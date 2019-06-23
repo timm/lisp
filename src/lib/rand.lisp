@@ -1,5 +1,5 @@
 #-------- -------- -------- -------- -------- -------- --------
-#-ish(load "../lib/ish")
+(unless (fboundp 'got) (load "../got"))
 
 (let* ((seed0      10013)
        (seed       seed0)

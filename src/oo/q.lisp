@@ -1,5 +1,5 @@
 ;-------- -------- -------- -------- -------- -------- --------
-#-ish(load "../lib/ish")
+(unless (fboundp 'got) (load ".,/got"))
 
 (defmacro ? (obj first-slot &rest more-slots)
   "From https://goo.gl/dqnmvH:"

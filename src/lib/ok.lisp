@@ -1,5 +1,5 @@
 ;-------- -------- -------- -------- -------- -------- --------
-#-ish(load "../lib/ish")
+(unless (fboundp 'got) (load "../got"))
 
 (defparameter *tests* nil)
 (defparameter *tries*   0)

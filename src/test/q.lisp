@@ -1,6 +1,6 @@
-#-ish(load "../lib/ish")
+(unless (fboundp 'got) (load "../got"))
 
-(needz  "oo/q" "lib/ok")
+(got  "oo/q" "lib/ok" )
 
 (deftest q1()
 	 (test '(SLOT-VALUE (SLOT-VALUE (SLOT-VALUE OO 'A) 'B) C)

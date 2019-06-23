@@ -1,5 +1,5 @@
 ;-------- -------- -------- -------- -------- -------- --------
-#-ish(load "../lib/ish")
+(unless (fboundp 'got) (load "../got"))
 
-(has "oo/q" "oo/q")
+(got "oo/q" "oo/q")
 

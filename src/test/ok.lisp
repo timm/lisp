@@ -1,6 +1,6 @@
-#-ish(load "../lib/ish")
+(unless (fboundp 'got) (load "../got"))
 
-(needz  "lib/ok")
+(got  "lib/ok")
 
 (deftest 
   aa()

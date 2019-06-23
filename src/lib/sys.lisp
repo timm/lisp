@@ -1,4 +1,4 @@
-#-ish(load "../lib/ish")
+(unless (fboundp 'got) (load "../got"))
 
 (defun klass-slots (it)
   "what are the slots of a class?"
