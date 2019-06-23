@@ -1,10 +1,10 @@
 (let 
-  ((pats '("../*/*.lisp"))
+  ((pats '("../*/" "../*/*.lisp"))
    files
    gotten)
   (labels 
     ((knowns (x) 
-	     (remove-if-not #'(lambda (z) (containsp z x)) files))
+	     (remove-if-not #'(lambda (z) (ends-with-p z x)) files))
 
      (containsp (str1 str2)
 		(unless (string-equal str2 "")
@@ -12,16 +12,23 @@
 			then (search str2 str1 :start2 (1+ p))
 			while p 
 			collect p)))
+     (ends-with-p (str1 str2)
+		  (let ((p (mismatch str2 str1 :from-end T)))
+		    (or (not p) (= 0 p))))
      (got1 (f)
-	   (unless (member f gotten)
-	     (format t "~&; loading ~a~%" f)
-	     (push f gotten)  
-	     #-sbcl
-	     (load f) 
-	     #+sbcl
-	     (handler-bind
-	       ((style-warning #'muffle-warning))
-	       (load f)))))
+	   (if (ends-with-p "/" f) 
+	     (progn (print 11)
+		    (dolist (file (directory (format nil "~a/*.lisp" f)))
+		      (format nil "asd~a" file)
+	       (got file)))
+	     (progn 
+	       #-sbcl
+	       (load f) 
+	       #+sbcl
+	       (handler-bind
+		 ((style-warning #'muffle-warning))
+		 (load f)))))
+     )
 
     (dolist (pat pats)
       (dolist (file (directory pat))
@@ -34,6 +41,9 @@
 	    (error "unknown file name [~a]" f)
 	    (if (cdr where) ; too many
 	      (error "ambiguous file name [~a]~%" f)
-	      (got1 (car where)) ; just right
-	      )))))))
+	      (unless (member (car where) gotten)
+		(push (car where) gotten)
+		(format t "~&; loading ~a~%" f)
+		(got1 (car where)) ; just right
+	      ))))))))
 
