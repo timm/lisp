@@ -19,9 +19,9 @@
 	 (error (format nil ,msg ,@txt)))
        (t (c)
 	  (incf *fail*)
-	  (format t "#E> ~a" c)))))
+	  (format t "; E> ~a" c)))))
 
-(defun tests (&optional force)
+(defun tests ()
   (when *tests*
     (mapc #'funcall  (reverse *tests*))
     (let ((pass (- *tries* *fail*)))

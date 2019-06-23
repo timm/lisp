@@ -1,11 +1,12 @@
 #-ish(load "../lib/ish")
 
-(has "lib/ok")
+(needz  "lib/ok")
 
 (deftest 
   aa()
   "asdas"
-  (test 1 2 "not int ~a" 'k))
+  (test 1 2 "not int ~a" 'k)
+  (test (/ 3 0)  2 "not int ~a" 'k))
 
-(tests)
+;(tests)
 

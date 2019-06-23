@@ -1,12 +1,12 @@
 (pushnew :ish *FEATURES*)
 
-(format nil "# ISH")
+(format t "; ISH")
 (let (seen)
-  (defun has (&rest lst)
+  (defun needz (&rest lst)
     (dolist (f lst)
       (let ((f (format nil "../~a.lisp" f)))
 	(unless  (member f seen :test #'equalp)
-	  (format t "; ~a~%" f)
+	  (format t "~&; loading ~a~%" f)
 	  (push f seen)  
 	  #-sbcl
 	  (load f) 

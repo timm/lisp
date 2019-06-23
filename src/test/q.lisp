@@ -1,5 +1,9 @@
 #-ish(load "../lib/ish")
 
-(has "oo/q")
+(needz  "oo/q" "lib/ok")
 
-(format t "~a~%" (macroexpand '(? oo 'a 'b c)))
+(deftest q1()
+	 (test '(SLOT-VALUE (SLOT-VALUE (SLOT-VALUE OO 'A) 'B) C)
+	       (macroexpand '(? oo 'a 'b c)) "bad expand"))
+
+(tests)
