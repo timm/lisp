@@ -4,7 +4,6 @@
 Areas: [lib](https://github.com/timm/lisp/tree/master/src/lib) | 
 [oo](https://github.com/timm/lisp/tree/master/src/oo)  | 
 [rows](https://github.com/timm/lisp/tree/master/src/rows)   
-<a href="https://git.io/gotlisp"><img src="https://raw.githubusercontent.com/timm/lisp/master/etc/img/gotlisp.png"><br>
 
 # Just some of my LISP Tricks.
 
