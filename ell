@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+Root=$(git rev-parse --show-toplevel)
+bash --init-file $Root/etc/dotbashrc  -i
