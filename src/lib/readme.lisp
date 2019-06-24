@@ -13,6 +13,18 @@
 
 (defun garnish (&rest x) x)
 
+(garnish "
+
+### Usage
+
+```bash
+cd src/xx
+sbcl --script ../lib/readme.lisp > README.md
+git add README.md
+```
+
+")
+
 (defun readme()
   "Generate README.md from all doco strings 
    form all LISP code in a directory."

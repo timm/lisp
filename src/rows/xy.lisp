@@ -5,3 +5,7 @@
 
 (defstruct data name colums egs)
 
+(defun xx()
+  "asdas"
+)
+

@@ -43,3 +43,13 @@ pathadd() {
       fi
 }
 pathadd /usr/local/bin
+Dirs=$(find $Got/src -type d  -depth 1 | grep -v \.git\/ | grep -v data )
+
+readmes() {
+  for d in $Dirs; do
+    (cd $d
+     echo $d
+     clisp ../lib/readme.lisp > README.md
+     git add README.md)
+  done
+}
