@@ -84,3 +84,4 @@ set hlsearch
 set nofoldenable    " disable folding
 colorscheme slate
 set ruler
+set statusline=%F\ %=%l\:%c\ 
