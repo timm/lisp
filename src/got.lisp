@@ -43,4 +43,3 @@
               (unless (member (car where) gotten)
                 (push (car where) gotten)
                 (got1 (car where))))))))))
-
