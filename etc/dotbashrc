@@ -15,7 +15,7 @@ PROMPT_COMMAND='echo -ne "${_c2}!${_c0}${_c0}$(hostname -s):${_c6}$(git branch 2
 
 alias egrep='egrep --color=auto'
 alias fgrep='fgrep --color=auto'
-alias gc="git config --global credential.helper cache; git config credential.helper 'cache --timeout=3600'"
+alias gfig="git config --global credential.helper cache; git config credential.helper 'cache --timeout=3600'"
 alias get='git pull'
 alias grep='grep --color=auto'
 alias ls='ls -G'
