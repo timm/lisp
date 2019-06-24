@@ -1,16 +1,16 @@
 ; vim: ts=2 sw=2 sts=2  et
 (unless (fboundp 'got) (load "../got"))
 
-(got "reads.lisp")
+(got "sys.lisp" "reads.lisp")
 
-(defparameter +header+ "
+(defparameter +header+ (format nil "
 
 <a href=\"https://git.io/gotlisp\"><img src=\"https://raw.githubusercontent.com/timm/lisp/master/etc/img/gotlisp.png\"><br>
 [home](http://git.io/gotlisp) | [contrib](https://github.com/timm/lisp/blob/master/CONTRIBUTING.md) | [discuss](https://github.com/timm/lisp/issues) 
 
-# Documentation
+# ~a
 
-")
+" (string-upcase (second (args))) ))
 
 (defun garnish (&rest x) x)
 
