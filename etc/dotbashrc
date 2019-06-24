@@ -13,13 +13,17 @@ here() { cd $1; basename "$PWD"; }
 
 PROMPT_COMMAND='echo -ne "${_c2}!${_c0}${_c0}$(hostname -s):${_c6}$(git branch 2>/dev/null | grep '^*' | colrm 1 2) \033]0;$(here ..)/$(here .)\007";PS1="${_c1}$_c2$(here ..)/$_c3$(here .) ${_c6}\!>${_c0}\e[m "'
 
+gfig() {
+  git config --global credential.helper cache
+  git config credential.helper 'cache --timeout=3600'
+}
+
 alias egrep='egrep --color=auto'
 alias fgrep='fgrep --color=auto'
-alias gfig="git config --global credential.helper cache; git config credential.helper 'cache --timeout=3600'"
 alias get='git pull'
 alias grep='grep --color=auto'
 alias ls='ls -G'
-alias put='gc; git commit -am saving; git push; git status'
+alias put='git commit -am saving; git push; git status'
 alias vi="vim -u $Got/etc/dotvimrc "
 
 pathadd() {
