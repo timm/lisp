@@ -16,18 +16,14 @@
 		  (let ((p (mismatch str2 str1 :from-end T)))
 		    (or (not p) (= 0 p))))
      (got1 (f)
-	   (if (ends-with-p "/" f) 
-	     (progn (print 11)
-		    (dolist (file (directory (format nil "~a/*.lisp" f)))
-		      (format nil "asd~a" file)
-	       (got file)))
+	   (if (ends-with-p f "/") 
+	     (dolist (file (directory (format nil "~a/*.lisp" f)))
+	       (got  (namestring file)))
 	     (progn 
-	       #-sbcl
-	       (load f) 
-	       #+sbcl
-	       (handler-bind
-		 ((style-warning #'muffle-warning))
-		 (load f)))))
+	       #-sbcl (load f) 
+	       #+sbcl (handler-bind
+			((style-warning #'muffle-warning))
+			(load f)))))
      )
 
     (dolist (pat pats)

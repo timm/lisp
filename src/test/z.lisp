@@ -1,6 +1,6 @@
 (unless (fboundp 'got) (load "../got"))
 
-(got  "oo/" "oo/q.lisp" "lib/ok.lisp" )
+(got "lib/" "oo/" )
 
 (deftest q1()
 	 (test '(SLOT-VALUE (SLOT-VALUE (SLOT-VALUE OO 'A) 'B) C)

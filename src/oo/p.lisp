@@ -1,5 +1,5 @@
 ;-------- -------- -------- -------- -------- -------- --------
 (unless (fboundp 'got) (load "../got"))
 
-(got "oo/q" "oo/q")
+(got "oo/q.lisp" "oo/q.lisp")
 
