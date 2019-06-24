@@ -85,3 +85,9 @@ set nofoldenable    " disable folding
 colorscheme slate
 set ruler
 set statusline=%F\ %=%l\:%c\ 
+
+set lispwords+=deftest
+set lispwords+=defthing
+set lispwords+=until
+set lispwords+=while
+set lispwords+=labels
