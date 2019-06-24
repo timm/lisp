@@ -11,11 +11,11 @@ Areas: [lib](https://github.com/timm/lisp/tree/master/src/lib) ::
 
 
 
-## p.lisp
+## [p.lisp](p.lisp)
 
 
 
-## q.lisp
+## [q.lisp](q.lisp)
 
 
 `? (obj first-slot &rest more-slots)`

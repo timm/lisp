@@ -11,11 +11,11 @@ Areas: [lib](https://github.com/timm/lisp/tree/master/src/lib) ::
 
 
 
-## ok.lisp
+## [ok.lisp](ok.lisp)
 
 
 
-## oo.lisp
+## [oo.lisp](oo.lisp)
 
 
 `defslot (slot x form)`
@@ -35,11 +35,11 @@ Areas: [lib](https://github.com/timm/lisp/tree/master/src/lib) ::
 -   print string for all public slot names
 
 
-## rand.lisp
+## [rand.lisp](rand.lisp)
 
 
 
-## readme.lisp
+## [readme.lisp](readme.lisp)
 
 
 
@@ -61,7 +61,7 @@ git add README.md
    form all LISP code in a directory.
 
 
-## reads.lisp
+## [reads.lisp](reads.lisp)
 
 
 `string-lines (str)`
@@ -73,7 +73,7 @@ git add README.md
 -   Read  a file, calling 'fn' on each s-expression.
 
 
-## sys.lisp
+## [sys.lisp](sys.lisp)
 
 
 `klass-slots (it)`

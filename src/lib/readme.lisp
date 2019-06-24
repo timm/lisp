@@ -60,7 +60,7 @@ git add README.md
                        #'(lambda (x y) (string< (pathname-name x) 
                                                 (pathname-name y)))))
         (setf name (pathname-name f))
-         (format t "~%~%## ~a.lisp~%~%" name)
+         (format t "~%~%## [~a.lisp](~a.lisp)~%~%" name name)
         (reads f #'fundoc)))))
 
 (format t "~a"  +header+)
