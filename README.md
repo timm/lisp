@@ -1,0 +1,3 @@
+# Lisp
+
+Just some tricks.
