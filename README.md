@@ -10,6 +10,8 @@
 
 
 
+[top](#top)
+
 # Just some of my LISP Tricks.
 
 have fun!
