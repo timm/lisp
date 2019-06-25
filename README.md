@@ -17,6 +17,9 @@
 
 <img width=300 src="http://lisperati.com/lisplogo_alien_256.png">
 
+## Why Lisp? Why Not?
+
+
 "Lisp isn't a language, it's a building material." - Alan Kay
 
 "Lisp is a programmable programming language." - John Foderaro
@@ -41,3 +44,16 @@ Much AI stuff (in LISP):
 
 - [Paradigms of Artiical Intelligence](https://www.amazon.com/Paradigms-Artificial-Intelligence-Programming-Studies/dp/1558601910/ref=pd_sbs_14_2/135-4118199-9331832?_encoding=UTF8&pd_rd_i=1558601910&pd_rd_r=ba1e0b44-975b-11e9-9e03-b199d7ed47b8&pd_rd_w=DBLQX&pd_rd_wg=NmfDg&pf_rd_p=588939de-d3f8-42f1-a3d8-d556eae5797d&pf_rd_r=YKATY6HX2MYDV0NSKEJX&psc=1&refRID=YKATY6HX2MYDV0NSKEJX), Peter Norvig. Some much inference, so little code. Totally wow.
 
+## Software
+
+Getting started:
+
+- Want a 2-clicks install ? Then get [Portacle](https://shinmera.github.io/portacle/), a portable and multiplatform Common Lisp environment. It ships Emacs25, SBCL (the implementation), Quicklisp (package manager), SLIME (IDE) and Git. It’s the most straightforward way to get going !
+- For other getting started advice, see [The LISP cookbook](https://lispcookbook.github.io/cl-cookbook/getting-started.html).
+
+
+
+Optional:  Install [quicklisp](https://www.quicklisp.org/beta/)  (which comes with ([Portacle](https://shinmera.github.io/portacle/). 
+  Quicklisp is more than a package manager, it is also a central repository (a dist) that ensures that all libraries build together.
+
+FY: I have my own, lightweight package management system contolled by the `got` function.
