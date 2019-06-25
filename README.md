@@ -1,4 +1,4 @@
-<a name=top></a><br>
+<a name=top></a>
 [home](https://github.com/timm/lisp/blob/master/README.md#top) ::
 [src](http://github.com/timm/lisp) ::
 [contrib](https://github.com/timm/lisp/blob/master/CONTRIBUTING.md) ::
@@ -11,11 +11,6 @@
 [rows](https://github.com/timm/lisp/tree/master/src/rows/README.md#top)  
 
 
-
-<p style="text-align:left;">
-This text is left aligned
-<span style="float:right;">This text is right aligned</span>
-</p>
 
 
 # Just some of my LISP Tricks
