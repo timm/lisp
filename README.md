@@ -4,9 +4,9 @@
 [discuss](https://github.com/timm/lisp/issues) ::
 [license](https://github.com/timm/lisp/blob/master/LICENSE)<br>
 <a href="https://git.io/gotlisp"><img src="https://raw.githubusercontent.com/timm/lisp/master/etc/img/gotlisp.png" ></a><br>
-[lib](https://github.com/timm/lisp/tree/master/src/lib) :: 
-[oo](https://github.com/timm/lisp/tree/master/src/oo)  :: 
-[rows](https://github.com/timm/lisp/tree/master/src/rows)  
+[lib](https://github.com/timm/lisp/tree/master/src/lib/README.md) :: 
+[oo](https://github.com/timm/lisp/tree/master/src/oo/README.md)  :: 
+[rows](https://github.com/timm/lisp/tree/master/src/rows/README.md)  
 
 
 
