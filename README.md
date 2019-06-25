@@ -10,9 +10,9 @@
 
 
 
-[top](#top)
 
-# Just some of my LISP Tricks.
+# [Just some of my LISP Tricks](#top)
+
 
 have fun!
 
