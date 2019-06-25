@@ -11,14 +11,16 @@
           (funcall act lst))))      
 
 (defun para1 (f)
+  "Read everything up to first blank line."
   (with-output-to-string (out)
     (tagbody
-       (reads f :get #'read-line :act (lambda (s)
+      (reads f :get #'read-line :act (lambda (s)
          (if (equalp "" (string-trim '(#\Space #\Tab) s))
              (go exit)
              (format out "~a~%" s))))
-        exit)))
+      exit)))
 
 (defun lines (x &optional (s (make-string-input-stream x)))
+  "Convert a string to a list of lines"
   (aif (read-line s nil)
        (cons it (lines  s))))
