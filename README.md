@@ -10,7 +10,7 @@
 
 
 
-[top](#top)
+[](#top)
 
 # Just some of my LISP Tricks.
 
