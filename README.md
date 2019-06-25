@@ -11,8 +11,7 @@
 
 
 
-# Just some of my LISP Tricks
+# <a name=top></a> Just some of my LISP Tricks
 
-<a href=#top>top></a>
 have fun!
 
