@@ -1,4 +1,4 @@
-[home](http://git.io/gotlisp) ::
+<a name=top></a>[home](http://git.io/gotlisp) ::
 [src](http://github.com/timm/lisp) ::
 [contrib](https://github.com/timm/lisp/blob/master/CONTRIBUTING.md) ::
 [discuss](https://github.com/timm/lisp/issues) ::
@@ -8,7 +8,7 @@
 [oo](https://github.com/timm/lisp/tree/master/src/oo/README.md#top)  :: 
 [rows](https://github.com/timm/lisp/tree/master/src/rows/README.md#top)  
 
-# <a name=top></a>ROWS
+# ROWS
 
 
 

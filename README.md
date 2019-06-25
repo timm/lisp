@@ -1,4 +1,4 @@
-[home](http://git.io/gotlisp) ::
+<a name=top></a>[home](http://git.io/gotlisp) ::
 [src](http://github.com/timm/lisp) ::
 [contrib](https://github.com/timm/lisp/blob/master/CONTRIBUTING.md) ::
 [discuss](https://github.com/timm/lisp/issues) ::
@@ -11,7 +11,7 @@
 
 
 
-# <a name=top></a> Just some of my LISP Tricks
+# Just some of my LISP Tricks
 
 have fun!
 
