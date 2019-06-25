@@ -13,7 +13,6 @@
 
 # Just some of my LISP Tricks
 
-[top](#top)
-
+<a href=#top>top></a>
 have fun!
 
