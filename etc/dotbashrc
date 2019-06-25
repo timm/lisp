@@ -11,7 +11,7 @@ _c7="\033[36m"     # turquoise
 
 here() { cd $1; basename "$PWD"; }
 
-PROMPT_COMMAND='echo -ne "${_c2}!${_c0}${_c0}$(hostname -s):${_c6}$(git branch 2>/dev/null | grep '^*' | colrm 1 2) \033]0;$(here ..)/$(here .)\007";PS1="${_c1}$_c2$(here ..)/$_c3$(here .) ${_c6}\!>${_c0}\e[m "'
+PROMPT_COMMAND='echo -ne "${_c2}GOT:${_c0}${_c0}$(hostname -s):${_c6}$(git branch 2>/dev/null | grep '^*' | colrm 1 2) \033]0;$(here ..)/$(here .)\007";PS1="${_c1}$_c2$(here ..)/$_c3$(here .) ${_c6}\!>${_c0}\e[m "'
 
 blank() {
 cat<<EOF
