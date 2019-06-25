@@ -11,7 +11,7 @@
        (format t "~&~%;;; ~a~%; ~a~%" ',name ,doc)
        ,@body))
 
-(defmacro test (want got msg &rest txt)
+(defmacro ok (want got msg &rest txt)
   `(progn 
      (incf *tries*)
      (handler-case
@@ -23,7 +23,7 @@
 
 (defun tests ()
   (when *tests*
-    (mapc #'funcall  (reverse *tests*))
+    (mapc #'funcall (reverse *tests*))
     (let ((pass (- *tries* *fail*)))
       (format 
 	t 
