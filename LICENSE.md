@@ -1,6 +1,6 @@
-BSD 2-Clause License
+# BSD 2-Clause License
 
-Copyright (c) 2019, Tim Menzies
+Copyright (c) 2019, Tim Menzies    
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
