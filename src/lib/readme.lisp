@@ -4,7 +4,7 @@
 (got "sys.lisp" "reads.lisp")
 
 (defparameter +header+ 
-  (format nil "~a~%# ~a~%~%" 
+  (format nil "~a~%# <a name=top></a>~a~%~%" 
           (para1 "../../README.md")
           (string-upcase (first (args)))))
 
