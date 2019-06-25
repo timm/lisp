@@ -23,4 +23,4 @@
 (defun lines (x &optional (s (make-string-input-stream x)))
   "Convert a string to a list of lines"
   (aif (read-line s nil)
-       (cons it (lines  s))))
+       (cons it (lines nil s))))

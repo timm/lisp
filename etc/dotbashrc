@@ -53,3 +53,9 @@ readmes() {
      git add README.md)
   done
 }
+
+alias got=". $Got/etc/dotbashrc"
+echo ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;"
+echo "(got (lisp '?))"
+echo "; v2.0, http://git.io/gotlisp"
+echo ""
