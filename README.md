@@ -14,5 +14,16 @@
 
 # Just some of my LISP Tricks
 
-have fun!
+<center>
+<img src="http://lisperati.com/lisplogo_alien_256.png">
+</center>
+
+"Lisp is a programmable programming language."  
+- John Foderaro, CACM, September 1991
+
+"Lisp isn't a language, it's a building material."  
+- Alan Kay
+
+"...please don't assume Lisp is only useful for Animation and Graphics, AI, Bioinformatics, B2B and E-Commerce, Data Mining, EDA/Semiconductor applications, Expert Systems, Finance, Intelligent Agents, Knowledge Management, Mechanical CAD, Modeling and Simulation, Natural Language, Optimization, Research, Risk Analysis, Scheduling, Telecom, and Web Authoring just because these are the only things they happened to list."   
+- Kent M. Pitman
 
