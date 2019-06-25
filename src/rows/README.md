@@ -1,4 +1,4 @@
-<p>&nbsp;</p>
+<p></p>
 <a name=top></a>
 [home](https://github.com/timm/lisp/blob/master/README.md#top) ::
 [src](http://github.com/timm/lisp) ::
