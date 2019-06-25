@@ -16,9 +16,12 @@
        (reads f :get #'read-line :act (lambda (s)
          (if (equalp "" (string-trim '(#\Space #\Tab) s))
              (go exit)
-             (format out "~a~%" s))))
-        exit)))
+             (format out "~a~%" s)))))))
+
+;        exit)))
 
 (defun lines (x &optional (s (make-string-input-stream x)))
   (aif (read-line s nil)
        (cons it (lines  s))))
+
+(print (para1 "../../README.md"))
