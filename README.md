@@ -13,7 +13,7 @@
 
 # Just some of my LISP Tricks
 
-[.](#top)
+[top](#top)
 
 have fun!
 
