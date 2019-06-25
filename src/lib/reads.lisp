@@ -38,5 +38,3 @@
                 (funcall fn  one str)
                 (worker))))
       (worker))))
-
-(print (para1 "../../README.md"))
