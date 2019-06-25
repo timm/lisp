@@ -12,6 +12,11 @@
 
 
 
+<p style="text-align:left;">
+This text is left aligned
+<span style="float:right;">This text is right aligned</span>
+</p>
+
 
 # Just some of my LISP Tricks
 
