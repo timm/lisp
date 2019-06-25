@@ -7,7 +7,7 @@
 [lib](https://github.com/timm/lisp/tree/master/src/lib/README.md) :: 
 [oo](https://github.com/timm/lisp/tree/master/src/oo/README.md)  :: 
 [rows](https://github.com/timm/lisp/tree/master/src/rows/README.md)  
-# LIB
+# --
 
 
 
@@ -69,7 +69,7 @@ git add README.md
 
 -   Convert a string to a list of lines.
 
-`reads (f &optional (fn #'print) (str t))`
+`reads (f &key (act #'print) (get #'read) (str t))`
 
 -   Read  a file, calling 'fn' on each s-expression.
 

@@ -28,7 +28,7 @@ git add README.md
   (let (name)
     (labels 
       ((fundoc 
-         (x s)
+         (x &optional (s t))
          "Takes the function documentation string and
          prints it, indented by a little white space"
          (labels 
@@ -55,7 +55,7 @@ git add README.md
                                                 (pathname-name y)))))
         (setf name (pathname-name f))
          (format t "~%~%## [~a.lisp](~a.lisp)~%~%" name name)
-        (reads f #'fundoc)))))
+        (reads f :act #'fundoc)))))
 
 (format t "~a"  +header+)
 (terpri)
