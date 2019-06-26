@@ -1,7 +1,7 @@
 ;; vim: set ts=2 sts=2 et :
 (unless (fboundp 'got) (load "../got"))
 
-(defmacro aif (test then &optional else)
+(defmacro af (test then &optional else)
   "Anaphoric 'if'"
   `(let ((it ,test))
      (if it ,then ,else)))
@@ -12,7 +12,7 @@
        ((not ,test))
      ,@body))
 
-(defmacro awhile (test &body body)
+(defmacro whale (test &body body)
   "implements 'while' (which is not standard in LISP)"
   `(while (setf it ,test)
      ,@body))

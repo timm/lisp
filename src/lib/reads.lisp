@@ -22,7 +22,7 @@
 
 (defun s->lines (x &optional (s (make-string-input-stream x)))
   "Convert a string to a list of lines"
-  (aif (read-line s nil)
+  (af (read-line s nil)
        (cons it (s->lines nil s))))
 
 (defun s->words (s &optional 
@@ -36,7 +36,7 @@
               (push (concatenate 'string (reverse tmp)) out) 
               (setf tmp nil) 
               out)))
-        (awhile (read-char str nil)
+        (whale (read-char str nil)
           (if (member it sep :test #'eq)
             (end-of-word)
             (push it tmp)))
