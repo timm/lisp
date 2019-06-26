@@ -17,10 +17,15 @@
 
 <img align=right src="http://lisperati.com/lisplogo_flag2_256.png">
 
-## Why Use These Tools?
+- [Introduction](#Introduction)
+- [Installation](#Installation)
+
+## Introduction
+
+### Why Use These Tools?
 
 - Cause you like LISP;
-- Cause you like writinglots of little code files;
+- Cause you like dividing your work into  lots of little files;
 - Cause you like CLISP for its brevity and SBCL for its speed;
 - Cause you like being able to test any file (mostly) in isolation from everything else;
 - Cause you want all the code and config inside a repo (not spread all over the hard drive)
@@ -29,7 +34,7 @@
 - Cause you thing most IDE tools are crazy over-elaborations.
 
 
-## But Why Lisp? Well, Why Not?
+### But Why Lisp? Well, Why Not?
 
 "Lisp isn't a language, it's a building material." - Alan Kay
 
@@ -39,7 +44,7 @@
 
 "It seems to me that there have been two really clean, consistent models of programming so far: the C model and the Lisp model. These two seem points of high ground, with swampy lowlands between them. As computers have grown more powerful, the new languages being developed have been moving steadily toward the Lisp model. A popular recipe for new programming languages in the past 20 years has been to take the C model of computing and add to it, piecemeal, parts taken from the Lisp model, like runtime typing and garbage collection." - Paul Graham
 
-## Great Books on Lisp
+### Great Books on Lisp
 
 Start here:
 
@@ -56,7 +61,7 @@ Much AI stuff (in LISP):
 
 - [Paradigms of Artiical Intelligence](https://www.amazon.com/Paradigms-Artificial-Intelligence-Programming-Studies/dp/1558601910/ref=pd_sbs_14_2/135-4118199-9331832?_encoding=UTF8&pd_rd_i=1558601910&pd_rd_r=ba1e0b44-975b-11e9-9e03-b199d7ed47b8&pd_rd_w=DBLQX&pd_rd_wg=NmfDg&pf_rd_p=588939de-d3f8-42f1-a3d8-d556eae5797d&pf_rd_r=YKATY6HX2MYDV0NSKEJX&psc=1&refRID=YKATY6HX2MYDV0NSKEJX), Peter Norvig. Some much inference, so little code. Totally wow.
 
-## Software
+### Software
 
 Getting started:
 
@@ -69,3 +74,8 @@ Optional:  Install [quicklisp](https://www.quicklisp.org/beta/)  (which comes wi
   Quicklisp is more than a package manager, it is also a central repository (a dist) that ensures that all libraries build together.
 
 FY: I have my own, lightweight package management system contolled by the `got` function.
+
+
+## Installation
+
+XXX
