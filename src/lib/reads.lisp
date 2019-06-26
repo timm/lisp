@@ -1,24 +1,24 @@
-; vim: ts=2 sw=2 sts=2 et
+; vim: ts=2 slw=2 sts=2 et
 (unless (fboundp 'got) (load "../got"))
 
 (got "macros.lisp")
 
-(defun reads (f &key  (act #'print) (get #'read) (str t))
-  "Read  a file, calling 'fn' on each s-expression. "
-  (with-open-file (s f)
-    (loop for lst = (funcall get s nil)
-          while lst do 
-          (funcall act lst))))      
+(defmacro doread ((it f &key out (take #'read)) &body body)
+  "Iterator for running over files or strings."
+  (let ((str (gensym)))
+    `(with-open-file (,str f)
+       (loop for ,it = (funcall ,take ,str nil)
+             while ,it do 
+             (progn ,@body))
+       ,out)))
 
 (defun para1 (f)
   "Read everything up to first blank line."
   (with-output-to-string (out)
-    (tagbody
-      (reads f :get #'read-line :act (lambda (s)
-         (if (equalp "" (string-trim '(#\Space #\Tab) s))
-             (go exit)
-             (format out "~a~%" s))))
-      exit)))
+    (doread (x f :take #'read-line)
+      (if (equalp "" (string-trim '(#\Space #\Tab) x))
+        (return)
+        (format t "~a~%" x)))))
 
 (defun lines (x &optional (s (make-string-input-stream x)))
   "Convert a string to a list of lines"

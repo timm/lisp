@@ -75,19 +75,19 @@ git add README.md
 
 
 
-`readme `
+`readme (&optional (s t))`
 
 -   
 Generate README.md from all doco strings 
-   form all LISP code in a directory.
+  form all LISP code in a directory.
 
 
 ## [reads.lisp](reads.lisp)
 
 
-`reads (f &key (act #'print) (get #'read) (str t))`
+`doread ((it f &key out (take #'read)) &body body)`
 
--   Read  a file, calling 'fn' on each s-expression. 
+-   Iterator for running over files or strings.
 
 `para1 (f)`
 

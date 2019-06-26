@@ -20,7 +20,7 @@
 Table of contents:
 
 - [Introduction](#Introduction)
-- [Installation](#Installation)
+- [How to install this Code](#Installation)
 
 ## Introduction
 
