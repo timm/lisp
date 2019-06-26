@@ -1,4 +1,4 @@
-; vim: ts=2 sw=2 sts=2  et
+;; vim: set ts=2 sts=2 et :
 (unless (fboundp 'got) (load "../got"))
 
 (defmacro aif (test then &optional else)

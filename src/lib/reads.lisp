@@ -29,15 +29,15 @@
   (with-input-from-string (str s)
     (let (tmp out)
       (labels 
-        ((complete () 
+        ((end-of-word () 
             (when tmp
               (push (concatenate 'string (reverse tmp)) out) 
               (setf tmp nil) 
               out)))
         (awhile (read-char str nil)
           (if (member it sep :test #'eq)
-            (complete)
+            (end-of-word)
             (push it tmp)))
-        (reverse (complete))))))
+        (reverse (end-of-word))))))
 
 (print (words "   asd,as as,das asd  asd as"))
