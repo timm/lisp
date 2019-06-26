@@ -17,7 +17,7 @@
 
 <img align=right src="http://lisperati.com/lisplogo_flag2_256.png">
 
-Table of contents
+Table of contents:
 
 - [Introduction](#Introduction)
 - [Installation](#Installation)
