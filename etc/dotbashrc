@@ -1,6 +1,17 @@
 #!/usr/bin/env bash
 Got=$(git rev-parse --show-toplevel)
 
+uname="$(uname -s)"
+for i in sbcl clisp tmux; do
+  case "${uname}" in
+      Linux*)     
+        which $i > /dev/null || sudo apt get $i;;
+      Darwin*)    
+        which $i > /dev/null || brew install $i;;
+      *) echo "UNKNOWN:${uname}"; exit 1;;
+  esac
+done
+
 _c0="\033[00m"     # white
 _c1="\033[01;32m"  # green
 _c2="\033[01;34m"  # blue
@@ -36,6 +47,7 @@ alias ls='ls -G'
 alias put='git commit -am saving; git push; git status'
 alias vi="vim -u $Got/etc/dotvimrc "
 alias sbcl="$(which sbcl) --script "
+alias tmux="tmux -f $Got/etc/dottmux"
 
 pathadd() {
       if  [[ ":$PATH:" != *":$1:"* ]]; then
