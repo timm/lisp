@@ -20,12 +20,14 @@
         (return)
         (format str "~a~%" x)))))
 
-(defun lines (x &optional (s (make-string-input-stream x)))
+(defun s->lines (x &optional (s (make-string-input-stream x)))
   "Convert a string to a list of lines"
   (aif (read-line s nil)
-       (cons it (lines nil s))))
+       (cons it (s->lines nil s))))
 
-(defun words (s &key (sep '(#\, #\space #\tab #\newline)))
+(defun s->words (s &optional 
+                (sep '(#\, #\space #\tab #\newline #\linefeed)))
+  "Convert a string to a list of words"
   (with-input-from-string (str s)
     (let (tmp out)
       (labels 
@@ -40,4 +42,6 @@
             (push it tmp)))
         (reverse (end-of-word))))))
 
-(print (words "   asd,as as,das asd  asd as"))
+(print (s->words "   asd,as as,das asd 
+                 
+                 asd as"))
