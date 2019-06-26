@@ -15,10 +15,19 @@
 
 # Just some of my LISP Programming Tricks
 
-<img width=300 src="http://lisperati.com/lisplogo_alien_256.png">
+<img align=right src="http://lisperati.com/lisplogo_alien_256.png">
+
+## Why Use These Tools?
+
+- Cause you like coding;
+- Cause you like LISP;
+- Cause you like CLISP for its brevity and SBCL for its speed;
+- Cause you like lots of little code files;
+- Cause you like being able to test any file (mostly) in isolation from everything else;
+- Cause you want all the code and config inside a repo (not spread all over the hard drive)
+- Cause you often log in to different machines via ascii terminals and all you want is a half-decent ascii IDE
 
 ## Why Lisp? Why Not?
-
 
 "Lisp isn't a language, it's a building material." - Alan Kay
 
@@ -32,6 +41,7 @@
 
 Start here:
 
+- [Learn Lisp in 20 minutes](https://learnxinyminutes.com/docs/common-lisp/)
 - [Land of Lisp](https://www.amazon.com/Land-Lisp-Learn-Program-Game/dp/1593272812),  Conrad Barski.  For a good time, Start here
 - [Ansi Common Lisp](https://www.amazon.com/ANSI-Common-LISP-Paul-Graham/dp/0133708756/ref=pd_sbs_14_5/135-4118199-9331832?_encoding=UTF8&pd_rd_i=0133708756&pd_rd_r=cf9f4331-975b-11e9-809f-935832fab2f8&pd_rd_w=197Te&pd_rd_wg=ERVPM&pf_rd_p=588939de-d3f8-42f1-a3d8-d556eae5797d&pf_rd_r=ZRERR6MHZMGSN413SSPC&psc=1&refRID=ZRERR6MHZMGSN413SSPC),  Paul Graham. Great  reference material. Lots of smal, crytal clear, exmples
 

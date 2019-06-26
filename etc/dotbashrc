@@ -55,7 +55,4 @@ readmes() {
 }
 
 alias got=". $Got/etc/dotbashrc"
-echo ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;"
-echo "(got (lisp '?))"
-echo "; v2.0, http://git.io/gotlisp"
-echo ""
+echo ";;;; (got (lisp '?)) ; v2.0 (c) 2019 Tim Menzies, http://git.io/gotlisp"
