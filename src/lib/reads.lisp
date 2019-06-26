@@ -24,3 +24,14 @@
   "Convert a string to a list of lines"
   (aif (read-line s nil)
        (cons it (lines nil s))))
+
+(defun delimiterp (c) (or (char= c #\Space) (char= c #\,)))
+
+(defun slice (string &key (delimiterp #'delimiterp))
+  (loop :for beg = (position-if-not delimiterp string)
+        :then      (position-if-not delimiterp string :start (1+ end))
+        :for end = (and beg (position-if delimiterp string :start beg))
+        :when beg :collect (subseq string beg end)
+        :while end))
+
+(print (slice "  ad,as, asdas,sda  asdas  "))
