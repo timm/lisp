@@ -15,7 +15,7 @@
 
 # Just some of my LISP Programming Tricks
 
-<img align=right src="http://lisperati.com/lisplogo_alien_256.png">
+<img align=right src="http://lisperati.com/lisplogo_flag2_256.png">
 
 ## Why Use These Tools?
 
