@@ -19,15 +19,17 @@
 
 ## Why Use These Tools?
 
-- Cause you like coding;
 - Cause you like LISP;
+- Cause you like writinglots of little code files;
 - Cause you like CLISP for its brevity and SBCL for its speed;
-- Cause you like lots of little code files;
 - Cause you like being able to test any file (mostly) in isolation from everything else;
 - Cause you want all the code and config inside a repo (not spread all over the hard drive)
-- Cause you often log in to different machines via ascii terminals and all you want is a half-decent ascii IDE
+- Cause you want documentation tools that write README.md files from the LISP documentation strings.
+- Cause you often log in to different machines via ascii terminals and all you want is a half-decent ascii IDE;
+- Cause you thing most IDE tools are crazy over-elaborations.
 
-## Why Lisp? Why Not?
+
+## But Why Lisp? Well, Why Not?
 
 "Lisp isn't a language, it's a building material." - Alan Kay
 
