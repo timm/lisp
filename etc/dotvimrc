@@ -88,6 +88,7 @@ set statusline=%F\ %=%l\:%c\
 
 set lispwords+=deftest
 set lispwords+=defthing
+set lispwords+=while
 set lispwords+=until
 set lispwords+=labels
 set lispwords+=labels

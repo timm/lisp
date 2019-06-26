@@ -1,9 +1,9 @@
-; vim: ts=2 slw=2 sts=2 et
+;; vim: set ts=2 sts=2 et :
 (unless (fboundp 'got) (load "../got"))
 
 (got "macros.lisp")
 
-(defmacro doread ((it f &key out (take #'read)) &body body)
+(defmacro doread ((it f  &key out (take #'read)) &body body)
   "Iterator for running over files or strings."
   (let ((str (gensym)))
     `(with-open-file (,str f)
@@ -14,24 +14,30 @@
 
 (defun para1 (f)
   "Read everything up to first blank line."
-  (with-output-to-string (out)
+  (with-output-to-string (str)
     (doread (x f :take #'read-line)
       (if (equalp "" (string-trim '(#\Space #\Tab) x))
         (return)
-        (format t "~a~%" x)))))
+        (format str "~a~%" x)))))
 
 (defun lines (x &optional (s (make-string-input-stream x)))
   "Convert a string to a list of lines"
   (aif (read-line s nil)
        (cons it (lines nil s))))
 
-(defun delimiterp (c) (or (char= c #\Space) (char= c #\,)))
+(defun words (s &key (sep '(#\, #\space #\tab #\newline)))
+  (with-input-from-string (str s)
+    (let (tmp out)
+      (labels 
+        ((complete () 
+            (when tmp
+              (push (concatenate 'string (reverse tmp)) out) 
+              (setf tmp nil) 
+              out)))
+        (awhile (read-char str nil)
+          (if (member it sep :test #'eq)
+            (complete)
+            (push it tmp)))
+        (reverse (complete))))))
 
-(defun slice (string &key (delimiterp #'delimiterp))
-  (loop :for beg = (position-if-not delimiterp string)
-        :then      (position-if-not delimiterp string :start (1+ end))
-        :for end = (and beg (position-if delimiterp string :start beg))
-        :when beg :collect (subseq string beg end)
-        :while end))
-
-(print (slice "  ad,as, asdas,sda  asdas  "))
+(print (words "   asd,as as,das asd  asd as"))

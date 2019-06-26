@@ -12,6 +12,11 @@
        ((not ,test))
      ,@body))
 
+(defmacro awhile (test &body body)
+  "implements 'while' (which is not standard in LISP)"
+  `(while (setf it ,test)
+     ,@body))
+
 (defmacro until (test &body body)
   "implements 'until' (which is not standard in LISP)"
   `(while (not ,test)
