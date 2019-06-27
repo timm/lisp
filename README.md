@@ -43,9 +43,9 @@ tests to get a feel for this code.
 
 <img align=right src="http://lisperati.com/lisplogo_256.png">
 
-- "Lisp isn't a language, it's a building material." **-Alan Kay**
-- "Lisp is a programmable programming language." **-John Foderaro**
-- "...please don't assume Lisp is only useful for Animation and Graphics, AI, Bioinformatics, B2B and E-Commerce, Data Mining, EDA/Semiconductor applications, Expert Systems, Finance, Intelligent Agents, Knowledge Management, Mechanical CAD, Modeling and Simulation, Natural Language, Optimization, Research, Risk Analysis, Scheduling, Telecom, and Web Authoring just because these are the only things they happened to list." **-&nbsp;Kents&nbsp;Pitman** 
+- "Lisp isn't a language, it's a building material." **-&nbsp;Alan&nbsp;Kay**
+- "Lisp is a programmable programming language." **-&nbsp;John&nbsp;Foderaro**
+- "...please don't assume Lisp is only useful for Animation and Graphics, AI, Bioinformatics, B2B and E-Commerce, Data Mining, EDA/Semiconductor applications, Expert Systems, Finance, Intelligent Agents, Knowledge Management, Mechanical CAD, Modeling and Simulation, Natural Language, Optimization, Research, Risk Analysis, Scheduling, Telecom, and Web Authoring just because these are the only things they happened to list." **-&nbsp;Kent&nbsp;Pitman** 
 - "It seems to me that there have been two really clean, consistent models of programming so far: the C model and the Lisp model. These two seem points of high ground, with swampy lowlands between them. As computers have grown more powerful, the new languages being developed have been moving steadily toward the Lisp model. A popular recipe for new programming languages in the past 20 years has been to take the C model of computing and add to it, piecemeal, parts taken from the Lisp model, like runtime typing and garbage collection." **-&nbsp;Paul&nbsp;Graham**
 
 ### Cause you divide code into  lots of little files
