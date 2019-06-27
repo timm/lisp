@@ -37,11 +37,12 @@ GOT::master someplace/lisp 1>
 At this point you can CNTRL-D to exit or `cd src/test` to run some unit
 tests to get a feel for this code.
 
-<img align=right src="http://lisperati.com/lisplogo_flag2_256.png">
 
 ## Why Use These Tools?
 
 ### Cause you love LISP 
+
+<img align=right src="http://lisperati.com/lisplogo_flag2_256.png">
 
 - "Lisp isn't a language, it's a building material." - Alan Kay
 - "Lisp is a programmable programming language." - John Foderaro
