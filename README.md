@@ -11,7 +11,7 @@
 [&copy;2019](https://github.com/timm/lisp/blob/master/LICENSE.md), [Tim Menzies](http://menzies.us) 
 
 
-# Some LISP coding tricks
+# Just some of my LISP coding tricks
 
 <img width=150 align=right src="http://lisperati.com/lisplogo_256.png">
 
@@ -21,7 +21,7 @@ I found myself using the same tricks, the same directory structures, the same ed
 the same workflow (git for storage, markdown for documentation), 
 the same multi-windowed environment (tmux),
 the same unit testing strategies,... And all of those tricks
- worked in ascii terminals, fast to boot, worked cross-platform, etc etc.
+ worked in ascii terminals, are fast to boot, worked cross-platform, etc etc.
 
 Here are all those tricks, tuned for LISP.
 
