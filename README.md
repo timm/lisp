@@ -24,7 +24,6 @@ the same unit testing strategies,... And all of those tricks
 
 Here are all those tricks, tuned for LISP.
 
-
 ## Installation
 
 For Mac or Unix:
