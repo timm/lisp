@@ -95,3 +95,9 @@ set lispwords+=labels
 set lispwords+=labels
 set lispwords+=doread
 set path+=../**
+
+if has("mouse_sgr")
+    set ttymouse=sgr
+else
+    set ttymouse=xterm2
+end

@@ -9,7 +9,7 @@ pathadd() {
 pathadd /usr/local/bin
 
 uname="$(uname -s)"
-for i in sbcl clisp tmux; do
+for i in sbcl clisp tmux htop; do
   case "${uname}" in
       Linux*)     
         which $i > /dev/null || sudo apt get $i;;
