@@ -15,7 +15,6 @@
 
 # Just some of my LISP Coding Tricks
 
-<img align=right src="http://lisperati.com/lisplogo_flag2_256.png">
 
 ## Installation
 
@@ -38,6 +37,7 @@ GOT::master someplace/lisp 1>
 At this point you can CNTRL-D to exit or `cd src/test` to run some unit
 tests to get a feel for this code.
 
+<img align=right src="http://lisperati.com/lisplogo_flag2_256.png">
 
 ## Why Use These Tools?
 
