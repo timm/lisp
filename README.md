@@ -17,36 +17,105 @@
 
 <img align=right src="http://lisperati.com/lisplogo_flag2_256.png">
 
-Table of contents:
+## Installation
 
-- [Introduction](#Introduction)
-- [How to install this Code](#Installation)
+For Mac or Unix:
 
-## Introduction
+```
+cd someplace
+git clone http://github.com/timm/lisp
+cd lisp
+sh ell
+```
+
+This will install LISP (if you do not have it), and present you with
+
+```bash
+;;;; (GOT (LISP '?)) ;v2.0 (c) 2019 <timm@ieee.org> http://git.io/gotlisp
+GOT::master someplace/lisp 1>
+```
+
+At this point you can CNTRL-D to exit or `cd src/test` to run some unit
+tests to get a feel for this code.
+
 
 ### Why Use These Tools?
 
-- Cause you like LISP;
-- Cause you like dividing your work into  lots of little files;
-- Cause you like CLISP for its brevity and SBCL for its speed;
-- Cause you like being able to test any file (mostly) in isolation from everything else;
-- Cause you want all the code and config inside a repo (not spread all over the hard drive)
-- Cause you want documentation tools that write README.md files from the LISP documentation strings.
-- Cause you often log in to different machines via ascii terminals and all you want is a half-decent ascii IDE;
-- Cause you thing most IDE tools are crazy over-elaborations.
+_Cause you [like LISP](#whynot)_
+
+- "Lisp isn't a language, it's a building material." - Alan Kay
+- "Lisp is a programmable programming language." - John Foderaro
+- "...please don't assume Lisp is only useful for Animation and Graphics, AI, Bioinformatics, B2B and E-Commerce, Data Mining, EDA/Semiconductor applications, Expert Systems, Finance, Intelligent Agents, Knowledge Management, Mechanical CAD, Modeling and Simulation, Natural Language, Optimization, Research, Risk Analysis, Scheduling, Telecom, and Web Authoring just because these are the only things they happened to list." - Kent Pitman 
+- "It seems to me that there have been two really clean, consistent models of programming so far: the C model and the Lisp model. These two seem points of high ground, with swampy lowlands between them. As computers have grown more powerful, the new languages being developed have been moving steadily toward the Lisp model. A popular recipe for new programming languages in the past 20 years has been to take the C model of computing and add to it, piecemeal, parts taken from the Lisp model, like runtime typing and garbage collection." - Paul Graham
+
+_Cause you like dividing your work into  lots of little files._
+
+This code uses the following directory strcture
+
+```
+/README.md
+/ell            ; create a friendly BASH environment
+/got.lisp       ; simple load manager
+/etc/           ; support files (e.g. vim config) 
+/src/           ; GOT packages (1 per sub-directory)
+    bias/
+    lib/
+    oo/
+    table/
+    test/  ; place for unit tests
+    ...
+```
+
+_Cause you like CLISP for its brevity and SBCL for its speed_
+
+All the code here runs on `sbcl` and `clisp`.
+
+_Cause you like being able to test any file, mostly in isolation from everything else._
+
+All my code is in  `lib/\*/`\*lisp` and starts with:
+
+```lisp
+;; vim: ts=2 sw=2 sts=2  et :
+;-------- -------- -------- -------- -------- --------
+(unless (fboundp 'got) (load "../got"))
+
+```
+
+Once that header is in place then
+
+```lisp
+(got "aa/" "bb.lisp" "cc/dd.lisp")
+```
+
+will hunt the `src/\*/\*` directories looking for your code:
+
+- "aa/" will load all the LISP files in the sub-directory "src/aa";
+- If there is only one "bb.lisp" in `src/\*/\*" then this will be loaded; 
+- If there are many "dd.lisp" files, then use "cc/dd.lisp" to just
+  load that file from the `cc`` directory.
+
+_Cause you want documentation tools that write README.md files from the LISP documentation strings._
+
+Once you run `sh ell` then the `readmes` command will pretty-print the
+all the docstrings in the `\*.lisp` files, and use these to create `README.md` files
+in all `lib/\*' sub-directories. 
+
+_Cause you want all the code and config inside a repo-- not spread all over the hard drive._
+
+All this code is held in the repo including all the config files (which are in `etc/\*`).
+
+This means that this code can easily jump from machine to machine,
+
+_Cause you often log in to different machines via ascii terminals and all you want is a half-decent ascii IDEs_
+
+This code  contains all my ascii IDE tricks (tmux, vim, bash). Command-line rules!
+
+_Cause you thing most IDE tools are crazy over-elaborations._
+
+'nough said
 
 
-### But Why Lisp? Well, Why Not?
-
-"Lisp isn't a language, it's a building material." - Alan Kay
-
-"Lisp is a programmable programming language." - John Foderaro
-
-"...please don't assume Lisp is only useful for Animation and Graphics, AI, Bioinformatics, B2B and E-Commerce, Data Mining, EDA/Semiconductor applications, Expert Systems, Finance, Intelligent Agents, Knowledge Management, Mechanical CAD, Modeling and Simulation, Natural Language, Optimization, Research, Risk Analysis, Scheduling, Telecom, and Web Authoring just because these are the only things they happened to list." - Kent Pitman 
-
-"It seems to me that there have been two really clean, consistent models of programming so far: the C model and the Lisp model. These two seem points of high ground, with swampy lowlands between them. As computers have grown more powerful, the new languages being developed have been moving steadily toward the Lisp model. A popular recipe for new programming languages in the past 20 years has been to take the C model of computing and add to it, piecemeal, parts taken from the Lisp model, like runtime typing and garbage collection." - Paul Graham
-
-### Great Books on Lisp
+## BTW, Great Books on Lisp
 
 Start here:
 
@@ -63,21 +132,4 @@ Much AI stuff (in LISP):
 
 - [Paradigms of Artiical Intelligence](https://www.amazon.com/Paradigms-Artificial-Intelligence-Programming-Studies/dp/1558601910/ref=pd_sbs_14_2/135-4118199-9331832?_encoding=UTF8&pd_rd_i=1558601910&pd_rd_r=ba1e0b44-975b-11e9-9e03-b199d7ed47b8&pd_rd_w=DBLQX&pd_rd_wg=NmfDg&pf_rd_p=588939de-d3f8-42f1-a3d8-d556eae5797d&pf_rd_r=YKATY6HX2MYDV0NSKEJX&psc=1&refRID=YKATY6HX2MYDV0NSKEJX), Peter Norvig. Some much inference, so little code. Totally wow.
 
-### Software
 
-Getting started:
-
-- Want a 2-clicks install ? Then get [Portacle](https://shinmera.github.io/portacle/), a portable and multiplatform Common Lisp environment. It ships Emacs25, SBCL (the implementation), Quicklisp (package manager), SLIME (IDE) and Git. It’s the most straightforward way to get going !
-- For other getting started advice, see [The LISP cookbook](https://lispcookbook.github.io/cl-cookbook/getting-started.html).
-
-
-
-Optional:  Install [quicklisp](https://www.quicklisp.org/beta/)  (which comes with ([Portacle](https://shinmera.github.io/portacle/). 
-  Quicklisp is more than a package manager, it is also a central repository (a dist) that ensures that all libraries build together.
-
-FY: I have my own, lightweight package management system contolled by the `got` function.
-
-
-## Installation
-
-XXX

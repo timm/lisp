@@ -1,10 +1,11 @@
 ;; vim: ts=2 sw=2 sts=2 et:
-;-------- -------- -------- -------- -------- -------- --------
+;-------- -------- -------- -------- -------- --------
 (unless (fboundp 'got) (load "../got"))
 
 (got "macros.lisp")
 
-(defmacro doread ((it f  &key out (take #'read)) &body body)
+(defmacro doread ((it f &optional out 
+                      &key (take #'read)) &body body)
   "Iterator for running over files or strings."
   (let ((str (gensym)))
     `(with-open-file (,str f)
@@ -16,18 +17,19 @@
 (defun para1 (f)
   "Read everything up to first blank line."
   (with-output-to-string (str)
-    (doread (x f :take #'read-line)
+    (doread (x f nil :take #'read-line)
       (if (equalp "" (string-trim '(#\Space #\Tab) x))
         (return)
         (format str "~a~%" x)))))
 
-(defun s->lines (x &optional (s (make-string-input-stream x)))
+(defun s->lines 
+  (x &optional (s (make-string-input-stream x)))
   "Convert a string to a list of lines"
   (af (read-line s nil)
-       (cons it (s->lines nil s))))
+       (cons a (s->lines nil s))))
 
-(defun s->words (s &optional 
-                (sep '(#\, #\space #\tab #\newline #\linefeed)))
+(defun s->words 
+  (s &optional (sep '(#\, #\space #\tab #\newline)))
   "Convert a string to a list of words"
   (with-input-from-string (str s)
     (let (tmp out)
@@ -38,11 +40,7 @@
               (setf tmp nil) 
               out)))
         (whale (read-char str nil)
-          (if (member it sep :test #'eq)
+          (if (member a sep :test #'eq)
             (end-of-word)
-            (push it tmp)))
+            (push a tmp)))
         (reverse (end-of-word))))))
-
-(print (s->words "   asd,as as,das asd 
-                 
-                 asd as"))

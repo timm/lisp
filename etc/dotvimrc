@@ -14,6 +14,7 @@ set ttyfast
 set backspace=indent,eol,start
 set laststatus=2
 set splitbelow
+set paste
 "ascii mouse
 set mouse=a
 "place buffer name into window title
@@ -93,3 +94,4 @@ set lispwords+=until
 set lispwords+=labels
 set lispwords+=labels
 set lispwords+=doread
+set path+=../**

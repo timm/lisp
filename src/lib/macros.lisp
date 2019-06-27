@@ -3,8 +3,8 @@
 
 (defmacro af (test then &optional else)
   "Anaphoric 'if'"
-  `(let ((it ,test))
-     (if it ,then ,else)))
+  `(let ((a ,test))
+     (if a ,then ,else)))
 
 (defmacro while (test &body body)
   "implements 'while' (which is not standard in LISP)"
@@ -14,7 +14,7 @@
 
 (defmacro whale (test &body body)
   "implements 'while' (which is not standard in LISP)"
-  `(while (setf it ,test)
+  `(while (setf a ,test)
      ,@body))
 
 (defmacro until (test &body body)

@@ -1,5 +1,10 @@
-;; vim: ts=2 sw=2 sts=2  et:
+;; vim: ts=2 sw=2 sts=2  et :
+;-------- -------- -------- -------- -------- -------- --------
 (unless (fboundp 'got) (load "../got"))
+
+(got "lib/sys.lisp")
+
+(defclass object () ())
 
 (defun defslot (slot x form)
   "helper function for defthing"
@@ -8,7 +13,6 @@
      :initform ,form
      :accessor ,(intern (format nil "~a-~a" x slot))))
 
-(defclass thing () ())
 
 (defmacro defthing (x parent &rest slots)
   "simpler creator for class"
@@ -27,7 +31,7 @@
       (klass-slots it))))
 
 (defmethod print-object ((it thing) out)
-  "print string for all public slot names"
+  "for things, print all public slots"
   (let ((lst (mapcar
                #'(lambda (s)
                    (list s (slot-value it s)))

@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 Got=$(git rev-parse --show-toplevel)
 
+pathadd() {
+      if  [[ ":$PATH:" != *":$1:"* ]]; then
+          export PATH="${PATH:+"$PATH:"}$1"
+      fi
+}
+pathadd /usr/local/bin
+
 uname="$(uname -s)"
 for i in sbcl clisp tmux; do
   case "${uname}" in
@@ -19,6 +26,7 @@ _c3="\033[31m"     # red
 _c5="\033[35m"     # purple
 _c6="\033[33m"     # yellow
 _c7="\033[36m"     # turquoise
+_c8="\033[96m"     # magenta
 
 here() { cd $1; basename "$PWD"; }
 
@@ -27,7 +35,7 @@ PROMPT_COMMAND='echo -ne "${_c2}GOT:${_c0}${_c0}:${_c6}$(git branch 2>/dev/null 
 blank() {
 cat<<EOF
 ;; vim: ts=2 sw=2 sts=2  et :
-;-------- -------- -------- -------- -------- -------- --------
+;-------- -------- -------- -------- -------- --------
 (unless (fboundp 'got) (load "../got"))
 
 (got "lib/")
@@ -44,18 +52,18 @@ alias egrep='egrep --color=auto'
 alias fgrep='fgrep --color=auto'
 alias get='git pull'
 alias grep='grep --color=auto'
-alias ls='ls -G'
 alias put='git commit -am saving; git push; git status'
 alias vi="vim -u $Got/etc/dotvimrc "
 alias sbcl="$(which sbcl) --script "
-alias tmux="tmux -f $Got/etc/dottmux"
+alias tmux="$(which tmux) -f $Got/etc/dottmux "
+case "${uname}" in
+      Linux*)     
+        alias ls='ls --color=auto';;
+      Darwin*)    
+        alias ls='ls -G' ;;
+      *) ;;
+esac
 
-pathadd() {
-      if  [[ ":$PATH:" != *":$1:"* ]]; then
-          export PATH="${PATH:+"$PATH:"}$1"
-      fi
-}
-pathadd /usr/local/bin
 Dirs=$(find $Got/src -type d  -depth 1 | grep -v \.git\/ | grep -v data )
 
 readmes() {
@@ -68,4 +76,4 @@ readmes() {
 }
 
 alias got=". $Got/etc/dotbashrc"
-echo -e "\e[96m;;;; (GOT (LISP '?)) v2.0 (c)2019 Tim Menzies <http://git.io/gotlisp>"
+echo -e "\e[96m;;;; (GOT (LISP '?)) ;v2.0 (c) 2019 <timm@ieee.org> http://git.io/gotlisp"
