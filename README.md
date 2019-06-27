@@ -62,11 +62,13 @@ At this point you can:
 
 ### Uninstall
 
+Just zap the directory containing this repo:
+
 ```bash
-rm -rf someplace    # zaps all files
+rm -rf lisp    # zaps all files
 ```
 
-Then uninstall the LISPs installed by this code (SBCL, CLISP).
+Then, optinally, uninstall the LISPs installed by this code (SBCL, CLISP).
 
 ## Why Use These Tools?
 
@@ -125,8 +127,8 @@ Once that header is in place then
 
 will hunt the `lisp/src/\*/\*` directories looking for your code:
 
-- "aa/" will load all the LISP files in the sub-directory "src/aa";
-- If there is only one "bb.lisp" in `src/\*/\*" then this will be loaded; 
+- "aa/" will load all the LISP files in the sub-directory "lisp/src/aa";
+- If there is only one "bb.lisp" in `lisp/src/\*/\*" then this will be loaded; 
 - If there are many "dd.lisp" files, then use "cc/dd.lisp" to just
   load that file from the `cc`` directory.
 
