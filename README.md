@@ -25,6 +25,8 @@ sh ell
 ```
 
 This will install LISP (if you do not have it), and present you with
+a shiny new BASH prompt:
+
 
 ```bash
 ;;;; (GOT (LISP '?)) ;v2.0 (c) 2019 <timm@ieee.org> http://git.io/gotlisp
