@@ -42,7 +42,7 @@ tests to get a feel for this code.
 
 ### Cause you love LISP 
 
-<img align=right src="http://lisperati.com/lisplogo_flag2_256.png">
+<img align=right src="http://lisperati.com/lisplogo_256.png">
 
 - "Lisp isn't a language, it's a building material." - Alan Kay
 - "Lisp is a programmable programming language." - John Foderaro
