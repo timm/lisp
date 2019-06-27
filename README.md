@@ -10,7 +10,7 @@
 [rows](https://github.com/timm/lisp/tree/master/src/rows/README.md#top) ::
 [&copy;2019](https://github.com/timm/lisp/blob/master/LICENSE.md), [Tim Menzies](http://menzies.us) 
 
-# Just some of my LISP Coding Tricks
+# Some LISP coding tricks
 
 
 ## Installation
@@ -33,7 +33,7 @@ a shiny new BASH prompt:
 GOT::master someplace/lisp 1>
 ```
 
-At this point you can CNTRL-D to exit or `cd src/test` to run some unit
+At this point you can CTRL-D to exit or `cd src/test` to run some unit
 tests to get a feel for this code.
 
 
@@ -48,7 +48,7 @@ tests to get a feel for this code.
 - "...please don't assume Lisp is only useful for Animation and Graphics, AI, Bioinformatics, B2B and E-Commerce, Data Mining, EDA/Semiconductor applications, Expert Systems, Finance, Intelligent Agents, Knowledge Management, Mechanical CAD, Modeling and Simulation, Natural Language, Optimization, Research, Risk Analysis, Scheduling, Telecom, and Web Authoring just because these are the only things they happened to list." - Kent Pitman 
 - "It seems to me that there have been two really clean, consistent models of programming so far: the C model and the Lisp model. These two seem points of high ground, with swampy lowlands between them. As computers have grown more powerful, the new languages being developed have been moving steadily toward the Lisp model. A popular recipe for new programming languages in the past 20 years has been to take the C model of computing and add to it, piecemeal, parts taken from the Lisp model, like runtime typing and garbage collection." - Paul Graham
 
-### Cause you dividing code into  lots of little files
+### Cause you divide code into  lots of little files
 
 This code uses the following directory strcture
 
@@ -70,7 +70,7 @@ This code uses the following directory strcture
 
 All the code here runs on `sbcl` and `clisp`.
 
-### Cause you like test any file, mostly in isolation
+### Cause you like to test any file, mostly in isolation
 
 Every one of my files knows its depedancies so this
 code can be loaded from any file.
@@ -119,7 +119,7 @@ This means that this code can easily jump from machine to machine,
 
 This code  contains all my ascii IDE tricks (tmux, vim, bash). Command-line rules!
 
-### Cause you thing most IDE tools are crazy over-elaborations.
+### Cause you think most IDE tools are crazy over-elaborations.
 
 'nough said
 

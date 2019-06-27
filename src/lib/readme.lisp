@@ -47,9 +47,10 @@ git add README.md
             (dump (second x))
             (terpri s))
           (when (and (defp) (docp) (not (secret)))
-            (format s "~%`~(~a~) ~(~a~)`~%~%-" 
+            (format s "~%`~(~a~) ~(~a~)`~%~%<ul>" 
                     (second x) (or (third x) ""))
-            (dump (fourth x) "   ")))))))
+            (dump (fourth x) "   ")
+            (format s "</ul>~%")))))))
 
 (format t "~a"  +header+)
 (terpri)

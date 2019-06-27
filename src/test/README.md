@@ -10,7 +10,7 @@
 [rows](https://github.com/timm/lisp/tree/master/src/rows/README.md#top) ::
 [&copy;2019](https://github.com/timm/lisp/blob/master/LICENSE.md), [Tim Menzies](http://menzies.us) 
 
-# TEST
+# XY
 
 
 
@@ -24,11 +24,13 @@
 
 `somemaydie `
 
--   Except three tests to run, one succeed, one give error.
+<ul>   Except three tests to run, one succeed, one give error.
+</ul>
 
 `success `
 
--   Expect allt ests to pass
+<ul>   Expect allt ests to pass
+</ul>
 
 
 ## [q.lisp](q.lisp)

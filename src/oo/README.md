@@ -20,7 +20,8 @@
 
 `keep (it &body body)`
 
--   with hash table _cache, compute once, then keep
+<ul>   with hash table _cache, compute once, then keep
+</ul>
 
 
 ## [macros.lisp](macros.lisp)
@@ -28,7 +29,8 @@
 
 `? (obj first-slot &rest more-slots)`
 
--   From https://goo.gl/dqnmvH:
+<ul>   From https://goo.gl/dqnmvH:
+</ul>
 
 
 ## [p.lisp](p.lisp)
@@ -40,24 +42,33 @@
 
 `? (obj first-slot &rest more-slots)`
 
--   From https://goo.gl/dqnmvH:
+<ul>   From https://goo.gl/dqnmvH:
+</ul>
 
 
 ## [thing.lisp](thing.lisp)
 
 
-`defslot (slot x form)`
+The standard LISP object syntax is very verbose.
+My `defthing` macro is a simpler way to specify an object.
 
--   helper function for defthing
+E.g. here is a subclass of `thing` that has two slots
+which initialize to a `gensym` and `nil`, respectively.
+
+```lisp
+(defthing keeper thing (id (gensym "kept")) (_cache))
+```
+
+Also, all my `thing`s know how to print their public slots
+(which is any slot whose name does not start with `_`)
+
 
 `defthing (x parent &rest slots)`
 
--   simpler creator for class
-
-`public-slot-names ((it thing))`
-
--   return all thing slots that don't start with '_'
+<ul>   Succinct class creation
+</ul>
 
 `print-object ((it thing) out)`
 
--   for things, print all public slots
+<ul>   for things, print all public slots
+</ul>

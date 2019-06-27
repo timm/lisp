@@ -20,11 +20,13 @@
 
 `do-hash ((k v h &optional out) &body body)`
 
--   Set key 'k' and value 'v' to items in hash
+<ul>   Set key 'k' and value 'v' to items in hash
+</ul>
 
 `hash-keys (h &aux out)`
 
--   return keys in hash
+<ul>   return keys in hash
+</ul>
 
 
 ## [macros.lisp](macros.lisp)
@@ -32,19 +34,23 @@
 
 `af (test then &optional else)`
 
--   Anaphoric 'if'
+<ul>   Anaphoric 'if'
+</ul>
 
 `while (test &body body)`
 
--   implements 'while' (which is not standard in LISP)
+<ul>   implements 'while' (which is not standard in LISP)
+</ul>
 
 `whale (test &body body)`
 
--   implements 'while' (which is not standard in LISP)
+<ul>   implements 'while' (which is not standard in LISP)
+</ul>
 
 `until (test &body body)`
 
--   implements 'until' (which is not standard in LISP)
+<ul>   implements 'until' (which is not standard in LISP)
+</ul>
 
 
 ## [ok.lisp](ok.lisp)
@@ -73,9 +79,10 @@ git add README.md
 
 `readme (&optional (s t))`
 
--   
+<ul>   
 Generate README.md from all doco strings 
   form all LISP code in a directory.
+</ul>
 
 
 ## [reads.lisp](reads.lisp)
@@ -83,15 +90,18 @@ Generate README.md from all doco strings
 
 `doread ((it f &optional out &key (take #'read)) &body body)`
 
--   Iterator for running over files or strings.
+<ul>   Iterator for running over files or strings.
+</ul>
 
 `para1 (f)`
 
--   Read everything up to first blank line.
+<ul>   Read everything up to first blank line.
+</ul>
 
 `s->lines (x &optional (s (make-string-input-stream x)))`
 
--   Convert a string to a list of lines
+<ul>   Convert a string to a list of lines
+</ul>
 
 
 ## [sys.lisp](sys.lisp)
@@ -99,20 +109,25 @@ Generate README.md from all doco strings
 
 `klass-slots (it)`
 
--   what are the slots of a class?
+<ul>   what are the slots of a class?
+</ul>
 
 `klass-slot-definition-name (x)`
 
--   what is a slot's name?
+<ul>   what is a slot's name?
+</ul>
 
 `args `
 
--   what are the command line args?
+<ul>   what are the command line args?
+</ul>
 
 `stop `
 
--   how to halt the program?
+<ul>   how to halt the program?
+</ul>
 
 `sh (cmd)`
 
--   Run a shwll command
+<ul>   Run a shwll command
+</ul>

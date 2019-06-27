@@ -4,23 +4,47 @@
 
 (got "lib/sys.lisp")
 
-(defclass object () ())
+(fyi
+"The standard LISP object syntax is very verbose.
+My `defthing` macro is a simpler way to specify an object.
+E.g. here is a subclass of `thing` that has two slots
+which initialize to a `gensym` and `nil`, respectively.
 
-(defun defslot (slot x form)
-  "helper function for defthing"
+```lisp
+(defthing keeper thing (id (gensym \"kept\")) (_cache))
+```
+
+Also, all my `thing`s know how to print their public slots
+(which is any slot whose name does not start with `_`)")
+
+(defclass thing () ())
+
+(defmacro defthing (x parent &rest slots)
+  "Succinct class creation"
+  `(defclass ,x (,parent)
+     ,(loop for (slot form) in slots collect 
+            (_defslot slot x form))))
+
+(defmethod print-object ((it thing) out)
+  "for things, print all public slots"
+  (let ((lst (mapcar
+               #'(lambda (s)
+                   (list s (slot-value it s)))
+               (sort (_public-slot-names it)
+                     #'string<))))
+    (format out "~a" 
+            (cons (class-name (class-of it)) lst))))
+
+;;; utils
+(defun _defslot (slot x form)
+  "Helper function for defthing"
   `(,slot
      :initarg  ,(intern (symbol-name slot) "KEYWORD")
      :initform ,form
      :accessor ,(intern (format nil "~a-~a" x slot))))
 
 
-(defmacro defthing (x parent &rest slots)
-  "simpler creator for class"
-  `(defclass ,x (,parent)
-     ,(loop for (slot form) in slots collect 
-            (defslot slot x form))))
-
-(defmethod public-slot-names ((it thing))
+(defmethod _public-slot-names ((it thing))
   "return all thing slots that don't start with '_'"
   (remove-if
     #'(lambda (x)
@@ -30,12 +54,4 @@
       #'klass-slot-definition-name
       (klass-slots it))))
 
-(defmethod print-object ((it thing) out)
-  "for things, print all public slots"
-  (let ((lst (mapcar
-               #'(lambda (s)
-                   (list s (slot-value it s)))
-               (sort (public-slot-names it)
-                     #'string<))))
-    (format out "~a" 
-            (cons (class-name (class-of it)) lst))))
+
