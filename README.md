@@ -16,7 +16,9 @@
 <img width=300 align=right src="http://lisperati.com/lisplogo_256.png">
 
 
-Having coded a lot in Prolog, LISP, Smalltalk, Python, Lua, CoffeeScript,  etc, etc
+Having coded a lot in 
+Prolog and LISP and Smalltalk and 
+Python and Lua and CoffeeScript and Gawk and  Bash and   etc, etc
 I found myself using the same tricks all the time; e.g
 
 - the same directory structures;
@@ -37,7 +39,6 @@ Here are those tricks, tweaked  for LISP.
 For Mac or Unix:
 
 ```
-cd someplace
 git clone http://github.com/timm/lisp
 cd lisp
 sh ell
@@ -49,15 +50,15 @@ a shiny new BASH prompt:
 
 ```bash
 ;;;; (GOT (LISP '?)) ;v2.0 (c) 2019 <timm@ieee.org> http://git.io/gotlisp
-GOT::master someplace/lisp 1>
+GOT::master parent/lisp 1>
 ```
 
 At this point you can:
 
 - CTRL-D to exit 
-- `cd src/someSubDirectory` and start writing code (just make sure
+- `cd lisp/src/someSubDirectory` and start writing code (just make sure
    your files start with [my standard header](#header)).
-- `cd src/test` to run some unit tests to get a feel for this code.
+- `cd lisp/src/test` to run some unit tests to get a feel for this code.
 
 ### Uninstall
 
@@ -84,17 +85,18 @@ Then uninstall the LISPs installed by this code (SBCL, CLISP).
 This code uses the following directory strcture
 
 ```
-/README.md
-/ell            ; create a friendly BASH environment
-/got.lisp       ; simple load manager
-/etc/           ; support files (e.g. vim config) 
-/src/           ; GOT packages (1 per sub-directory)
-    bias/
-    lib/
-    oo/
-    table/
-    test/  ; place for unit tests
-    ...
+lisp/
+   /README.md
+   /ell            ; create a friendly BASH environment
+   /got.lisp       ; simple load manager
+   /etc/           ; support files (e.g. vim config) 
+   /src/           ; GOT packages (1 per sub-directory)
+       bias/
+       lib/
+       oo/
+       table/
+       test/  ; place for unit tests
+       ...
 ```
 
 ### Cause you like CLISP for brevity and SBCL for speed
@@ -106,7 +108,7 @@ All the code here runs on `sbcl` and `clisp`.
 Every one of my files knows its depedancies so this
 code can be loaded from any file.
 
-To achieve this, all my code is in  `lib/\*/`\*lisp` and starts with:
+To achieve this, all my code is in  `lisp/serc/\*/`\*lisp` and starts with:
 
 ```lisp
 ;; vim: ts=2 sw=2 sts=2  et :
@@ -121,7 +123,7 @@ Once that header is in place then
 (got "aa/" "bb.lisp" "cc/dd.lisp")
 ```
 
-will hunt the `src/\*/\*` directories looking for your code:
+will hunt the `lisp/src/\*/\*` directories looking for your code:
 
 - "aa/" will load all the LISP files in the sub-directory "src/aa";
 - If there is only one "bb.lisp" in `src/\*/\*" then this will be loaded; 
@@ -142,7 +144,7 @@ of `/README.md`.  So if you want some standard headers and navigations, add itth
 
 ### Cause you don't want code + config all over the hard drive
 
-All this code is held in the repo including all the config files (which are in `etc/\*`).
+All this code is held in the repo including all the config files (which are in `lisp/etc/\*`).
 
 This means that this code can easily jump from machine to machine,
 
