@@ -13,7 +13,7 @@
 
 # Some LISP coding tricks
 
-<img align=right src="http://lisperati.com/lisplogo_256.png">
+<img width=200 align=right src="http://lisperati.com/lisplogo_256.png">
 
 
 Having coded a lot in Prolog, LISP, Smalltalk, Python, Lua, CoffeeScript,  etc, etc
