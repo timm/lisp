@@ -10,7 +10,18 @@
 [rows](https://github.com/timm/lisp/tree/master/src/rows/README.md#top) ::
 [&copy;2019](https://github.com/timm/lisp/blob/master/LICENSE.md), [Tim Menzies](http://menzies.us) 
 
+<img src="http://imgs.xkcd.com/comics/lisp_cycles.png" width=300 align=right">
 # Some LISP coding tricks
+
+
+Having coded a lot in Prolog, LISP, Smalltalk, Python, Lua, CoffeeScript,  etc, etc
+I found myself using the same tricks, the same directory structures, the same editor (vim),
+the same workflow (git for storage, markdown for documentation), 
+the same multi-windowed environment (tmux),
+the same unit testing strategies,... And all of those tricks
+ worked in ascii terminals, fast to boot, worked cross-platform, etc etc.
+
+Here are all those tricks, tuned for LISP.
 
 
 ## Installation
@@ -118,11 +129,6 @@ This means that this code can easily jump from machine to machine,
 ### Cause you log in to many machines via ascii terminals and all you want is a half-decent ascii IDEs
 
 This code  contains all my ascii IDE tricks (tmux, vim, bash). Command-line rules!
-
-### Cause you think most IDE tools are crazy over-elaborations.
-
-'nough said
-
 
 ## BTW, Great Books on Lisp
 
