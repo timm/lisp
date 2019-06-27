@@ -11,7 +11,7 @@
 [&copy;2019](https://github.com/timm/lisp/blob/master/LICENSE.md), [Tim Menzies](http://menzies.us) 
 
 
-# Just some of my LISP coding tricks
+# Just a few LISP coding tricks
 
 <img width=300 align=right src="http://lisperati.com/lisplogo_256.png">
 
@@ -22,15 +22,15 @@ I found myself using the same tricks all the time; e.g
 - the same directory structures;
 - the same unit testing strategy;
 - the same way of handling global options;
-- the same workflow (git for storage, markdown for documentation), 
-- the same multi-paned environment (tmux),
-- the same editor (vim),
-- the same same shell (bash),
+- the same workflow (git for storage, markdown for documentation);
+- the same multi-paned environment (tmux);
+- the same editor (vim);
+- the same same shell (bash).
 
-And all of those tricks
- worked in ascii terminals, are fast to boot, worked cross-platform, etc etc.
+All of those tricks
+worked in ascii terminals, are fast to boot, worked cross-platform, etc etc.
 
-Here are all those tricks, tweaked  for LISP.
+Here are those tricks, tweaked  for LISP.
 
 ## Installation
 
@@ -52,9 +52,20 @@ a shiny new BASH prompt:
 GOT::master someplace/lisp 1>
 ```
 
-At this point you can CTRL-D to exit or `cd src/test` to run some unit
-tests to get a feel for this code.
+At this point you can:
 
+- CTRL-D to exit 
+- `cd src/someSubDirectory` and start writing code (just make sure
+   your files start with [my standard header](#header)).
+- `cd src/test` to run some unit tests to get a feel for this code.
+
+### Uninstall
+
+```bash
+rm -rf someplace    # zaps all files
+```
+
+Then uninstall the LISPs installed by this code (SBCL, CLISP).
 
 ## Why Use These Tools?
 
@@ -90,7 +101,7 @@ This code uses the following directory strcture
 
 All the code here runs on `sbcl` and `clisp`.
 
-### Cause you like to test any file, mostly in isolation
+### <a name="header">Cause you like to test any file, mostly in isolation</a>
 
 Every one of my files knows its depedancies so this
 code can be loaded from any file.
