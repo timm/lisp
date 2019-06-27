@@ -22,11 +22,12 @@ _c7="\033[36m"     # turquoise
 
 here() { cd $1; basename "$PWD"; }
 
-PROMPT_COMMAND='echo -ne "${_c2}GOT:${_c0}${_c0}$(hostname -s):${_c6}$(git branch 2>/dev/null | grep '^*' | colrm 1 2) \033]0;$(here ..)/$(here .)\007";PS1="${_c1}$_c2$(here ..)/$_c3$(here .) ${_c6}\!>${_c0}\e[m "'
+PROMPT_COMMAND='echo -ne "${_c2}GOT:${_c0}${_c0}:${_c6}$(git branch 2>/dev/null | grep '^*' | colrm 1 2) \033]0;$(here ..)/$(here .)\007";PS1="${_c1}$_c2$(here ..)/$_c3$(here .) ${_c6}\!>${_c0}\e[m "'
 
 blank() {
 cat<<EOF
-; vim: ts=2 sw=2 sts=2  et
+;; vim: ts=2 sw=2 sts=2  et :
+;-------- -------- -------- -------- -------- -------- --------
 (unless (fboundp 'got) (load "../got"))
 
 (got "lib/")
@@ -67,4 +68,4 @@ readmes() {
 }
 
 alias got=". $Got/etc/dotbashrc"
-echo ";;;; (got (lisp '?)) ; v2.0 (c) 2019 Tim Menzies, http://git.io/gotlisp"
+echo -e "\e[96m;;;; (GOT (LISP '?)) v2.0 (c)2019 Tim Menzies <http://git.io/gotlisp>"

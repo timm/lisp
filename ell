@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
 
+# usage: sh ell
+
 Got=$(git rev-parse --show-toplevel)
 bash --init-file $Got/etc/dotbashrc  -i
