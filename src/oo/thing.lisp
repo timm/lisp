@@ -2,7 +2,7 @@
 ;-------- -------- -------- -------- -------- -------- --------
 (unless (fboundp 'got) (load "../got"))
 
-(got "lib/sys.lisp")
+(got "lib/")
 
 (fyi
 "The standard LISP object syntax is very verbose.

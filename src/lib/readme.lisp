@@ -26,6 +26,8 @@ git add README.md
 (defun readme(&optional (s t))
   "Generate README.md from all doco strings 
   form all LISP code in a directory."
+  (format t "~a"  +header+)
+  (terpri)
   (dolist (f (sort (directory "*.lisp") 
                    #'(lambda (x y) (string< (pathname-name x) 
                                             (pathname-name y)))))
@@ -52,6 +54,3 @@ git add README.md
             (dump (fourth x) "   ")
             (format s "</ul>~%")))))))
 
-(format t "~a"  +header+)
-(terpri)
-(readme)
