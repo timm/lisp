@@ -13,8 +13,8 @@
 
 # Some LISP coding tricks
 
+<img align=right src="http://lisperati.com/lisplogo_256.png">
 
-<img align=right width=400 src="http://imgs.xkcd.com/comics/lisp_cycles.png">
 
 Having coded a lot in Prolog, LISP, Smalltalk, Python, Lua, CoffeeScript,  etc, etc
 I found myself using the same tricks, the same directory structures, the same editor (vim),
@@ -53,7 +53,8 @@ tests to get a feel for this code.
 
 ### (Cause (you (love (LISP)))) 
 
-<img align=right src="http://lisperati.com/lisplogo_256.png">
+
+<img align=right width=400 src="http://imgs.xkcd.com/comics/lisp_cycles.png">
 
 - "Lisp isn't a language, it's a building material." **-&nbsp;Alan&nbsp;Kay**
 - "Lisp is a programmable programming language." **-&nbsp;John&nbsp;Foderaro**
