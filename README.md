@@ -12,7 +12,7 @@
 
 
 
-<a href="https://www.csc.ncsu.edu/enews/images2/2001.jpg" width=300 align=right>
+<img src="https://www.csc.ncsu.edu/enews/images2/2001.jpg" width=300 align=right>
 
 # Just some of my LISP Coding Tricks
 
