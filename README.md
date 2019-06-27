@@ -39,7 +39,7 @@ tests to get a feel for this code.
 
 ## Why Use These Tools?
 
-### Cause you love LISP 
+### (Cause (you (love (LISP)))) 
 
 <img align=right src="http://lisperati.com/lisplogo_256.png">
 

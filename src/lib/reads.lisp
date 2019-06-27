@@ -9,7 +9,9 @@
   "Iterator for running over files or strings."
   (let ((str (gensym)))
     `(with-open-file (,str f)
-       (loop for ,it = (funcall ,take ,str nil)
+       (loop for 
+             ,it = (handler-case (funcall ,take ,str)
+                   (end-of-file () (loop-finish)))
              while ,it do 
              (progn ,@body))
        ,out)))
@@ -28,19 +30,20 @@
   (af (read-line s nil)
        (cons a (s->lines nil s))))
 
-(defun s->words 
-  (s &optional (sep '(#\, #\space #\tab #\newline)))
-  "Convert a string to a list of words"
-  (with-input-from-string (str s)
-    (let (tmp out)
-      (labels 
-        ((end-of-word () 
-            (when tmp
-              (push (concatenate 'string (reverse tmp)) out) 
-              (setf tmp nil) 
-              out)))
-        (whale (read-char str nil)
-          (if (member a sep :test #'eq)
-            (end-of-word)
-            (push a tmp)))
-        (reverse (end-of-word))))))
+(let ((whitespace '(#\, #\space #\tab #\newline)))
+  (defun s->words (s &optional (sep whitespace))
+    "Convert a string to a list of words"
+    (with-input-from-string (str s)
+      (let (tmp out)
+        (labels 
+          ((end-of-word () 
+             (when tmp
+                   (push (concatenate 'string 
+                                (reverse tmp)) out) 
+                   (setf tmp nil) 
+                   out)))
+          (whale (read-char str nil)
+                 (if (member a sep :test #'eq)
+                   (end-of-word)
+                   (push a tmp)))
+          (reverse (end-of-word)))))))
