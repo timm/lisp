@@ -39,16 +39,16 @@ At this point you can CNTRL-D to exit or `cd src/test` to run some unit
 tests to get a feel for this code.
 
 
-### Why Use These Tools?
+## Why Use These Tools?
 
-_Cause you [like LISP](#whynot)_
+### Cause you love LISP 
 
 - "Lisp isn't a language, it's a building material." - Alan Kay
 - "Lisp is a programmable programming language." - John Foderaro
 - "...please don't assume Lisp is only useful for Animation and Graphics, AI, Bioinformatics, B2B and E-Commerce, Data Mining, EDA/Semiconductor applications, Expert Systems, Finance, Intelligent Agents, Knowledge Management, Mechanical CAD, Modeling and Simulation, Natural Language, Optimization, Research, Risk Analysis, Scheduling, Telecom, and Web Authoring just because these are the only things they happened to list." - Kent Pitman 
 - "It seems to me that there have been two really clean, consistent models of programming so far: the C model and the Lisp model. These two seem points of high ground, with swampy lowlands between them. As computers have grown more powerful, the new languages being developed have been moving steadily toward the Lisp model. A popular recipe for new programming languages in the past 20 years has been to take the C model of computing and add to it, piecemeal, parts taken from the Lisp model, like runtime typing and garbage collection." - Paul Graham
 
-_Cause you like dividing your work into  lots of little files._
+### Cause you like dividing your work into  lots of little files.
 
 This code uses the following directory strcture
 
@@ -66,11 +66,11 @@ This code uses the following directory strcture
     ...
 ```
 
-_Cause you like CLISP for its brevity and SBCL for its speed_
+### Cause you like CLISP for its brevity and SBCL for its speed
 
 All the code here runs on `sbcl` and `clisp`.
 
-_Cause you like being able to test any file, mostly in isolation from everything else._
+### Cause you like being able to test any file, mostly in isolation from everything else.
 
 All my code is in  `lib/\*/`\*lisp` and starts with:
 
@@ -94,23 +94,26 @@ will hunt the `src/\*/\*` directories looking for your code:
 - If there are many "dd.lisp" files, then use "cc/dd.lisp" to just
   load that file from the `cc`` directory.
 
-_Cause you want documentation tools that write README.md files from the LISP documentation strings._
+### Cause you want documentation tools that write README.md files from the LISP documentation strings.
 
 Once you run `sh ell` then the `readmes` command will pretty-print the
 all the docstrings in the `\*.lisp` files, and use these to create `README.md` files
 in all `lib/\*' sub-directories. 
 
-_Cause you want all the code and config inside a repo-- not spread all over the hard drive._
+Note that the header of those README.md` files will be taken from the first paragraph
+of ``/README.md`.  So if you want some standard headers and navigations, add itthere.
+
+### Cause you want all the code and config inside a repo-- not spread all over the hard drive.
 
 All this code is held in the repo including all the config files (which are in `etc/\*`).
 
 This means that this code can easily jump from machine to machine,
 
-_Cause you often log in to different machines via ascii terminals and all you want is a half-decent ascii IDEs_
+### Cause you often log in to different machines via ascii terminals and all you want is a half-decent ascii IDEs
 
 This code  contains all my ascii IDE tricks (tmux, vim, bash). Command-line rules!
 
-_Cause you thing most IDE tools are crazy over-elaborations._
+### Cause you thing most IDE tools are crazy over-elaborations.
 
 'nough said
 
