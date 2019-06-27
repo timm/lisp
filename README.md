@@ -17,13 +17,20 @@
 
 
 Having coded a lot in Prolog, LISP, Smalltalk, Python, Lua, CoffeeScript,  etc, etc
-I found myself using the same tricks, the same directory structures, the same editor (vim),
-the same workflow (git for storage, markdown for documentation), 
-the same multi-windowed environment (tmux),
-the same unit testing strategies,... And all of those tricks
+I found myself using the same tricks all the time; e.g
+
+- the same directory structures;
+- the same unit testing strategy;
+- the same way of handling global options;
+- the same workflow (git for storage, markdown for documentation), 
+- the same multi-paned environment (tmux),
+- the same editor (vim),
+- the same same shell (bash),
+
+And all of those tricks
  worked in ascii terminals, are fast to boot, worked cross-platform, etc etc.
 
-Here are all those tricks, tuned for LISP.
+Here are all those tricks, tweaked  for LISP.
 
 ## Installation
 
