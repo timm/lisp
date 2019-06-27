@@ -8,7 +8,7 @@
 [lib](https://github.com/timm/lisp/tree/master/src/lib/README.md#top) :: 
 [oo](https://github.com/timm/lisp/tree/master/src/oo/README.md#top)  :: 
 [rows](https://github.com/timm/lisp/tree/master/src/rows/README.md#top) ::
-[@copy; 2019](https://github.com/timm/lisp/blob/master/LICENSE.md) [Tim Menzies](http://menzies.us) 
+[&copy;2019](https://github.com/timm/lisp/blob/master/LICENSE.md), [Tim Menzies](http://menzies.us) 
 
 # LIB
 
@@ -92,14 +92,6 @@ Generate README.md from all doco strings
 `s->lines (x &optional (s (make-string-input-stream x)))`
 
 -   Convert a string to a list of lines
-
-`s->words 
-(s &optional
- (sep
-  '(,   	
-    )))`
-
--   Convert a string to a list of words
 
 
 ## [sys.lisp](sys.lisp)
