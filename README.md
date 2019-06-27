@@ -10,7 +10,7 @@
 [rows](https://github.com/timm/lisp/tree/master/src/rows/README.md#top) ::
 [&copy;2019](https://github.com/timm/lisp/blob/master/LICENSE.md), [Tim Menzies](http://menzies.us) 
 
-<img align=right src="http://imgs.xkcd.com/comics/lisp_cycles.png">
+<img align=right width=400 src="http://imgs.xkcd.com/comics/lisp_cycles.png">
 
 # Some LISP coding tricks
 
