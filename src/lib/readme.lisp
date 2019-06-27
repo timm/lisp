@@ -2,7 +2,7 @@
 ;-------- -------- -------- -------- -------- -------- --------
 (unless (fboundp 'got) (load "../got"))
 
-(got "sys.lisp" "reads.lisp")
+(got "sys.lisp" "lib/reads.lisp")
 
 (defparameter +header+ 
   (format nil "~a~%# ~a~%~%" 

@@ -5,24 +5,40 @@
 [src](http://github.com/timm/lisp) ::
 [contrib](https://github.com/timm/lisp/blob/master/CONTRIBUTING.md) ::
 [discuss](https://github.com/timm/lisp/issues) ::
-[license](https://github.com/timm/lisp/blob/master/LICENSE.md) :: 
 [lib](https://github.com/timm/lisp/tree/master/src/lib/README.md#top) :: 
 [oo](https://github.com/timm/lisp/tree/master/src/oo/README.md#top)  :: 
-[rows](https://github.com/timm/lisp/tree/master/src/rows/README.md#top)  
+[rows](https://github.com/timm/lisp/tree/master/src/rows/README.md#top) ::
+[@copy; 2019](https://github.com/timm/lisp/blob/master/LICENSE.md) [Tim Menzies](http://menzies.us) 
 
 # LIB
 
 
 
 
+## [hash.lisp](hash.lisp)
+
+
+`do-hash ((k v h &optional out) &body body)`
+
+-   Set key 'k' and value 'v' to items in hash
+
+`hash-keys (h &aux out)`
+
+-   return keys in hash
+
+
 ## [macros.lisp](macros.lisp)
 
 
-`aif (test then &optional else)`
+`af (test then &optional else)`
 
 -   Anaphoric 'if'
 
 `while (test &body body)`
+
+-   implements 'while' (which is not standard in LISP)
+
+`whale (test &body body)`
 
 -   implements 'while' (which is not standard in LISP)
 
@@ -33,26 +49,6 @@
 
 ## [ok.lisp](ok.lisp)
 
-
-
-## [oo.lisp](oo.lisp)
-
-
-`defslot (slot x form)`
-
--   helper function for defthing
-
-`defthing (x parent &rest slots)`
-
--   simpler creator for class
-
-`public-slot-names ((it thing))`
-
--   return all thing slots that don't start with '_'
-
-`print-object ((it thing) out)`
-
--   print string for all public slot names
 
 
 ## [rand.lisp](rand.lisp)
@@ -85,7 +81,7 @@ Generate README.md from all doco strings
 ## [reads.lisp](reads.lisp)
 
 
-`doread ((it f &key out (take #'read)) &body body)`
+`doread ((it f &optional out &key (take #'read)) &body body)`
 
 -   Iterator for running over files or strings.
 
@@ -93,9 +89,17 @@ Generate README.md from all doco strings
 
 -   Read everything up to first blank line.
 
-`lines (x &optional (s (make-string-input-stream x)))`
+`s->lines (x &optional (s (make-string-input-stream x)))`
 
 -   Convert a string to a list of lines
+
+`s->words 
+(s &optional
+ (sep
+  '(,   	
+    )))`
+
+-   Convert a string to a list of words
 
 
 ## [sys.lisp](sys.lisp)
@@ -119,4 +123,4 @@ Generate README.md from all doco strings
 
 `sh (cmd)`
 
--   A multi-implementation function equivalent for the C function system
+-   Run a shwll command

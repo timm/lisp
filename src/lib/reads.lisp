@@ -2,7 +2,7 @@
 ;-------- -------- -------- -------- -------- --------
 (unless (fboundp 'got) (load "../got"))
 
-(got "macros.lisp")
+(got "lib/macros.lisp")
 
 (defmacro doread ((it f &optional out 
                       &key (take #'read)) &body body)

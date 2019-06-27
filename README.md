@@ -5,10 +5,10 @@
 [src](http://github.com/timm/lisp) ::
 [contrib](https://github.com/timm/lisp/blob/master/CONTRIBUTING.md) ::
 [discuss](https://github.com/timm/lisp/issues) ::
-[license](https://github.com/timm/lisp/blob/master/LICENSE.md) :: 
 [lib](https://github.com/timm/lisp/tree/master/src/lib/README.md#top) :: 
 [oo](https://github.com/timm/lisp/tree/master/src/oo/README.md#top)  :: 
-[rows](https://github.com/timm/lisp/tree/master/src/rows/README.md#top)  
+[rows](https://github.com/timm/lisp/tree/master/src/rows/README.md#top) ::
+[@copy; 2019](https://github.com/timm/lisp/blob/master/LICENSE.md) [Tim Menzies](http://menzies.us) 
 
 
 
