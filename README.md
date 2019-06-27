@@ -11,6 +11,7 @@
 [&copy;2019](https://github.com/timm/lisp/blob/master/LICENSE.md), [Tim Menzies](http://menzies.us) 
 
 <img src="http://imgs.xkcd.com/comics/lisp_cycles.png" width=300 align=right">
+
 # Some LISP coding tricks
 
 
