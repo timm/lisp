@@ -10,10 +10,11 @@
 [rows](https://github.com/timm/lisp/tree/master/src/rows/README.md#top) ::
 [&copy;2019](https://github.com/timm/lisp/blob/master/LICENSE.md), [Tim Menzies](http://menzies.us) 
 
-<img align=right width=400 src="http://imgs.xkcd.com/comics/lisp_cycles.png">
 
 # Some LISP coding tricks
 
+
+<img align=right width=400 src="http://imgs.xkcd.com/comics/lisp_cycles.png">
 
 Having coded a lot in Prolog, LISP, Smalltalk, Python, Lua, CoffeeScript,  etc, etc
 I found myself using the same tricks, the same directory structures, the same editor (vim),
