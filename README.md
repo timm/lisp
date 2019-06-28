@@ -16,7 +16,7 @@
 # Just a few LISP coding tricks
 
 
-<img width=150 align=right src="https://raw.githubusercontent.com/timm/lisp/master/etc/img/haveLisp.jpg">
+<img width=300 align=right src="https://raw.githubusercontent.com/timm/lisp/master/etc/img/haveLisp.jpg">
 
 Having coded a lot in 
 Prolog and LISP and Smalltalk and 
