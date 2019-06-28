@@ -165,7 +165,7 @@ can contain markdnown text.
 
 Note that:
 
-- The header of those README.md` files will be taken from the first paragraph
+- The header of those `README.md` files will be taken from the first paragraph
 of `lisp/README.md`.  So if you want some standard headers and navigations, add itthere.
 - Each 
 `lisp/lib/\*' sub-directories should have  an `about.lisp` file containing

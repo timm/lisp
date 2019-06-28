@@ -12,7 +12,7 @@
        (format t "~&~%;;; ~a~%; ~a~%" ',name ,doc)
        ,@body))
 
-(defmacro ok (want got msg &rest txt)
+(defmacro ok (want got &optional (msg "") &rest txt)
   `(progn 
      (incf *tries*)
      (handler-case

@@ -104,7 +104,7 @@ of data in a `table`")
 (defmethod ent ((s sym))
   (with-slots (counts n) s
     (let ((e 0))
-      (doh (k v counts e)
+      (do-hash (k v counts e)
         (let ((p (/ v n)))
           (decf e (* p (log p 2))))))))
 
