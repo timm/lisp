@@ -18,10 +18,11 @@
 
 <img width=400 align=right src="https://raw.githubusercontent.com/timm/lisp/master/etc/img/haveLisp.jpg">
 
-Having coded a lot in 
+After decades of coding,
+in 
 Prolog and LISP and Smalltalk and 
-Python and Lua and CoffeeScript and Gawk and  Bash and   etc, etc
-I found myself using the same tricks all the time; e.g
+Python and Lua and CoffeeScript and Gawk and  Bash and  other thing,
+I found myself using the same tricks all the time; i.e.
 
 - the same directory structures;
 - the same unit testing strategy;
@@ -32,7 +33,7 @@ I found myself using the same tricks all the time; e.g
 - the same shell (bash).
 
 All of those tricks
-worked in ascii terminals, are fast to boot, worked cross-platform, etc etc.
+worked in ascii terminals, were fast to boot, and worked cross-platform.
 
 Here are those tricks, tweaked  for LISP.
 
