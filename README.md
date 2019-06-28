@@ -99,11 +99,15 @@ lisp/
        dottmux    ; used when you call tmux
    src/           ; GOT packages (1 per sub-directory)
        bias/
-         about.lisp ; notes in this package.
+         about.lisp ; notes on this package.
          ...
        lib/
+         about.lisp ; notes on this package.
+         ...
        oo/
-       table/
+         about.lisp ; notes on this package.
+         ...
+       ...
        test/  ; place for unit tests
        ...
 ```
