@@ -1,8 +1,8 @@
 <a name=top></a>
-<img width=1 height=30 src="https://github.com/timm/lisp/blob/master/etc/img/FFFFFF.png">
 [home](https://github.com/timm/lisp/blob/master/README.md#top) ::
 [&copy;2019](https://github.com/timm/lisp/blob/master/LICENSE.md) ::
 [Tim Menzies](http://menzies.us) 
+<img width=1 height=30 src="https://github.com/timm/lisp/blob/master/etc/img/FFFFFF.png">
 <a href="https://github.com/timm/lisp/blob/master/README.md#top">
 <img src="https://raw.githubusercontent.com/timm/lisp/master/etc/img/gotlisp.png" ></a><br>
 ([src](http://github.com/timm/lisp) ::
