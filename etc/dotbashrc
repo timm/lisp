@@ -70,7 +70,7 @@ readmes() {
   for d in $Dirs; do
     (cd $d
      echo $d
-     clisp ../lib/readme.lisp "$(basename $d)" > README.md
+     clisp  $Got/src/lib/readme.lisp  --makedoc "$(basename $d)" > README.md
      git add README.md)
   done
 }

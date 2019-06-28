@@ -10,12 +10,20 @@
 [rows](https://github.com/timm/lisp/tree/master/src/rows/README.md#top) ::
 [&copy;2019](https://github.com/timm/lisp/blob/master/LICENSE.md), [Tim Menzies](http://menzies.us) 
 
-# XY
+# TEST
 
+
+
+
+## [col.lisp](col.lisp)
 
 
 
 ## [hash.lisp](hash.lisp)
+
+
+
+## [keeper.lisp](keeper.lisp)
 
 
 
@@ -34,6 +42,10 @@
 
 
 ## [q.lisp](q.lisp)
+
+
+
+## [rand.lisp](rand.lisp)
 
 
 

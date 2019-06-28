@@ -18,10 +18,10 @@ these 12 lines of code.
 
 <ul>Generate a random integer in the range 0.. n. </ul>")
 
-(let* ((seed       (the :rand :seed))
+(let* ((seed       (my :rand :seed))
        (multiplier 16807.0d0)
        (modulus    2147483647.0d0))
-  (defun reset-seed (&optional (n (the :rand :seed)))  
+  (defun reset-seed (&optional (n (my :rand :seed)))  
     (setf seed n))
   (defun randf (&optional (n 1)) 
     (* n (- 1.0d0 (_park-miller-randomizer))))

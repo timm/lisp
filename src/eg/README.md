@@ -15,6 +15,47 @@
 
 
 
+## [col.lisp](col.lisp)
+
+
+
+A `col`umn is either a `num`ber or a `sym`bol.
+`Col`s are places to store summaries about columns
+of data in a `table`
+
+
+
+`add ((c col) x &key (filter #'identity))`
+
+<ul>   Add numbers to column.
+</ul>
+
+`dist ((c col) x y)`
+
+<ul>   Return a number 0 .. 1
+</ul>
+
+`add1 ((nu num) x)`
+
+<ul>   New numbers update `min` and `max`.
+</ul>
+
+`norm ((n num) x)`
+
+<ul>   Convert x to the range 0..1.
+</ul>
+
+`add1 ((s sym) x)`
+
+<ul>   Increment the symbols counts
+</ul>
+
+`norm ((s sym) x)`
+
+<ul>   Normalize symbols does nothing.
+</ul>
+
+
 ## [data.lisp](data.lisp)
 
 
@@ -24,20 +65,25 @@
 
 `add ((c col) x &key (filter #'identity))`
 
--   Add numbers to column.
+<ul>   Add numbers to column.
+</ul>
 
 `add1 ((nu num) x)`
 
--   New numbers update `min` and `max`.
+<ul>   New numbers update `min` and `max`.
+</ul>
 
 `norm ((n num) x)`
 
--   Convert x to the range 0..1.
+<ul>   Convert x to the range 0..1.
+</ul>
 
 `add1 ((s sym) x)`
 
--   Increment the symbols counts
+<ul>   Increment the symbols counts
+</ul>
 
 `norm ((s sym) x)`
 
--   Normalize symbols does nothing.
+<ul>   Normalize symbols does nothing.
+</ul>

@@ -34,15 +34,16 @@ of data in a `table`")
    (float (* (/ (? x n) n) (slot-value x field))))
 
 (defmethod dist ((c col) x y)
-  "Return a number 0 ,, 1"
-  (if (and (eql x #\?) (eql y #\?))  
-    1
-    (progn 
-      (if (eql x #\?)
-        (setf y (norm col y) x (faraway col y)))
-      (if (eql y #\?)
-        (setf x (norm col x) y (faraway col x)))
-      (delta col x y))))
+  "Return a number 0 .. 1"
+  (labels ((no (x) (eql x #\?)))
+    (if (and (no x) (no y)) 
+      1
+      (progn 
+        (if (no x) (setf y (norm col y) 
+                         x (far col y)))
+        (if (no y) (setf x (norm col x) 
+                         y (far col x)))
+        (delta col x y)))))
 
 ;-------- -------- -------- -------- -------- --------
 (defthing num col

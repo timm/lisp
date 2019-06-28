@@ -61,8 +61,26 @@
 
 
 
-## [readme.lisp](readme.lisp)
+The LISP random number generator does not let me
+easily set the same seeds on mutilple plaforms. Hemce,
+these 12 lines of code.
 
+`reset-seed (&optional n)`
+
+<ul>Reset seed to `n` (default = `(my :rand :seed)`</ul>
+
+`randf (&optional (n 100))
+
+<ul>Generate a random float in the range 0.. n. </ul>
+
+`randi (&optional (n 1))
+
+<ul>Generate a random integer in the range 0.. n. </ul>
+
+
+
+
+## [readme.lisp](readme.lisp)
 
 
 
@@ -72,12 +90,11 @@
 cd src/xx
 sbcl --script ../lib/readme.lisp > README.md
 git add README.md
-```
+``` 
 
 
 
-
-`readme (&optional (s t))`
+`readme (dir &optional (s t))`
 
 <ul>   
 Generate README.md from all doco strings 

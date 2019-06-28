@@ -88,12 +88,17 @@ This code uses the following directory strcture
 
 ```
 lisp/
-   /README.md
-   /ell            ; create a friendly BASH environment
-   /got.lisp       ; simple load manager
-   /etc/           ; support files (e.g. vim config) 
-   /src/           ; GOT packages (1 per sub-directory)
+   README.md
+   ell            ; create a friendly BASH environment
+   got.lisp       ; simple load manager
+   etc/           ; support files (e.g. vim config) 
+       dotbashrc  ; called when you load `sh ell`
+       dotvimrc   : uused when you call vim
+       dottmux    ; used when you call tmux
+   src/           ; GOT packages (1 per sub-directory)
        bias/
+         about.lisp ; notes in this package.
+         ...
        lib/
        oo/
        table/
@@ -139,10 +144,27 @@ Note that `got` remembers what whas loaded
 
 Once you run `sh ell` then the `readmes` command will pretty-print the
 all the docstrings in the `\*.lisp` files, and use these to create `README.md` files
-in all `lib/\*' sub-directories. 
+in all `lisp/lib/\*' sub-directories. 
 
-Note that the header of those README.md` files will be taken from the first paragraph
-of `/README.md`.  So if you want some standard headers and navigations, add itthere.
+Also, if you want other text in the `READNE.md`, add an `fyi` form into your `*.lisp` file. e.g.:
+
+```lisp
+(fyi "some text to show
+mabe many lines long.
+
+### ALso
+
+can contain markdnown text.
+```
+
+Note that:
+
+- The header of those README.md` files will be taken from the first paragraph
+of `lisp/README.md`.  So if you want some standard headers and navigations, add itthere.
+- Each 
+`lisp/lib/\*' sub-directories should have  an `about.lisp` file containing
+  stuff to be listed first in the readme.
+
 
 ### Cause you don't want code + config all over the hard drive
 

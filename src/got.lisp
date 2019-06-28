@@ -1,6 +1,7 @@
 ;; vim: ts=2 sw=2 sts=2  et :
 ;-------- -------- -------- -------- -------- --------
-(unless (fboundp 'got) (load "../got"))
+
+(defun fyi (&rest _) _)
 
 (let 
   ((pats '("../*.lisp" "../*/" "../*/*.lisp"))

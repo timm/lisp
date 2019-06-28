@@ -18,9 +18,21 @@
 ## [keeper.lisp](keeper.lisp)
 
 
-`keep (it &body body)`
 
-<ul>   with hash table _cache, compute once, then keep
+`Keeper`s are subclasses of `thing`s that,
+optionally, now how to cache the results of a method
+call (so if that method is called N times, we only
+compute it once). 
+
+The cache is maintain within the `_cache` variable.
+
+
+
+`defkept (m a &body b)`
+
+<ul>   
+Define a method that will cache its result,
+  returning the same result if called multiple times
 </ul>
 
 
@@ -29,29 +41,19 @@
 
 `? (obj first-slot &rest more-slots)`
 
-<ul>   From https://goo.gl/dqnmvH:
-</ul>
-
-
-## [p.lisp](p.lisp)
-
-
-
-## [q.lisp](q.lisp)
-
-
-`? (obj first-slot &rest more-slots)`
-
-<ul>   From https://goo.gl/dqnmvH:
+<ul>   
+Easy reference to LISP slots; e.g. (? obj 'a 'b c) expands
+  to `(slot-value slot-value (slot-value obj 'a) 'b) c)`.
+  Built using advice from https://goo.gl/dqnmvH.
 </ul>
 
 
 ## [thing.lisp](thing.lisp)
 
 
+
 The standard LISP object syntax is very verbose.
 My `defthing` macro is a simpler way to specify an object.
-
 E.g. here is a subclass of `thing` that has two slots
 which initialize to a `gensym` and `nil`, respectively.
 
@@ -61,6 +63,7 @@ which initialize to a `gensym` and `nil`, respectively.
 
 Also, all my `thing`s know how to print their public slots
 (which is any slot whose name does not start with `_`)
+
 
 
 `defthing (x parent &rest slots)`
