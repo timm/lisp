@@ -29,7 +29,7 @@ I found myself using the same tricks all the time; e.g
 - the same workflow (git for storage, markdown for documentation);
 - the same multi-paned environment (tmux);
 - the same editor (vim);
-- the same same shell (bash).
+- the same shell (bash).
 
 All of those tricks
 worked in ascii terminals, are fast to boot, worked cross-platform, etc etc.
