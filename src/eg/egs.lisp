@@ -2,17 +2,31 @@
 ;-------- -------- -------- -------- -------- --------
 (unless (fboundp 'got) (load "../got"))
 
-(got "oo/" "eg/col.lisp")
+(got "oo/" "lib/macros.lisp" "eg/col.lisp")
 
-(defthing egs 
-  keeper (name) (nums) (syms) (cols) (rows))
+;-------- -------- -------- -------- -------- --------
+(defun skip?  (x) (col x #\?))
+(defun more?  (x) (col x #\>))
+(defun less?  (x) (col x #\<))
+(defun klass? (x) (col x #\!))
+(defun goal?  (x) (or (klass? e x) (less? e x) (more? e x)))
 
-(defmethod skip?  ((e egs) x) (col e x #\?))
-(defmethod more?  ((e egs) x) (col e x #\>))
-(defmethod less?  ((e egs) x) (col e x #\<))
-(defmethod klass? ((e egs) x) (col e x #\!))
-(defmethod goal?  ((e egs) x) 
-  (or (klass? e x) (less? e x) (more? e x)))
+(defun col (x y) 
+  (eql (char (symbol-name x) 0) y))
+
+;-------- -------- -------- -------- -------- --------
+(defthing row keeper (egs) (cells))
+
+(defmethod cell ((r row) col)
+  (aref (? r cells) (? col pos)))
+   
+(defkeep klass ((r row))
+  (aref
+    (? r 'cells)
+    (? (klass  (? r 'egs)) 'pos)))
+
+;-------- -------- -------- -------- -------- --------
+(defthing egs keeper (name) (nums) (syms) (cols) (rows))
 
 (defkeep mores  ((e egs)) (cols e #'more?))
 (defkeep lesss  ((e egs)) (cols e #'less?))
@@ -21,49 +35,48 @@
 
 (defmethod klass ((e egs)) (car (klasss e)))
 
-(defmethod col ((e egs) x) 
-  (eql (char (symbol-name x) 0) y))
-
 (defmethod cols ((e egs) fn)
   (remove-if-not 
     #'(lambda (x) (funcall fn (?  x 'name)))
-    (? e 'cols))))
+    (? e 'cols)))
 
 ;-------- -------- -------- -------- -------- --------
-(defthing row keeper (_table) (cells))
-
-(defmethod cell ((r row) col)
-  (aref (? r cells) (? col pos)))
-   
-(defthing klass ((r row))
-  (aref
-    (? r cells)
-    (? (klass  (? r table)) 'pos)))
-
 (defun data (&key name cols egs
-             &aux (tab 
-                   (make-instance 'table :name name)))
+             &aux whats (width 0)
+                  (out 
+                    (make-instance 'table :name name)))
   "Build table for name, col, egs"
   (labels 
     ((okRow? (row) 
-            (assert (eql (length row) (length (? tab cols)))
-                    (row) "wrong length ~a" row)
-            t)
-     (col+ (txt pos)
-           (make-instance 
-              (if (numeric? txt) 'num 'sym )
-              :name txt :pos pos :_table tab))
+        (assert (eql width (length row)) 
+                (row) "not of size ~a" width)
+        t)
+     (col+ (val what)
+        (make-instance 
+           (if (numberp val) 'num 'sym )
+           :name (getf what :name) :pos (getf what :pos) :egs egs))
      (row+ (cells)
-           (let ((row (make-instance 'row
-                         :_table tab :cells (l->a cells))))
-             (dolist (col (? tab cols) row)
-               (add col (cell row col))))))
-    ;; now we can begin
-    (doitems (txt pos cols)
-      (if (not (skip?  txt))
-        (push (col+ txt pos) 
-              (? tab cols))))
+        (let ((row (make-instance 'row
+                   :egs eg :cells (l->a cells))))
+          (mapc (lambda (val what)
+                   (when (not (skip? val)
+                      (setf (getf what :has)
+                            (or (getf what :has)
+                                  (setf (getf what :has) 
+                          (col+ val what)
+XXX
+                          (getf what :name) (getf what :ois)
+
+                calls whats)
+          olist (col (? egs cols) row)
+            (add col (cell row col))))))
+    ;------------------------------------
+    
+    (setf whats
+      (doitems (txt pos cols (reverse what))
+        (when (not (skip?  txt))
+          (incf width)
+          (push `(:name ,txt :pos ,pos :has nil) whats))))
     (dolist (eg egs tab)
       (if (okRow? eg) 
-        (push (row+ eg) 
-              (? tab rows))))))
+        (push (row+ eg) (? out 'rows))))))

@@ -88,6 +88,7 @@ set ruler
 set statusline=%F\ %=%l\:%c\ 
 
 set lispwords+=defthing
+set lispwords+=doitems
 set lispwords+=deftest
 set lispwords+=defkeep
 set lispwords+=labels

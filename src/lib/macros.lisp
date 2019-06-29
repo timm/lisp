@@ -21,3 +21,10 @@
   "implements 'until' (which is not standard in LISP)"
   `(while (not ,test)
      ,@body))
+
+(defmacro doitems ((one n list &optional out) &body body )
+  "Set 'one' and 'n' to each item in a list, and its position."
+  `(let ((,n -1))
+     (dolist (,one ,list ,out)
+       (incf ,n)
+       ,@body)))
