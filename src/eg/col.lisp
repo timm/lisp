@@ -20,7 +20,7 @@ of data in a `table`")
   (adds (make-instance 'sym) lst :filter filter))
 
 (defmethod xpect (x field n)
-   (float (* (/ (? x n) n) (slot-value x field))))
+   (/ (? x field) n))
 
 ;-------- -------- -------- -------- -------- --------
 (defthing col keeper (n 0))
@@ -31,11 +31,11 @@ of data in a `table`")
     (if (and (no x) (no y)) 
       1
       (progn 
-        (if (no x) (setf y (norm col y) 
-                         x (far col y)))
-        (if (no y) (setf x (norm col x) 
-                         y (far col x)))
-        (delta col x y)))))
+        (if (no x) (setf y (norm    c y) 
+                         x (faraway c y)))
+        (if (no y) (setf x (norm    c x) 
+                         y (faraway c x)))
+        (delta c x y)))))
 
 (defmethod add ((c col) x &key (filter #'identity))
   "Add numbers to column."

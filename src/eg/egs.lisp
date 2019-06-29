@@ -9,7 +9,7 @@
 (defun more?  (x) (col x #\>))
 (defun less?  (x) (col x #\<))
 (defun klass? (x) (col x #\!))
-(defun goal?  (x) (or (klass? e x) (less? e x) (more? e x)))
+(defun goal?  (x) (or (klass? x) (less? x) (more? x)))
 (defun col (x y) 
   (eql (char (symbol-name x) 0) y))
 
@@ -46,37 +46,44 @@
 (defthing holder keeper  
   (has) (name) (pos))
 
-(defmethod add ((h holder) x)
-  (with-slots (has)
-    (unless (eql x #\?)
+(defmethod add ((h holder) x &key (filter #'identity))
+  (with-slots (has) h
+    (when (and x (not (eql x #\?)))
       (setf has (or has
                     (make-instance
                       (if (numberb x) 'num 'sum))))
-      (add has x))))
+      (add has x :filter filter))))
 
 (defmethod nump ((h holder)) (typep (? h 'has) 'num))
 (defmethod symp ((h holder)) (typep (? h 'has) 'sym))
 
 ;-------- -------- -------- -------- -------- --------
-(defun data (&key name cols egs
+(defun data (&key name columns egs
              &aux (out 
                     (make-instance 'egs :name name)))
   "Build table for name, col, egs"
   (labels 
     ((ok (lst width) 
-        (assert (eql width (length lst)) 
-                (lst) "not of size ~a" width))
-     (col+ (pos name)
-        (make-instance 'holder :pos pos :name name))
-     (eg+ (lst)
-        (let ((eg (make-instance 'eg
-                     :egs out :cells (l->a lst))))
-          (dolist (col (? out 'cols) eg)
-            (add col (cell eg val))))))
+         (assert (eql width (length lst)) 
+                 (lst) "not of size ~a" width))
+     (col+ (pos txt)
+         (unless (skip? txt) (col+ val (incf pos))))
+           (make-instance 'holder :pos pos :name name))
+     (eg+ (cols vals 
+                &optional (eg (make-instance 'eg :egs egs)))
+          (if (not cols)
+            eg
+            (let ((val (pop vals))
+                  (col (pop cols)))
+              (if col
+                (add col val))
+              (eg+ cols vals)))))
     ;------------------------------------
-    (doitems (txt pos cols)
-      (when (not (skip?  txt))
-        (push (col+ val pos) (? out 'cols))))
-    (dolist (lst egs out)
-      (ok lst (length (? out 'cols)))
-      (push (eg+ lst) (? out 'egs)))))
+    (with-slots (cols egs) out
+      (let ((pos 0))
+        (setf cols
+              (mapcar #'(lambda (txt) 
+              columns)))
+      (dolist (vals egs out)
+        (ok lst (length cols))
+        (push (eg+ cols vals) egs)))))
