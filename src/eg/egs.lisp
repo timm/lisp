@@ -10,73 +10,73 @@
 (defun less?  (x) (col x #\<))
 (defun klass? (x) (col x #\!))
 (defun goal?  (x) (or (klass? e x) (less? e x) (more? e x)))
-
 (defun col (x y) 
   (eql (char (symbol-name x) 0) y))
 
 ;-------- -------- -------- -------- -------- --------
-(defthing row keeper (egs) (cells))
+(defthing eg keeper (egs) (cells))
 
-(defmethod cell ((r row) col)
-  (aref (? r cells) (? col pos)))
+(defmethod cell ((e eg) col)
+  (aref (? e 'cells) (? col 'pos)))
    
-(defkeep klass ((r row))
+(defkept klass ((e eg))
   (aref
-    (? r 'cells)
-    (? (klass  (? r 'egs)) 'pos)))
+    (? e 'cells)
+    (? (klass  (? e 'egs)) 'pos)))
 
 ;-------- -------- -------- -------- -------- --------
-(defthing egs keeper (name) (nums) (syms) (cols) (rows))
+(defthing egs keeper (name) (cols) (egs))
 
-(defkeep mores  ((e egs)) (cols e #'more?))
-(defkeep lesss  ((e egs)) (cols e #'less?))
-(defkeep klasss ((e egs)) (cols e #'klass?))
-(defkeep goals  ((e egs)) (cols e #'goal?))
+(defkept mores  ((e egs)) (names e #'more?))
+(defkept lesss  ((e egs)) (names e #'less?))
+(defkept klasss ((e egs)) (names e #'klass?))
+(defkept goals  ((e egs)) (names e #'goal?))
+(defkept nums   ((e egs)) (loop for c in (? e 'cols)
+                             when #'nump collect c))
+(defkept syms   ((e egs)) (loop for c in (? e 'cols) 
+                             when #'symp collect c))
 
 (defmethod klass ((e egs)) (car (klasss e)))
 
-(defmethod cols ((e egs) fn)
+(defmethod names ((e egs) fn)
   (remove-if-not 
-    #'(lambda (x) (funcall fn (?  x 'name)))
-    (? e 'cols)))
+    #'(lambda (x) (funcall fn (?  x 'name))) (? e 'cols)))
+
+;-------- -------- -------- -------- -------- --------
+(defthing holder keeper  
+  (has) (name) (pos))
+
+(defmethod add ((h holder) x)
+  (with-slots (has)
+    (unless (eql x #\?)
+      (setf has (or has
+                    (make-instance
+                      (if (numberb x) 'num 'sum))))
+      (add has x))))
+
+(defmethod nump ((h holder)) (typep (? h 'has) 'num))
+(defmethod symp ((h holder)) (typep (? h 'has) 'sym))
 
 ;-------- -------- -------- -------- -------- --------
 (defun data (&key name cols egs
-             &aux whats (width 0)
-                  (out 
-                    (make-instance 'table :name name)))
+             &aux (out 
+                    (make-instance 'egs :name name)))
   "Build table for name, col, egs"
   (labels 
-    ((okRow? (row) 
-        (assert (eql width (length row)) 
-                (row) "not of size ~a" width)
-        t)
-     (col+ (val what)
-        (make-instance 
-           (if (numberp val) 'num 'sym )
-           :name (getf what :name) :pos (getf what :pos) :egs egs))
-     (row+ (cells)
-        (let ((row (make-instance 'row
-                   :egs eg :cells (l->a cells))))
-          (mapc (lambda (val what)
-                   (when (not (skip? val)
-                      (setf (getf what :has)
-                            (or (getf what :has)
-                                  (setf (getf what :has) 
-                          (col+ val what)
-XXX
-                          (getf what :name) (getf what :ois)
-
-                calls whats)
-          olist (col (? egs cols) row)
-            (add col (cell row col))))))
+    ((ok (lst width) 
+        (assert (eql width (length lst)) 
+                (lst) "not of size ~a" width))
+     (col+ (pos name)
+        (make-instance 'holder :pos pos :name name))
+     (eg+ (lst)
+        (let ((eg (make-instance 'eg
+                     :egs out :cells (l->a lst))))
+          (dolist (col (? out 'cols) eg)
+            (add col (cell eg val))))))
     ;------------------------------------
-    
-    (setf whats
-      (doitems (txt pos cols (reverse what))
-        (when (not (skip?  txt))
-          (incf width)
-          (push `(:name ,txt :pos ,pos :has nil) whats))))
-    (dolist (eg egs tab)
-      (if (okRow? eg) 
-        (push (row+ eg) (? out 'rows))))))
+    (doitems (txt pos cols)
+      (when (not (skip?  txt))
+        (push (col+ val pos) (? out 'cols))))
+    (dolist (lst egs out)
+      (ok lst (length (? out 'cols)))
+      (push (eg+ lst) (? out 'egs)))))

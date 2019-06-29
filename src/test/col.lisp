@@ -6,7 +6,7 @@
 
 (deftest _num () 
   "Compute number."
-  (let ((nu (nums '(9 2 5 4 12 7 8 11 9 3
+  (let ((nu (numbers '(9 2 5 4 12 7 8 11 9 3
                    7 4 12 5 4 10 9 6 9 4))))
     (ok 3.0607877 (? nu 'sd))
     (ok 7         (? nu 'mu))))
@@ -15,6 +15,6 @@
   "Compute symbols"
   (ok t (ish 1.3787836 
              (ent 
-               (syms '(a b b c c c c))))))
+               (symbols '(a b b c c c c))))))
 
 (tests)

@@ -8,30 +8,22 @@
 `Col`s are places to store summaries about columns
 of data in a `table`")
 
-(defthing col keeper  
-  (n 0) (name) (pos) (_table))
-
-(defmethod add ((c col) x &key (filter #'identity))
-  "Add numbers to column."
-  (unless (eql c #\?) ; skip ignores
-    (let ((y (funcall filter x)))
-      (incf (? c 'n)) ; inc the total counts
-      (add1 c y)))   ; add it in
-  x)
-
 ;-------- -------- -------- -------- -------- --------
-(defmethod adds ((c col) lst &key (filter #'identity))
+(defun adds (c lst &key (filter #'identity))
   (dolist (x lst c) 
     (add c x :filter filter)))
 
-(defun nums (lst &key (filter #'identity)) 
+(defun numbers (lst &key (filter #'identity)) 
   (adds (make-instance 'num) lst :filter filter))
 
-(defun syms (lst &key (filter #'identity)) 
+(defun symbols (lst &key (filter #'identity)) 
   (adds (make-instance 'sym) lst :filter filter))
 
 (defmethod xpect (x field n)
    (float (* (/ (? x n) n) (slot-value x field))))
+
+;-------- -------- -------- -------- -------- --------
+(defthing col keeper (n 0))
 
 (defmethod dist ((c col) x y)
   "Return a number 0 .. 1"
@@ -44,6 +36,13 @@ of data in a `table`")
         (if (no y) (setf x (norm col x) 
                          y (far col x)))
         (delta col x y)))))
+
+(defmethod add ((c col) x &key (filter #'identity))
+  "Add numbers to column."
+  (let ((y (funcall filter x)))
+    (incf (? c 'n)) ; inc the total counts
+    (add1 c y))   ; add it in
+  x)
 
 ;-------- -------- -------- -------- -------- --------
 (defthing num col
