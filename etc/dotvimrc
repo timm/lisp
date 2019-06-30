@@ -83,12 +83,11 @@ set hlsearch
 "autocmd VimEnter * wincmd w
 "autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
 set nofoldenable    " disable folding
-colorscheme slate
 set ruler
-set statusline=%F\ %=%l\:%c\ 
-
-set lispwords+=defthing
-set lispwords+=doitems
+set statusline=%F\ \(%M\)\ %=%l\:%c\ 
+  
+set lispwords+=defthing   
+set lispwords+=doitems    
 set lispwords+=deftest
 set lispwords+=defkeep
 set lispwords+=labels
@@ -101,5 +100,9 @@ set path+=../**
 if has("mouse_sgr")
     set ttymouse=sgr
 else
-    set ttymouse=xterm2
-end
+    set ttymouse=xterm2 
+end        
+colorscheme default
+set termguicolors
+let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
+let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"

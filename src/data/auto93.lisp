@@ -1,3 +1,9 @@
+;; vim: ts=2 sw=2 sts=2  et :
+;--------- --------- --------- --------- --------- ---------
+(unless (fboundp 'got) (load "../got"))
+
+(got "sample/")
+
 ;%
 ;% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ;%
@@ -127,8 +133,8 @@
 (defun auto93 ()
   (data
     :name 'auto93
-    :columns '(Manufacturer Type <City_MPG <Highway_MPG Air_Bags_standard Drive_train_type Number_of_cylinders Engine_size Horsepower RPM Engine_revolutions_per_mile Manual_transmission_available Fuel_tank_capacity >Passenger_capacity Length Wheelbase Width U-turn_space Rear_seat_room >Luggage_capacity Weight Domestic <class)
-    :egs
+    :header '(Manufacturer Type <City_MPG <Highway_MPG Air_Bags_standard Drive_train_type Number_of_cylinders Engine_size Horsepower RPM Engine_revolutions_per_mile Manual_transmission_available Fuel_tank_capacity >Passenger_capacity Length Wheelbase Width U-turn_space Rear_seat_room >Luggage_capacity Weight Domestic <class)
+    :rows
     '(
       (Acura Small 25 31 0 1 4 1.8 140 6300 2890 1 13.2 5 177 102 68 37 26.5 11 2705 0 15.9)
       (Acura Midsize 18 25 2 1 6 3.2 200 5500 2335 1 18 5 195 115 71 38 30 15 3560 0 33.9)

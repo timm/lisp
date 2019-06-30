@@ -2,6 +2,8 @@
 ;-------- -------- -------- -------- -------- --------
 (unless (fboundp 'got) (load "../got"))
 
+(got "lib/rand.lisp")
+
 (defun head (lst) "Return first item" (car lst))
 (defun tail (lst) "Return last item" (car (last lst)))
 
@@ -16,3 +18,9 @@
 (defun select (selector-fn facts)
   "return all list items satisying selector-fn"
   (remove-if-not selector-fn facts))
+
+(defun nshuffle (sequence)
+  (loop for i from (length sequence) downto 1
+        do (rotatef (elt sequence (randi i))
+                    (elt sequence (1- i))))
+  sequence)

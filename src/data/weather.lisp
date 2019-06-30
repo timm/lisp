@@ -1,14 +1,14 @@
 ;; vim: ts=2 sw=2 sts=2  et :
-;-------- -------- -------- -------- -------- --------
+;--------- --------- --------- --------- --------- ---------
 (unless (fboundp 'got) (load "../got"))
 
-(got "eg/")
+(got "sample/")
 
 (defun weather ()
   (data
    :name     'weather
-   :columns  '(forecast temp humidty windy !play)
-   :egs     '((sunny    hot  high   FALSE no) 
+   :header  '(forecast temp ?humidty windy !play)
+   :rows     '((sunny    hot  high   FALSE no) 
               (sunny    hot  high   TRUE  no)
               (overcast hot  high   FALSE yes)
               (rainy    mild high   FALSE yes)

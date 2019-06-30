@@ -53,7 +53,10 @@
   `(getfs +config+ ,x ,@y))
 
 (defun config0()
-  '(:rand  (:seed 10013)
-    :col   (:p 2)))
+  '( 
+    :rand  (:seed 10013)
+    :col   (:p 2)
+    :dom   (:samples 100)
+    ))
 
 (defparameter +config+ (config0))

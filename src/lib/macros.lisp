@@ -14,8 +14,9 @@
 
 (defmacro whale (test &body body)
   "implements 'while' (which is not standard in LISP)"
-  `(while (setf a ,test)
-     ,@body))
+  `(let (a)
+     (while (setf a ,test)
+       ,@body)))
 
 (defmacro until (test &body body)
   "implements 'until' (which is not standard in LISP)"

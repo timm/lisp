@@ -23,7 +23,7 @@ of data in a `table`")
    (/ (? x field) n))
 
 ;-------- -------- -------- -------- -------- --------
-(defthing col keeper (n 0))
+(defthing col keeper (w 1) (n 0))
 
 (defmethod dist ((c col) x y)
   "Return a number 0 .. 1"
@@ -46,7 +46,7 @@ of data in a `table`")
 
 ;-------- -------- -------- -------- -------- --------
 (defthing num col
-  (mu 0) (m2 0) (sd 0)
+  (mu 0.0) (m2 0.0) (sd 0.0)
   (lo most-positive-fixnum)
   (hi most-negative-fixnum)
   )
@@ -74,7 +74,7 @@ of data in a `table`")
   (if (< x 0.5) 1 0))
 
 (defmethod delta ((n num) x y)
-  (pow (- x y) (the :col :p)))
+  (pow (- x y) (my :col :p)))
 
 ;-------- -------- -------- -------- -------- --------
 (defthing sym col
