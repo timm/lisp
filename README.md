@@ -12,9 +12,7 @@
 ([oo](https://github.com/timm/lisp/tree/master/src/oo/README.md#top)
 ([sample](https://github.com/timm/lisp/tree/master/src/sample/README.md#top)))))
 
-
 # Just a few LISP coding tricks
-
 
 <img width=400 align=right src="https://raw.githubusercontent.com/timm/lisp/master/etc/img/haveLisp.jpg">
 
