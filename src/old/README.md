@@ -12,25 +12,13 @@
 ([oo](https://github.com/timm/lisp/tree/master/src/oo/README.md#top)
 ([sample](https://github.com/timm/lisp/tree/master/src/sample/README.md#top)))))
 
-# SAMPLE
+# OLD
 
 
 
 
-## [col.lisp](col.lisp)
+## [xy.lisp](xy.lisp)
 
-
-
-A `col`umn is either a `num`ber or a `sym`bol.
-`Col`s are places to store summaries about columns
-of data in a `table`
-
-
-
-`dist ((c col) x y)`
-
-<ul>   Return a number 0 .. 1
-</ul>
 
 `add ((c col) x &key (filter #'identity))`
 
@@ -55,17 +43,4 @@ of data in a `table`
 `norm ((s sym) x)`
 
 <ul>   Normalize symbols does nothing.
-</ul>
-
-
-## [dom.lisp](dom.lisp)
-
-
-
-## [sample.lisp](sample.lisp)
-
-
-`data (&key name header rows)`
-
-<ul>   Build table for name, col, egs
 </ul>
