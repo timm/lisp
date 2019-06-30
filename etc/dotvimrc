@@ -96,7 +96,7 @@ set lispwords+=doread
 set lispwords+=while
 set lispwords+=until
 set path+=../**
-
+imap E tabedit
 if has("mouse_sgr")
     set ttymouse=sgr
 else
