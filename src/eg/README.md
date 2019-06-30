@@ -12,60 +12,6 @@
 ([oo](https://github.com/timm/lisp/tree/master/src/oo/README.md#top)
 ([sample](https://github.com/timm/lisp/tree/master/src/sample/README.md#top)))))
 
-# TEST
+# EG
 
-
-
-
-## [col.lisp](col.lisp)
-
-
-
-## [hash.lisp](hash.lisp)
-
-
-
-## [keeper.lisp](keeper.lisp)
-
-
-
-## [ok.lisp](ok.lisp)
-
-
-`somemaydie `
-
-<ul>   Except three tests to run, one succeed, one give error.
-</ul>
-
-`success `
-
-<ul>   Expect allt ests to pass
-</ul>
-
-
-## [q.lisp](q.lisp)
-
-
-
-## [rand.lisp](rand.lisp)
-
-
-
-## [reads.lisp](reads.lisp)
-
-
-
-## [test.lisp](test.lisp)
-
-
-
-## [weather.lisp](weather.lisp)
-
-
-
-## [xy.lisp](xy.lisp)
-
-
-
-## [z.lisp](z.lisp)
 
