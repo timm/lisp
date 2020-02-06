@@ -23,7 +23,7 @@
 (defun s->lines (x &optional (s (make-string-input-stream x)))
   "Convert a string to a list of lines"
   (af (read-line s nil)
-       (cons it (s->lines nil s))))
+       (cons a (s->lines nil s))))
 
 (defun s->words (s &optional 
                 (sep '(#\, #\space #\tab #\newline #\linefeed)))
@@ -37,9 +37,9 @@
               (setf tmp nil) 
               out)))
         (whale (read-char str nil)
-          (if (member it sep :test #'eq)
+          (if (member a sep :test #'eq)
             (end-of-word)
-            (push it tmp)))
+            (push a tmp)))
         (reverse (end-of-word))))))
 
 (print (s->words "   asd,as as,das asd 
