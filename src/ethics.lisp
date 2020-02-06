@@ -21,8 +21,7 @@
 
 (defmacro doarray ((one n arr &optional out) &body body )
    `(dotimes (,n (length ,arr) ,out)
-       (let ((,one (aref arr ,n)))
-         ,@body)))
+       (let ((,one (aref arr ,n))) ,@body)))
 
 (defmacro dohash ((key value  h &optional out) &body body )
   `(progn (maphash #'(lambda (,key ,value) ,@body) ,h) ,out))
@@ -35,7 +34,7 @@
 (defmacro ?? (&rest x) (? *O* ,@x))
 
 ;---------.---------.---------.---------.--------.---------.----------
-(defstruct ch-options 
+(defstruct ch!
 	(meta  #\:)
 	(less  #\<)
 	(more  #\>)
@@ -43,13 +42,13 @@
 	(skip  #\?)
 	(sep   #\,))
 
-(defstruct lsh-options
+(defstruct lsh!
 	(poles 10)
   (trim  0.95))
 
-(defstruct options 
-	(lsh  (make-lsh-options))
-	(ch   (make-ch-options)))
+(defstruct control 
+	(lsh  (make-lsh!))
+	(ch   (make-ch!)))
 
 (defun cli2options (thing)
 	(dolist (x (cli) thing)
@@ -57,7 +56,7 @@
        (setf (slot-value thing x) 
              (read-from-string (nth (+ 1 a ) lst))))))
 
-(defvar *O* (make-options))
+(defvar *O* (make-control))
 
 ;---------.---------.---------.---------.--------.---------.----------
 ; tricks 
@@ -99,9 +98,9 @@
   (lo most-positive-fixnum)
   (hi most-negative-fixnum))
 
-(defmethod var ((s sym) x) (num-sd x))
-(defmethod mid ((s sym) x) (num-mu x))
-(defmethod prep ((s sym) x) (if (numberp x) x (read-from-string x)))
+(defmethod var ((s num) x) (num-sd x))
+(defmethod mid ((s num) x) (num-mu x))
+(defmethod prep ((s num) x) (if (numberp x) x (read-from-string x)))
 
 (defmethod add ((nu num) x)
   (with-slots (n all lo hi mu m2 sd) nu
@@ -118,8 +117,8 @@
                    ((< m2 0) 0)
                    (t  (sqrt (/ m2 (- n 1))))))))
 
-(defmethod norm ((n num) x)
-  (with-slots (lo hi) n
+(defmethod norm ((nu num) x)
+  (with-slots (lo hi) nu
     (/ (- x lo) (+ (- hi lo) (/ 1 most-positive-fixnum)))))
 
 ;---------.---------.---------.---------.--------.---------.----------
@@ -130,20 +129,26 @@
 (defstruct tbl rows (cols (make-cols)))
 
 (defmethod add ((c cols) arr)
-	(labels 
-		((goalp(x) (has x (?? ch klass) (?? ch less) (?? ch more)))
-		 (nump(x)  (has x (?? ch num)   (?? ch less) (?? ch more))))
-		(with-slots (indep klass all meta nums syms) c
-			(doarray (x pos arr)
-				(unless (has x (?? ch skip))
-					(push x names)
-					(if (has x (?? ch klass)) (setq klass pos))
-					(let* ((w     (if (has x (?? ch less)) -1 1))
-								 (todo  (if (nump x) #'make-num #'make-sym))
-								 (col   (funcall todo :pos pos :txt x :w w)))
-						(push col all)
-						(push col (if (nump  x) nums  syms))
-						(if (has x (?? ch meta))
-							(push col meta)
-							(push col (if (goalp x) goals indep)))))))))
+	(with-slots (indep klass all meta nums syms) c
+    (doarray (x pos arr)
+	    (labels 
+        ((goalp()  (has x (?? ch klass) (?? ch less) (?? ch more)))
+         (nump()   (has x (?? ch num)   (?? ch less) (?? ch more)))
+         (klassp() (has x (?? ch klass)))
+         (metap()  (has x (?? ch meta)))
+         (lessp()  (has x (?? ch less)))
+         (skipp()  (has x (?? ch skip)))
+         )
+        (unless (skipp)
+          (push x names)
+          (if (klassp) (setq klass pos))
+          (let* ((w     (if (lessp) -1 1))
+                 (todo  (if (nump) #'make-num #'make-sym))
+                 (col   (funcall todo :pos pos :txt x :w w)))
+            (push col all)
+            (push col (if (nump) nums  syms))
+            (if (metap)
+              (push col meta)
+              (push col (if (goalp) goals indep)))))))
+    (reverse all)))
 
