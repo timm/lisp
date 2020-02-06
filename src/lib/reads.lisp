@@ -30,20 +30,19 @@
   (af (read-line s nil)
        (cons a (s->lines nil s))))
 
-(let ((whitespace '(#\, #\space #\tab #\newline)))
-  (defun s->words (s &optional (sep whitespace))
-    "Convert a string to a list of words"
-    (with-input-from-string (str s)
-      (let (tmp out)
-        (labels 
-          ((end-of-word () 
-             (when tmp
-                   (push (concatenate 'string 
-                                (reverse tmp)) out) 
-                   (setf tmp nil) 
-                   out)))
-          (whale (read-char str nil)
-                 (af (member a sep :test #'eq)
-                   (end-of-word)
-                   (push a tmp)))
-          (reverse (end-of-word)))))))
+ (defun s->words (s &optional (sep #\,))
+   "Convert a string to a list of words"
+   (with-input-from-string (str s)
+     (let (tmp 
+           out
+           (whitespace `(,sep #\space #\tab #\newline)))
+       (labels ((end-of-word () 
+                  (when tmp
+                    (push (concatenate 'string (reverse tmp)) out) 
+                    (setf tmp nil) 
+                    out)))
+         (whale (read-char str nil)
+                (af (member a sep :test #'eq)
+                    (end-of-word)
+                    (push a tmp)))
+         (reverse (end-of-word))))))
