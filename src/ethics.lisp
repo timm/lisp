@@ -1,9 +1,23 @@
 ; vim: ts=2 sw=2 sts=2  et :
-  
-(defun finds (x &rest lst) 
-  (dolist (y lst)
-     (if (find ,y ,x :test #'equal)
-         (return t))))
+
+;---------.---------.---------.---------.--------.---------.----------
+; hash defines
+(defun stop ()
+  #+sbcl (sb-ext:exit)
+  #+:clisp (ext:exit))
+
+(defun cli ()
+  #+clisp ext:*args*
+  #+sbcl sb-ext:*posix-argv*)
+
+(defun the-slots (it)
+  #+clisp (class-slots (class-of it))
+  #+sbcl (sb-mop:class-slots (class-of it)))
+
+;---------.---------.---------.---------.--------.---------.----------
+; macros
+(defmacro af (test then &optional else)
+  `(let ((a ,test)) (if a ,then ,else)))
 
 (defmacro doarray ((one n arr &optional out) &body body )
    `(dotimes (,n (length ,arr) ,out)
@@ -18,32 +32,76 @@
    		`(slot-value ,obj ,first-slot)
    		`(? (slot-value ,obj ,first-slot) ,@more-slots)))
 
+(defmacro ?? (&rest x) (? *O* ,@x))
+
+;---------.---------.---------.---------.--------.---------.----------
+(defstruct ch-options 
+	(meta  #\:)
+	(less  #\<)
+	(more  #\>)
+	(klass #\!)
+	(skip  #\?)
+	(sep   #\,))
+
+(defstruct lsh-options
+	(poles 10)
+  (trim  0.95))
+
+(defstruct options 
+	(lsh  (make-lsh-options))
+	(ch   (make-ch-options)))
+
+(defun cli2options (thing)
+	(dolist (x (cli) thing)
+     (aif (find (format nil ":~a" x) (the-slots things))
+       (setf (slot-value thing x) 
+             (read-from-string (nth (+ 1 a ) lst))))))
+
+(defvar *O* (make-options))
+
+;---------.---------.---------.---------.--------.---------.----------
+; tricks 
+(defun has (x &rest lst) 
+  (dolist (y lst)
+     (if (find ,y ,x :test #'equal) (return t))))
+
+;---------.---------.---------.---------.--------.---------.----------
+; symbols
 (defstruct sym
   (count (make-hash-table))
   (n 0)
+  (ent 0)
   most
   mode)
 
+(defmethod var ((s sym) x) (ent x))
+(defmethod mid ((s sym) x) (sym-mode x))
+(defmethod prep ((s sym) x) x)
+
 (defmethod add ((s sym) x)
   (with-slots (most mode counts  n) s
-    (let*
-      ((new (incf (gethash x counts 0))))
-      (if (> new most)
-        (setf most new
+    (let* ((new (incf (gethash x counts 0))))
+			(if (> new most)
+				(setf most new
               mode x)))))
 
-(defmethod ent ((s sym))
+(defmethod ent ((s sym) &aux (e 0))
   (with-slots (counts n) s
-    (let ((e 0))
-      (do-hash (k v counts e)
-        (let ((p (/ v n)))
-          (decf e (* p (log p 2))))))))
+    (dohash (k v counts e)
+      (let ((p (/ v n)))
+        (decf e (* p (log p 2)))))))
 
+;---------.---------.---------.---------.--------.---------.----------
+; numbers
 (defstruct num 
   (n 0)
   (mu 0.0) (m2 0.0) (sd 0.0)
   (lo most-positive-fixnum)
   (hi most-negative-fixnum))
+
+(defmethod var ((s sym) x) (num-sd x))
+(defmethod mid ((s sym) x) (num-mu x))
+(defmethod prep ((s sym) x) (if (numberp x) x (read-from-string x)))
 
 (defmethod add ((nu num) x)
   (with-slots (n all lo hi mu m2 sd) nu
@@ -64,61 +122,28 @@
   (with-slots (lo hi) n
     (/ (- x lo) (+ (- hi lo) (/ 1 most-positive-fixnum)))))
 
+;---------.---------.---------.---------.--------.---------.----------
+; tables of data
 (defstruct col (w 1) (pos 0) (txt ""))
-(defstruct cols all klass goals names indep nums syms)
+(defstruct cols all klass goals names indep nums syms meta)
 (defstruct row cells poles)
 (defstruct tbl rows (cols (make-cols)))
 
-(defstruct value want)
-(defmethod add ((e value) x)
-  (with-slots (want) e
-    (if (eql x #\?)
-      x
-      (let* ((y   (read-from-string x))
-             (got (numberp y)))
-        (if want (assert (eql got want)))
-        (setf want got)
-        y))))
-
-(defstruct values wants)
-(defmethod add ((vs values) arr)
-   (with-slots (wants) vs
-     (if wants
-       (let out (make-array (list (length wants)))
-          (doarray (want n wants out)
-            (setf (aref out n) (add want (aref arr n)))))
-       (progn
-         (setf wants (make-array (list (length arr)))
-            (doarray (want n wants arr)
-              (setf (aref wants n) (make-value))))))))
-          
-     
-(defmacro dovalues ((rows &optional out) &body body)
-  (let ((vals (gensym))
-        (n      (gensym))
-        `(doarray (one n1 rows)
-           (cond ((eql n 0)
-                  (setf ,vals (add (make-values) row))
-                  ,@body)
-                (t 
-                     ,@body)))))))
-           
-(defun skipp(x) (finds x #\?))
-(defun goalp(x) (finds x #\! #\< #\>))
-(defun nump(x)  (finds x #\$ #\< #\>))
-
 (defmethod add ((c cols) arr)
-	(with-slots (indep klass all  nums syms) c
-		(do-array (x pos arr)
-			 (unless (skipo x)
-				 (push x names)
-				 (if (finds x #\!) (setq klass pos))
-				 (let* ((w     (if (? x #\<) -1 1))
-								(todo  (if (num? x) #'make-num #'make-sym))
-								(col   (funcall todo :pos pos :txt x :w w)))
-					 (push col all)
-					 (push col (if (nump  x) nums  syms))
-					 (push col (if (goalp x) goals indep)))))))
+	(labels 
+		((goalp(x) (has x (?? ch klass) (?? ch less) (?? ch more)))
+		 (nump(x)  (has x (?? ch num)   (?? ch less) (?? ch more))))
+		(with-slots (indep klass all meta nums syms) c
+			(doarray (x pos arr)
+				(unless (has x (?? ch skip))
+					(push x names)
+					(if (has x (?? ch klass)) (setq klass pos))
+					(let* ((w     (if (has x (?? ch less)) -1 1))
+								 (todo  (if (nump x) #'make-num #'make-sym))
+								 (col   (funcall todo :pos pos :txt x :w w)))
+						(push col all)
+						(push col (if (nump  x) nums  syms))
+						(if (has x (?? ch meta))
+							(push col meta)
+							(push col (if (goalp x) goals indep)))))))))
 
-(defmethod add ((tbl tbl) a)
-  (if (
