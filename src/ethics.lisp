@@ -1,4 +1,6 @@
 ; vim: ts=2 sw=2 sts=2  et :
+(defmacro has (x y) `(find ,y ,x :test #'equal))
+
 (defmacro doarray ((one n arr &optional out) &body body )
    `(dotimes (,n (length ,arr) ,out)
        (let ((,one (aref arr ,n)))
@@ -6,6 +8,11 @@
 
 (defmacro dohash ((key value  h &optional out) &body body )
   `(progn (maphash #'(lambda (,key ,value) ,@body) ,h) ,out))
+
+(defmacro ? (obj first-slot &rest more-slots)
+ 	(if (null more-slots)
+   		`(slot-value ,obj ,first-slot)
+   		`(? (slot-value ,obj ,first-slot) ,@more-slots)))
 
 (defstruct sym
   (count (make-hash-table))
@@ -58,17 +65,16 @@
 (defstruct row cells poles)
 (defstruct tbl rows (cols (make-cols)))
 
-(defun skipp(x) (?? x #\?))
-(defun goalp(x)  (or (?? x #\!) (?? x #\<) (?? x #\>)))
-(defun nump(x)   (or (?? x #\$) (?? x #\<) (?? x #\>)))
-(defmethod ??  (x y) (find y x :test #'equal))
+(defun skipp(x) (has x #\?))
+(defun goalp(x)  (or (has x #\!) (has x #\<) (has x #\>)))
+(defun nump(x)   (or (has x #\$) (?? x #\<) (has x #\>)))
 
 (defmethod add ((c cols) arr)
 	(with-slots (indep klass all  nums syms) c
 		(do-array (x pos arr)
 			 (unless (skipo x)
 				 (push x names)
-				 (if (?? x #\!) (setq klass pos))
+				 (if (has x #\!) (setq klass pos))
 				 (let* ((w     (if (? x #\<) -1 1))
 								(todo  (if (num? x) #'make-num #'make-sym))
 								(col   (funcall todo :pos pos :txt x :w w)))
