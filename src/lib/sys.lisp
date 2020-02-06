@@ -1,3 +1,5 @@
+;; vim: set ts=2 sts=2 et :
+;-------- -------- -------- -------- -------- -------- --------
 (unless (fboundp 'got) (load "../got"))
 
 (defun klass-slots (it)
@@ -27,8 +29,13 @@
   #+allegro (excl:exit))
 
 (defun sh (cmd)
-   "A multi-implementation function equivalent for the C function system"
+   "Run a shwll command"
    #+clisp (shell cmd)
    #+ecl (si:system cmd)
-   #+sbcl (sb-ext:run-program "/bin/sh" (list "-c" cmd) :input nil :output *standard-output*)
-   #+clozure (ccl:run-program "/bin/sh" (list "-c" cmd) :input nil :output *standard-output*))
+   #+sbcl (sb-ext:run-program "/bin/sh" 
+             (list "-c" cmd) 
+	        :input nil :output *standard-output*)
+   #+clozure (ccl:run-program "/bin/sh" 
+	        (list "-c" cmd) 
+		   :input nil :output *standard-output*))
+

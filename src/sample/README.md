@@ -12,7 +12,7 @@
 ([oo](https://github.com/timm/lisp/tree/master/src/oo/README.md#top)
 ([sample](https://github.com/timm/lisp/tree/master/src/sample/README.md#top)))))
 
-# TEST
+# SAMPLE
 
 
 
@@ -21,51 +21,51 @@
 
 
 
-## [hash.lisp](hash.lisp)
+A `col`umn is either a `num`ber or a `sym`bol.
+`Col`s are places to store summaries about columns
+of data in a `table`
 
 
 
-## [keeper.lisp](keeper.lisp)
+`dist ((c col) x y)`
 
-
-
-## [ok.lisp](ok.lisp)
-
-
-`somemaydie `
-
-<ul>   Except three tests to run, one succeed, one give error.
+<ul>   Return a number 0 .. 1
 </ul>
 
-`success `
+`add ((c col) x &key (filter #'identity))`
 
-<ul>   Expect allt ests to pass
+<ul>   Add numbers to column.
+</ul>
+
+`add1 ((nu num) x)`
+
+<ul>   New numbers update `min` and `max`.
+</ul>
+
+`norm ((n num) x)`
+
+<ul>   Convert x to the range 0..1.
+</ul>
+
+`add1 ((s sym) x)`
+
+<ul>   Increment the symbols counts
+</ul>
+
+`norm ((s sym) x)`
+
+<ul>   Normalize symbols does nothing.
 </ul>
 
 
-## [q.lisp](q.lisp)
+## [dom.lisp](dom.lisp)
 
 
 
-## [rand.lisp](rand.lisp)
+## [sample.lisp](sample.lisp)
 
 
+`data (&key name header rows)`
 
-## [reads.lisp](reads.lisp)
-
-
-
-## [test.lisp](test.lisp)
-
-
-
-## [weather.lisp](weather.lisp)
-
-
-
-## [xy.lisp](xy.lisp)
-
-
-
-## [z.lisp](z.lisp)
-
+<ul>   Build table for name, col, egs
+</ul>

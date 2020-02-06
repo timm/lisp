@@ -1,30 +1,23 @@
-; vim: ts=2 sw=2 sts=2  et
+;; vim: ts=2 sw=2 sts=2 et:
+;-------- -------- -------- -------- -------- -------- --------
 (unless (fboundp 'got) (load "../got"))
 
-(got "sys.lisp" "reads.lisp")
+(got "sys.lisp" "lib/reads.lisp")
 
-(defparameter +header+ 
-  (format nil "~a~%# ~a~%~%" 
-          (para1 "../../README.md")
-          (string-upcase (first (args)))))
-
-(defun fyi (&rest x) x)
-
-(fyi "
-
-### Usage
+(fyi "### Usage
 
 ```bash
 cd src/xx
 sbcl --script ../lib/readme.lisp > README.md
 git add README.md
-```
+``` ")
 
-")
-
-(defun readme(&optional (s t))
+(defun readme(dir &optional (s t))
   "Generate README.md from all doco strings 
   form all LISP code in a directory."
+  (format t "~a~%# ~a~%~%~%" 
+          (para1 "../../README.md")
+          (string-upcase dir))
   (dolist (f (sort (directory "*.lisp") 
                    #'(lambda (x y) (string< (pathname-name x) 
                                             (pathname-name y)))))
@@ -42,14 +35,17 @@ git add README.md
            (dump   (str  &optional (pad ""))
                    (format s "~a~a~%" pad str)))
           (when (fyip)
-            (terpri s)
+            (terpri s) (terpri s)
             (dump (second x))
-            (terpri s))
+            (terpri s) (terpri s)
+            )
           (when (and (defp) (docp) (not (secret)))
-            (format s "~%`~(~a~) ~(~a~)`~%~%-" 
+            (format s "~%`~(~a~) ~(~a~)`~%~%<ul>" 
                     (second x) (or (third x) ""))
-            (dump (fourth x) "   ")))))))
+            (dump (fourth x) "   ")
+            (format s "</ul>~%")))))))
 
-(format t "~a"  +header+)
-(terpri)
-(readme)
+(let ((cli (args)))
+  (if (and cli (equalp "--makedoc" (first cli)))
+    (readme (second cli))))
+  

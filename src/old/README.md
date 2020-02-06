@@ -12,60 +12,35 @@
 ([oo](https://github.com/timm/lisp/tree/master/src/oo/README.md#top)
 ([sample](https://github.com/timm/lisp/tree/master/src/sample/README.md#top)))))
 
-# TEST
+# OLD
 
-
-
-
-## [col.lisp](col.lisp)
-
-
-
-## [hash.lisp](hash.lisp)
-
-
-
-## [keeper.lisp](keeper.lisp)
-
-
-
-## [ok.lisp](ok.lisp)
-
-
-`somemaydie `
-
-<ul>   Except three tests to run, one succeed, one give error.
-</ul>
-
-`success `
-
-<ul>   Expect allt ests to pass
-</ul>
-
-
-## [q.lisp](q.lisp)
-
-
-
-## [rand.lisp](rand.lisp)
-
-
-
-## [reads.lisp](reads.lisp)
-
-
-
-## [test.lisp](test.lisp)
-
-
-
-## [weather.lisp](weather.lisp)
 
 
 
 ## [xy.lisp](xy.lisp)
 
 
+`add ((c col) x &key (filter #'identity))`
 
-## [z.lisp](z.lisp)
+<ul>   Add numbers to column.
+</ul>
 
+`add1 ((nu num) x)`
+
+<ul>   New numbers update `min` and `max`.
+</ul>
+
+`norm ((n num) x)`
+
+<ul>   Convert x to the range 0..1.
+</ul>
+
+`add1 ((s sym) x)`
+
+<ul>   Increment the symbols counts
+</ul>
+
+`norm ((s sym) x)`
+
+<ul>   Normalize symbols does nothing.
+</ul>

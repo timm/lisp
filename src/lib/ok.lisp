@@ -1,3 +1,4 @@
+;; vim: ts=2 sw=2 sts=2 et :
 ;-------- -------- -------- -------- -------- -------- --------
 (unless (fboundp 'got) (load "../got"))
 
@@ -11,7 +12,7 @@
        (format t "~&~%;;; ~a~%; ~a~%" ',name ,doc)
        ,@body))
 
-(defmacro ok (want got msg &rest txt)
+(defmacro ok (want got &optional (msg "") &rest txt)
   `(progn 
      (incf *tries*)
      (handler-case
