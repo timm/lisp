@@ -1,5 +1,9 @@
 ; vim: ts=2 sw=2 sts=2  et :
-(defmacro has (x y) `(find ,y ,x :test #'equal))
+  
+(defun finds (x &rest lst) 
+  (dolist (y lst)
+     (if (find ,y ,x :test #'equal)
+         (return t))))
 
 (defmacro doarray ((one n arr &optional out) &body body )
    `(dotimes (,n (length ,arr) ,out)
@@ -65,16 +69,50 @@
 (defstruct row cells poles)
 (defstruct tbl rows (cols (make-cols)))
 
-(defun skipp(x) (has x #\?))
-(defun goalp(x)  (or (has x #\!) (has x #\<) (has x #\>)))
-(defun nump(x)   (or (has x #\$) (?? x #\<) (has x #\>)))
+(defstruct value want)
+(defmethod add ((e value) x)
+  (with-slots (want) e
+    (if (eql x #\?)
+      x
+      (let* ((y   (read-from-string x))
+             (got (numberp y)))
+        (if want (assert (eql got want)))
+        (setf want got)
+        y))))
+
+(defstruct values wants)
+(defmethod add ((vs values) arr)
+   (with-slots (wants) vs
+     (if wants
+       (let out (make-array (list (length wants)))
+          (doarray (want n wants out)
+            (setf (aref out n) (add want (aref arr n)))))
+       (progn
+         (setf wants (make-array (list (length arr)))
+            (doarray (want n wants arr)
+              (setf (aref wants n) (make-value))))))))
+          
+     
+(defmacro dovalues ((rows &optional out) &body body)
+  (let ((vals (gensym))
+        (n      (gensym))
+        `(doarray (one n1 rows)
+           (cond ((eql n 0)
+                  (setf ,vals (add (make-values) row))
+                  ,@body)
+                (t 
+                     ,@body)))))))
+           
+(defun skipp(x) (finds x #\?))
+(defun goalp(x) (finds x #\! #\< #\>))
+(defun nump(x)  (finds x #\$ #\< #\>))
 
 (defmethod add ((c cols) arr)
 	(with-slots (indep klass all  nums syms) c
 		(do-array (x pos arr)
 			 (unless (skipo x)
 				 (push x names)
-				 (if (has x #\!) (setq klass pos))
+				 (if (finds x #\!) (setq klass pos))
 				 (let* ((w     (if (? x #\<) -1 1))
 								(todo  (if (num? x) #'make-num #'make-sym))
 								(col   (funcall todo :pos pos :txt x :w w)))
