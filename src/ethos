@@ -1,5 +1,5 @@
 #!/usr/bin/env clisp -q
-; vim: ts=2 sw=2 sts=2  et :
+; vim: filetype=lisp: ts=2 sw=2 sts=2  et :
 
 ;---------.---------.---------.---------.--------.---------.----------
 ; hash defines
@@ -35,9 +35,9 @@
   `(progn (maphash #'(lambda (,key ,value) ,@body) ,h) ,out))
 
 (defmacro ? (obj first-slot &rest more-slots)
- 	(if (null more-slots)
-   		`(slot-value ,obj ',first-slot)
-   		`(? (slot-value ,obj ',first-slot) ,@more-slots)))
+   (if (null more-slots)
+       `(slot-value ,obj ',first-slot)
+       `(? (slot-value ,obj ',first-slot) ,@more-slots)))
 
 (defmacro ?? (&rest x) `(? *O* ,@x))
 
@@ -54,24 +54,24 @@
 
 ;---------.---------.---------.---------.--------.---------.----------
 (defstruct ch!
-	(meta  #\%)
-	(less  #\<)
-	(num   #\$)
-	(more  #\>)
-	(klass #\!)
-	(skip  #\?)
-	(sep   #\,))
+  (meta  #\%)
+  (less  #\<)
+  (num   #\$)
+  (more  #\>)
+  (klass #\!)
+  (skip  #\?)
+  (sep   #\,))
 
 (defstruct lsh!
-	(poles 10)
+  (poles 10)
   (trim  0.95))
 
 (defstruct control 
-	(lsh  (make-lsh!))
-	(ch   (make-ch!)))
+  (lsh  (make-lsh!))
+  (ch   (make-ch!)))
 
 (defun cli2options (thing)
-	(dolist (x (cli) thing)
+  (dolist (x (cli) thing)
      (aif (find (format nil ":~a" x) (the-slots things))
        (setf (slot-value thing x) 
              (read-from-string (nth (+ 1 a ) lst))))))
@@ -89,20 +89,20 @@
         (return t)))))
 
 (let ((whitespace '(#\, #\space #\tab #\newline)))
-	(defun s->words (s &optional (sep whitespace))
-		(with-input-from-string (str s)
-			(let (tmp out)
-				(labels 
-					((end-of-word () 
-						(when tmp
-							(push (concatenate 'string (reverse tmp)) out) 
-							(setf tmp nil)) 
-							out))
-					(whale (read-char str nil)
-								 (if (member a sep :test #'eql)
-										 (end-of-word)
-										 (push a tmp)))
-					(reverse (end-of-word)))))))
+  (defun s->words (s &optional (sep whitespace))
+    (with-input-from-string (str s)
+      (let (tmp out)
+        (labels 
+          ((end-of-word () 
+            (when tmp
+              (push (concatenate 'string (reverse tmp)) out) 
+              (setf tmp nil)) 
+              out))
+          (whale (read-char str nil)
+                 (if (member a sep :test #'eql)
+                     (end-of-word)
+                     (push a tmp)))
+          (reverse (end-of-word)))))))
 
 ;---------.---------.---------.---------.--------.---------.----------
 ; symbols
@@ -121,8 +121,8 @@
   (with-slots (most mode counts  n) s
     (incf n)
     (let ((new (incf (gethash x counts 0))))
-			(if (> new most)
-				(setf most new
+      (if (> new most)
+        (setf most new
               mode x)))
     x))
 
