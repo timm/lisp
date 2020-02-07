@@ -107,10 +107,10 @@
 ;---------.---------.---------.---------.--------.---------.----------
 ; symbols
 (defstruct sym
-  (count (make-hash-table))
+  (counts (make-hash-table))
   (n 0) (pos 0) (txt "") (w 1)
   (ent 0)
-  most
+  (most 0)
   mode)
 
 (defmethod var ((s sym) x) (ent x))
@@ -119,6 +119,7 @@
 
 (defmethod update ((s sym) x)
   (with-slots (most mode counts  n) s
+    (incf n)
     (let ((new (incf (gethash x counts 0))))
 			(if (> new most)
 				(setf most new
@@ -158,6 +159,7 @@
 (defmethod update ((nu num) x)
   (with-slots (n lo hi mu m2) nu
     (setf x (prep nu x))
+    (print `(mu update x ,x ,(type-of x)))
     (let ((delta (- x mu)))
       (setf n  (+ 1 n)
             lo (min lo x)
@@ -204,6 +206,7 @@
 (defstruct data rows (cols (make-cols)))
 
 (defmethod create ((c cols) arr)
+  (print `(create))
   (with-slots (indep klass all names goals meta nums syms) c
     (do-array (x pos arr)
       (labels 
@@ -226,27 +229,25 @@
               (push col (if (goalp) goals indep)))))))
     (reverse all)))
 
-(defmethod update ((c cols) arr)
-  (do-array (col _ (? cols all) arr)
+(defmethod update ((cs cols) arr)
+  (print `(update))
+  (dolist (col (? cs all) arr)
+    (print `(col ,col ,(? col pos) ,arr))
     (setf (aref arr (? col pos))
-          (update col (aref arr (? col pos))))
-    (print 22)))
+          (update col (aref arr (? col pos))))))
 
 (defmethod update ((d data) arr)
   (if (? d cols names) 
-    (let ((arr (prog1 (update (? d cols) arr) (print 33))))
-      (push (make-row arr) (data-rows d)))
-    (create (? d cols) arr))
-	(print (? d cols)))
+    (let ((arr (update (? d cols) arr)))
+      (push (make-row :cells arr) (data-rows d)))
+    (create (? d cols) arr)))
 
 (defmethod readd ((d data) &optional f)
    (do-read (x f d)
      (update d (coerce (s->words x) 'vector))))
 
-(format t "~a" (?? ch klass))
 
+(let ((d (make-data)))
+   (readd d "../data/weather.csv"))
 
-(let ((c (make-cols))) 
-	(create c ' #(:name $age >aaa))
-  (print c)
-) 
+;(let ((c (make-cols))) (create c ' #(:name $age >aaa)) (print c)) 
