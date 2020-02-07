@@ -246,7 +246,7 @@
    (do-read (x f d)
      (update d (coerce (s->words x) 'vector))))
 
-
+; a comment
 (let ((d (make-data)))
    (readd d "../data/weather.csv"))
 
