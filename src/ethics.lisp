@@ -43,13 +43,13 @@
 
 (defmacro do-read ((it &optional f out) &body body)
   (let ((str (gensym)))
-    `(progn
+    `(progn 
        (if ,f
          (with-open-file (,str ,f)
            (while (setf ,it (read-line ,str nil))
              ,@body))
-          (while (setf ,it (read-line *standard-input* nil))
-            ,@body))
+         (while (setf ,it (read-line *standard-input* nil))
+           ,@body))
        ,out)))
 
 ;---------.---------.---------.---------.--------.---------.----------
@@ -82,7 +82,11 @@
 ; tricks 
 (defun has (x &rest lst) 
   (dolist (y lst)
-     (if (find y x :test #'equal) (return t))))
+    (let ((x (if (stringp x) 
+               x 
+               (format nil "~a" x))))
+      (if (find y x :test #'equal) 
+        (return t)))))
 
 (let ((whitespace '(#\, #\space #\tab #\newline)))
 	(defun s->words (s &optional (sep whitespace))
@@ -115,17 +119,29 @@
 
 (defmethod update ((s sym) x)
   (with-slots (most mode counts  n) s
-    (let* ((new (incf (gethash x counts 0))))
+    (let ((new (incf (gethash x counts 0))))
 			(if (> new most)
 				(setf most new
               mode x)))
     x))
+
+(defmethod dec ((s sym) x)
+  (with-slots (n counts) s
+    (unless (< n 1)
+      (decf (gethash x counts 0))
+      (decf n))))
 
 (defmethod ent ((s sym) &aux (e 0))
   (with-slots (counts n) s
     (do-hash (k v counts e)
       (let ((p (/ v n)))
         (decf e (* p (log p 2)))))))
+
+(defmethod dist ((s sym) s1 s2)
+  (labels ((no (x) (eql x (?? ch skip))))
+    (if (and (no s1) (no s2))
+      1
+      (if (eql s1 s2) 0 1))))
 
 ;---------.---------.---------.---------.--------.---------.----------
 ; numbers
@@ -140,15 +156,24 @@
 (defmethod prep ((s num) x) (if (numberp x) x (read-from-string x)))
 
 (defmethod update ((nu num) x)
-  (with-slots (n all lo hi mu m2 sd) nu
+  (with-slots (n lo hi mu m2) nu
     (setf x (prep nu x))
     (let ((delta (- x mu)))
-      (setf lo (min lo x)
+      (setf n  (+ 1 n)
+            lo (min lo x)
             hi (max hi x)
             mu (+ mu (/ delta n))
             m2 (+ m2 (* delta (- x mu))))
       (sd-prim nu))
     x))
+
+(defmethod dec ((nu num) x)
+  (with-slots (n mu m2) nu
+    (let ((delta (- x mu)))
+      (setf n  (- 1 n)
+            mu (- mu (/ delta n))
+            m2 (- m2 (* delta (- x mu))))
+      (sd-prim nu))))
 
 (defmethod sd-prim ((nu num))
   (with-slots (sd n m2) nu
@@ -159,6 +184,17 @@
 (defmethod norm ((nu num) x)
   (with-slots (lo hi) nu
     (/ (- x lo) (+ (- hi lo) (/ 1 most-positive-fixnum)))))
+
+(defmethod dist ((nu num) n1 n2)
+  (labels ((no (x) (eql x (?? ch skip))))
+    (cond ((and (no n1) (no n2)) (return 1))
+          ((no n1) (setf n2 (norm nu n2)
+                         n1 (if (< n1 0.5) 1 0)))
+          ((no n2) (setf n1 (norm nu n1)
+                         n2 (if (< n2 0.5) 1 0)))
+          (t       (setf n1 (norm nu n1)
+                         n2 (norm nu n2))))
+    (abs (- n1 n2))))
 
 ;---------.---------.---------.---------.--------.---------.----------
 ; tables of data
@@ -209,7 +245,8 @@
 
 (format t "~a" (?? ch klass))
 
-(let ((d (make-data))) 
-	(readd d)
-  d
-  ) 
+
+(let ((c (make-cols))) 
+	(create c ' #(:name $age >aaa))
+  (print c)
+) 
