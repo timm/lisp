@@ -28,16 +28,16 @@
      (while (setf a ,test) ,@body)))
 
 (defmacro do-array ((one n arr &optional out) &body body )
-   `(dotimes (,n (length ,arr) ,out)
-       (let ((,one (aref arr ,n))) ,@body)))
+  `(dotimes (,n (length ,arr) ,out)
+     (let ((,one (aref arr ,n))) ,@body)))
 
 (defmacro do-hash ((key value  h &optional out) &body body )
   `(progn (maphash #'(lambda (,key ,value) ,@body) ,h) ,out))
 
 (defmacro ? (obj first-slot &rest more-slots)
-   (if (null more-slots)
-       `(slot-value ,obj ',first-slot)
-       `(? (slot-value ,obj ',first-slot) ,@more-slots)))
+  (if (null more-slots)
+    `(slot-value ,obj ',first-slot)
+    `(? (slot-value ,obj ',first-slot) ,@more-slots)))
 
 (defmacro ?? (&rest x) `(? *O* ,@x))
 
@@ -80,6 +80,15 @@
 
 ;---------.---------.---------.---------.--------.---------.----------
 ; tricks 
+(defun list-string(lst &optional (sep ","))
+  (with-ouput-to-string (str)
+     (print-list lst sep str)))
+
+(defun print-list(lst sep  str)
+  (format str "(~a" (car lst))
+  (dolist (x (cdr lst)) (format str "~a ~a" sep x))
+  (format str ")"))
+
 (defun has (x &rest lst) 
   (dolist (y lst)
     (let ((x (if (stringp x) 
@@ -159,7 +168,6 @@
 (defmethod update ((nu num) x)
   (with-slots (n lo hi mu m2) nu
     (setf x (prep nu x))
-    (print `(mu update x ,x ,(type-of x)))
     (let ((delta (- x mu)))
       (setf n  (+ 1 n)
             lo (min lo x)
@@ -206,7 +214,6 @@
 (defstruct data rows (cols (make-cols)))
 
 (defmethod create ((c cols) arr)
-  (print `(create))
   (with-slots (indep klass all names goals meta nums syms) c
     (do-array (x pos arr)
       (labels 
@@ -230,9 +237,7 @@
     (reverse all)))
 
 (defmethod update ((cs cols) arr)
-  (print `(update))
   (dolist (col (? cs all) arr)
-    (print `(col ,col ,(? col pos) ,arr))
     (setf (aref arr (? col pos))
           (update col (aref arr (? col pos))))))
 
@@ -248,6 +253,7 @@
 
 ; a comment
 (let ((d (make-data)))
-   (readd d "../data/weather.csv"))
+   (print (? (readd d "../data/weather.csv") cols names)))
 
+(format t "~{~, ~a~}" '(i love icecream))
 ;(let ((c (make-cols))) (create c ' #(:name $age >aaa)) (print c)) 
