@@ -183,6 +183,7 @@ vimrc() { cat<<-'EOF'
 	Plugin 'nequo/vim-allomancer'
 	Plugin 'nanotech/jellybeans.vim'
 	Plugin 'vimwiki/vimwiki'
+	Plugin 'jpalardy/vim-slime'
         " All of your Plugins must be added before the following line
 	call vundle#end()            " required
 	filetype plugin indent on    " required
@@ -196,9 +197,12 @@ vimrc() { cat<<-'EOF'
 	hi NonText guibg=NONE ctermbg=NONE
         set fillchars=vert:\|
 	hi VertSplit cterm=NONE	
-	EOF
+	let g:slime_target = "tmux"
+        let g:slime_paste_file = "$HOME/tmp/ish/.slime_paste"
+        let g:slime_default_config = {"socket_name": "default", "target_pane": "{right-of}"}
+EOF
 }
-bashrc() { cat<<-'EOF'
+        bashrc() { cat<<-'EOF'
 	root=$(git rev-parse --show-toplevel)
 	ishs=$HOME/tmp/ish
 	mkdir -p $ishs
@@ -215,6 +219,7 @@ bashrc() { cat<<-'EOF'
 	alias add='zap; git add *'
 	alias put='gfig; zap; git commit -am saving; git push; git status'
 	alias get='gfig; git pull'
+        alias lisp="rlwrap sbcl --noinform "
 	vim -u $ishs/.vimrc +PlugInstall  +qall
 	uname="$(uname -s)"
 	case "${uname}" in
@@ -259,7 +264,7 @@ bashrc() { cat<<-'EOF'
 AFTER=1
 #brew install bsdgames-osx
 
-for c in gawk git tmux vim mc tree cmatrix rain; do
+for c in gawk git tmux vim mc tree cmatrix rain rlwrap; do
   if [ -z "$(which $c)" ]; then
     AFTER=""
     echo "#E> missing: $c"
