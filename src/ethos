@@ -132,6 +132,13 @@
 
 (eg (equalp "A, B, C" (list-string '(a b c))))
 
+(defun ifs (flags lst)
+	(if lst
+		(if (car flags)
+			(cons (car lst)
+						(ifs (cdr flags) (cdr lst)))
+			(ifs (cdr flags) (cdr lst)))))
+
 (defun has (x &rest lst) 
   (dolist (y lst)
     (let ((x (if (stringp x) x (format nil "~a" x))))
@@ -192,15 +199,16 @@
 
 (defmethod dec ((s sym) x)
   (with-slots (n counts) s
-    (unless (< n 1)
+    (when (> (gethash x counts 0) 0)
       (decf (gethash x counts 0))
       (decf n))))
 
 (defmethod ent ((s sym) &aux (e 0))
   (with-slots (counts n) s
     (do-hash (k v counts e)
-      (let ((p (/ v n)))
-        (decf e (* p (log p 2)))))))
+      (if (> v 0)
+				(let ((p (/ v n)))
+					(decf e (* p (log p 2))))))))
 
 (defmethod dist ((s sym) s1 s2)
   (labels ((no (x) (eql x (?? ch skip))))
@@ -263,15 +271,12 @@
                          n2 (norm nu n2))))
     (abs (- n1 n2))))
 
-(eg 
-	(progn 
-		(rand-reset)
-		(let* ((max     1000)
+(defun _updateDec (lst)
+	(let ((n (if (numberp (car lst)) (make-num) (make-sym))))
+		(let* ((max     (length lst))
 					 (min     5)
 					 (diff 	  0)
-					 (results (make-hash-table))
-					 (n       (make-num))
-					 (lst     (loop for i from 1 to max collect (rand))))
+					 (results (make-hash-table)))
 			(loop 	
 				for i from 0 to (1- max)  do
 				(setf (gethash i results) (spread n))
@@ -282,11 +287,30 @@
 				(incf diff (- (spread n) (gethash i results))))
 			(< (abs diff) 0.0001))))
 
+(eg (progn
+			(rand-reset)
+			(_updateDec
+				(loop for i from 1 to 1000 collect (rand)))))
+
+(eg (progn
+			(rand-reset)
+			(_updateDec
+				(loop for i from 1 to 1000 collect 
+							(format nil "_~a" (randi 10))))))
+
 ;--------d.---------.---------.---------.--------.---------.----------
+(defun xpect (f &rest lst)
+	"expected value of, e.g., spread"
+	(let ((sum 0) 
+        (n   0))
+		(dolist (one lst (/ sum n))
+			(incf n   (? one n))
+			(incf sum (* (? one n) (funcall f one))))))
+
 (defun all (lst &optional how)
   (dolist (one lst how)
-	  (setf how 
-       (or how (if (numberp one) (make-num) (make-sym))))
+	  (setf how (or how 
+                  (if (numberp one) (make-num) (make-sym))))
     (update how one)))
 
 (eg (let ((x (all '( y y y y y y y y n n n n n))))
@@ -304,30 +328,29 @@
 (defstruct row cells poles)
 (defstruct data  rows (cols (make-cols)) (npoles 0))
 
-(defmethod build ((c cols) lst)
-  (with-slots (indep klass all names goals meta nums syms) c
-    (doitems (x pos lst)
-      (labels 
-        ((goalp()  (has x (?? ch klass) (?? ch less) (?? ch more)))
-         (nump()   (has x (?? ch num)   (?? ch less) (?? ch more)))
-         (klassp() (has x (?? ch klass)))
-         (metap()  (has x (?? ch meta)))
-         (lessp()  (has x (?? ch less)))
-         (skipp()  (has x (?? ch skip))))
-        (unless (skipp)
-          (push x names)
-          (if (klassp) (setq klass pos))
-          (let* ((w     (if (lessp) -1 1))
-                 (todo  (if (nump) #'make-num #'make-sym))
-                 (col   (funcall todo :pos pos :txt x :w w)))
-            (push col all)
-            (if (nump) (push col nums)  (push col syms))
-            (if (metap)
-              (push col meta)
-              (if (goalp) (push col goals) (push col indep)))))))
-    (reverse all)))
+(defmethod goalp ((c cols) x) (has x (?? ch klass) (?? ch less) (?? ch more)))
+(defmethod nump  ((c cols) x) (has x (?? ch num)   (?? ch less) (?? ch more)))
+(defmethod klassp((c cols) x) (has x (?? ch klass)))
+(defmethod metap ((c cols) x) (has x (?? ch meta)))
+(defmethod lessp ((c cols) x) (has x (?? ch less)))
+(defmethod skipp ((c cols) x) (has x (?? ch skip))))
 
-(build (make-cols) '($a  ?c  <e !f))
+(defmethod build ((c cols) lst)
+	"assumes all skipped columns are filtered before we get here"
+	(with-slots (indep klass all names goals meta nums syms) c
+		(doitems (x pos lst (reverse all))
+			(push x names)
+			(if (klassp c x) (setq klass pos))
+			(let* ((w        (if (lessp) -1 1))
+						 (todo     (if (nump) #'make-num #'make-sym))
+						 (col      (funcall todo :pos pos :txt x :w w)))
+				(push col all)
+				(if (nump c x) (push col nums)  (push col syms))
+				(if (metap c x)
+					(push col meta)
+					(if (goalp c x) (push col goals) (push col indep)))))))
+
+(eg (build (make-cols) '($a   <e !f)))
 
 (defmethod update ((cs cols) lst)
   (dolist (col (? cs all) lst)
@@ -340,9 +363,21 @@
       (push (make-row :cells tmp) (data-rows d)))
     (build (? d cols) lst)))
 
+(defmethod skipp ((d data) lst)
+	(mapcar (lambda (x) (skipp (? d cols) x) lst)))
+
+(defmethod without ((d data) skips lst)
+	(if lst
+		(if (car skips)
+			(without d (cdr skips) (cdr lst))
+			(cons (car lst)
+						(without d (cdr skips) (cdr lst)))
+
 (defmethod readd ((d data) &optional f)
-   (do-read (x f)
-     (update d (s->words x))))
+	(let (bad)
+		(do-read (x f)
+			(setf bad (or bad (skipp d x)))
+			(update d (without d bad x)))))
 
 (defmethod print-object ((d data) str)
   (print-list (? d cols names)  ","  str)
@@ -358,8 +393,10 @@
     (terpri str)))
 
 ; a comment
-'(let ((d (make-data)))
+(let ((d (make-data)))
    (readd d "../data/weather.csv")
-   (format t "~&~a" d))
+   ;(format t "~&~a" (? d cols)
+)
+
 
 (run *tests*)
