@@ -268,23 +268,19 @@
 		(rand-reset)
 		(let* ((max     1000)
 					 (min     5)
+					 (diff 	  0)
 					 (results (make-hash-table))
 					 (n       (make-num))
 					 (lst     (loop for i from 1 to max collect (rand))))
-			(loop for i from 0 to (1- max)  do
-						(if (> i (1- min))
-							(push (spread n) (gethash i results)))
-						(update n (nth i lst))
-						)
-			(loop for i from (1- max)  downto min do
-						(dec n (nth i lst))
-						(push (spread n) (gethash i results))
-						)
-			(let ((diff 0))
-				(maphash #'(lambda (k v) 
-										 (incf diff (-(first v) (second v))))
-								 results)
-				(< (abs diff) 0.0001)))))
+			(loop 	
+				for i from 0 to (1- max)  do
+				(setf (gethash i results) (spread n))
+				(update n (nth i lst)))
+			(loop 
+				for i from (1- max)  downto min do
+				(dec n (nth i lst))
+				(incf diff (- (spread n) (gethash i results))))
+			(< (abs diff) 0.0001))))
 
 ;--------d.---------.---------.---------.--------.---------.----------
 (defun all (lst &optional how)
