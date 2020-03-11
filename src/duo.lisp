@@ -3,7 +3,7 @@
 
 (defun l() 
   (handler-bind ((style-warning #'muffle-warning)) 
-    (load "ethos")))
+    (load "duo")))
 
 ;---------.---------.---------.---------.--------.---------.----------
 ; test suite
@@ -85,7 +85,7 @@
        ,out)))
 
 (eg (let ((n 0))
-			(do-csv (x "ethos" (> n 0)) 
+			(do-csv (x "duo.lisp" (> n 0)) 
 				(incf n (length x)))))
 
 ;---------.---------.---------.---------.--------.---------.----------
@@ -326,11 +326,8 @@
 						 (< 6.99 (? x mu) 7.01))))
 
 ;---------.---------.---------.---------.--------.---------.----------
-; tables of data
-(defstruct col (w 1) (pos 0) (txt ""))
+; table columns
 (defstruct cols all klass goals names indep nums syms meta)
-(defstruct row cells poles)
-(defstruct data  rows (cols (make-cols)) (npoles 0))
 
 (defmethod goalp ((c cols) x) (has x (?? ch klass) (?? ch less) (?? ch more)))
 (defmethod nump  ((c cols) x) (has x (?? ch num)   (?? ch less) (?? ch more)))
@@ -345,9 +342,9 @@
 		(doitems (x pos lst)
 			(push x names)
 			(if (klassp c x) (setq klass pos))
-			(let* ((w        (if (lessp c x) -1 1))
-						 (todo     (if (nump c x) #'make-num #'make-sym))
-						 (col      (funcall todo :pos pos :txt x :w w)))
+			(let* ((w    (if (lessp c x) -1 1))
+						 (todo (if (nump c x) #'make-num #'make-sym))
+						 (col  (funcall todo :pos pos :txt x :w w)))
 				(push col all)
 				(if (nump c x) (push col nums)  (push col syms))
 				(if (metap c x)
@@ -361,6 +358,12 @@
   (dolist (col (? cs all) lst)
     (setf (nth (? col pos) lst)
           (update col (nth (? col pos) lst)))))
+
+
+;---------.---------.---------.---------.--------.---------.----------
+; data has many rows and coumns
+(defstruct row cells poles)
+(defstruct data  rows (cols (make-cols)) (npoles 0))
 
 (defmethod update ((d data) lst)
   (if (? d cols names) 
@@ -382,14 +385,7 @@
 	(let (bad)
 		(do-csv (cells file)
 			(setf bad (or bad (skipp d cells)))
-			(update  d (without d bad cells)))))
-
-(eg 
-	(let (bad (d (make-data)))
-		(do-csv (cells "../data/weather.csv")
-			(setf bad (or bad (skipp d cells)))
-			(show  d (without d bad cells)))))
-
+			(update d (without d bad cells)))))
 
 (defmethod print-object ((d data) str)
   (print-list (? d cols names)  ","  str)
@@ -404,12 +400,18 @@
         (format str ",0")))
     (terpri str)))
 
+(eg 
+	(let (bad (d (make-data)))
+		(do-csv (cells "../data/weather.csv" t)
+			(setf bad (or bad (skipp d cells)))
+			(show (without d bad cells)))))
+
 ; make do-csv for csv. do s->words inside it
 ; a comment
 (let ((d (make-data)))
    (readd d "../data/weather.csv")
+   (mapc (lambda (x) (print (spread x))) (? d cols all))
    ;(format t "~&~a" (? d cols)
 )
 
-
-'(run *tests*)
+(run *tests*)
