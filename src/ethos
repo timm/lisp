@@ -71,19 +71,21 @@
 
 (defmacro ?? (&rest x) `(? *O* ,@x))
 
-(defmacro do-read ((it &optional f out) &body body)
+(defmacro do-csv ((it &optional f out ) &body body)
   (let ((str (gensym)))
     `(let (,it) 
        (if ,f
          (with-open-file (,str ,f)
-           (while (setf ,it (read-line ,str nil))
+           (while (setf ,it  (read-line ,str nil))
+             (setf ,it (s->words ,it))
              ,@body))
          (while (setf ,it (read-line *standard-input* nil))
-           ,@body))
+             (setf ,it (s->words ,it))
+             ,@body))
        ,out)))
 
 (eg (let ((n 0))
-			(do-read (x "ethos" (> n 0)) 
+			(do-csv (x "ethos" (> n 0)) 
 				(incf n (length x)))))
 
 ;---------.---------.---------.---------.--------.---------.----------
@@ -123,6 +125,8 @@
 
 ;---------.---------.---------.---------.--------.---------.----------
 ; tricks 
+(defun show (&rest lst) (print lst))
+
 (defun print-list(lst sep  str)
   (format str "~a" (car lst))
   (dolist (x (cdr lst)) (format str "~a ~a" sep x)))
@@ -333,22 +337,23 @@
 (defmethod klassp((c cols) x) (has x (?? ch klass)))
 (defmethod metap ((c cols) x) (has x (?? ch meta)))
 (defmethod lessp ((c cols) x) (has x (?? ch less)))
-(defmethod skipp ((c cols) x) (has x (?? ch skip))))
+(defmethod skipp ((c cols) x) (has x (?? ch skip)))
 
 (defmethod build ((c cols) lst)
 	"assumes all skipped columns are filtered before we get here"
 	(with-slots (indep klass all names goals meta nums syms) c
-		(doitems (x pos lst (reverse all))
+		(doitems (x pos lst)
 			(push x names)
 			(if (klassp c x) (setq klass pos))
-			(let* ((w        (if (lessp) -1 1))
-						 (todo     (if (nump) #'make-num #'make-sym))
+			(let* ((w        (if (lessp c x) -1 1))
+						 (todo     (if (nump c x) #'make-num #'make-sym))
 						 (col      (funcall todo :pos pos :txt x :w w)))
 				(push col all)
 				(if (nump c x) (push col nums)  (push col syms))
 				(if (metap c x)
 					(push col meta)
-					(if (goalp c x) (push col goals) (push col indep)))))))
+					(if (goalp c x) (push col goals) (push col indep)))))
+		(setf all (reverse all))))
 
 (eg (build (make-cols) '($a   <e !f)))
 
@@ -361,23 +366,30 @@
   (if (? d cols names) 
     (let ((tmp (update (? d cols) lst)))
       (push (make-row :cells tmp) (data-rows d)))
-    (build (? d cols) lst)))
+    (build (? d cols) lst))) 
 
 (defmethod skipp ((d data) lst)
-	(mapcar (lambda (x) (skipp (? d cols) x) lst)))
+	(mapcar (lambda (x) (skipp (? d cols) x)) lst))
 
 (defmethod without ((d data) skips lst)
 	(if lst
 		(if (car skips)
 			(without d (cdr skips) (cdr lst))
 			(cons (car lst)
-						(without d (cdr skips) (cdr lst)))
+						(without d (cdr skips) (cdr lst))))))
 
-(defmethod readd ((d data) &optional f)
+(defmethod readd ((d data) &optional file )
 	(let (bad)
-		(do-read (x f)
-			(setf bad (or bad (skipp d x)))
-			(update d (without d bad x)))))
+		(do-csv (cells file)
+			(setf bad (or bad (skipp d cells)))
+			(update  d (without d bad cells)))))
+
+(eg 
+	(let (bad (d (make-data)))
+		(do-csv (cells "../data/weather.csv")
+			(setf bad (or bad (skipp d cells)))
+			(show  d (without d bad cells)))))
+
 
 (defmethod print-object ((d data) str)
   (print-list (? d cols names)  ","  str)
@@ -392,6 +404,7 @@
         (format str ",0")))
     (terpri str)))
 
+; make do-csv for csv. do s->words inside it
 ; a comment
 (let ((d (make-data)))
    (readd d "../data/weather.csv")
@@ -399,4 +412,4 @@
 )
 
 
-(run *tests*)
+'(run *tests*)
