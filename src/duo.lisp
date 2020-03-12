@@ -5,6 +5,19 @@
   (handler-bind ((style-warning #'muffle-warning)) 
     (load "duo")))
 
+(setf +header+ "
+[![](https://raw.githubusercontent.com/timm/ish/master/etc/img/banner.png)](https://github.com/timm/ish/blob/master/README.md)[home](http://git.io/ish)
+| [code](https://github.com/timm/ish/tree/master/src)
+| [doc](https://github.com/timm/ish/blob/master/src/README.md)
+| [discuss](https://github.com/timm/ish/issues)
+| [contribute](https://github.com/timm/ish/blob/master/CONTRIB.md)
+| [cite](https://github.com/timm/ish/blob/master/CITATION.md)
+| [&copy; 2018](https://github.com/timm/ish/blob/master/LICENSE.md)
+
+[![](https://zenodo.org/badge/doi/10.5281/zenodo.1172230.svg)](https://github.com/timm/ish/blob/master/CITATION.md
+
+")
+
 ;---------.---------.---------.---------.--------.---------.----------
 ; test suite
 (defstruct tests all)
@@ -43,6 +56,8 @@
 
 ;---------.---------.---------.---------.--------.---------.----------
 ; macros
+(defmacro dot (s &rest data) data)
+
 (defmacro aif (test then &optional else)
 	`(let ((a ,test)) (if a ,then ,else)))
 
@@ -124,7 +139,8 @@
 (eg (eql #\% (?? ch meta)))
 
 ;---------.---------.---------.---------.--------.---------.----------
-; tricks 
+(doc "## Basic tools")
+
 (defun show (&rest lst) (print lst))
 
 (defun print-list(lst sep  str)
@@ -179,6 +195,56 @@
 (defun randi (&optional (n 100)) 
 	(floor (* n (/ (rand 1000.0) 1000))))
 
+(defun reads (f &optional  (fn #'print) (str t))
+	"Read  a file, calling 'fn' on each s-expression. "
+	(with-open-file (s f)
+		(labels 
+			((worker (&optional (one (read s nil :eof)))
+							 (unless (eq  one :eof)
+								 (funcall fn  one str)
+								 (worker))))
+			(worker))))
+
+(defun string-lines (str)
+  "Convert a string to a list of lines."
+  (labels 
+    ((nl    (z)    (char= z #\Newline))
+     (where (pos0) (position-if #'nl str :start pos0))
+     (worker (pos0 &aux pos)
+        (if (setf pos (where pos0))
+            (cons (subseq str pos0 pos) 
+                  (worker (1+ pos)))
+            (list (subseq str pos0)))))
+    (worker 0)))
+
+(defun fundoc (x s)
+  "Takes the function documentation string and
+  prints it, indented by a little white space"
+  (labels ((defp     () (member (first x) '(defun defmacro defmethod)))
+           (garnishp () (eql    (first x)  'garnish))
+           (secret   () (char= #\_ (elt (symbol-name (second x)) 0)))
+           (docp     () (and    (> (length x) 3)
+                                (stringp (fourth x))
+                                (not (equal "" (fourth x)))))
+           (dump (str  &optional (pad ""))
+             (dolist (line (string-lines str))
+                (format s "~a~a~%" pad (string-trim " ;" line)))))
+    (when (garnishp)
+      (terpri s)
+      (dump (second x))
+      (terpri s))
+    (when (and (defp) (docp) (not (secret)))
+      (format s "~%`~(~a~) ~(~a~)`~%~%-" (second x) (or (third x) ""))
+      (dump (fourth x) "   "))))
+
+(defun readme (f) 
+	(with-output-to-string (out)
+		(format out "~a" +header+) 
+		(format out "# ~a ~%" f)
+		(reads f #'fundoc out)
+    (terpri out)))
+
+(readme "duo.lisp")
 ;---------.---------.---------.---------.--------.---------.---------
 ; symbols
 (defstruct sym
@@ -414,4 +480,4 @@
    ;(format t "~&~a" (? d cols)
 )
 
-(run *tests*)
+'(run *tests*)
