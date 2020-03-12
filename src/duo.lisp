@@ -56,7 +56,7 @@
 
 ;---------.---------.---------.---------.--------.---------.----------
 ; macros
-(defmacro dot (s &rest data) data)
+(defun doc (str &key toc))
 
 (defmacro aif (test then &optional else)
 	`(let ((a ,test)) (if a ,then ,else)))
@@ -195,16 +195,6 @@
 (defun randi (&optional (n 100)) 
 	(floor (* n (/ (rand 1000.0) 1000))))
 
-(defun reads (f &optional  (fn #'print) (str t))
-	"Read  a file, calling 'fn' on each s-expression. "
-	(with-open-file (s f)
-		(labels 
-			((worker (&optional (one (read s nil :eof)))
-							 (unless (eq  one :eof)
-								 (funcall fn  one str)
-								 (worker))))
-			(worker))))
-
 (defun string-lines (str)
   "Convert a string to a list of lines."
   (labels 
@@ -217,11 +207,22 @@
             (list (subseq str pos0)))))
     (worker 0)))
 
+(defun reads (f &optional  (fn #'print) (str t))
+	"Read  a file, calling 'fn' on each s-expression. "
+	(with-open-file (s f)
+		(labels 
+			((worker (&optional (one (read s nil :eof)))
+							 (unless (eq  one :eof)
+								 (funcall fn  one str)
+								 (worker))))
+			(worker))))
+
 (defun fundoc (x s)
   "Takes the function documentation string and
   prints it, indented by a little white space"
+  (print x)
   (labels ((defp     () (member (first x) '(defun defmacro defmethod)))
-           (garnishp () (eql    (first x)  'garnish))
+           (docp     () (eql    (first x)  'doc))
            (secret   () (char= #\_ (elt (symbol-name (second x)) 0)))
            (docp     () (and    (> (length x) 3)
                                 (stringp (fourth x))
@@ -229,13 +230,11 @@
            (dump (str  &optional (pad ""))
              (dolist (line (string-lines str))
                 (format s "~a~a~%" pad (string-trim " ;" line)))))
-    (when (garnishp)
-      (terpri s)
-      (dump (second x))
-      (terpri s))
-    (when (and (defp) (docp) (not (secret)))
-      (format s "~%`~(~a~) ~(~a~)`~%~%-" (second x) (or (third x) ""))
-      (dump (fourth x) "   "))))
+    (cond ((docp)
+           (terpri s) (dump (cdr x)) (terpri s))
+          (t (when (and (defp) (docp) (not (secret)))
+               (format s "~%`~(~a~) ~(~a~)`~%~%-" (second x) (or (third x) ""))
+               (dump (fourth  x) "   "))))))
 
 (defun readme (f) 
 	(with-output-to-string (out)
@@ -244,7 +243,6 @@
 		(reads f #'fundoc out)
     (terpri out)))
 
-(readme "duo.lisp")
 ;---------.---------.---------.---------.--------.---------.---------
 ; symbols
 (defstruct sym
@@ -480,4 +478,5 @@
    ;(format t "~&~a" (? d cols)
 )
 
+'(readme "duo.lisp")
 '(run *tests*)
