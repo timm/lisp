@@ -243,18 +243,18 @@
   "Takes the function documentation string and
   prints it, indented by a little white space"
   (labels ((defp     () (member (first x) '(defun defmacro defmethod)))
-           (docp     () (eql    (first x)  'doc))
+           (docp     () (and (defp) (eql    (first x)  'doc)))
            (secret   () (char= #\_ (elt (symbol-name (second x)) 0)))
-           (commentp () (and    (defp)
-                                (> (length x) 3)
-                                (stringp (fourth x))
-                                (not (equal "" (fourth x))))))
+           (commentp () (and (defp)
+                              (> (length x) 3)
+                              (stringp (fourth x))
+                              (not (equal "" (fourth x))))))
     (if (docp)
      (format s "~%~a~%"  (second x)))
-    (if (and (commentp) (not (secret)))
-     (format s "~%### ~(~a~) ~%~%~a~%"  
-                  (cons (second x) (third x)) (fourth x)))
-               ))
+    (when (and (commentp) (not (secret)))
+     (format t "~&~a~%" (second x))
+     (format s "~%### ~(~a~) ~%~%~a~%"  (cons (second x) (third x)) 
+                                        (fourth x)))))
 
 (defun lisp2md (&optional (in "duo.lisp") (out "/tmp/duo.md")) 
   "Generates a Markdown file from the lisp code."
@@ -262,7 +262,8 @@
 		(format sout "~a" +header+) 
 		(format sout "# ~a ~%" in)
 		(reads in #'fundoc sout)
-    (terpri sout)))
+    (terpri sout))
+  out)
 
 ;(lisp2md)
 
