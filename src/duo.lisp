@@ -5,19 +5,6 @@
   (handler-bind ((style-warning #'muffle-warning)) 
     (load "duo")))
 
-(setf +header+ "
-[![](https://raw.githubusercontent.com/timm/ish/master/etc/img/banner.png)](https://github.com/timm/ish/blob/master/README.md)[home](http://git.io/ish)
-| [code](https://github.com/timm/ish/tree/master/src)
-| [doc](https://github.com/timm/ish/blob/master/src/README.md)
-| [discuss](https://github.com/timm/ish/issues)
-| [contribute](https://github.com/timm/ish/blob/master/CONTRIB.md)
-| [cite](https://github.com/timm/ish/blob/master/CITATION.md)
-| [&copy; 2018](https://github.com/timm/ish/blob/master/LICENSE.md)
-
-[![](https://zenodo.org/badge/doi/10.5281/zenodo.1172230.svg)](https://github.com/timm/ish/blob/master/CITATION.md
-
-")
-
 ;---------.---------.---------.---------.--------.---------.----------
 ; test suite
 (defstruct tests all)
@@ -217,31 +204,50 @@
 								 (worker))))
 			(worker))))
 
+;---------.---------.---------.---------.--------.---------.----------
+(doc "## Documentation (Lisp to Markdown)")
+
+(setf +header+ "
+[![](https://raw.githubusercontent.com/timm/ish/master/etc/img/banner.png)](https://github.com/timm/ish/blob/master/README.md)[home](http://git.io/ish)
+| [code](https://github.com/timm/ish/tree/master/src)
+| [doc](https://github.com/timm/ish/blob/master/src/README.md)
+| [discuss](https://github.com/timm/ish/issues)
+| [contribute](https://github.com/timm/ish/blob/master/CONTRIB.md)
+| [cite](https://github.com/timm/ish/blob/master/CITATION.md)
+| [&copy; 2018](https://github.com/timm/ish/blob/master/LICENSE.md)
+
+[![](https://zenodo.org/badge/doi/10.5281/zenodo.1172230.svg)](https://github.com/timm/ish/blob/master/CITATION.md
+
+")
+
 (defun fundoc (x s)
   "Takes the function documentation string and
   prints it, indented by a little white space"
-  (print x)
   (labels ((defp     () (member (first x) '(defun defmacro defmethod)))
            (docp     () (eql    (first x)  'doc))
            (secret   () (char= #\_ (elt (symbol-name (second x)) 0)))
-           (docp     () (and    (> (length x) 3)
+           (commentp () (and    (defp)
+                                (> (length x) 3)
                                 (stringp (fourth x))
-                                (not (equal "" (fourth x)))))
-           (dump (str  &optional (pad ""))
-             (dolist (line (string-lines str))
-                (format s "~a~a~%" pad (string-trim " ;" line)))))
-    (cond ((docp)
-           (terpri s) (dump (cdr x)) (terpri s))
-          (t (when (and (defp) (docp) (not (secret)))
-               (format s "~%`~(~a~) ~(~a~)`~%~%-" (second x) (or (third x) ""))
-               (dump (fourth  x) "   "))))))
+                                (not (equal "" (fourth x))))))
+    (if (docp)
+     (format s "~%~a~%"  (second x)))
+    (if (and (commentp) (not (secret)))
+     (format s "~%### ~(~a~) ~%~%~a~%"  
+                  (cons (second x) (third x)) (fourth x)))
+               ))
 
-(defun readme (f) 
-	(with-output-to-string (out)
-		(format out "~a" +header+) 
-		(format out "# ~a ~%" f)
-		(reads f #'fundoc out)
-    (terpri out)))
+(defun lisp2md (&optional (in "duo.lisp") (out "/tmp/duo.md")) 
+  "Generates a Markdown file from the lisp code."
+  (with-open-file (sout  out  :direction :output)
+		(format sout "~a" +header+) 
+		(format sout "# ~a ~%" f)
+		(reads in #'fundoc sout)
+    (terpri sout)))
+
+(lisp2md)
+
+; sbcl --noinform --eval "(progn (format t "~&~a~%" 1))"
 
 ;---------.---------.---------.---------.--------.---------.---------
 ; symbols
@@ -478,5 +484,4 @@
    ;(format t "~&~a" (? d cols)
 )
 
-'(readme "duo.lisp")
 '(run *tests*)
