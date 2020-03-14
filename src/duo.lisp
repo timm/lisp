@@ -116,6 +116,7 @@
   (more  #\>)
   (klass #\!)
   (skip  #\?)
+  (skipstr  "?")
   (sep   #\,))
 
 (defstruct lsh!
@@ -225,7 +226,7 @@
 ;---------.---------.---------.---------.--------.---------.----------
 (doc "## Documentation (Lisp to Markdown)")
 
-(setf +header+ "
+(defparameter +header+ "
 [![](https://raw.githubusercontent.com/timm/ish/master/etc/img/banner.png)](https://github.com/timm/ish/blob/master/README.md)<br>
 [home](http://git.io/ish)
 | [code](https://github.com/timm/ish/tree/master/src)
@@ -283,13 +284,14 @@
 (defmethod prep ((s sym) x) x)
 
 (defmethod update ((s sym) x)
-  (with-slots (most mode counts  n) s
-    (incf n)
-    (let ((new (incf (gethash x counts 0))))
-      (if (> new most)
-        (setf most new
-              mode x)))
-    x))
+  (unless  (member x (list #\? "?") :test #'equal)
+    (with-slots (most mode counts  n) s
+      (incf n)
+      (let ((new (incf (gethash x counts 0))))
+        (if (> new most)
+          (setf most new
+                mode x)))))
+  x)
 
 (defmethod dec ((s sym) x)
   (with-slots (n counts) s
@@ -310,6 +312,15 @@
       1
       (if (eql s1 s2) 0 1))))
 
+(eg (let ((n (make-sym)))
+      (and i
+           (equal 1 (dist n 'tim #/?))
+           (equal 1 (dist n 'tim 'tom))
+
+           (equal 1 (dist n 1 2)))
+      ))
+
+
 ;---------.---------.---------.---------.--------.---------.----------
 ; numbers
 (defstruct num 
@@ -325,16 +336,17 @@
 (defmethod update ((nu num) (x string))
   (update nu (prep nu x)))
 
-(defmethod update ((nu num) (x number))
-  (with-slots (n lo hi mu m2) nu
-    (let ((delta (- x mu)))
-      (setf n  (+ 1 n)
-            lo (min lo x)
-            hi (max hi x)
-            mu (+ mu (/ delta n))
-            m2 (+ m2 (* delta (- x mu))))
-      (sd-prim nu))
-    x))
+(defmethod update ((nu num) x )
+  (unless  (member x (list #\? "?") :test #'equal)
+    (with-slots (n lo hi mu m2) nu
+      (let ((delta (- x mu)))
+        (setf n  (+ 1 n)
+              lo (min lo x)
+              hi (max hi x)
+              mu (+ mu (/ delta n))
+              m2 (+ m2 (* delta (- x mu))))
+        (sd-prim nu))))
+  x)
 
 (defmethod dec ((nu num) x)
   (with-slots (n mu m2) nu
