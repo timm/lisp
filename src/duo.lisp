@@ -1,16 +1,35 @@
 ;#!/usr/bin/env clisp -q
 ; vim: filetype=lisp: ts=2 sw=2 sts=1  et :
 
+(defun doc (str &key toc))
+(doc "# Start up stuff")
+
 (defun l() 
+  "Quick reload of system (with fewest load warnings)."
   (handler-bind ((style-warning #'muffle-warning)) 
     (load "duo")))
 
 ;---------.---------.---------.---------.--------.---------.----------
-; test suite
+(doc "# Unit Tests")
+
 (defstruct tests all)
 (defparameter *tests* (make-tests))
 
+(defmethod build ((te tests) x)
+	(pushnew x (tests-all te) :test #'equalp))
+
+(defmacro eg (&body body) 
+  "Add a new test. e.g. 
+
+      (eg (equal t nil))
+
+  (And note that if this test fails, and a failure is reported,
+  then the test engine is working.)
+  "
+  `(build *tests* ',@body))
+
 (defmethod run ((te tests))
+  "Run all the tests."
 	(let (fail (n 0) (y 0))
 		(dolist (one (tests-all te))
 			(cond ((eval  one) (incf y))
@@ -20,30 +39,29 @@
 			(mapc #'print fail)
 			(format t "~%PASS = ~s FAIL = ~s~%"  y n))))
 
-(defmethod build ((te tests) x)
-	(pushnew x (tests-all te) :test #'equalp))
-
-(defmacro eg (&body body) `(build *tests* ',@body))
 
 (eg (equal t nil))
 
 ;---------.---------.---------.---------.--------.---------.----------
-; hash defines
+(doc "Version-specific code.")
+
 (defun stop ()
+  "Halt (for sbcl or clisp)."
   #+sbcl (sb-ext:exit)
   #+:clisp (ext:exit))
 
 (defun cli ()
-		#+clisp ext:*args*
+  "Get command line options  (for sbcl or clisp)."
+  #+clisp ext:*args*
   #+sbcl sb-ext:*posix-argv*)
 
 (defun the-slots (it)
+  "Get slot names of the `it` struct, or class, (for sbcl or clisp)."
   #+clisp (class-slots (class-of it))
   #+sbcl (sb-mop:class-slots (class-of it)))
 
 ;---------.---------.---------.---------.--------.---------.----------
 ; macros
-(defun doc (str &key toc))
 
 (defmacro aif (test then &optional else)
 	`(let ((a ,test)) (if a ,then ,else)))
@@ -208,7 +226,8 @@
 (doc "## Documentation (Lisp to Markdown)")
 
 (setf +header+ "
-[![](https://raw.githubusercontent.com/timm/ish/master/etc/img/banner.png)](https://github.com/timm/ish/blob/master/README.md)[home](http://git.io/ish)
+[![](https://raw.githubusercontent.com/timm/ish/master/etc/img/banner.png)](https://github.com/timm/ish/blob/master/README.md)<br>
+[home](http://git.io/ish)
 | [code](https://github.com/timm/ish/tree/master/src)
 | [doc](https://github.com/timm/ish/blob/master/src/README.md)
 | [discuss](https://github.com/timm/ish/issues)
@@ -216,7 +235,7 @@
 | [cite](https://github.com/timm/ish/blob/master/CITATION.md)
 | [&copy; 2018](https://github.com/timm/ish/blob/master/LICENSE.md)
 
-[![](https://zenodo.org/badge/doi/10.5281/zenodo.1172230.svg)](https://github.com/timm/ish/blob/master/CITATION.md
+[![](https://zenodo.org/badge/doi/10.5281/zenodo.1172230.svg)](https://github.com/timm/ish/blob/master/CITATION.md)
 
 ")
 
@@ -239,20 +258,20 @@
 
 (defun lisp2md (&optional (in "duo.lisp") (out "/tmp/duo.md")) 
   "Generates a Markdown file from the lisp code."
-  (with-open-file (sout  out  :direction :output)
+  (with-open-file (sout  out  :direction :output :if-exists :overwrite)
 		(format sout "~a" +header+) 
-		(format sout "# ~a ~%" f)
+		(format sout "# ~a ~%" in)
 		(reads in #'fundoc sout)
     (terpri sout)))
 
-(lisp2md)
+;(lisp2md)
 
 ; sbcl --noinform --eval "(progn (format t "~&~a~%" 1))"
 
 ;---------.---------.---------.---------.--------.---------.---------
 ; symbols
 (defstruct sym
-  (counts (make-hash-table))
+  (counts (make-hash-table :test #'equal))
   (n 0) (pos 0) (txt "") (w 1)
   (ent 0)
   (most 0)
@@ -280,7 +299,7 @@
 (defmethod ent ((s sym) &aux (e 0))
   (with-slots (counts n) s
     (do-hash (k v counts e)
-      (if (> v 0)
+      (when (> v 0)
 				(let ((p (/ v n)))
 					(decf e (* p (log p 2))))))))
 
@@ -429,7 +448,6 @@
     (setf (nth (? col pos) lst)
           (update col (nth (? col pos) lst)))))
 
-
 ;---------.---------.---------.---------.--------.---------.----------
 ; data has many rows and coumns
 (defstruct row cells poles)
@@ -470,18 +488,12 @@
         (format str ",0")))
     (terpri str)))
 
-(eg 
-	(let (bad (d (make-data)))
-		(do-csv (cells "../data/weather.csv" t)
-			(setf bad (or bad (skipp d cells)))
-			(show (without d bad cells)))))
-
 ; make do-csv for csv. do s->words inside it
 ; a comment
-(let ((d (make-data)))
-   (readd d "../data/weather.csv")
-   (mapc (lambda (x) (print (spread x))) (? d cols all))
-   ;(format t "~&~a" (? d cols)
-)
+(eg 
+  (let ((d (make-data)))
+     (readd d "../data/weather.csv")
+     (and (eql 13 (length (? d rows)))
+          (< 10.33 (spread (second (? d cols all))) 10.34))))
 
-'(run *tests*)
+(run *tests*)
