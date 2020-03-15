@@ -1,7 +1,9 @@
 ;#!/usr/bin/env clisp -q
 ; vim: filetype=lisp: ts=2 sw=2 sts=1  et :
 
-(defun doc (str &key toc))
+(defun doc (str &key toc)
+  (declare (ignore str toc)))
+
 (doc "# Start up stuff")
 
 (defun l() 
@@ -123,6 +125,9 @@
   (poles 10)
   (trim  0.95))
 
+(defstruct misc
+   (pp  2))
+
 (defstruct rands 
 	(seed 			10013) 
 	(seed1			10013) 
@@ -130,6 +135,7 @@
 	(modulus    2147483647.0d0))
 
 (defstruct control 
+  (misc (make-misc))
   (rand (make-rands))
   (lsh  (make-lsh!))
   (ch   (make-ch!)))
@@ -226,6 +232,14 @@
 								 (worker))))
 			(worker))))
 
+(defmethod  print-object ((ht hash-table) s)
+  (format s "~a" "{")
+  (let ((sep ""))
+    (do-hash (k v ht)
+      (format s "~a:~a ~a" sep k v)
+      (setf sep " ")))
+  (format s "~a" "}"))
+
 ;---------.---------.---------.---------.--------.---------.----------
 (doc "## Documentation (Lisp to Markdown)")
 
@@ -276,20 +290,17 @@
 ;---------.---------.---------.---------.--------.---------.---------
 ; symbols
 (defstruct sym
-  (counts (make-hash-table :test #'equal))
+  (counts (make-hash-table :test #'equalp))
   (n 0) (pos 0) (txt "") (w 1)
-  (ent 0)
+  ent
   (most 0)
   mode)
 
-(defmethod spread ((s sym)) (ent s))
-(defmethod mid ((s sym)) (sym-mode s))
-(defmethod prep ((s sym) x) x)
-
 (defmethod update ((s sym) x)
   (unless  (member x (list #\? "?") :test #'equal)
-    (with-slots (most mode counts  n) s
+    (with-slots (most mode counts  n ent) s
       (incf n)
+      (setf ent nil)
       (let ((new (incf (gethash x counts 0))))
         (if (> new most)
           (setf most new
@@ -297,17 +308,22 @@
   x)
 
 (defmethod dec ((s sym) x)
-  (with-slots (n counts) s
+  (with-slots (n counts ent) s
     (when (> (gethash x counts 0) 0)
+      (setf ent nil)
       (decf (gethash x counts 0))
       (decf n))))
 
-(defmethod ent ((s sym) &aux (e 0))
-  (with-slots (counts n) s
-    (do-hash (k v counts e)
-      (when (> v 0)
-				(let ((p (/ v n)))
-					(decf e (* p (log p 2))))))))
+(defmethod update-ent ((s sym))
+  (with-slots (counts n ent) s
+    (unless ent
+      (setf ent 0)
+      (loop for v being the hash-value in counts 
+            do
+            (when (> v 0)
+              (let ((p (/ v n)))
+                (decf ent (* p (log p 2)))))))
+    ent))
 
 (defmethod dist ((s sym) s1 s2)
   (labels ((no (x) (eql x (?? ch skip))))
@@ -315,8 +331,14 @@
       1
       (if (eql s1 s2) 0 1))))
 
+(defmethod spread ((s sym)) (update-ent s))
+(defmethod mid ((s sym)) (sym-mode s))
+(defmethod prep ((s sym) x) x)
+
 (eg (let ((n (make-sym)))
+    (dolist (x '(s s s s s o o o o r r r r)) (update n x))
       (and 
+           (< 1.57 (spread n) 1.58)
            (equal 1 (dist n 'tim #\?))
            (equal 1 (dist n 'tim 'tom))
            (equal 1 (dist n 1 2)))))
@@ -330,9 +352,12 @@
   (lo most-positive-fixnum)
   (hi most-negative-fixnum))
 
-(defmethod spread ((s num)) (num-sd s))
-(defmethod mid ((s num)) (num-mu s))
-(defmethod prep ((s num) x) (if (numberp x) x (read-from-string x)))
+(defmethod update-sd ((nu num))
+  (with-slots (sd n m2) nu
+    (setf sd (cond ((< n 2)  0)
+                   ((< m2 0) 0)
+                   (t  (sqrt (/ m2 (- n 1))))))))
+
 
 (defmethod update ((nu num) (x string))
   (update nu (prep nu x)))
@@ -346,7 +371,7 @@
               hi (max hi x)
               mu (+ mu (/ delta n))
               m2 (+ m2 (* delta (- x mu))))
-        (sd-prim nu))))
+        (update-sd nu))))
   x)
 
 (defmethod dec ((nu num) x)
@@ -355,13 +380,7 @@
       (setf n  (- n 1)
             mu (- mu (/ delta n))
             m2 (- m2 (* delta (- x mu))))
-      (sd-prim nu))))
-
-(defmethod sd-prim ((nu num))
-  (with-slots (sd n m2) nu
-    (setf sd (cond ((< n 2)  0)
-                   ((< m2 0) 0)
-                   (t  (sqrt (/ m2 (- n 1))))))))
+      (update-sd nu))))
 
 (defmethod norm ((nu num) x)
   (with-slots (lo hi) nu
@@ -377,6 +396,13 @@
           (t       (setf n1 (norm nu n1)
                          n2 (norm nu n2))))
     (abs (- n1 n2))))
+
+;--------d.---------.---------.---------.--------.---------.----------
+; num tests
+(defmethod spread ((s num)) (num-sd s))
+(defmethod mid ((s num)) (num-mu s))
+(defmethod prep ((s num) x) (if (numberp x) x (read-from-string x)))
+
 
 (defun _updateDec (lst)
 	(let ((n (if (numberp (car lst)) (make-num) (make-sym))))
@@ -463,26 +489,47 @@
           (update col (nth (? col pos) lst)))))
 
 ;---------.---------.---------.---------.--------.---------.----------
-; data has many rows and coumns
-(defstruct row  cells poles (id (id)))
-(defstruct data rows (cols (make-cols)) (npoles 0))
+; row
+(defstruct row  data cells poles (id (id)))
 
-(defmethod dist ((d data) row1 row2)
-  (let ((n      0) 
+(defmethod print-object ((r row) s)
+  (format s "Row{~a}" (? r cells)))
+
+(defmethod dist ((r row) (r1 row) (r2 row))
+  (let ((p      (?? misc pp))
+        (n      0) 
+        (inc    0)
         (delta  0) 
-        (cells1 (? row1 cells)) 
-        (cells2 (? row2 cells)))
-    (print (list (? row1 id) (? row2 id)))
-    (dolist (col (? d cols indep) (/ delta n))
+        (cells1 (? r1 cells)) 
+        (cells2 (? r2 cells)))
+    (dolist (col (? r1 data cols indep) (expt (/ delta n) (/ 1 p)))
       (let ((pos (? col pos)))
         (incf n)
-        (incf d  (dist col (nth pos  cells1) 
-                           (nth pos cells2)))))))
+        (setf inc (dist col (nth pos cells1) 
+                            (nth pos cells2)))
+        (incf delta (expt inc p))))))
+
+(defun _dist (d)
+  (dolist (row1 (? d rows)) 
+    (let (all)
+      (dolist (row2 (? d rows)) 
+        (when (<= (? row1 id) (? row2 id)) 
+          (push  (list (dist row1 row1 row2) row2) all)))
+      (setf all (sort all #'(lambda (x y) (< (first x) (first y)))))
+      (terpri)
+      (print row1)
+      (print (second (first all)))
+      (print (second (first (last all))))
+      )))
+
+;---------.---------.---------.---------.--------.---------.----------
+; tbl has many rows and coumns
+(defstruct data rows (cols (make-cols)) (npoles 0))
 
 (defmethod update ((d data) lst)
   (if (? d cols names) 
     (let ((tmp (update (? d cols) lst)))
-      (push (make-row :cells tmp) (data-rows d)))
+      (push (make-row :data d :cells tmp) (data-rows d)))
     (build (? d cols) lst))) 
 
 (defmethod skipp ((d data) lst)
@@ -516,14 +563,12 @@
 
 ; make do-csv for csv. do s->words inside it
 ; a comment
-(eg 
   (let ((d (make-data)))
      (readd d "../data/weather.csv")
-     (dolist (row1 (? d rows))
-      (dolist (row2 (? d rows))
-        (when (< (? row1 id) (? row2 id))
-           (print (dist d row1 row2)))))
-     (and (eql 13 (length (? d rows)))
-          (< 10.33 (spread (second (? d cols all))) 10.34))))
+     (_dist d)
+     (print (? (first (? d cols all)) counts))
+     (print (spread (first (? d cols all))))
+   ;  (and (eql 13 (length (? d rows))) (< 10.33 (spread (second (? d cols all))) 10.34))))
+)
 
 (run *tests*)
