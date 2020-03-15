@@ -147,6 +147,9 @@
 ;---------.---------.---------.---------.--------.---------.----------
 (doc "## Basic tools")
 
+(let ((_id 0))
+  (defun id () (incf _id)))
+
 (defun show (&rest lst) (print lst))
 
 (defun print-list(lst sep  str)
@@ -313,12 +316,10 @@
       (if (eql s1 s2) 0 1))))
 
 (eg (let ((n (make-sym)))
-      (and i
-           (equal 1 (dist n 'tim #/?))
+      (and 
+           (equal 1 (dist n 'tim #\?))
            (equal 1 (dist n 'tim 'tom))
-
-           (equal 1 (dist n 1 2)))
-      ))
+           (equal 1 (dist n 1 2)))))
 
 
 ;---------.---------.---------.---------.--------.---------.----------
@@ -463,8 +464,20 @@
 
 ;---------.---------.---------.---------.--------.---------.----------
 ; data has many rows and coumns
-(defstruct row cells poles)
-(defstruct data  rows (cols (make-cols)) (npoles 0))
+(defstruct row  cells poles (id (id)))
+(defstruct data rows (cols (make-cols)) (npoles 0))
+
+(defmethod dist ((d data) row1 row2)
+  (let ((n      0) 
+        (delta  0) 
+        (cells1 (? row1 cells)) 
+        (cells2 (? row2 cells)))
+    (print (list (? row1 id) (? row2 id)))
+    (dolist (col (? d cols indep) (/ delta n))
+      (let ((pos (? col pos)))
+        (incf n)
+        (incf d  (dist col (nth pos  cells1) 
+                           (nth pos cells2)))))))
 
 (defmethod update ((d data) lst)
   (if (? d cols names) 
@@ -488,7 +501,7 @@
 			(setf bad (or bad (skipp d cells)))
 			(update d (without d bad cells)))))
 
-(defmethod print-object ((d data) str)
+(defmethod xprint-object ((d data) str)
   (print-list (? d cols names)  ","  str)
   (dotimes (i  (? d npoles)) 
     (format str ", %pole~a" i))
@@ -497,8 +510,8 @@
     (print-list (coerce (? row cells) 'list)  ","  str)
     (if (? row poles)
       (print-list (? row poles)  ","  str)
-      (dotimes (i  (? d npoles)) 
-        (format str ",0")))
+        (dotimes (i (? d npoles)) 
+          (format str ",0")))
     (terpri str)))
 
 ; make do-csv for csv. do s->words inside it
@@ -506,6 +519,10 @@
 (eg 
   (let ((d (make-data)))
      (readd d "../data/weather.csv")
+     (dolist (row1 (? d rows))
+      (dolist (row2 (? d rows))
+        (when (< (? row1 id) (? row2 id))
+           (print (dist d row1 row2)))))
      (and (eql 13 (length (? d rows)))
           (< 10.33 (spread (second (? d cols all))) 10.34))))
 
