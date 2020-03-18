@@ -490,37 +490,10 @@
 
 ;---------.---------.---------.---------.--------.---------.----------
 ; row
-(defstruct row  data cells poles (id (id)))
+(defstruct row data cells poles (id (id)))
 
 (defmethod print-object ((r row) s)
   (format s "Row{~a}" (? r cells)))
-
-(defmethod dist ((r row) (r1 row) (r2 row))
-  (let ((p      (?? misc pp))
-        (n      0) 
-        (inc    0)
-        (delta  0) 
-        (cells1 (? r1 cells)) 
-        (cells2 (? r2 cells)))
-    (dolist (col (? r1 data cols indep) (expt (/ delta n) (/ 1 p)))
-      (let ((pos (? col pos)))
-        (incf n)
-        (setf inc (dist col (nth pos cells1) 
-                            (nth pos cells2)))
-        (incf delta (expt inc p))))))
-
-(defun _dist (d)
-  (dolist (row1 (? d rows)) 
-    (let (all)
-      (dolist (row2 (? d rows)) 
-        (when (<= (? row1 id) (? row2 id)) 
-          (push  (list (dist row1 row1 row2) row2) all)))
-      (setf all (sort all #'(lambda (x y) (< (first x) (first y)))))
-      (terpri)
-      (print row1)
-      (print (second (first all)))
-      (print (second (first (last all))))
-      )))
 
 ;---------.---------.---------.---------.--------.---------.----------
 ; tbl has many rows and coumns
@@ -529,7 +502,7 @@
 (defmethod update ((d data) lst)
   (if (? d cols names) 
     (let ((tmp (update (? d cols) lst)))
-      (push (make-row :data d :cells tmp) (data-rows d)))
+      (push (make-row :cells tmp) (data-rows d)))
     (build (? d cols) lst))) 
 
 (defmethod skipp ((d data) lst)
@@ -548,6 +521,34 @@
 			(setf bad (or bad (skipp d cells)))
 			(update d (without d bad cells)))))
 
+(defmethod dist ((d data) (r1 row) (r2 row))
+  (let ((p      (?? misc pp))
+        (n      0) 
+        (inc    0)
+        (delta  0) 
+        (cells1 (? r1 cells)) 
+        (cells2 (? r2 cells)))
+    (dolist (col (? d cols indep) (expt (/ delta n) (/ 1 p)))
+      (let ((pos (? col pos)))
+        (incf n)
+        (setf inc (dist col (nth pos cells1) 
+                            (nth pos cells2)))
+        (incf delta (expt inc p))))))
+
+(defun _dist (d)
+  (dolist (row1 (? d rows)) 
+    (let (all)
+      (dolist (row2 (? d rows)) 
+        (when (<= (? row1 id) (? row2 id)) 
+          (push  (list (dist d row1 row2) row2) all)))
+      (setf all (sort all #'(lambda (x y) (< (first x) (first y)))))
+      (terpri)
+      (print row1)
+      (print (second (first all)))
+      (print (second (first (last all))))
+      )))
+
+
 (defmethod xprint-object ((d data) str)
   (print-list (? d cols names)  ","  str)
   (dotimes (i  (? d npoles)) 
@@ -564,9 +565,10 @@
 ; make do-csv for csv. do s->words inside it
 ; a comment
   (let ((d (make-data)))
-     (readd d "../data/weather.csv")
+     (readd d "../data/cube.csv")
+     (print 222)
      (_dist d)
-     (print (? (first (? d cols all)) counts))
+     ;(print (? (first (? d cols all)) counts))
      (print (spread (first (? d cols all))))
    ;  (and (eql 13 (length (? d rows))) (< 10.33 (spread (second (? d cols all))) 10.34))))
 )
