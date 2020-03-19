@@ -157,6 +157,7 @@
   (defun id () (incf _id)))
 
 (defun show (&rest lst) (print lst))
+(defun end  (&rest lst) (car (last lst)))
 
 (defun print-list(lst sep  str)
   (format str "~a" (car lst))
@@ -493,7 +494,7 @@
 (defstruct row data cells poles (id (id)))
 
 (defmethod print-object ((r row) s)
-  (format s "Row{~a}" (? r cells)))
+  (format s "Row{#~a,~a}" (? r id) (? r cells)))
 
 ;---------.---------.---------.---------.--------.---------.----------
 ; tbl has many rows and coumns
@@ -522,32 +523,43 @@
 			(update d (without d bad cells)))))
 
 (defmethod dist ((d data) (r1 row) (r2 row))
+  (terpri)
   (let ((p      (?? misc pp))
         (n      0) 
-        (inc    0)
         (delta  0) 
         (cells1 (? r1 cells)) 
         (cells2 (? r2 cells)))
-    (dolist (col (? d cols indep) (expt (/ delta n) (/ 1 p)))
-      (let ((pos (? col pos)))
-        (incf n)
-        (setf inc (dist col (nth pos cells1) 
-                            (nth pos cells2)))
-        (incf delta (expt inc p))))))
+    (dolist (col (? d cols indep))
+      (let* ((pos (? col pos))
+             (inc (dist col (nth pos cells1) 
+                            (nth pos cells2))))
+        (setf  n    (1+ n))
+        (print `(inc ,inc p ,p))
+        (setf delta (+ delta (expt inc p)))))
+    (print `(delta ,delta p ,p ))
+    (expt (/ delta n) (/ 1 p))))
+
+(defstruct xy dist row)
 
 (defun _dist (d)
   (dolist (row1 (? d rows)) 
     (let (all)
-      (dolist (row2 (? d rows)) 
-        (when (<= (? row1 id) (? row2 id)) 
-          (push  (list (dist d row1 row2) row2) all)))
-      (setf all (sort all #'(lambda (x y) (< (first x) (first y)))))
-      (terpri)
       (print row1)
-      (print (second (first all)))
-      (print (second (first (last all))))
-      )))
+      (dolist (row2 (? d rows)) 
+        (when (> (? row1 id) (? row2 id)) 
+          (push (list (dist d row1 row2) row2) all)))
+      (when all
+        (setf all (sort all #'(lambda (x y) (< (first x) (first y)))))
+        (dolist (one  all) (print one))
+        (stop)
+      ))))
 
+;      (terpri)
+;      (print row1)
+;      (print (reverse (first all)))
+;      (print (reverse (end all)))
+;      )))
+;
 
 (defmethod xprint-object ((d data) str)
   (print-list (? d cols names)  ","  str)
