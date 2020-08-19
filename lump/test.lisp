@@ -1,6 +1,6 @@
 ; vim: noai:ts=4:sw=4:et: 
 (format *error-output* "; test.lisp~%")
-(or (boundp '*my*) (load "my"))
+(or (boundp '*the*) (load "the"))
 (or (fboundp 'send) (load "oo"))
 
 (defun test (ok)
