@@ -18,6 +18,15 @@
                     pass 0
                     fail 0)))
 
+"
+ass stiff
+
+Suicides
+f
+ff
+adds
+"
+
 (defmacro ? (&rest fs) 
    `(getr getf *the* ,@fs))
 
