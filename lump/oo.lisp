@@ -1,6 +1,6 @@
 ; vim: noai:ts=2:sw=2:et: 
 (format *error-output* "; oo.lisp~%")
-(unless (boundp '*my*) (load "my"))
+(or (boundp '*my*) (load "my"))
 
 (defmacro send (obj f &rest args)
   `(funcall (slot-value ,obj ',f) ,obj ,@args))
