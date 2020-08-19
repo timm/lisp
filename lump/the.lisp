@@ -14,9 +14,9 @@
                     cohen .3 
                     trivial 1.05)
          seed 1
-         test       (it "")
-                    (pass 0)
-                    (fail 0)))
+         test (     it ""
+                    pass 0
+                    fail 0)))
 
 (defmacro ? (&rest fs) 
    `(getr getf *the* ,@fs))
