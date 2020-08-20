@@ -7,6 +7,7 @@
 (or (fboundp 'stop)  (load "os"))
 
 (defun pre (x y) 
+  "returns t if the string or symbol 'x' starts with 'y'"
   (typecase x
     (symbol (pre (symbol-name x) y))
     (t      (eql (char x 0) y))))
@@ -18,8 +19,8 @@
    (bb (make-cc)))
 
 (let ((a (make-aa)))
-   (setf (has  a bb dd) 21)
-   (print (has  a bb dd)))
+   (setf (~  a bb dd) 21)
+   (print (~  a bb dd)))
 
 (print (? some cohen))
 

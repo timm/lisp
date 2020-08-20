@@ -1,28 +1,63 @@
 ; vim: noai:ts=2:sw=2:et: 
 (format *error-output* "; num.lisp~%")
-(or (boundp '*the*) (load "lib"))
+(or (boundp '*the*) (load "the"))
+(or (fboundp 'send) (load "oo"))
 
-(defstruct num ()
+(defun col! (&optional (txt "") (pos 0) &key all)
+  (let ((out (if (or (search (? char less) txt)
+                     (search (? char more) txt)
+                     (search (? char num)  txt))
+               (num! txt pos)
+               (sym! txt pos))))
+   (dolist (one all out)
+     (send out add one))))
+
+(defstruct sym 
+  (pos 0)
+  (txt "")
+  (n 0)
+  (seen (make-hash-table :test 'sting-equal))
+  (most 0)
+  mode
+  (add 'sym+))
+
+(defun sym! (txt pos)
+  (make-sym :txt txt :pos pos))
+
+(defun sym+ (i x)
+  (if (and (stringp x)
+           (string-equal x (? char skip)))
+    x
+    (with-slots (n seen most mode) i
+      (let* 
+        ((new (incf (gethash x seen 0))))
+        (if (> new most)
+          (setf most new
+                mode x))
+        x))))
+   
+(defstruct num 
   (pos 0)
   (txt "")
   (w 0)
   (n 0)
   (mu 0)
   (m2 0)
+  (sd 0)
   (lo most-positive-fixnum)
   (hi most-negative-fixnum)
-  (add 'numadd))
+  (add 'num+))
 
 (defun num! (txt pos)
   (make-num :txt txt :pos pos 
-            :w (if (search (? less) x) -1 1)))
+            :w (if (search (? char less) txt) -1 1)))
 
 (defun num+ (i x)
   (if (stringp x)
-    (if (string-equal x (? skip))
+    (if (string-equal x (? char skip))
       x
-      (numadd i (read-from-string x)))
-    (with-slots (n  mu m2 hi lo) i
+      (num+ i (read-from-string x)))
+    (with-slots (n  mu m2 hi lo sd) i
       (incf n)
       (if (> x hi) (setf hi x))
       (if (< x lo) (setf lo x))
@@ -30,7 +65,7 @@
          (incf mu (/ d n))
          (incf m2 (* d (- x mu)))
          (setf sd 
-           (cond ((< m2 0) 0a)
-                 (< n 20 0)
-                  (t (sqrt (/ m2 (- n2 1)))))))
+           (cond ((< m2 0) 0)
+                 ((< n 2) 0)
+                 (t (sqrt (/ m2 (- n 1)))))))
       x)))

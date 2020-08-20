@@ -1,3 +1,6 @@
+; vim: noai:ts=2:sw=2:et: 
+(format *error-output* "; os.lisp~%")
+
 (defun klass-slots (it)
   "what are the slots of a class?"
   #+clisp
@@ -30,7 +33,7 @@
    #+ecl (si:system cmd)
    #+sbcl (sb-ext:run-program "/bin/sh" 
              (list "-c" cmd) 
-	        :input nil :output *standard-output*)
+             :input nil :output *standard-output*)
    #+clozure (ccl:run-program "/bin/sh" 
-	        (list "-c" cmd) 
-		   :input nil :output *standard-output*))
+             (list "-c" cmd) 
+             :input nil :output *standard-output*))

@@ -1,4 +1,5 @@
-; vim: noai:ts=4:sw=4:et: 
+; vim: noai:ts=2:sw=2:et: 
+(format *error-output* "; lump.lisp~%")
 (unless (fboundp 'num) (load "num"))
 (unless (fboundp 'send) (load "lib"))
 

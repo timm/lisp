@@ -5,5 +5,5 @@
 (defmacro send (obj f &rest args)
   `(funcall (slot-value ,obj ',f) ,obj ,@args))
 
-(defmacro has (x &rest fs) 
+(defmacro ~ (x &rest fs) 
   `(getr  slot-value ,x ,@fs))

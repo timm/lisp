@@ -1,3 +1,5 @@
+; vim: noai:ts=2:sw=2:et: 
+(format *error-output* "; readmes.lisp~%")
 (or (fboundp 'args) (load "os"))
 
 "

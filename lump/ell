@@ -1,0 +1,28 @@
+# vim:ft=sh:
+
+Ell=$(cd $( dirname "${BASH_SOURCE[0]}" ) && pwd )
+
+
+tput bold; tput setaf 5
+cat <<'EOF'
+   .-.
+  (o o)  boo !!
+  | O \    there's no escape
+   \   \     from (sh)ELL, v0.4
+    `~~~'
+EOF
+tput sgr0
+
+ook() { sbcl --script  ok${1}.lisp; }
+scl() { sbcl --script $1.lisp;  }
+ccl() { clisp $1.lisp;  }
+
+for i in *.lisp; do
+  f=$(basename $i .lisp)
+  com="alias $f='sbcl --script $i'"
+  eval  $com
+done
+
+alias reload=". $Ell/ell"
+alias gp="git add *; git commit -am saving; git push; git status"
+
