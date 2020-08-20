@@ -12,15 +12,12 @@
     (symbol (pre (symbol-name x) y))
     (t      (eql (char x 0) y))))
 
-(defstruct cc
-  (dd 0))
+(defun skip? (x) 
+   (and (string x)
+        (string-equal x (? char skip))))
 
-(defstruct aa
-   (bb (make-cc)))
-
-(let ((a (make-aa)))
-   (setf (~  a bb dd) 21)
-   (print (~  a bb dd)))
-
-(print (? some cohen))
-
+(defun num? (x)
+  (let ((n (elt x 0)))
+    (or (string-equal n (? char num))
+        (string-equal n (? char less))
+        (string_equal n (? char more)))))

@@ -4,13 +4,12 @@
 (or (fboundp 'send) (load "oo"))
 
 (defun col! (&optional (txt "") (pos 0) &key all)
-  (let ((out (if (or (search (? char less) txt)
-                     (search (? char more) txt)
-                     (search (? char num)  txt))
-               (num! txt pos)
-               (sym! txt pos))))
-   (dolist (one all out)
-     (send out add one))))
+  (if (num? (elt txt 0))
+    (num! txt pos)
+    (sym! txt pos)))
+
+(defun add* (x l)
+  (dolist (one l x) (send add x one)))
 
 (defstruct sym 
   (pos 0)
@@ -19,12 +18,12 @@
   (seen (make-hash-table :test 'sting-equal))
   (most 0)
   mode
-  (add 'sym+))
+  (add 'sym1))
 
 (defun sym! (txt pos)
   (make-sym :txt txt :pos pos))
 
-(defun sym+ (i x)
+(defun sym1 (i x)
   (if (and (stringp x)
            (string-equal x (? char skip)))
     x
@@ -46,8 +45,12 @@
   (sd 0)
   (lo most-positive-fixnum)
   (hi most-negative-fixnum)
-  (add 'num+))
+  (add 'num1))
 
+(defun col+ (i x)
+  (cond ((skip? x) xP
+      x
+      (id 
 (defun num! (txt pos)
   (make-num :txt txt :pos pos 
             :w (if (search (? char less) txt) -1 1)))
