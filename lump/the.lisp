@@ -1,6 +1,6 @@
 ; vim: noai:ts=2:sw=2:et: 
-(format *error-output* "; the.lisp~%")
-(or (fboundp 'getr) (load "macros"))
+(or (fboundp 'lib) (load "lib"))
+(lib "macros")
 
 "
 Global options used by everyone.

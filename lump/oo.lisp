@@ -1,7 +1,6 @@
 ; vim: noai:ts=2:sw=2:et: 
-(format *error-output* "; oo.lisp~%")
-(or (fboundp 'klass-slots) (load "os"))
-(or (fboundp 'getr) (load "macros"))
+(or (fboundp 'lib) (load "lib"))
+(lib "macros")
 
 (defmacro ~ (x &rest fs) 
   `(getr  slot-value ,x ,@fs))

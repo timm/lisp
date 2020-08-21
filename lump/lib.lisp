@@ -1,10 +1,19 @@
 ; vim: noai:ts=2:sw=2:et: 
 (format *error-output* "; lib.lisp~%")
-(or (boundp  '*the*) (load "the"))
-(or (fboundp 'send)  (load "oo"))
-(or (fboundp 'test)  (load "test"))
-(or (fboundp 'while) (load "macros"))
-(or (fboundp 'stop)  (load "os"))
+
+(let (seen)
+  (defun lib (&rest files)
+    (mapc (lambda (f)
+            (unless (member f seen)
+              (format *error-output* "; ~(~a~).lisp~%" f)
+              (push f seen)
+              #-sbcl (load f) 
+              #+sbcl (handler-bind
+                       ((style-warning #'muffle-warning))
+                       (load f))))
+          files)))
+
+(lib "macros" "the" "oo" "test") ; macros os))
 
 (defun pre (x y) 
   "returns t if the string or symbol 'x' starts with 'y'"

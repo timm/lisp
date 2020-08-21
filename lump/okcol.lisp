@@ -1,6 +1,6 @@
 ; vim: noai:ts=2:sw=2:et: 
 (format *error-output* "; oknum.lisp~%")
-(or (boundp 'add*) (load "col"))
+(or (boundp 'col)   (load "col"))
 (or (boundp 'dofun) (load "test"))
 
 (dofun 
@@ -12,7 +12,7 @@
 
 (dofun
   sym ()
-  (let ((s (add* '(a  b b  c c c c) 'sym!)))
+  (let ((s (add* '(a  b b  c c c c) 'sym)))
     (print s)))
 
 

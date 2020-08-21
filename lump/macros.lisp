@@ -1,6 +1,4 @@
 ; vim: noai:ts=2:sw=2:et: 
-(format *error-output* "; macros.lisp~%")
-
 (defmacro while (test &body body) 
   `(do () ((not ,test)) ,@body))
 
