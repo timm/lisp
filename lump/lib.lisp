@@ -11,13 +11,3 @@
   (typecase x
     (symbol (pre (symbol-name x) y))
     (t      (eql (char x 0) y))))
-
-(defun skip? (x) 
-   (and (string x)
-        (string-equal x (? char skip))))
-
-(defun num? (x)
-  (let ((n (elt x 0)))
-    (or (string-equal n (? char num))
-        (string-equal n (? char less))
-        (string_equal n (? char more)))))

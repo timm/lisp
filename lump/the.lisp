@@ -11,11 +11,11 @@ Accessed as follows (for example):
 "
 
 (defvar *the*
-       '(char (     skip "?"
-                    less ">"
-                    more ">"
-                    num  "$"
-                    klass "!")
+       '(ch (     skip  #\?
+                    less  #\<
+                    more  #\>
+                    num   #\$
+                    klass #\!)
          some (     max 512 
                     step .5 
                     cohen .3 
@@ -29,3 +29,11 @@ Accessed as follows (for example):
    "getter for globals"
    `(getr getf *the* ,@fs))
 
+(defun skip? (x) 
+   (and (stringp x)
+        (string-equal x (? ch skip))))
+
+(defun num? (x &aux (n (elt x 0)))
+  (or (eql n (? ch num))
+      (eql n (? ch less))
+      (eql n (? ch more))))
