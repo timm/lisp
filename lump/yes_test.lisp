@@ -1,7 +1,7 @@
 ; vim: noai:ts=2:sw=2:et: 
 (load "got")
-(got "test")
+(got "yes")
 
 (dofun fail ()
-  (test nil))
+  (yes nil))
 

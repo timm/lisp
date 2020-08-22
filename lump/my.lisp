@@ -21,7 +21,7 @@ Accessed as follows (for example):
                     cohen .3 
                     trivial 1.05)
          seed 1
-         ok   (     it ""
+         yes   (    it ""
                     pass 0
                     fail 0)))
 
