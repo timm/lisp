@@ -1,0 +1,10 @@
+language: python
+python:
+  - "3.8"
+cache: pip
+install:
+  - pip3 install -r requirements.txt
+script:
+  - pwd
+  - ls
+  - python3 -m bnbad -T
