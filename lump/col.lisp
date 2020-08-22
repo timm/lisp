@@ -2,6 +2,9 @@
 (load "got")
 (got "oo" "is")
 
+" Cols can be eother `num`s or `sym`s for numeric
+or symbolic content (respectively)."
+
 (defthing col thing (w 1) (n 0) (pos 0) (txt ""))
 
 (defthing sym col (n 0) (most 0) (mode)

@@ -11,6 +11,12 @@
 
 
 
+ Cols can be eother `num`s or `sym`s for numeric
+or symbolic content (respectively).
+
+
+
+
 -------
 
 ## [got.lisp](got.lisp)
