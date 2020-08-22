@@ -284,9 +284,68 @@ Generate README.md from doco strings from LISP code in a directory.
 
 
 
+
+
+<ul>
+
+Misc string tricks
+
+</ul>
+
+
+
+
+### `words (s &optional (lo 0) (hi (position , s start (1+ lo))))`
+
+
+
+<ul>
+
+Separate a string `s` on commas
+
+</ul>
+
+
+
+### `lines 
+(s &optional (lo 0)
+ (hi
+  (position
+   
+   s start (1+ lo))))`
+
+
+
+<ul>
+
+Separate a string `s` on newline.
+
+</ul>
+
+
+
+### `with-csv ((line file) &body body)`
+
+
+
+<ul>
+
+Return one list per line, words separated by commas.
+
+</ul>
+
+
+
+
 -------
 
 ## [yes.lisp](yes.lisp)
+
+
+
+-------
+
+## [yes_data.lisp](yes_data.lisp)
 
 
 
