@@ -1,17 +1,6 @@
 ; vim: noai:ts=2:sw=2:et: 
 (load "os")
 
-"
-Generate markdown from doc strings
-(and top-level strings) from LISP code in the
-current directory.
-
-Usage:
-
-         lisp readmes.lisp --makedoc Header 
-
-"
-
 (defmacro doread ((it f &optional out 
                       &key (take #'read)) &body body)
   "Iterator for running over files or strings."
