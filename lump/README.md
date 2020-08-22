@@ -334,7 +334,7 @@ To Public License, Version 2, as published by Sam Hocevar. See
 http://www.wtfpl.net/ for more details. 
 
 <p align=center>
-            DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE 
+            DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE <br>
    TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION 
 </p>
 
