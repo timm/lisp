@@ -1,4 +1,4 @@
-; vim: noai:ts=2:sw=2:et: 
+; vim: ts=2 sw=2 et:
 (load "got")
 (got "my" "macros" "os")
 
@@ -9,13 +9,13 @@
 ;;; define classes and slots --------------------
 (defmacro defthing (x parent &rest slots)
   "Succinct class creation"
-	`(defclass ,x (,parent)
-		 ,(loop 
-				for (slot form) in slots collect 
-				`(,slot 
-					 :initarg  ,(intern (symbol-name slot) "KEYWORD")
-					 :initform ,form
-					 :accessor ,(intern (format nil "~a-~a" x slot))))))
+  `(defclass ,x (,parent)
+     ,(loop 
+        for (slot form) in slots collect 
+        `(,slot 
+           :initarg  ,(intern (symbol-name slot) "KEYWORD")
+           :initform ,form
+           :accessor ,(intern (format nil "~a-~a" x slot))))))
 
 ;;; pretty print (skipping private slots) --------
 (defmethod print-object ((it thing) out)
@@ -29,5 +29,5 @@
   "return all thing slots that don't start with '_'"
   (remove-if
     #'(lambda (x) (and (symbolp x)
-											 (equal (elt (symbol-name x) 0) #\_)))
+                       (equal (elt (symbol-name x) 0) #\_)))
     (mapcar #'klass-slot-definition-name (klass-slots it))))
