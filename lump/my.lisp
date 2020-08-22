@@ -2,14 +2,6 @@
 (load "got")
 (got "macros")
 
-"
-Global options used by everyone.
-Accessed as follows (for example):
-
-    (? char skip) ; ==> returns #\?
-
-"
-
 (defvar *my*
        '(ch (     skip  #\?
                     less  #\<
@@ -32,6 +24,3 @@ Accessed as follows (for example):
 (defun skip? (x) 
    (and (stringp x)
         (eql x (my ch skip))))
-
-
-
