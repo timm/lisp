@@ -2,14 +2,6 @@
 (load "got")
 (got "oo" "is" "strings" "col")
 
-"
-
-# dadasdas
-
-asdas
-
-"
-
 (defthing rows thing (all) (cols (make-instance 'cols)))
 (defthing row thing (cells) (_rows))
 (defthing cols thing (all) (nums) (syms) (x) (y) (klass))
@@ -22,8 +14,8 @@ asdas
 		   (if (num? txt) 'num 'sym)
 		   :txt txt :pos pos
                    :w (if (less? txt) -1 1))))
-	(push new (if (num?  txt) nums syms))
-	(push new (if (goal? txt) y    x))
+	(if (num?  txt) (push new nums) (push new syms))
+	(if (goal? txt) (push new y)    (push new x))
 	(push new all)
 	(if (klass? txt)
 	  (setf klass new))))))
@@ -35,10 +27,9 @@ asdas
     :cells (mapcar #'add (? i all) cells)))
 
 ;;; rows ----------------------------------------
-(defmethod use? ((i rows) head &aux todo)
-  (doitems (txt pos head todo)
-    (unless (ignore? txt) 
-      (push pos todo))))
+(defmethod use? ((i rows) head &aux out)
+  (doitems (txt pos head out)
+    (unless (ignore? txt) (push pos out))))
 
 (defmethod use! ((i rows) using row &aux out)
   (dolist (use using out)

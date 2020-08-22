@@ -2,7 +2,7 @@
 (load "got")
 (got "oo" "is")
 
-(defthing col thing (w 1) (n 0) (w 1) (pos 0) (txt ""))
+(defthing col thing (w 1) (n 0) (pos 0) (txt ""))
 
 (defthing sym col (n 0) (most 0) (mode)
   (seen (make-hash-table :test #'equalp)))
