@@ -1,32 +1,19 @@
 ; vim: noai:ts=2:sw=2:et: 
 (load "got")
-(got "oo" "strings" "col")
+(got "oo" "is" "strings" "col")
 
-(defun ignore? (x &aux (n (elt x 0))) 
-  (eql n (my ch skip)))
-
-(defun klass? (x &aux (n (elt x 0))) 
-  (eql n (my ch klass)))
-
-(defun goal? (x &aux (n (elt x 0)))
-  (or (eql n (my ch less))
-      (eql n (my ch more))
-      (eql n (my ch klass))))
-
-(defun num? (x &aux (n (elt x 0)))
-  (or (eql n (my ch num))
-      (eql n (my ch less))
-      (eql n (my ch more))))
-
-;-------- --------- --------- --------- --------- ----------
+(defthing rows thing (all) (cols (make-instance 'cols)))
+(defthing row thing (cells) (_rows))
 (defthing cols thing (all) (nums) (syms) (x) (y) (klass))
 
+;;; columns -------------------------------------
 (defmethod header ((i cols) headers)
   (with-slots (all nums syms x y klass) i
     (doitems (txt pos (reverse headers))
       (let ((new (make-instance 
 		   (if (num? txt) 'num 'sym)
-		   :txt txt :pos pos)))
+		   :txt txt :pos pos
+                   :w (if (less? txt) -1 1))))
 	(push new (if (num?  txt) nums syms))
 	(push new (if (goal? txt) y    x))
 	(push new all)
@@ -39,12 +26,7 @@
     :_rows rows
     :cells (mapcar #'add (? i all) cells)))
 
-;-------- --------- --------- --------- --------- ----------
-(defthing row thing (cells) (_rows))
-
-;-------- --------- --------- --------- --------- ----------
-(defthing rows thing (all) (cols (make-instance 'cols)))
-
+;;; rows ----------------------------------------
 (defmethod use? ((i rows) head &aux todo)
   (doitems (txt pos head todo)
     (unless (ignore? txt) 
@@ -63,4 +45,3 @@
 	(push (row cols i tmp) all)
 	(header cols tmp))))
   i)
-
