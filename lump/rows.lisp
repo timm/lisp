@@ -2,6 +2,14 @@
 (load "got")
 (got "oo" "is" "strings" "col")
 
+"
+
+# dadasdas
+
+asdas
+
+"
+
 (defthing rows thing (all) (cols (make-instance 'cols)))
 (defthing row thing (cells) (_rows))
 (defthing cols thing (all) (nums) (syms) (x) (y) (klass))
