@@ -1,6 +1,6 @@
 ; vim: noai:ts=2:sw=2:et: 
-(format *error-output* "; okthe.lisp~%")
-(or (boundp 'dofun) (load "test"))
+(load "got")
+(got "test")
 
 (dofun fail ()
   (test nil))

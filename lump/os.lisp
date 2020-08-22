@@ -1,5 +1,4 @@
 ; vim: noai:ts=2:sw=2:et: 
-(format *error-output* "; os.lisp~%")
 
 (defun klass-slots (it)
   "what are the slots of a class?"

@@ -1,6 +1,6 @@
 ; vim: noai:ts=2:sw=2:et: 
-(or (fboundp 'lib) (load "lib"))
-(lib "macros")
+(load "got")
+(got "macros")
 
 "
 Global options used by everyone.
@@ -10,7 +10,7 @@ Accessed as follows (for example):
 
 "
 
-(defvar *the*
+(defvar *my*
        '(ch (     skip  #\?
                     less  #\<
                     more  #\>
@@ -25,15 +25,13 @@ Accessed as follows (for example):
                     pass 0
                     fail 0)))
 
-(defmacro ? (&rest fs) 
+(defmacro my (&rest fs) 
    "getter for globals"
-   `(getr getf *the* ,@fs))
+   `(getr getf *my* ,@fs))
 
 (defun skip? (x) 
    (and (stringp x)
-        (string-equal x (? ch skip))))
+        (eql x (my ch skip))))
 
-(defun num? (x &aux (n (elt x 0)))
-  (or (eql n (? ch num))
-      (eql n (? ch less))
-      (eql n (? ch more))))
+
+

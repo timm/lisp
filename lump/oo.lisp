@@ -1,11 +1,13 @@
 ; vim: noai:ts=2:sw=2:et: 
-(or (fboundp 'lib) (load "lib"))
-(lib "macros")
+(load "got")
+(got "my" "macros" "os")
 
-(defmacro ~ (x &rest fs) 
+(defmacro ? (x &rest fs) 
   `(getr  slot-value ,x ,@fs))
 
-(defclass thing () ())
+(let ((id 0))
+  (defclass thing () 
+    ((id :initform (incf id)))))
 
 (defmacro defthing (x parent &rest slots)
   "Succinct class creation"
