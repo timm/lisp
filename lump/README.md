@@ -69,8 +69,15 @@ Can…
 
 
 
+
+
+<ul>
+
  Cols can be eother `num`s or `sym`s for numeric
 or symbolic content (respectively).
+
+</ul>
+
 
 
 
@@ -100,27 +107,62 @@ or symbolic content (respectively).
 
 ### `while (test &body body)`
 
+
+
+<ul>
+
 Adding a `while` loop to LISP.
+
+</ul>
+
 
 
 ### `getr (how obj f &rest fs)`
 
+
+
+<ul>
+
 Recursive access to contents.
+
+</ul>
+
 
 
 ### `? (x &rest fs)`
 
+
+
+<ul>
+
 Recursive access to slot instances
+
+</ul>
+
 
 
 ### `dohash ((k v h &optional out) &body body)`
 
+
+
+<ul>
+
 Set key `k` and value `v` to items in hash. Returns `out`.
+
+</ul>
+
 
 
 ### `doitems ((one pos lst &optional out) &body body)`
 
+
+
+<ul>
+
 Item `one` is found at `pos` in `lst`. Returns `out`.
+
+</ul>
+
 
 
 
@@ -131,7 +173,14 @@ Item `one` is found at `pos` in `lst`. Returns `out`.
 
 ### `my (&rest fs)`
 
+
+
+<ul>
+
 getter for globals
+
+</ul>
+
 
 
 
@@ -148,12 +197,26 @@ getter for globals
 
 ### `defthing (x parent &rest slots)`
 
+
+
+<ul>
+
 Succinct class creation
+
+</ul>
+
 
 
 ### `print-object ((it thing) out)`
 
+
+
+<ul>
+
 for things, print all public slots
+
+</ul>
+
 
 
 
@@ -164,27 +227,62 @@ for things, print all public slots
 
 ### `klass-slots (it)`
 
+
+
+<ul>
+
 what are the slots of a class?
+
+</ul>
+
 
 
 ### `klass-slot-definition-name (x)`
 
+
+
+<ul>
+
 what is a slot's name?
+
+</ul>
+
 
 
 ### `args `
 
+
+
+<ul>
+
 what are the command line args?
+
+</ul>
+
 
 
 ### `stop `
 
+
+
+<ul>
+
 how to halt the program?
+
+</ul>
+
 
 
 ### `sh (cmd)`
 
+
+
+<ul>
+
 Run a shwll command
+
+</ul>
+
 
 
 
@@ -195,12 +293,26 @@ Run a shwll command
 
 ### `doread ((it f &optional out &key (take #'read)) &body body)`
 
+
+
+<ul>
+
 Iterator for running over files or strings.
+
+</ul>
+
 
 
 ### `readme (dir &optional (s t))`
 
+
+
+<ul>
+
 Generate README.md from doco strings from LISP code in a directory.
+
+</ul>
+
 
 
 

@@ -34,7 +34,7 @@
                               (stringp (fourth x))
                               (not (equal "" (fourth x)))))
            (dump   (str  &optional (pad ""))
-                   (format s "~a~a~%" pad str)))
+                   (format s "~%~%<ul>~%~%~a~a~%~%</ul>~%~%" pad str)))
           (when (fyip)
             (terpri s) (terpri s)
             (dump x)

@@ -42,6 +42,7 @@ PROMPT_COMMAND='echo -ne "👀 $(git branch 2>/dev/null | grep '^*' | colrm 1 2)
 doco() {
   doco1 > README.md
   clisp readmes.lisp --makedoc LUMP >> README.md
+  license >> README.md
   git add README.md
 }
 
@@ -59,6 +60,10 @@ doco1() { cat<<'EOF'
 &nbsp;&nbsp;:code ([lib](https://github.com/timm/lisp/tree/master/src/lib/README.md#top)
 ([oo](https://github.com/timm/lisp/tree/master/src/oo/README.md#top)
 ([sample](https://github.com/timm/lisp/tree/master/src/sample/README.md#top)))))
+
+EOF
+}
+license() { cat<<'EOF'
 
 ## License
 
