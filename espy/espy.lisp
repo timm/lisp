@@ -20,9 +20,13 @@
 ; macros and constants
 (defconstant +lo+ most-negative-fixnum)
 (defconstant +hi+ most-positive-fixnum)
+
 (defvar *demos* nil)
 (defvar *fails* 0)
 (defvar *tries* 0)
+
+(defmacro setor (x &rest body)
+  `(or ,x (setf ,x (progn ,@body))))
 
 (defmacro ? (obj f &rest fs)
   (if fs `(? (slot-value ,obj ',f) ,@fs) `(slot-value ,obj ',f)))
@@ -34,14 +38,13 @@
      ,@body))
 
 (defmacro ok (want got &optional (msg "") &rest txt)
-  `(progn 
-     (incf *tries*)
-     (handler-case
-       (if (not (equalp ,want ,got))
-   (error (format nil ,msg ,@txt)))
-       (t (c)
-    (incf *fails*)
-    (format t "; E> ~a~%" c)))))
+  `(progn (incf *tries*)
+          (handler-case
+            (if (not (equalp ,want ,got))
+              (error (format nil ,msg ,@txt)))
+            (t (c)
+               (incf *fails*)
+               (format t "; E> ~a~%" c)))))
 
 ;-------- --------- --------- --------- --------- --------- --------- ----------
 (defstruct span (lo +lo+) (hi +hi+) also)
@@ -61,12 +64,10 @@
   x)
 
 (defmethod bins ((c col) tab)
-  (or (? c bins)
-      (setf (? c bins) (bins1 c tab))))
+  (setor (? c bins) (bins1 c tab)))
 
 (defmethod w ((c col) &aux (s (? c txt)))
-  (or (? c w) 
-      (setf (? c w) (if (eql #\- (char s (1- (length s)))) -1 1))))
+  (setor (? c w) (if (eql #\- (char s (1- (length s)))) -1 1)))
 
 (defmethod bins1 ((c col) x) x)
 
@@ -78,9 +79,10 @@
   (setf (? n ok) nil))
 
 (defmethod all ((n num))
-  (if (? n ok)
-      (? n all)
-      (setf (? n all) (sort (? n all) #'<))))
+  (unless (? n ok)
+      (setf (? n all) (sort (? n all) #'<)))
+  (setf (? n ok) t)
+  (? n all))
 
 (defmethod norm ((n num) x) 
   (if (equal x "?")
