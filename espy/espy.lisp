@@ -79,8 +79,7 @@
   (setf (? n ok) nil))
 
 (defmethod all ((n num))
-  (unless (? n ok)
-      (setf (? n all) (sort (? n all) #'<)))
+  (unless (? n ok) (setf (? n all) (sort (? n all) #'<)))
   (setf (? n ok) t)
   (? n all))
 
@@ -111,7 +110,7 @@
     (defun randf (&optional (n 1)) (* n (- 1.0d0 (park-miller-randomizer))))
     (defun randi (n) (floor (* n (/ (randf 1000.0) 1000))))))
 
-(defun is (x &aux (y (read-from-string x))) 
+(defun thing (x &aux (y (read-from-string x))) 
   (if (typep y 'number) y x))
 
 (defun has (needle haystack &key (test 'char=))
@@ -124,7 +123,7 @@
 ; start up
 (let (x 
      (o (make-options))) 
-  (dolist (y (mapcar #'is sb-ext:*posix-argv*))
+  (dolist (y (mapcar #'thing sb-ext:*posix-argv*))
     (if (equal x "-keep")  (setf (? o keep) y))
     (if (equal x "-data")  (setf (? o data) y))
     (if (equal x "-data")  (setf (? o data) y))
