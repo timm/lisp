@@ -1,0 +1,16 @@
+#!/etc/bin/env bash
+Espy=$(cd $( dirname "${BASH_SOURCE[0]}" ) && pwd )
+alias repl="rlwrap sbcl --noinform "
+alias ls="ls -G"
+alias gp="git add *; git commit -am saving; git push; git status"
+
+lisp() { 
+  f=$(basename $1 .lisp).lisp
+  shift
+  sbcl --noinform --script $f  $* 2> >(gawk '{print} /^5:/ {exit}') 
+} 
+
+here() { cd $1; basename `pwd`; }
+
+
+PROMPT_COMMAND='echo -ne "👽 $(git branch 2>/dev/null | grep '^*' | colrm 1 2):";PS1="$(here ..)/$(here .):\!\e[m ▶ "'
