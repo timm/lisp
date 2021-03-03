@@ -85,14 +85,18 @@
   (? n all))
 
 (defmethod norm ((n num) x) 
-  (if (equal x "?")
-      x
-      (let ((lst (all n)))
-        (/ (- x (nth 0 lst)) (- (cdr (last lst)) (nth 0 lst))))))
+  (cond ((equal x "?") x)
+        (t (let ((lst (all n)))
+             (/ (- x (nth 0 lst)) (- (cdr (last lst)) (nth 0 lst)))))))
 
 (defmethod per ((n num) p) (nth (1- (* p (length (all n)))) (all n)))
 (defmethod mid ((n num))   (per n .5))
 (defmethod sd  ((n num))   (/ (- (per n .9) (per n .1)) 2.56))
+
+(defdemo num?(&aux (n (make-num)))
+  "Testing nums"
+  (add n '(1 2 3 4 5 6 6 7 7 8))
+  (print (sd n)))
 
 ;-------- --------- --------- --------- --------- --------- --------- ----------
 (defun espy (o) o)
