@@ -119,25 +119,26 @@
 ;-------- --------- --------- --------- --------- --------- --------- ----------
 ; start up
 (let (x 
-      (args (mapcar #'thing sb-ext:*posix-argv*))
-      (o (make-options))) 
-  (defun usage (&optional msg) 
-    (format t "~&~aOptions: ~{-~(~a~)~^, ~}~%" 
-       (if msg (format nil "[~a] unknown~%" msg) "")
-       (cons 'demos (slots o))))
-  (dolist (y args)
+      (o (make-options))
+      (args (cdr (mapcar #'thing sb-ext:*posix-argv*))))
+  (defun usage (&optional missing) 
+    (format t "~&~aOptions: ~{:~(~a~)~^, ~}~%" 
+       (if missing (format nil "[~a] unknown~%" missing) "")
+       (append '(h demos) (slots o))))
+  (loop 
+    while (setf x (pop args)) do
     (cond
-      ((equal x "-h")     (usage))
-      ((equal x "-keep")  (setf (? o keep) y))
-      ((equal x "-data")  (setf (? o data) y))
-      ((equal x "-data")  (setf (? o data) y))
-      ((equal x "-dir" )  (setf (? o dir)  y))
-      ((equal y "-demos") (mapcar #'funcall *demos*))
-      ((equal x "-demo" ) (dolist (f *demos*)
-                            (if (has (string-upcase y) f) (funcall f))))
-      ((and (stringp y) (eql #\- (char y 0)))  
-       (usage y)))
-    (setf x y))
-  (espy o))
+      ((equalp x "-h")     (usage))
+      ((equalp x "-demos") (mapcar #'funcall *demos*))
+      ((equalp x ":keep")  (setf (? o keep) (pop args)))
+      ((equalp x ":data")  (setf (? o data) (pop args)))
+      ((equalp x ":data")  (setf (? o data) (pop args)))
+      ((equalp x ":dir" )  (setf (? o dir)  (pop args)))
+      ((equalp x ":demo" ) (let ((goal (string-upcase (pop args))))
+                             (dolist (f *demos*)
+                               (if (has goal f) (funcall f)))))
+      ((if (and (stringp x) (eql #\- (char x 0)))  
+         (usage x))))
+    (espy o))
 
-(sb-ext:exit :code (if (< *fails* 2) 0 1)))
+  (sb-ext:exit :code (if (< *fails* 2) 0 1)))
