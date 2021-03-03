@@ -23,7 +23,6 @@
 
 (defvar *demos* nil)
 (defvar *fails* 0)
-(defvar *tries* 0)
 
 (defmacro setor (x &rest body)
   `(or ,x (setf ,x (progn ,@body))))
@@ -32,19 +31,14 @@
   (if fs `(? (slot-value ,obj ',f) ,@fs) `(slot-value ,obj ',f)))
 
 (defmacro defdemo (name args &optional (doc "") &body body)
-  (pushnew name *demos*)
+  (pushnew name (cdr (last *demos*)))
   `(defun ,name ,args ,doc
-     (format t "~&~%;;; ~a~%; ~a~%" ',name ,doc)
-     ,@body))
+     (format t "~&~%;;; ~a~%; ~a~%" ',name ,doc) ,@body))
 
-(defmacro ok (want got &optional (msg "") &rest txt)
-  `(progn (incf *tries*)
-          (handler-case
-            (if (not (equalp ,want ,got))
-              (error (format nil ,msg ,@txt)))
-            (t (c)
-               (incf *fails*)
-               (format t "; E> ~a~%" c)))))
+(defmacro ok (x y &optional (msg "") &rest txt)
+  `(handler-case
+     (if (not (equalp ,x ,y)) (error (format nil ,msg ,@txt)))
+     (t  (c)                  (format t "; E[~a]> ~a~%"  (incf *fails*) c))))
 
 ;-------- --------- --------- --------- --------- --------- --------- ----------
 (defstruct span (lo +lo+) (hi +hi+) also)
@@ -92,11 +86,11 @@
 (defmethod mid ((n num))   (per n .5))
 (defmethod sd  ((n num))   (/ (- (per n .9) (per n .1)) 2.56))
 
-(defdemo num?(&aux (n (make-num)))
-  "Testing nums"
-  (add n '(1 2 3 4 5 6 6 7 7 8))
-  (print (sd n)))
-
+; (defdemo num?(&aux (n (make-num)))
+;   "Testing nums"
+;   (add n '(1 2 3 4 5 6 6 7 7 8))
+;   (print (sd n)))
+;
 ;-------- --------- --------- --------- --------- --------- --------- ----------
 (defun espy (o) o)
 
@@ -115,22 +109,35 @@
 
 (defun has (needle haystack &key (test 'char=))
   (not (null (search (string needle) (string haystack) :test test))))
+  
+(defun slots (x)
+  (mapcar #'sb-mop:slot-definition-name  (sb-mop:class-slots (class-of x))))
 
 ;-------- --------- --------- --------- --------- --------- --------- ----------
-(defdemo aa() "aa" (ok 2 1 "cheching not eq"))
+;(defdemo aa() "aa" (ok 2 1 "cheching not eq"))
 
 ;-------- --------- --------- --------- --------- --------- --------- ----------
 ; start up
 (let (x 
-     (o (make-options))) 
-  (dolist (y (mapcar #'thing sb-ext:*posix-argv*))
-    (if (equal x "-keep")  (setf (? o keep) y))
-    (if (equal x "-data")  (setf (? o data) y))
-    (if (equal x "-data")  (setf (? o data) y))
-    (if (equal x "-dir" )  (setf (? o dir)  y))
-    (if (equal y "-demos") (mapcar #'funcall (reverse *demos*)))
-    (if (equal x "-demo" ) (dolist (f (reverse *demos*))
-                             (if  (has (string-upcase y) f) (funcall f))))
+      (args (mapcar #'thing sb-ext:*posix-argv*))
+      (o (make-options))) 
+  (defun usage (&optional msg) 
+    (format t "~&~aOptions: ~{-~(~a~)~^, ~}~%" 
+       (if msg (format nil "[~a] unknown~%" msg) "")
+       (cons 'demos (slots o))))
+  (dolist (y args)
+    (cond
+      ((equal x "-h")     (usage))
+      ((equal x "-keep")  (setf (? o keep) y))
+      ((equal x "-data")  (setf (? o data) y))
+      ((equal x "-data")  (setf (? o data) y))
+      ((equal x "-dir" )  (setf (? o dir)  y))
+      ((equal y "-demos") (mapcar #'funcall *demos*))
+      ((equal x "-demo" ) (dolist (f *demos*)
+                            (if (has (string-upcase y) f) (funcall f))))
+      ((and (stringp y) (eql #\- (char y 0)))  
+       (usage y)))
     (setf x y))
-  (espy o)
-  (sb-ext:exit :code (if (< *fails* 2) 0 1)))
+  (espy o))
+
+(sb-ext:exit :code (if (< *fails* 2) 0 1)))
