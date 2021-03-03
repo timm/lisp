@@ -11,9 +11,19 @@ cat <<'EOF'
 EOF
 tput sgr0
 
-ook() { sbcl --script  ok${1}.lisp; }
-scl() { sbcl --script $1.lisp;  }
-ccl() { clisp $1.lisp;  }
+alias gg="git pull"   
+alias gp="git add *; git commit -am saving; git push; git status"
+alias gs="git status"   
+alias ls="ls -G"
+alias reload=". $Ell/lithp"
+alias tmux="tmux -f $Ell/.var/tmuxrc"
+alias vi="vim    -u $Ell/.var/vimrc"
+
+ook()  { sbcl --script  ok${1}.lisp; }
+scl()  { sbcl --script $1.lisp;  }
+ccl()  { clisp $1.lisp;  }
+here() { cd $1; basename `pwd`; }    
+vims() { vim -u $Ell/.var/vimrc +PluginInstall +qall; }
 
 for i in *.lisp; do
   f=$(basename $i .lisp)
@@ -24,26 +34,28 @@ for i in *.lisp; do
   eval  $com
 done
 
-alias reload=". $Ell/ell"
-alias gp="git add *; git commit -am saving; git push; git status"
-alias gg="git pull"   
-alias gs="git status"   
-alias reload=". $Ell/lithp"
-
-vims()   { vim -u $Ell/.var/vimrc +PluginInstall +qall; }
-
-alias vi="vim    -u $Ell/.var/vimrc"
-alias tmux="tmux -f $Ell/.var/tmuxrc"
-
-here()  { cd $1; basename `pwd`; }    
-
-PROMPT_COMMAND='echo -ne "👀 $(git branch 2>/dev/null | grep '^*' | colrm 1 2):";PS1="$(here ..)/$(here .):\!\e[m ▶ "'     
+PROMPT_COMMAND='echo -ne "💫 $(git branch 2>/dev/null | grep '^*' | colrm 1 2):";PS1="$(here ..)/$(here .):\!\e[m ▶ "'     
 
 doco() {
   doco1 > README.md
   clisp readmes.lisp --makedoc LUMP >> README.md
   license >> README.md
   git add README.md
+}
+
+about() { cat<<'EOF'
+
+## Install
+
+Install Common Lisp; either:
+
+- Clisp: good for simple scripts and succinct debug information;
+- Sbcl: good for speed and verbose debig information
+
+Unzip
+
+
+EOF
 }
 
 doco1() { cat<<'EOF'

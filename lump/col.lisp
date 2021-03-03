@@ -2,8 +2,9 @@
 (load "got")
 (got "oo" "is")
 
-" Cols can be eother `num`s or `sym`s for numeric
-or symbolic content (respectively)."
+"Code for incrementally managing summaries of  `num`eric or `sym`bolic  
+data. `Num`s can report their mean and standard deviation while `Sym`s can
+report their mode and entropy."
 
 (defthing col thing (w 1) (n 0) (pos 0) (txt ""))
 
@@ -56,3 +57,7 @@ or symbolic content (respectively)."
                   ((< n 2) 0)
                   (t (sqrt (/ m2 (- n 1))))))))
   x)
+
+;;; non-parametric analysis of numbers ----------
+
+

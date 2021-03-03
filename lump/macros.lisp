@@ -14,9 +14,9 @@
   "Recursive access to slot instances"
   `(getr  slot-value ,x ,@fs))
 
-(defmacro dohash ((k v h &optional out) &body body )
-  "Set key `k` and value `v` to items in hash. Returns `out`."
-  `(progn (maphash #'(lambda (,k ,v) ,@body) ,h) ,out))
+;(defmacro dohash ((k v h &optional out) &body body )
+;  "Set key `k` and value `v` to items in hash. Returns `out`."
+;  `(progn (maphash #'(lambda (,k ,v) ,@body) ,h) ,out))
 
 (defmacro doitems ((one pos lst &optional out) &body body )
   "Item `one` is found at `pos` in `lst`. Returns `out`."
