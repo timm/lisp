@@ -99,46 +99,49 @@
 (let* ((seed 10013))
   (labels ((park-miller-randomizer ()
               (setf seed (mod (* 16807.0d0 seed) 2147483647.0d0))
-                              (/ seed            2147483647.0d0)))
-    (defun srand (o)  (setf seed (? o seed)))
+                              (/ seed            2147483647.0d0))) (defun srand (o)  (setf seed (? o seed)))
     (defun randf (&optional (n 1)) (* n (- 1.0d0 (park-miller-randomizer))))
     (defun randi (n) (floor (* n (/ (randf 1000.0) 1000))))))
 
-(defun thing (x &aux (y (read-from-string x))) 
+(defun it (x &aux (y (read-from-string x))) 
   (if (typep y 'number) y x))
 
 (defun has (needle haystack &key (test 'char=))
   (not (null (search (string needle) (string haystack) :test test))))
   
-(defun slots (x)
-  (mapcar #'sb-mop:slot-definition-name  (sb-mop:class-slots (class-of x))))
+(defun slots (x)  
+  (mapcar #'sb-mop:slot-definition-name(sb-mop:class-slots (class-of x))))
 
 ;-------- --------- --------- --------- --------- --------- --------- ----------
 ;(defdemo aa() "aa" (ok 2 1 "cheching not eq"))
 
 ;-------- --------- --------- --------- --------- --------- --------- ----------
 ; start up
-(let (x 
-      (o (make-options))
-      (args (cdr (mapcar #'thing sb-ext:*posix-argv*))))
-  (defun usage (&optional missing) 
-    (format t "~&~aOptions: ~{:~(~a~)~^, ~}~%" 
-       (if missing (format nil "[~a] unknown~%" missing) "")
-       (append '(h demos) (slots o))))
-  (loop 
-    while (setf x (pop args)) do
-    (cond
-      ((equalp x "-h")     (usage))
-      ((equalp x "-demos") (mapcar #'funcall *demos*))
-      ((equalp x ":keep")  (setf (? o keep) (pop args)))
-      ((equalp x ":data")  (setf (? o data) (pop args)))
-      ((equalp x ":data")  (setf (? o data) (pop args)))
-      ((equalp x ":dir" )  (setf (? o dir)  (pop args)))
-      ((equalp x ":demo" ) (let ((goal (string-upcase (pop args))))
-                             (dolist (f *demos*)
-                               (if (has goal f) (funcall f)))))
-      ((if (and (stringp x) (eql #\- (char x 0)))  
-         (usage x))))
-    (espy o))
-
+(defmethod cli ((o options) act &aux (args (mapcar #'it sb-ext:*posix-argv*)))
+  (loop while args do (let ((arg (pop args)))
+                        (or (cli1 o arg args))
+                        (and (stringp arg) (eql #\- (char arg 0)) (usage o x))))
+  (funcall act o)
   (sb-ext:exit :code (if (< *fails* 2) 0 1)))
+
+(defmethod usage ((o options) &optional missing) 
+  (format t "~&~aOptions: ~{:~(~a~)~^, ~}~%" 
+          (if missing (format nil "[~a] unknown~%" missing) "")
+          (append '(h demos) (slots o))))
+
+(defmethod cli1 ((o options) arg args)
+  (cond ((equalp arg "-h")     (usage o))
+        ((equalp arg "-demos") (mapcar #'funcall *demos*))
+        ((equalp arg ":sep")   (setf (? o sep)  (pop args)))
+        ((equalp arg ":keep")  (setf (? o keep) (pop args)))
+        ((equalp arg ":data")  (setf (? o data) (pop args)))
+        ((equalp arg ":data")  (setf (? o data) (pop args)))
+        ((equalp arg ":dir" )  (setf (? o dir)  (pop args)))
+        ((equalp arg ":demo" ) 
+         (let ((goal (pop args)))
+           (dolist (f *demos*)
+             (if (has (string-upcase goal) f) (funcall f)))))
+        (t)))
+
+(cli (make-options) #'espy) 
+
