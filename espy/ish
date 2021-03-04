@@ -3,8 +3,13 @@ web="https://raw.githubusercontent.com/timm/lisp/master/espy"
 Espy=$(cd $( dirname "${BASH_SOURCE[0]}" ) && pwd )
 mkdir -p $Espy/etc
 
-want=etc/tmux-conf; [ -f "$Espy/$want" ] || wget -q -O $Espy/$want $web/$want
-want=etc/vimrc;     [ -f "$Espy/$want" ] || wget -q -O $Espy/$want $web/$want
+f=etc/tmux-conf; [ -f "$Espy/$f" ]||wget -q -O $Espy/$f $web/$f
+f=etc/vimrc;     [ -f "$Espy/$f" ]||wget -q -O $Espy/$f $web/$f
+f=etc/gitignore; [ -f "$Espy/$f" ]||wget -q -O $Espy/$f $web/$f
+
+f=gitignore;    [ -f "$Espy/.$f" ]||cp $Espy/etc/$f $Espy/.$f
+
+git add $Espy/etc/* $Espy/.gitignore
 
 alias repl="rlwrap sbcl --noinform "
 alias ls="ls -G"
