@@ -118,9 +118,7 @@
 ;-------- --------- --------- --------- --------- --------- --------- ----------
 ; start up
 (defmethod cli ((o options) act &aux (args (mapcar #'it sb-ext:*posix-argv*)))
-  (loop while args do (let ((arg (pop args)))
-                        (or (cli1 o arg args))
-                        (and (stringp arg) (eql #\- (char arg 0)) (usage o x))))
+  (loop while args do (cli1 o (pop args) args))
   (funcall act o)
   (sb-ext:exit :code (if (< *fails* 2) 0 1)))
 
@@ -132,16 +130,15 @@
 (defmethod cli1 ((o options) arg args)
   (cond ((equalp arg "-h")     (usage o))
         ((equalp arg "-demos") (mapcar #'funcall *demos*))
-        ((equalp arg ":sep")   (setf (? o sep)  (pop args)))
-        ((equalp arg ":keep")  (setf (? o keep) (pop args)))
-        ((equalp arg ":data")  (setf (? o data) (pop args)))
-        ((equalp arg ":data")  (setf (? o data) (pop args)))
-        ((equalp arg ":dir" )  (setf (? o dir)  (pop args)))
-        ((equalp arg ":demo" ) 
+        ((equalp arg "-sep")   (setf (? o sep)  (pop args)))
+        ((equalp arg "-keep")  (setf (? o keep) (pop args)))
+        ((equalp arg "-data")  (setf (? o data) (pop args)))
+        ((equalp arg "-dir" )  (setf (? o dir)  (pop args)))
+        ((equalp arg "-demo" ) 
          (let ((goal (pop args)))
            (dolist (f *demos*)
              (if (has (string-upcase goal) f) (funcall f)))))
-        (t)))
+        ((and (stringp arg) (eql #\- (char arg 0)) (usage o arg)))))
 
 (cli (make-options) #'espy) 
 
