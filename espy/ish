@@ -5,7 +5,7 @@ Espy=$(cd $( dirname "${BASH_SOURCE[0]}" ) && pwd )
 
 ############# assert dirs exist
 mkdir -p $Espy/etc
-chmod +x $Espy/ing
+chmod +x $Espy/ish
 
 ############# ensure files exist
 f=etc/tmux-conf; [ -f "$Espy/$f"  ] || wget -q -O $Espy/$f $web/$f
@@ -16,7 +16,7 @@ f=gitignore;     [ -f "$Espy/.$f" ] || cp $Espy/etc/$f $Espy/.$f
 git add $Espy/etc/* $Espy/.gitignore
 
 ############## aliases
-alias espy="lisp espying.lisp"
+alias espy="lisp espy-cli.lisp"
 alias gp="git add *; git commit -am saving; git push; git status"
 alias ls="ls -G"
 alias repl="rlwrap sbcl --noinform "
@@ -36,16 +36,22 @@ here() { cd $1; basename `pwd`; }
 hello() {
   clear
   tput bold; tput setaf 32; cat <<-'EOF'
-|\   \\\\__     o   
-| \_/    o \    o 
-> _   (( <_  oo     BASH INg
-| / \__+___/      
-|/     |/
-
+                        _.      
+               _.-----'' `\                  D
+   __..-----'''            `.             aN
+  <            `\.           '\      x
+  :.              `.           `\ E 
+   `:.              `.   i  t  y `-.    P
+     `:E S P Y        . t 2 r       +.
+       `:. optimizer   `.  __.===::::;)
+         `:         ___.__>'::::::a:f/'
+           `.  _,===:::=-'-=-\"\"\"''
+            '-/:::''
+              ''
 EOF
   tput sgr0
   tput bold; tput setaf 0
-  awk '/^alias/ {print $0}'   $Espy/ing
+  awk '/^alias/ {print $0}'   $Espy/ish
   echo ""
   tput sgr0
 }
@@ -56,15 +62,15 @@ mytmux() {
   $Tmux start-server
   sleep 1
   $Tmux new-session -d -s $session  
-  $Tmux send-keys ". $Espy/ing"  C-m  "sleep 0.5; clear; vi espy.lisp" C-m
+  $Tmux send-keys ". $Espy/ish"  C-m  "sleep 0.5; clear; vi espy.lisp" C-m
 
   $Tmux splitw -h -p 20
   $Tmux selectp -t 1
-  $Tmux send-keys ".  $Espy/ing"  C-m  "clear; hello" C-m
+  $Tmux send-keys ".  $Espy/ish"  C-m  "clear; hello" C-m
 
   $Tmux splitw -v  -p 5
   $Tmux selectp -t 2
-  $Tmux send-keys ".  $Espy/ing"  C-m  "htop"  C-m
+  $Tmux send-keys ".  $Espy/ish"  C-m  "htop"  C-m
 
   $Tmux attach-session -t $session
 }
