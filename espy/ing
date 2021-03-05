@@ -1,11 +1,11 @@
-#!/usr/bin/env bash
+#!/usr/bin/bash
 ############ paths
 web="https://raw.githubusercontent.com/timm/lisp/master/espy"
 Espy=$(cd $( dirname "${BASH_SOURCE[0]}" ) && pwd )
 
 ############# assert dirs exist
 mkdir -p $Espy/etc
-chmod +x $Espy/ell
+chmod +x $Espy/ing
 
 ############# ensure files exist
 f=etc/tmux-conf; [ -f "$Espy/$f"  ] || wget -q -O $Espy/$f $web/$f
@@ -23,6 +23,7 @@ alias repl="rlwrap sbcl --noinform "
 alias tmux="$(which tmux) -f $Espy/etc/tmux-conf "
 alias vi="vim -u $Espy/etc/vimrc "
 alias vims="vim +PluginInstall +qall"         
+
 ############## tricks
 lisp() { 
   f=$(basename $1 .lisp).lisp
@@ -35,15 +36,16 @@ here() { cd $1; basename `pwd`; }
 hello() {
   clear
   tput bold; tput setaf 32; cat <<-'EOF'
-   .-.
-  (o o)  There is no escape from...
-  ( O )    sH ELL !!!
-   \   \      ver1 
-    `~~~'
+|\   \\\\__     o   
+| \_/    o \    o 
+> _   (( <_  oo     BASH INg
+| / \__+___/      
+|/     |/
+
 EOF
   tput sgr0
   tput bold; tput setaf 0
-  awk '/^alias/ {print $0}'   $Espy/ell
+  awk '/^alias/ {print $0}'   $Espy/ing
   echo ""
   tput sgr0
 }
@@ -54,15 +56,15 @@ mytmux() {
   $Tmux start-server
   sleep 1
   $Tmux new-session -d -s $session  
-  $Tmux send-keys ". $Espy/ell"  C-m  "sleep 0.5; clear; vi espy.lisp" C-m
+  $Tmux send-keys ". $Espy/ing"  C-m  "sleep 0.5; clear; vi espy.lisp" C-m
 
   $Tmux splitw -h -p 20
   $Tmux selectp -t 1
-  $Tmux send-keys ".  $Espy/ell"  C-m  "clear; hello" C-m
+  $Tmux send-keys ".  $Espy/ing"  C-m  "clear; hello" C-m
 
   $Tmux splitw -v  -p 5
   $Tmux selectp -t 2
-  $Tmux send-keys ".  $Espy/ell"  C-m  "htop"  C-m
+  $Tmux send-keys ".  $Espy/ing"  C-m  "htop"  C-m
 
   $Tmux attach-session -t $session
 }
