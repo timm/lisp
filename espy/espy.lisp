@@ -26,24 +26,11 @@
 (defconstant +lo+ most-negative-fixnum)
 (defconstant +hi+ most-positive-fixnum)
 
-(defvar *demos* nil)
-(defvar *fails* 0)
-
 (defmacro setor (x &rest body)
   `(or ,x (setf ,x (progn ,@body))))
 
 (defmacro ? (obj f &rest fs)
   (if fs `(? (slot-value ,obj ',f) ,@fs) `(slot-value ,obj ',f)))
-
-(defmacro defdemo (name args &optional (doc "") &body body)
-  (pushnew name (cdr (last *demos*)))
-  `(defun ,name ,args ,doc
-     (format t "~&~%;;; ~a~%; ~a~%" ',name ,doc) ,@body))
-
-(defmacro ok (x y &optional (msg "") &rest txt)
-  `(handler-case
-     (if (not (equalp ,x ,y)) (error (format nil ,msg ,@txt)))
-     (t  (c)                  (format t "; E[~a]> ~a~%"  (incf *fails*) c))))
 
 ;-------- --------- --------- --------- --------- --------- --------- ----------
 (defstruct span (lo +lo+) (hi +hi+) also)
@@ -53,10 +40,11 @@
     (if (equal lo hi) (equal x lo) (<= lo x hi))))
 
 ;-------- --------- --------- --------- --------- --------- --------- ----------
-(defstruct col (n 0) (pos 0) (txt "") w  bins all)
+(defstruct col (n 0) (pos 0) (txt "") w bins all)
 
 (defmethod add ((c col) (lst cons)) 
-  (dolist (x lst) (add c x)))
+  (dolist (x lst) (add c x))
+  c)
 
 (defmethod add ((c col) x) 
   (unless (equal x "?") (incf (? c n)) (add1 c x))
@@ -71,40 +59,34 @@
 (defmethod bins1 ((c col) x) x)
 
 ;-------- --------- --------- --------- --------- --------- --------- ----------
-(defstruct (num (:include col)) ok)
+(defstruct (num (:include col)) ok tmp)
 
 (defmethod add1 ((n num) x)
-  (push x (? n all))
+  (push x (? n tmp))
   (setf (? n ok) nil))
 
 (defmethod all ((n num))
-  (unless (? n ok) (setf (? n all) (sort (? n all) #'<)))
-  (setf (? n ok) t)
-  (? n all))
+  (with-slots (ok all tmp) n
+    (unless ok 
+      (setf all (coerce (sort tmp #'<) 'vector)))
+    (setf ok t)
+    all))
 
 (defmethod norm ((n num) x) 
   (cond ((equal x "?") x)
         (t (let ((lst (all n)))
              (/ (- x (nth 0 lst)) (- (cdr (last lst)) (nth 0 lst)))))))
 
-(defmethod per ((n num) p) (nth (1- (* p (length (all n)))) (all n)))
+(defmethod per ((n num) p) (aref (all n) (1- (floor (* p (length (all n)))))))
 (defmethod mid ((n num))   (per n .5))
 (defmethod sd  ((n num))   (/ (- (per n .9) (per n .1)) 2.56))
-
-; (defdemo num?(&aux (n (make-num)))
-;   "Testing nums"
-;   (add n '(1 2 3 4 5 6 6 7 7 8))
-;   (print (sd n)))
-;
-;-------- --------- --------- --------- --------- --------- --------- ----------
-(defun espy (&optional (o (make-options))) o)
-
 ;-------- --------- --------- --------- --------- --------- --------- ----------
 ;;;; lib
 (let* ((seed 10013))
   (labels ((park-miller-randomizer ()
-              (setf seed (mod (* 16807.0d0 seed) 2147483647.0d0))
-                              (/ seed            2147483647.0d0))) (defun srand (o)  (setf seed (? o seed)))
+             (setf seed (mod (* 16807.0d0 seed) 2147483647.0d0))
+             (/ seed 2147483647.0d0))) 
+    (defun srand (o)  (setf seed (? o seed)))
     (defun randf (&optional (n 1)) (* n (- 1.0d0 (park-miller-randomizer))))
     (defun randi (n) (floor (* n (/ (randf 1000.0) 1000))))))
 
@@ -116,33 +98,7 @@
   
 (defun slots (x)  
   (mapcar #'sb-mop:slot-definition-name(sb-mop:class-slots (class-of x))))
-
 ;-------- --------- --------- --------- --------- --------- --------- ----------
-;(defdemo aa() "aa" (ok 2 1 "cheching not eq"))
+(defun espy (&optional (o (make-options))) o)
 
-;-------- --------- --------- --------- --------- --------- --------- ----------
-; start up
-(defmethod cli ((o options) act &aux (args (mapcar #'it sb-ext:*posix-argv*)))
-  (loop while args do (cli1 o (pop args) args))
-  (funcall act o)
-  (sb-ext:exit :code (if (< *fails* 2) 0 1)))
 
-(defmethod usage ((o options) &optional missing) 
-  (format t "~&~aOptions: ~{:~(~a~)~^, ~}~%" 
-          (if missing (format nil "[~a] unknown~%" missing) "")
-          (append '(h demos) (slots o))))
-
-(defmethod cli1 ((o options) arg args)
-  (cond ((equalp arg "-h")     (usage o))
-        ((equalp arg "-demos") (mapcar #'funcall *demos*))
-        ((equalp arg "-sep")   (setf (? o sep)  (pop args)))
-        ((equalp arg "-keep")  (setf (? o keep) (pop args)))
-        ((equalp arg "-data")  (setf (? o data) (pop args)))
-        ((equalp arg "-dir" )  (setf (? o dir)  (pop args)))
-        ((equalp arg "-demo" ) 
-         (let ((goal (pop args)))
-           (dolist (f *demos*)
-             (if (has (string-upcase goal) f) (funcall f)))))
-        ((and (stringp arg) (eql #\- (char arg 0)) (usage o arg)))))
-
-(cli (make-options) #'espy) 
