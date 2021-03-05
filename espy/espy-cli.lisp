@@ -19,9 +19,9 @@
      (t  (c)                  (format t "; E[~a]> ~a~%"  (incf *fails*) c))))
 
 (defun cli (o)
-  (let ((args  (mapcar #'it sb-ext:*posix-argv*))
-        (flags (mapcar 
-                 #'(lambda (x) (cons (format nil "-~(~a~)" x) x)) (slots o))))
+  (let 
+    ((args (mapcar #'it sb-ext:*posix-argv*))
+     (all  (mapcar #'(lambda (x) (cons (format nil "-~(~a~)" x) x)) (slots o))))
     (labels (
        (usage (&optional msg) 
           (format t "~&~aOptions: ~{:~(~a~)~^, ~}~%" 
@@ -29,7 +29,7 @@
                   (append '(h demos) (slots o))))
 
        (else (arg)
-          (let ((slot (assoc arg flags :test #'equalp)))
+          (let ((slot (assoc arg all :test #'equalp)))
             (if slot
               (setf (slot-value o (cdr slot)) (pop args))
               (if (and (stringp arg) (eql #\- (char arg 0)))
