@@ -1,4 +1,9 @@
 ; vim: noai:ts=2:sw=2:et: 
+(defpackage :espy
+  (:use :common-lisp)
+  (:export #:espy))
+
+(in-package :espy)
 
 (defstruct about
   (who  "Tim Menzies")
@@ -92,7 +97,7 @@
 ;   (print (sd n)))
 ;
 ;-------- --------- --------- --------- --------- --------- --------- ----------
-(defun espy (o) o)
+(defun espy (&optional (o (make-options))) o)
 
 ;-------- --------- --------- --------- --------- --------- --------- ----------
 ;;;; lib
@@ -141,4 +146,3 @@
         ((and (stringp arg) (eql #\- (char arg 0)) (usage o arg)))))
 
 (cli (make-options) #'espy) 
-
