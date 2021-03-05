@@ -1,6 +1,6 @@
 #!/usr/bin/bash
-############ paths
-web="https://raw.githubusercontent.com/timm/lisp/master/espy"
+####
+
 Espy=$(cd $( dirname "${BASH_SOURCE[0]}" ) && pwd )
 
 ############# assert dirs exist
@@ -10,6 +10,7 @@ chmod +x $Espy/ish
 ############# ensure files exist
 f=etc/tmux-conf; [ -f "$Espy/$f"  ] || wget -q -O $Espy/$f $web/$f
 f=etc/vimrc;     [ -f "$Espy/$f"  ] || wget -q -O $Espy/$f $web/$f
+f=etc/pics;      [ -f "$Espy/$f"  ] || wget -q -O $Espy/$f $web/$f
 f=etc/gitignore; [ -f "$Espy/$f"  ] || wget -q -O $Espy/$f $web/$f
 f=gitignore;     [ -f "$Espy/.$f" ] || cp $Espy/etc/$f $Espy/.$f
 
@@ -28,7 +29,7 @@ alias vims="vim +PluginInstall +qall"
 lisp() { 
   f=$(basename $1 .lisp).lisp
   shift
-  sbcl --noinform --script $f  $* 2> >(gawk '{print} /^5:/ {exit}') 
+  sbcl --noinform --script $f  $* 2> >(gawk '{print} /^3:/ {exit}') 
 } 
 
 here() { cd $1; basename `pwd`; }
@@ -36,18 +37,13 @@ here() { cd $1; basename `pwd`; }
 hello() {
   clear
   tput bold; tput setaf 32; cat <<-'EOF'
-                        _.      
-               _.-----'' `\                  D
-   __..-----'''            `.             aN
-  <            `\.           '\      x
-  :.              `.           `\ E 
-   `:.              `.   i  t  y `-.    P
-     `:E S P Y        . t 2 r       +.
-       `:. optimizer   `.  __.===::::;)
-         `:         ___.__>'::::::a:f/'
-           `.  _,===:::=-'-=-\"\"\"''
-            '-/:::''
-              ''
+                             .
+     .              .   .'.     \   /
+   \   /      .'. .' '.'   '  -=  o  =-
+ -=  o  =-  .'   '              /   \
+   /   \                          '
+     '     (some (useful (ish) (lisp)) tricks)
+
 EOF
   tput sgr0
   tput bold; tput setaf 0
@@ -84,7 +80,7 @@ startup() {
   [ -z "$TMUX" ] && mytmux
 }
 ############### prompt
-PROMPT_COMMAND='echo -ne "👻 $(git branch 2>/dev/null | grep '^*' | colrm 1 2):";PS1="$(here ..)/$(here .):\!\e[m ▶ "'
+PROMPT_COMMAND='echo -ne "⭐️ $(git branch 2>/dev/null | grep '^*' | colrm 1 2):";PS1="$(here ..)/$(here .):\!\e[m ▶ "'
 
 
-[[ $1 == "-s" ]] && startup
+[[ $1 == "-s" ]] 
