@@ -19,32 +19,30 @@
      (t  (c)                  (format t "; E[~a]> ~a~%"  (incf *fails*) c))))
 
 (defun cli (o)
-  (let 
-    ((args (mapcar #'it sb-ext:*posix-argv*))
-     (all  (mapcar #'(lambda (x) (cons (format nil "-~(~a~)" x) x)) (slots o))))
+  (let (arg
+        (args (mapcar #'it sb-ext:*posix-argv*))
+        (all  (mapcar #'(lambda (x) `((format nil "-~(~a~)" x) . x) (slots o)))))
     (labels (
        (usage (&optional msg) 
           (format t "~&~aOptions: ~{:~(~a~)~^, ~}~%" 
                   (if msg (format nil "[~a] unknown~%" msg) "")
                   (append '(h demos) (slots o))))
 
-       (else (arg)
+       (else ()
           (let ((slot (assoc arg all :test #'equalp)))
             (if slot
               (setf (slot-value o (cdr slot)) (pop args))
               (if (and (stringp arg) (eql #\- (char arg 0)))
                 (usage args)))))
 
-       (cli1 (arg)
-          (cond ((equalp arg "-h")     (usage))
-                ((equalp arg "-demos") (mapcar #'funcall (reverse *demos*)))
-                ((equalp arg "-demo" ) (let ((x (pop args)))
-                                         (dolist (f (reverse *demos*))
-                                           (if (has (string-upcase x) f) 
-                                             (funcall f)))))
-                (t (else arg)))))
-
-      (loop while args do (cli1 (pop args)))
+      (loop while (setf arg (pop args)) do
+            (cond ((equalp arg "-h")     (usage))
+                  ((equalp arg "-demos") (mapcar #'funcall (reverse *demos*)))
+                  ((equalp arg "-demo" ) (let ((x (pop args)))
+                                           (dolist (f (reverse *demos*))
+                                             (if (has (string-upcase x) f) 
+                                               (funcall f)))))
+                  (t (else)))))
       o)))
 
 (defdemo num? ()
