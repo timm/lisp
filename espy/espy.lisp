@@ -12,7 +12,7 @@
   (version 0.21)
   (copyleft "(c) 2021 Tim Menzies, MIT License"))
 
-(defstruct options
+(defstruct options 
   (about (make-about))
   (dir  "data")
   (data "auto93.csv")
@@ -26,8 +26,12 @@
 (defconstant +lo+ most-negative-fixnum)
 (defconstant +hi+ most-positive-fixnum)
 
-(defmacro setor (x &rest body)
+(defmacro memo (x &rest body)
   `(or ,x (setf ,x (progn ,@body))))
+
+(defmacro assoc! (x lst &key new (test #'equal))
+  `(or (assoc ,x ,lst :test ,test)
+       (car (setf ,lst (cons (cons ,x ,new) ,lst)))))
 
 (defmacro ? (obj f &rest fs)
   (if fs `(? (slot-value ,obj ',f) ,@fs) `(slot-value ,obj ',f)))
@@ -43,18 +47,17 @@
 (defstruct col (n 0) (pos 0) (txt "") w bins all)
 
 (defmethod add ((c col) (lst cons)) 
-  (dolist (x lst) (add c x))
-  c)
+  (dolist (x lst c) (add c x)))
 
 (defmethod add ((c col) x) 
   (unless (equal x "?") (incf (? c n)) (add1 c x))
   x)
 
 (defmethod bins ((c col) tab)
-  (setor (? c bins) (bins1 c tab)))
+  (memo (? c bins) (bins1 c tab)))
 
 (defmethod w ((c col) &aux (s (? c txt)))
-  (setor (? c w) (if (eql #\- (char s (1- (length s)))) -1 1)))
+  (memo (? c w) (if (eql #\- (char s (1- (length s)))) -1 1)))
 
 (defmethod bins1 ((c col) x) x)
 
@@ -96,9 +99,6 @@
 (defun has (needle haystack &key (test 'char=))
   (not (null (search (string needle) (string haystack) :test test))))
   
-(defun slots (x)  
-  (mapcar #'sb-mop:slot-definition-name(sb-mop:class-slots (class-of x))))
 ;-------- --------- --------- --------- --------- --------- --------- ----------
-(defun espy (&optional (o (make-options))) o)
-
-
+(defun espy (&optional (o (make-options))) 
+  (print o))

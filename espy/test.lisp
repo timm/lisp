@@ -32,3 +32,6 @@
 (format t "t1 ~5,3f~%" (timings #'t1 100000))
 
 (format t "t2 ~5,3f~%" (timings #'t2 100000))
+
+(print (loop for x being the external-symbol of "CL" 
+        when (fboundp x) collect (cons x (string x))))
