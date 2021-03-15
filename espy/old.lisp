@@ -1,23 +1,3 @@
-; vim: noai:ts=2:sw=2:et: 
-(handler-bind 
-  ((style-warning #'muffle-warning)) 
-  (load "espy"))
-
-(in-package :espy)
-
-(defvar *demos* nil)
-(defvar *fails* 0)
-
-(defmacro defdemo (name args &optional (doc "") &body body)
-  (pushnew name *demos*)
-  `(defun ,name ,args ,doc
-     (format t "~&~%;;; ~a~%; ~a~%" ',name ,doc) ,@body))
-
-(defmacro ok (x y &optional (msg "") &rest txt)
-  `(handler-case
-     (if (not (equalp ,x ,y)) (error (format nil ,msg ,@txt)))
-     (t  (c)                  (format t "; E[~a]> ~a~%"  (incf *fails*) c))))
-
 (defun slots (x)  
   (mapcar #'sb-mop:slot-definition-name(sb-mop:class-slots (class-of x))))
 
@@ -49,8 +29,4 @@
                   (t (else))))
       o)))
 
-(defdemo num? ()
-  "Testing nums"
-  (print (sd (add (make-num) '(1 2 3 4 5 6 6 7 7 8)))))
 
-(espy (cli (make-options)))

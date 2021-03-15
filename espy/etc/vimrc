@@ -82,7 +82,7 @@ call vundle#begin()
 Plugin 'VundleVim/Vundle.vim'
 Plugin 'tpope/vim-fugitive'
 Plugin 'scrooloose/nerdtree'
-Plugin 'kien/rainbow_parentheses.vim'
+"Plugin 'kien/rainbow_parentheses.vim'
 Plugin 'nielsmadan/harlequin'
 Plugin 'tbastos/vim-lua'
 Plugin 'airblade/vim-gitgutter'
@@ -158,7 +158,7 @@ let g:syntastic_python_python_exec = 'python3'
 let g:syntastic_loc_list_height=5
 "autocmd BufWritePost *.py call Flake8()
 
-au VimEnter * RainbowParenthesesToggle
-au Syntax * RainbowParenthesesLoadRound
-au Syntax * RainbowParenthesesLoadSquare
-au Syntax * RainbowParenthesesLoadBraces
+"au VimEnter * RainbowParenthesesToggle
+"au Syntax * RainbowParenthesesLoadRound
+"au Syntax * RainbowParenthesesLoadSquare
+"au Syntax * RainbowParenthesesLoadBraces
