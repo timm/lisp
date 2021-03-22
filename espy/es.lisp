@@ -97,7 +97,7 @@
     (if (goalp x) (push tmp (? tb y)) (push tmp (? tb x)))
     tmp))
 
-(defmethod add ((tb tab) lst)
+(defmethod add ((tb tab) lst)  
   (dolist (one lst)
     (if (? tb cols)
       (push (mapcar #'add (? tb cols)) (? tb rows))
