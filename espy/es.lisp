@@ -21,8 +21,8 @@
   (no   "?")
   (sep  ","))
 
-;-------- --------- --------- --------- --------- --------- --------- ----------
-; macros and constants
+;;;; background code ----------------------------------------------------------
+
 (defconstant +lo+ most-negative-fixnum)
 (defconstant +hi+ most-positive-fixnum)
 (defconstant +no+ "?")
@@ -37,15 +37,31 @@
 (defmacro ? (obj f &rest fs)
   (if fs `(? (slot-value ,obj ',f) ,@fs) `(slot-value ,obj ',f)))
 
-;-------- --------- --------- --------- --------- --------- --------- ----------
-(defstruct bin (lo +lo+) (hi +hi+) (also (make-sym)))
+(let* ((seed 10013))
+  (labels ((park-miller-randomizer ()
+             (setf seed (mod (* 16807.0d0 seed) 2147483647.0d0))
+             (/ seed 2147483647.0d0))) 
+    (defun srand (o)  (setf seed (? o seed)))
+    (defun randf (&optional (n 1)) (* n (- 1.0d0 (park-miller-randomizer))))
+    (defun randi (n) (floor (* n (/ (randf 1000.0) 1000))))))
+
+(defun it (x &aux (y (read-from-string x))) 
+  (if (typep y 'number) y x))
+
+(defun in (needle haystack &key (test 'char=))
+  (not (null (search (string needle) (string haystack) :test test))))
+
+;;;; Structs  -----------------------------------------------------------------
+
+(defstruct bin ;---------------------------------------------------------------
+  (lo +lo+) (hi +hi+) (also (make-sym)))
 
 (defmethod holds ((b bin) x)
   (with-slots (lo hi) b
     (if (equal lo hi) (equal x lo) (<= lo x hi))))
 
-;-------- --------- --------- --------- --------- --------- --------- ----------
-(defstruct col (n 0) (pos 0) (txt "") w bins all)
+(defstruct col ;---------------------------------------------------------------
+  (n 0) (pos 0) (txt "") w bins all)
 
 (defmethod add ((c col) (lst cons)) 
   (dolist (x lst c) (add c x)))
@@ -62,12 +78,11 @@
 
 (defmethod bins1 ((c col) x) x)
 
-;-------- --------- --------- --------- --------- --------- --------- ----------
-(defstruct (sym (:include col))  tmp (most 0) mode)
+(defstruct (sym (:include col))  ;---------------------------------------------
+  tmp (most 0) mode)
 
-
-;-------- --------- --------- --------- --------- --------- --------- ----------
-(defstruct (num (:include col)) ok tmp)
+(defstruct (num (:include col)) ;----------------------------------------------
+  ok tmp)
 
 (defmethod add1 ((n num) x)
   (push x (? n tmp))
@@ -89,11 +104,10 @@
 (defmethod per ((n num) p) (aref (all n) (1- (floor (* p (length (all n)))))))
 (defmethod sd  ((n num))   (/ (- (per n .9) (per n .1)) 2.56))
 
-;-------- --------- --------- --------- --------- --------- --------- ----------
-;;;; tab
-(defstruct tab rows cols names xs ys)
+(defstruct tab ;---------------------------------------------------------------
+  rows cols names xs ys)
 
-(defun better  r1 r2 &aux (s1 0) (s2 0) (n (len (? tb rows))))
+(defmethod better ((tb tab) r1 r2 &aux (s1 0) (s2 0) (n (length (? tb rows))))
   (dolist (col (? tb ys) 
                (< (/ s1 n)  (/ s2 n)))
     (let ((a (norm col (nth r1 (? col pos))))
@@ -120,20 +134,6 @@
      
 ;-------- --------- --------- --------- --------- --------- --------- ----------
 ;;;; lib
-(let* ((seed 10013))
-  (labels ((park-miller-randomizer ()
-             (setf seed (mod (* 16807.0d0 seed) 2147483647.0d0))
-             (/ seed 2147483647.0d0))) 
-    (defun srand (o)  (setf seed (? o seed)))
-    (defun randf (&optional (n 1)) (* n (- 1.0d0 (park-miller-randomizer))))
-    (defun randi (n) (floor (* n (/ (randf 1000.0) 1000))))))
-
-(defun it (x &aux (y (read-from-string x))) 
-  (if (typep y 'number) y x))
-
-(defun in (needle haystack &key (test 'char=))
-  (not (null (search (string needle) (string haystack) :test test))))
-
 ;-------- --------- --------- --------- --------- --------- --------- ----------
 ;;;; main
 (defun espy (&optional (my (make-options))) my)

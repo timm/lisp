@@ -16,6 +16,5 @@
 
 (do-all-symbols (s '())
   (when (and (fboundp s)  (in "DEMO-" (symbol-name s)))
-    (format t "; ~a : ~a " s (documentation s 'function))
+    (format t "~&; ~a : ~a ~%" s (documentation s 'function))
     (funcall s (make-options))))
-
