@@ -18,13 +18,12 @@
   (no   "?")
   (sep  ","))
 
-;;;; structs ------------------------------------------------------------------
 (defstruct col (n 0) (pos 0) (txt "") w bins all)
 (defstruct (sym (:include col)) tmp (most 0) mode)
 (defstruct (num (:include col)) ok tmp)
-
-((defstruct tab rows cols names xs ys)
-defstruct bin (also (make-sym)) (lo most-positive-fixnum) (hi most-negative-fixnum))
+(defstruct tab rows cols names xs ys)
+(defstruct bin (also (make-sym)) 
+                (lo most-positive-fixnum) (hi most-negative-fixnum))
 
 ;;;; macros -------------------------------------------------------------------
 (defmacro has (x &rest body) `(or ,x (setf ,x (progn ,@body))))
@@ -86,23 +85,26 @@ defstruct bin (also (make-sym)) (lo most-positive-fixnum) (hi most-negative-fixn
       (decf s1 (exp (* (? col w) (/ (- a b) n))))
       (decf s2 (exp (* (? col w) (/ (- b a) n)))))))
 
+(defmethod goalp ((tb tab) x)
+  (member (char x (1- (length x))) (list #\! #\+ #\-)))
+
+(defmethod header ((tb tab)  x)
+  (let* ((n   (length (? tb names)))
+         (tmp (if (upper-case-p (char x 0))
+                (make-num :pos n :txt x)
+                (make-sym :pos n :txt x))))
+    (push (cons x n) (? tb names))
+    (if (goalp x) (push tmp (? tb y)) (push tmp (? tb x)))
+    tmp))
+
 (defmethod add ((tb tab) lst)
-  (let ((n 0))
-    (labels 
-      ((goalp (x) (member (char x (1- (length x))) (list #\! #\+ #\-)))
-       (prep  (x) (let ((tmp (if (upper-case-p (char x 0))
-                               (make-num :pos (incf n) :txt x)
-                               (make-sym :pos (incf n) :txt x))))
-                    (push (cons x n) (? tb names))
-                    (if (goalp x) (push tmp (? tb y)) (push tmp (? tb x)))
-                    tmp)))
-      (dolist (one lst)
-        (if (? tb cols)
-          (push (mapcar #'add (? tb cols)) (? tb rows))
-          (setf (? tb cols) (mapcar #'prep one))))
-      (setf (? tb  rows) (sort (? tb rows) #'better))
-      tb)))
-     
+  (dolist (one lst)
+    (if (? tb cols)
+      (push (mapcar #'add (? tb cols)) (? tb rows))
+      (setf (? tb cols) (mapcar #'(lambda (x) (header tb x)) one))))
+  (setf (? tb  rows) (sort (? tb rows) #'better))
+  tb)
+
 ;;;; lib -----------------------------------------------------------------------
 ;;; random numbers
 (let* ((seed 10013))
