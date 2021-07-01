@@ -72,7 +72,7 @@ map Z 1z=
 set spell spelllang=en_us
 set spellsuggest=fast,20 "Don't show too much suggestion for spell check
 nn <F7> :setlocal spell! spell?<CR>
-let g:vim_markdown_fenced_languages = ['awk=awk']
+let g:vim_markdown_fenced_languages = ['lisp=lisp']
 set nocompatible              " be iMproved, required
 filetype off                  " required
 
@@ -108,7 +108,7 @@ Plugin 'nanotech/jellybeans.vim'
 Plugin 'tell-k/vim-autopep8'
 Plugin 'morhetz/gruvbox'
 Plugin 'tomasr/molokai'
-Plugin 'vimwiki/vimwiki'
+"Plugin 'vimwiki/vimwiki'
 Plugin 'sonph/onehalf'
 Plugin 'dracula/vim', { 'as': 'dracula' }
 Plugin 'kchmck/vim-coffee-script'
@@ -161,6 +161,9 @@ let g:syntastic_python_checkers = ['python']
 let g:syntastic_python_python_exec = 'python3'
 let g:syntastic_loc_list_height=5
 "autocmd BufWritePost *.py call Flake8()
+"au BufRead,BufNewFile *.md set filetype=lisp
+autocmd Filetype lisp setlocal ts=2 sw=2 expandtab  
+autocmd Filetype markdown setlocal ts=2 sw=2 expandtab  
 
 au VimEnter * RainbowParenthesesToggle
 au Syntax * RainbowParenthesesLoadRound

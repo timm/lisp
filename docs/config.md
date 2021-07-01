@@ -1,4 +1,6 @@
-; vim: noai:ts=2:sw=2:et: 
+; vim: ft=markdown ts=2 sw=2 et:
+
+
 (defvar +config+
   '( :all  (:seed 10013
             :data "../data/aaa.csv")

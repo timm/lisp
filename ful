@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# vim: ts=2 sw=2 sts=2 et :
+# vim: ft=bash ts=2 sw=2 sts=2 et :
   
 hi() { 
   tput bold; tput setaf 5
@@ -20,11 +20,28 @@ hi() {
   echo ""
   tput sgr0
 }
+md2lisp() {
+  mkdir -p $Ful/docs
+  mkdir -p $Ful/.var
+  local here=$PWD
+  cd $Ful/docs
+  for f in *.md; do
+    g=${f%.md}.lisp
+    cat $f | gawk '
+       NR==1 { next }
+       gsub(/^```.*/,"") {Code = 1 - Code; next}
+                         {print (Code ? "" : "; ") $0}         
+    '> $Ful/.var/$g
+  done
+  cd $here
+}
 
 if [ -z "$Ful" ]; then
   Ful="$(cd $( dirname "${BASH_SOURCE[0]}" ) && pwd )"
   Ful="$Ful" bash --init-file "${BASH_SOURCE[0]}" -i
 else
+  mkdir -p $Ful/docs
+  mkdir -p $Ful/.var
   alias ..='cd ..'
   alias ...='cd ../../../'
 
@@ -42,13 +59,17 @@ else
   alias vims="vim +PluginInstall +qall"         
 
   lisp()  {
-    f=$(basename $1 .lisp).lisp
+    local here=$PWD
+    md2lisp
+    f=$1
     shift
+    cd $Ful/.var
     sbcl --noinform --script $f  $* 2> >( gawk ' {print} /^5:/ {exit}' ) 
+    cd $here
   }
   
   here() { cd $1; basename `pwd`; }
   
-  PROMPT_COMMAND='echo -ne "🕵️  $(git branch 2>/dev/null | grep '^*' | colrm 1 2):";PS1="$(here ..)/$(here .):\!\e[m ▶ "'
+  PROMPT_COMMAND='echo -ne "🧠 $(git branch 2>/dev/null | grep '^*' | colrm 1 2):";PS1="$(here ..)/$(here .):\!\e[m ▶ "'
   hi
 fi

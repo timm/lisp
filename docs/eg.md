@@ -1,4 +1,10 @@
-; vim: noai ts=2 sw=2 et: 
+; vim: ft=markdown ts=2 sw=2 et:
+
+# Eg.md
+
+where to go now?
+
+```lisp
 (load "etc")
 (defpackage :espy-test-suite 
   (:use :cl)  (:nicknames :eg)
@@ -6,7 +12,9 @@
                      :rnd :want :aif :it :a))
 (in-package :eg)
 
-;-------------------------------------
+```
+
+```lisp
 (defvar *tests* nil)
 (defvar *fails* 0)
 
@@ -44,3 +52,4 @@
 
 (demos (etc::cli))
 (etc::halt *fails*)
+```

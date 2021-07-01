@@ -1,10 +1,11 @@
-; vim: noai:ts=2:sw=2:et: 
-"
+; vim: ft=markdown ts=2 sw=2 et:
+
 ## Etc
 
 Misc utils
-"
 
+
+```lisp
 (defpackage :espy-misc-utils 
   (:export todo)
   (:use :cl)  (:nicknames :etc))
@@ -18,14 +19,14 @@ Misc utils
     (load file)))
 
 (loading "config");
+```
 
-"----------------------------------------------
 ###  Macros"
 
+```lisp
 (defmacro aif (test yes &optional no)
   "Anaphoric if (the result of the condition 
    is cached in `it`)."
-
   `(let ((it ,test)) (if it ,yes ,no)))
 
 (defmacro whale (expr &body body) 
@@ -49,6 +50,7 @@ Misc utils
   "Return  number with `places` number of decimals."
   (let ((div (expt 10 places)))
     (float (/ (round (* number div)) div))))
+```
 
 "----------------------------------------------
 ### Random Numbers
@@ -76,11 +78,10 @@ CommonLisp. So I write my own."
   "Return a random integer 0.. n-1"
   (floor (* n (/ (randf 1000.0) 1000))))
 
-"----------------------------------------------
 ### System
 
 Wrapper functions to SBCL system functions with strange 
-names."
+names.
 
 (defun halt (&optional (status 0)) (sb-ext:exit :code status))
 (defun argv () sb-ext:*posix-argv*)
