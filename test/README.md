@@ -1,3 +1,0 @@
-# Tests
-
-see "../src/test"

@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# vim: ts=2 sw=2 sts=2 et :
+  
+hi() { 
+  tput bold; tput setaf 5
+  cat<<-'EOF'
+                     ___  ___       _ __  _   _ 
+                    / _ \/ __|     | '_ \| | | |
+ :-----:           |  __/\__ \  _  | |_) | |_| |
+ | Ba  | Bad <--.   \___||___/ (_) | .__/ \__, |   
+ |  56 |        |                  |_|    |___/  
+ :-----:----:   |     
+       | B  |   v     explore= min(bad+better)
+       |  5 | Better  optimze= max(better - bad)
+       :----:         monitor= max(bad - better)
+
+	EOF
+  tput bold; tput setaf 241
+  echo "Short cuts:"
+  alias | sed 's/alias /  /'
+  echo ""
+  tput sgr0
+}
+
+if [ -z "$Ful" ]; then
+  Ful="$(cd $( dirname "${BASH_SOURCE[0]}" ) && pwd )"
+  Ful="$Ful" bash --init-file "${BASH_SOURCE[0]}" -i
+else
+  doc() {
+    (cd $Ful
+    pdoc $Ful/keys0.py
+    mv $Ful/docs/keys0.html $Ful/docs/index.html)
+  }
+  PDOC="-f --html --config sort_identifiers=False --template-dir $Ful/docs/ -c latex_math=True"
+  alias ..='cd ..'
+  alias ...='cd ../../../'
+  alias grep='grep --color=auto'
+  alias egrep='egrep --color=auto'
+  alias fgrep='fgrep --color=auto'
+  alias gp="git add *;git commit -am save;git push;git status"
+  alias hello="git pull"
+  alias bye="gp; tmux detach"
+  alias h="history"
+  alias ls="ls -G"
+  alias pdoc="pdoc3 -o $Ful/docs $PDOC "
+  alias tmux="tmux -f $Ful/etc/dottmux "
+  alias vi="vim -u $Ful/etc/dotvimrc "
+  alias vims="vim +PluginInstall +qall"         
+  alias repl="rlwrap sbcl --noinform " 
+  
+  here() { cd $1; basename `pwd`; }
+  
+  PROMPT_COMMAND='echo -ne "🕵️  $(git branch 2>/dev/null | grep '^*' | colrm 1 2):";PS1="$(here ..)/$(here .):\!\e[m ▶ "'
+  hi
+fi
