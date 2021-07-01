@@ -1,0 +1,12 @@
+language: c
+
+os:
+  - linux
+
+sudo: true
+
+install:
+  - apt install sbcl
+
+script:
+  - sbcl --script src/test1.lisp
