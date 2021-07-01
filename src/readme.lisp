@@ -1,6 +1,5 @@
 ;; vim: ts=2 sw=2 sts=2 et:
 ;-------- -------- -------- -------- -------- -------- --------
-(unless (fboundp 'got) (load "../got"))
 
 "### Usage
 
@@ -27,9 +26,9 @@ git add README.md
 (defun readme(dir &optional (s t))
   "Generate README.md from all doco strings 
   form all LISP code in a directory."
-  (format t "~a~%# ~a~%~%~%" 
-          (para1 "../../README.md")
-          (string-upcase dir))
+  ; (format t "~a~%# ~a~%~%~%" 
+  ;         (para1 "../../README.md")
+  ;         (string-upcase dir))
   (dolist (f (sort (directory "*.lisp") 
                    #'(lambda (x y) (string< (pathname-name x) 
                                             (pathname-name y)))))
@@ -55,7 +54,8 @@ git add README.md
             (dump (fourth x) "   ")
             (format s "</ul>~%")))))))
 
-(let ((cli (args)))
-  (if (and cli (equalp "--makedoc" (first cli)))
-    (readme (second cli))))
+; (let ((cli (args)))
+;   (when (and cli (equalp "--makedoc" (first cli)))
+;     (print cli)
+(readme ".")
   

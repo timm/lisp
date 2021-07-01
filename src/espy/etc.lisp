@@ -19,8 +19,9 @@ Misc utils
 
 (loading "config");
 
-"###  Macros"
-;-------------------------------------
+"----------------------------------------------
+###  Macros"
+
 (defmacro aif (test yes &optional no)
   "Anaphoric if (the result of the condition 
    is cached in `it`)."
@@ -49,8 +50,8 @@ Misc utils
   (let ((div (expt 10 places)))
     (float (/ (round (* number div)) div))))
 
-;-------------------------------------
-"### Random Numbers
+"----------------------------------------------
+### Random Numbers
 
 I confess that I never found a way to do
 platform independent random number generation with
@@ -75,8 +76,8 @@ CommonLisp. So I write my own."
   "Return a random integer 0.. n-1"
   (floor (* n (/ (randf 1000.0) 1000))))
 
-; ------------------------------------
-"### System
+"----------------------------------------------
+### System
 
 Wrapper functions to SBCL system functions with strange 
 names."
