@@ -4,13 +4,15 @@
 hi() { 
   tput bold; tput setaf 5
   cat<<-'EOF'
+            _        __ __
+ / _/ _    (_   /  /(  /__)
+(()/_)   ()/   (__(__)/
 
- _     ___ ____  ____  (Some (useful (ish)) LISP)
-| |   |_ _/ ___||  _ \ (Elegant 
-| |    | |\___ \| |_) | (weapons
-| |___ | | ___) |  __/    (for (a (more
-|_____|___|____/|_|         (civilized age))))))
-                       
+(quote 
+   (Elegant (weapons
+      (for (a (more 
+         (civilized age)))))))
+                     
 	EOF
   tput bold; tput setaf 241
   echo "Short cuts:"
