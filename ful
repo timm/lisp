@@ -4,16 +4,13 @@
 hi() { 
   tput bold; tput setaf 5
   cat<<-'EOF'
-                     ___  ___       _ __  _   _ 
-                    / _ \/ __|     | '_ \| | | |
- :-----:           |  __/\__ \  _  | |_) | |_| |
- | Ba  | Bad <--.   \___||___/ (_) | .__/ \__, |   
- |  56 |        |                  |_|    |___/  
- :-----:----:   |     
-       | B  |   v     explore= min(bad+better)
-       |  5 | Better  optimze= max(better - bad)
-       :----:         monitor= max(bad - better)
 
+ _     ___ ____  ____  (Some (useful (ish)) LISP)
+| |   |_ _/ ___||  _ \ (Elegant 
+| |    | |\___ \| |_) | (weapons
+| |___ | | ___) |  __/    (for (a (more
+|_____|___|____/|_|         (civilized age))))))
+                       
 	EOF
   tput bold; tput setaf 241
   echo "Short cuts:"
@@ -26,27 +23,27 @@ if [ -z "$Ful" ]; then
   Ful="$(cd $( dirname "${BASH_SOURCE[0]}" ) && pwd )"
   Ful="$Ful" bash --init-file "${BASH_SOURCE[0]}" -i
 else
-  doc() {
-    (cd $Ful
-    pdoc $Ful/keys0.py
-    mv $Ful/docs/keys0.html $Ful/docs/index.html)
-  }
-  PDOC="-f --html --config sort_identifiers=False --template-dir $Ful/docs/ -c latex_math=True"
   alias ..='cd ..'
   alias ...='cd ../../../'
-  alias grep='grep --color=auto'
+
+  alias bye="gp; tmux detach"
   alias egrep='egrep --color=auto'
   alias fgrep='fgrep --color=auto'
   alias gp="git add *;git commit -am save;git push;git status"
-  alias hello="git pull"
-  alias bye="gp; tmux detach"
+  alias grep='grep --color=auto'
   alias h="history"
+  alias hello="git pull"
   alias ls="ls -G"
-  alias pdoc="pdoc3 -o $Ful/docs $PDOC "
+  alias repl="rlwrap sbcl --noinform " 
   alias tmux="tmux -f $Ful/etc/dottmux "
   alias vi="vim -u $Ful/etc/dotvimrc "
   alias vims="vim +PluginInstall +qall"         
-  alias repl="rlwrap sbcl --noinform " 
+
+  lisp()  {
+    f=$(basename $1 .lisp).lisp
+    shift
+    sbcl --noinform --script $f  $* 2> >( gawk ' {print} /^5:/ {exit}' ) 
+  }
   
   here() { cd $1; basename `pwd`; }
   
