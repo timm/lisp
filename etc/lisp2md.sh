@@ -11,8 +11,8 @@ BEGIN         {RS=""; FS="\n"}
               {Now=0}
 $0 ~ /^\(/    {Now=1}
  Now &&  B4   {print "" }
- Now && !B4   {print "\n<summary><details>SRC></details>\n\n```lisp"}
-!Now &&  B4   {print "```\n\n</summary>\n"}
+ Now && !B4   {print "\n<details><summary>CODE</summary>\n\n```lisp"}
+!Now &&  B4   {print "```\n\n</details>\n"}
               {print $0}
               {B4=Now}
 END           {if (Now) print "```"}
