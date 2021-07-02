@@ -1,37 +1,26 @@
-#!/usr/bin/env  bash
-cat $1 |
-gawk ' CODE=1
-       
-{R[++r] = $0 }
-END { for(i=1;i<=r;i++) {
-if (R[i] ~ /^[ \t]*$/) go=1
-if (go){
-  
-}}
+#!/usr/bin/env gawk -f
 
-/^; vim:/ { next }
-{ gsub(/^; /,"")
-  gsub(/^;;; /, "## "); 
-  gsub(/^;; / , "### "); 
-  gsub(/^; /  , ""); 
-  gsub(/^.defun/, "\n(defun")
-  gsub(/^.defmacro/, "\n(defmacro")
-  gsub(/^#\| /, "\n")
-  gsub(/^\|# /, "\n")
-  print $0  
-}' | 
-gawk '
-BEGIN { FS="\n"; RS=""}
-      { R[++r]  = $0
-        Code[r] = $0 ~ /)[ \t]*$/ }
-END   { for(i=1;i<=r;i++)  {
-           if (Code[i] && !Code[i-1])
-              print("\n<details><summary>Source</summary>\n\n```lisp\n"R[i])
-           else if (Code[i] && !Code[i+1])
-              print(R[i]"\n```\n\n</details>")
-           else 
-              print("\n"R[i]) 
-        }
-        if (Code[r]) print("```")
-}'
+cat $1 | gawk '
+/; vim:/      {next}
+gsub(/; /,"") {Com=1}
+gsub(/;/,"")  {Com=1}
+$0 ~/^\(/     {print "\n"}
+              {print $0}
+' | gawk ' 
+BEGIN         {RS=""; FS="\n"}
+              {Now=0}
+$0 ~ /^\(/    {Now=1}
+ Now &&  B4   {print "" }
+ Now && !B4   {print "\n<summary><details>SRC></details>\n\n```lisp"}
+!Now &&  B4   {print "```\n\n</summary>\n"}
+              {print $0}
+              {B4=Now}
+END           {if (Now) print "```"}
+'
+#if (!Code) {print "\n```lisp\n" $0; Code=1;} next}
+#Code && !B4Code     {print "\n```lisp" }
+#!Com && !B4Com      {print "```\n"}
+#                    {print $0}
+#                    {B4Com=Com; B4Code=Code; Last=$0}
+#END                 {if (B4Code) print "```"}
 

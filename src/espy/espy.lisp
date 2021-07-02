@@ -15,3 +15,6 @@
 (loaded "etc")
 (loaded "es")
 (loaded "eg")
+
+(demos (cli))
+(halt *fails*)

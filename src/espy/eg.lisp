@@ -1,5 +1,4 @@
 ; vim: ts=2 sw=2 et:
-
 ; # Eg.md
 
 (defvar *tests* nil)
@@ -42,5 +41,7 @@
     (setf b (loop for x below  n collect (randi 1000)) )
     (want  (equal a b) "lists not equal")))
 
-(demos (cli))
-(halt *fails*)
+(defun  _? (_)
+ (let ((plist '(:a (:b 23 :c 3) :d 4)))
+   (want (= 4 (incf (? plist :a :c))) "add one")))
+

@@ -1,35 +1,16 @@
 ; vim:  ts=2 sw=2 et:
 
-; ## Etc
+; # Etc
 ;
-; Misc utils
-;
-;
-; asd
-; sss
-;;; Uses
-(defpackage :espy-misc-utils 
-  (:export todo)
-  (:use :cl)  (:nicknames :etc))
-(in-package :etc)
-
-;; loading
-; Load a file, ignoring the SBCL messages.
-(defun loading (file)
-  (format *error-output* "; loading ~(~a~) ...~%" file)
-  (handler-bind ((style-warning #'muffle-warning))
-    (load file)))
-
-(loading "config")
-
-;;; Macros
-;; aif
+; ## Misc utils
+; Macros
+; ### aif
 ; Anaphoric if (the result of the condition ;is cached in `it`).
 (defmacro aif (test yes &optional no)
   `(let ((it ,test)) (if it ,yes ,no)))
 
-;;; whale
-;; Anaphoric while (the current of the loop controller is cached in `a`).
+; ### whale
+; Anaphoric while (the current of the loop controller is cached in `a`).
 (defmacro whale (expr &body body) 
   `(do ((a ,expr ,expr)) ((not a)) ,@body))
 
@@ -38,42 +19,41 @@
 (defmacro ? (p x &rest xs)
   (if (null xs) `(getf ,p ,x) `(? (getf ,p ,x) ,@xs)))
 
-;;; o
+; ### o
 ; Recurse struct accessor; e.g. `(o s address street number)`.
 (defmacro o (s x &rest xs)
   (if (null xs) `(slot-value ,s ,x) `(o (slot-value ,s ,x) ,@xs)))
 
-;;; want
+; ### want
 ; Simpler assert statement.
 (defmacro want (x &rest y)
   `(assert ,x () ,@y))
 
-;;; rnd
+; ### rnd
 ; Return  number with `places` number of decimals."
 (defun rnd (number &optional (places 0))
   (let ((div (expt 10 places)))
     (float (/ (round (* number div)) div))))
 
 ; --------------------------------------------
-;;; Random Numbers
-;
+; ## Random Numbers
 ; I confess that I never found a way to do
 ; platform independent random number generation with
 ; CommonLisp. So I write my own."
 
 (defvar *seed* 10013)
 
-;; srand
+; ### srand
 ; Reset random number seed,
 (defun srand (&optional (n 10013))  
   (setf *seed* n))
 
-;; randi
+; ### randi
 ; Return a random integer 0.. n-1.
 (defun randi (&optional (n 1)) 
   (floor (* n (/ (randf 1000.0) 1000))))
 
-;; randf
+; ### randf
 ; Return a random flaot 0..n-1.
 (defun randf (&optional (n 1.0)) 
   (_park-miller n))
@@ -84,18 +64,18 @@
     (setf *seed* (mod (* multiplier *seed*) modulus))
     (* n (- 1.0d0 (/ *seed* modulus)))))
 
-;;; System
+; ## System
 ; Wrapper functions to SBCL system functions with strange names.
 
-;; halt
+; ### halt
 ; Exit
 (defun halt (&optional (status 0)) (sb-ext:exit :code status))
 
-;; argv
+; ### argv
 ; Arguments
 (defun argv () sb-ext:*posix-argv*)
 
-;; cli
+; ### cli
 ; Given a plist with keywords, if  the command line 
 ; has any of the same keywords, then update the plist with the
 ; command-line values.keywords that 
@@ -113,8 +93,8 @@
             ((keywordp a)   (format t (red ";?? ignoring [~a]") a))))
    plist)
 
-;;; Types
-;; num?
+; ## Types
+; ### num?
 ; Return a number (if we can). 
 (defun num? (x &optional looping)
   (cond ((numberp x) x)
@@ -122,13 +102,13 @@
                        (if (numberp y) y x)))
         (t x))) 
 
-;;; List stuff
-;; Deepcopy
+; ## List stuff
+; ### Deepcopy
 ; Deep copy a list.
 (defun deepcopy (x)
    (if (consp x) (mapcar #'deepcopy x) x))
 
-;; Powerset
+; ### Powerset
 ; Return all subsets of a list.
 (defun powerset (lst)
   (let ((out (list nil)))
@@ -136,22 +116,23 @@
       (dolist (tmp out)
         (push (cons x tmp) out)))))
 
-;;; Colors
-;; color
+; ## Colors
+; ### color
 ; Return string `s`, surrounded by ANSI escape color sequences.
- (let ((all '((black . 30) (red . 31) (green . 32)  (yellow . 33) 
-              (blue . 34)  (magenta . 35) (cyan . 36) (white .37))))
-   (format str "~c[~a;1m~a~c[0m" #\ESC (cdr (assoc c all)) s #\ESC)))
+(defun color (s c &optional (str t))
+  (let ((all '((black . 30) (red . 31) (green . 32)  (yellow . 33) 
+               (blue . 34)  (magenta . 35) (cyan . 36) (white .37))))
+    (format str "~c[~a;1m~a~c[0m" #\ESC (cdr (assoc c all)) s #\ESC)))
 
-;; red
+; ### red
 (defun red (s) (color s 'red nil))
-;; green
+; ### green
 (defun green (s) (color s 'green nil))
-;; yellow
+; ### yellow
 (defun yellow (s) (color s 'yellow nil))
 
-;;; String stuff
-;; str->words
+; ## String stuff
+; ### str->words
 ; Kill white space, split string on `sep` (defaults to ',').
 (defun str->words (s0 &optional (sep #\comma)) 
   (labels ((whitep (c) (member c '(#\space #\tab)))
@@ -162,9 +143,9 @@
     (let ((s1 (remove-if  #'whitep s0)))
       (unless (zerop (length s1)) (worker  s1)))))
 
-;; file->words
+; ### file->words
 ; For each line  in file `f`, call a function `fn` on a list of words in each line.
 (defun file->words (f fn)
   (with-open-file (s f) 
     (whale (read-line s nil)
-           (aif (str->words a) (funcall fn  it)))))
+      (aif (str->words a) (funcall fn  it)))))
