@@ -11,7 +11,7 @@ Anaphoric if (the result of the condition is cached in `it`).
   `(let ((it ,test)) (if it ,yes ,no)))
 ```
 
-</details</ul>>
+</details</ul>
 
 ### whale
 Anaphoric while (the current of the loop controller is cached in `a`).
@@ -23,7 +23,7 @@ Anaphoric while (the current of the loop controller is cached in `a`).
   `(do ((a ,expr ,expr)) ((not a)) ,@body))
 ```
 
-</details</ul>>
+</details</ul>
 
 ### ?
 Recursive  plist accessore.g. `(? p :outer :inner)`.
@@ -35,7 +35,7 @@ Recursive  plist accessore.g. `(? p :outer :inner)`.
   (if (null xs) `(getf ,p ,x) `(? (getf ,p ,x) ,@xs)))
 ```
 
-</details</ul>>
+</details</ul>
 
 ### o
 Recurse struct accessore.g. `(o s address street number)`.
@@ -47,7 +47,7 @@ Recurse struct accessore.g. `(o s address street number)`.
   (if (null xs) `(slot-value ,s ,x) `(o (slot-value ,s ,x) ,@xs)))
 ```
 
-</details</ul>>
+</details</ul>
 
 ### want
 Simpler assert statement.
@@ -59,7 +59,7 @@ Simpler assert statement.
   `(assert ,x () ,@y))
 ```
 
-</details</ul>>
+</details</ul>
 
 ### rnd
 Return  number with `places` number of decimals."
@@ -72,7 +72,7 @@ Return  number with `places` number of decimals."
     (float (/ (round (* number div)) div))))
 ```
 
-</details</ul>>
+</details</ul>
 
 --------------------------------------------
 ## Random Numbers
@@ -86,7 +86,7 @@ CommonLisp. So I write my own."
 (defvar *seed* 10013)
 ```
 
-</details</ul>>
+</details</ul>
 
 ### srand
 Reset random number seed,
@@ -98,7 +98,7 @@ Reset random number seed,
   (setf *seed* n))
 ```
 
-</details</ul>>
+</details</ul>
 
 ### randi
 Return a random integer 0.. n-1.
@@ -110,7 +110,7 @@ Return a random integer 0.. n-1.
   (floor (* n (/ (randf 1000.0) 1000))))
 ```
 
-</details</ul>>
+</details</ul>
 
 ### randf
 Return a random flaot 0..n-1.
@@ -128,7 +128,7 @@ Return a random flaot 0..n-1.
     (* n (- 1.0d0 (/ *seed* modulus)))))
 ```
 
-</details</ul>>
+</details</ul>
 
 ## System
 Wrapper functions to SBCL system functions with strange names.
@@ -141,7 +141,7 @@ Exit
 (defun halt (&optional (status 0)) (sb-ext:exit :code status))
 ```
 
-</details</ul>>
+</details</ul>
 
 ### argv
 Arguments
@@ -152,7 +152,7 @@ Arguments
 (defun argv () sb-ext:*posix-argv*)
 ```
 
-</details</ul>>
+</details</ul>
 
 ### cli
 Given a plist with keywords, if  the command line 
@@ -177,7 +177,7 @@ command-line values.keywords that
    plist)
 ```
 
-</details</ul>>
+</details</ul>
 
 ## Types
 ### num?
@@ -193,7 +193,7 @@ Return a number (if we can).
         (t x))) 
 ```
 
-</details</ul>>
+</details</ul>
 
 ## List stuff
 ### Deepcopy
@@ -206,7 +206,7 @@ Deep copy a list.
    (if (consp x) (mapcar #'deepcopy x) x))
 ```
 
-</details</ul>>
+</details</ul>
 
 ### Powerset
 Return all subsets of a list.
@@ -221,7 +221,7 @@ Return all subsets of a list.
         (push (cons x tmp) out)))))
 ```
 
-</details</ul>>
+</details</ul>
 
 ## Colors
 ### color
@@ -236,7 +236,7 @@ Return string `s`, surrounded by ANSI escape color sequences.
     (format str "~c[~a1m~a~c[0m" #\ESC (cdr (assoc c all)) s #\ESC)))
 ```
 
-</details</ul>>
+</details</ul>
 
 ### red
 
@@ -252,7 +252,7 @@ Return string `s`, surrounded by ANSI escape color sequences.
 (defun yellow (s) (color s 'yellow nil))
 ```
 
-</details</ul>>
+</details</ul>
 
 ## String stuff
 ### str->words
@@ -271,7 +271,7 @@ Kill white space, split string on `sep` (defaults to ',').
       (unless (zerop (length s1)) (worker  s1)))))
 ```
 
-</details</ul>>
+</details</ul>
 
 ### file->words
 For each line  in file `f`, call a function `fn` on a list of words in each line.
