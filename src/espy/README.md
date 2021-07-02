@@ -4,67 +4,67 @@ Macros
 ### aif
 Anaphoric if (the result of the condition is cached in `it`).
 
-<details><summary>CODE</summary>
+<ul><details><summary>CODE</summary>
 
 ```lisp
 (defmacro aif (test yes &optional no)
   `(let ((it ,test)) (if it ,yes ,no)))
 ```
 
-</details>
+</details</ul>>
 
 ### whale
 Anaphoric while (the current of the loop controller is cached in `a`).
 
-<details><summary>CODE</summary>
+<ul><details><summary>CODE</summary>
 
 ```lisp
 (defmacro whale (expr &body body) 
   `(do ((a ,expr ,expr)) ((not a)) ,@body))
 ```
 
-</details>
+</details</ul>>
 
 ### ?
 Recursive  plist accessore.g. `(? p :outer :inner)`.
 
-<details><summary>CODE</summary>
+<ul><details><summary>CODE</summary>
 
 ```lisp
 (defmacro ? (p x &rest xs)
   (if (null xs) `(getf ,p ,x) `(? (getf ,p ,x) ,@xs)))
 ```
 
-</details>
+</details</ul>>
 
 ### o
 Recurse struct accessore.g. `(o s address street number)`.
 
-<details><summary>CODE</summary>
+<ul><details><summary>CODE</summary>
 
 ```lisp
 (defmacro o (s x &rest xs)
   (if (null xs) `(slot-value ,s ,x) `(o (slot-value ,s ,x) ,@xs)))
 ```
 
-</details>
+</details</ul>>
 
 ### want
 Simpler assert statement.
 
-<details><summary>CODE</summary>
+<ul><details><summary>CODE</summary>
 
 ```lisp
 (defmacro want (x &rest y)
   `(assert ,x () ,@y))
 ```
 
-</details>
+</details</ul>>
 
 ### rnd
 Return  number with `places` number of decimals."
 
-<details><summary>CODE</summary>
+<ul><details><summary>CODE</summary>
 
 ```lisp
 (defun rnd (number &optional (places 0))
@@ -72,7 +72,7 @@ Return  number with `places` number of decimals."
     (float (/ (round (* number div)) div))))
 ```
 
-</details>
+</details</ul>>
 
 --------------------------------------------
 ## Random Numbers
@@ -80,42 +80,42 @@ I confess that I never found a way to do
 platform independent random number generation with
 CommonLisp. So I write my own."
 
-<details><summary>CODE</summary>
+<ul><details><summary>CODE</summary>
 
 ```lisp
 (defvar *seed* 10013)
 ```
 
-</details>
+</details</ul>>
 
 ### srand
 Reset random number seed,
 
-<details><summary>CODE</summary>
+<ul><details><summary>CODE</summary>
 
 ```lisp
 (defun srand (&optional (n 10013))  
   (setf *seed* n))
 ```
 
-</details>
+</details</ul>>
 
 ### randi
 Return a random integer 0.. n-1.
 
-<details><summary>CODE</summary>
+<ul><details><summary>CODE</summary>
 
 ```lisp
 (defun randi (&optional (n 1)) 
   (floor (* n (/ (randf 1000.0) 1000))))
 ```
 
-</details>
+</details</ul>>
 
 ### randf
 Return a random flaot 0..n-1.
 
-<details><summary>CODE</summary>
+<ul><details><summary>CODE</summary>
 
 ```lisp
 (defun randf (&optional (n 1.0)) 
@@ -128,38 +128,38 @@ Return a random flaot 0..n-1.
     (* n (- 1.0d0 (/ *seed* modulus)))))
 ```
 
-</details>
+</details</ul>>
 
 ## System
 Wrapper functions to SBCL system functions with strange names.
 ### halt
 Exit
 
-<details><summary>CODE</summary>
+<ul><details><summary>CODE</summary>
 
 ```lisp
 (defun halt (&optional (status 0)) (sb-ext:exit :code status))
 ```
 
-</details>
+</details</ul>>
 
 ### argv
 Arguments
 
-<details><summary>CODE</summary>
+<ul><details><summary>CODE</summary>
 
 ```lisp
 (defun argv () sb-ext:*posix-argv*)
 ```
 
-</details>
+</details</ul>>
 
 ### cli
 Given a plist with keywords, if  the command line 
 has any of the same keywords, then update the plist with the
 command-line values.keywords that 
 
-<details><summary>CODE</summary>
+<ul><details><summary>CODE</summary>
 
 ```lisp
 (defun cli (&key (plist  (deepcopy +config+)) 
@@ -177,13 +177,13 @@ command-line values.keywords that
    plist)
 ```
 
-</details>
+</details</ul>>
 
 ## Types
 ### num?
 Return a number (if we can). 
 
-<details><summary>CODE</summary>
+<ul><details><summary>CODE</summary>
 
 ```lisp
 (defun num? (x &optional looping)
@@ -193,25 +193,25 @@ Return a number (if we can).
         (t x))) 
 ```
 
-</details>
+</details</ul>>
 
 ## List stuff
 ### Deepcopy
 Deep copy a list.
 
-<details><summary>CODE</summary>
+<ul><details><summary>CODE</summary>
 
 ```lisp
 (defun deepcopy (x)
    (if (consp x) (mapcar #'deepcopy x) x))
 ```
 
-</details>
+</details</ul>>
 
 ### Powerset
 Return all subsets of a list.
 
-<details><summary>CODE</summary>
+<ul><details><summary>CODE</summary>
 
 ```lisp
 (defun powerset (lst)
@@ -221,13 +221,13 @@ Return all subsets of a list.
         (push (cons x tmp) out)))))
 ```
 
-</details>
+</details</ul>>
 
 ## Colors
 ### color
 Return string `s`, surrounded by ANSI escape color sequences.
 
-<details><summary>CODE</summary>
+<ul><details><summary>CODE</summary>
 
 ```lisp
 (defun color (s c &optional (str t))
@@ -236,11 +236,11 @@ Return string `s`, surrounded by ANSI escape color sequences.
     (format str "~c[~a1m~a~c[0m" #\ESC (cdr (assoc c all)) s #\ESC)))
 ```
 
-</details>
+</details</ul>>
 
 ### red
 
-<details><summary>CODE</summary>
+<ul><details><summary>CODE</summary>
 
 ```lisp
 (defun red (s) (color s 'red nil))
@@ -252,13 +252,13 @@ Return string `s`, surrounded by ANSI escape color sequences.
 (defun yellow (s) (color s 'yellow nil))
 ```
 
-</details>
+</details</ul>>
 
 ## String stuff
 ### str->words
 Kill white space, split string on `sep` (defaults to ',').
 
-<details><summary>CODE</summary>
+<ul><details><summary>CODE</summary>
 
 ```lisp
 (defun str->words (s0 &optional (sep #\comma)) 
@@ -271,12 +271,12 @@ Kill white space, split string on `sep` (defaults to ',').
       (unless (zerop (length s1)) (worker  s1)))))
 ```
 
-</details>
+</details</ul>>
 
 ### file->words
 For each line  in file `f`, call a function `fn` on a list of words in each line.
 
-<details><summary>CODE</summary>
+<ul><details><summary>CODE</summary>
 
 ```lisp
 (defun file->words (f fn)
