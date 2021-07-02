@@ -12,7 +12,7 @@ BEGIN         {RS=""; FS="\n"}
 $0 ~ /^\(/    {Now=1}
  Now &&  B4   {print "" }
  Now && !B4   {print "\n<ul><details><summary>CODE</summary>\n\n```lisp"}
-!Now &&  B4   {print "```\n\n</details</ul>\n"}
+!Now &&  B4   {print "```\n\n</details></ul>\n"}
               {print $0}
               {B4=Now}
 END           {if (Now) print "```"}
