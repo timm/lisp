@@ -22,7 +22,7 @@
 ; ### o
 ; Recurse struct accessor; e.g. `(o s address street number)`.
 (defmacro o (s x &rest xs)
-  (if (null xs) `(slot-value ,s ,x) `(o (slot-value ,s ,x) ,@xs)))
+  (if (null xs) `(slot-value ,s ',x) `(o (slot-value ,s ',x) ,@xs)))
 
 ; ### want
 ; Simpler assert statement.
@@ -99,14 +99,19 @@
 (defun num? (x &optional looping)
   (cond ((numberp x) x)
         ((stringp x) (let ((y (read-from-string x)))
-                       (if (numberp y) y x)))
-        (t x))) 
+                       (if (numberp y)
+                           y
+                           (if (equal "?" x) #\? x))))
+        (t x)))
 
 ; ## List stuff
-; ### Deepcopy
-; Deep copy a list.
-(defun deepcopy (x)
-   (if (consp x) (mapcar #'deepcopy x) x))
+; ### inca
+; A counter, implemented as an association list.
+(defun inca (x a &optional (n  1))
+  (incf (cdr (or (assoc x a :test #'equal)
+                 (setf a (cons (cons x 0) a))))))
+
+(let (a) (inca  'x a)  a)
 
 ; ### Powerset
 ; Return all subsets of a list.

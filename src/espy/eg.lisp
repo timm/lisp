@@ -41,7 +41,19 @@
     (setf b (loop for x below  n collect (randi 1000)) )
     (want  (equal a b) "lists not equal")))
 
-(defun  _? (_)
- (let ((plist '(:a (:b 23 :c 3) :d 4)))
-   (want (= 4 (incf (? plist :a :c))) "add one")))
+(deftest  _? (_)
+  "nested plist access"
+  (let ((plist '(:a (:b 23 :c 3) :d 4)))
+    (want (= 4 (incf (? plist :a :c))) "add one")))
 
+(deftest _rnd (_)
+  "rounding number"
+  (want (eql (rnd 3.14157 2) 3.14) "equal"))
+
+(deftest _deepcopy (_)
+  (let* ((a '((10)  20 30 (40 50 60)))
+         (b (copy-tree a)))
+      (print a)
+      (print b)
+      (want (eql 2 (length (car a))))
+      (want (eql 20 (second b)))))
