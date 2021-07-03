@@ -94,14 +94,14 @@
    plist)
 
 ; ## Types
-; ### num?
+; ### cell?
 ; Return a number (if we can). 
-(defun num? (x &optional looping)
+(defun cell? (x &optional looping)
   (cond ((numberp x) x)
-        ((stringp x) (let ((y (read-from-string x)))
-                       (if (numberp y)
-                           y
-                           (if (equal "?" x) #\? x))))
+        ((stringp x) (if (equal "?" x)
+                         #\?
+                       (let ((y (read-from-string x)))
+                         (if (numberp y) y x))))
         (t x)))
 
 ; ## List stuff

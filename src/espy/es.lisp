@@ -16,7 +16,7 @@
 
 ; ### Skip
 (defstruct (skip (:include col)))
-(defmethod add1((x skip) y &optional (n 1)) y)
+(defmethod add1 ((x skip) y &optional (n 1)) y)
 
 ; ### Sym
 (defstruct (sym (:include col))  seen mode (most 0))
@@ -32,8 +32,8 @@
 
 (defmethod entropy ((s sym) &aux (e 0))
   (dolist (x (o s seen) e)
-    (decf e (* (/ (cdr x) (o s n))
-               (log (/ (cdr x) (o s n)) 2)))))
+    (let ((p (/ (cdr x) (o s n))))
+      (decf e (* p (log p 2))))))
                      
 (defmethod dist1 ((c sym) x y) (if (eql x y) 1 0))
 
@@ -64,15 +64,23 @@
          (s (length v)))
     (svref v (floor (* p s)))))
 
+(defmethod lo ((n  num)) (svref (all n) 0))
+(defmethod hi ((n  num) &aux (a (all  n))) (svref a (1- (length a)))))
+
 (defmethod dist1 ((n num) a b)
-  (cond ((eq a #\?)
-         (setf b (norm n b))
-         (setf a (if (> b 0.5) 1 0)))
-        ((eq b #\?)
-         (setf a (norm n  a))
-         (setf b (if (> a 0.5) 1 0)))
-        (t (setf a (norm n a)
-                 b (norm n b))))
+  (cond ((eq a #\?) (setf b (norm n b)
+                          a (if (> b 0.5) 1 0)))
+        ((eq b #\?) (setf a (norm n  a)
+                          b (if (> a 0.5) 1 0)))
+        (t          (setf a (norm n a)
+                          b (norm n b))))
   (abs (- a b)))
 
+(defmethod norm ((n num) x)
+  (if (eq x #\?)
+      x
+    (let ((n1 (lo n)) (n2 (hi n)))
+      (if (eql n1 n2)
+          0
+        (max 0 (min 1 (/ (- x n1) (- n2 n1 1E-32))))))))
   
