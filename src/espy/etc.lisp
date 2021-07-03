@@ -107,11 +107,11 @@
 ; ## List stuff
 ; ### inca
 ; A counter, implemented as an association list.
-(defun inca (x a &optional (n  1))
-  (incf (cdr (or (assoc x a :test #'equal)
-                 (setf a (cons (cons x 0) a))))))
+(defmacro inca (x a &optional (n  1))
+  `(incf (cdr (or (assoc ,x ,a :test #'equal)
+                  (car (setf ,a (cons (cons ,x 0) ,a)))))
+         ,n))
 
-(let (a) (inca  'x a)  a)
 
 ; ### Powerset
 ; Return all subsets of a list.
