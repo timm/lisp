@@ -1,22 +1,36 @@
  ; vim: filetype=lisp ts=2 sw=3 sts=2 et :
 
-;       ,-_|\   lispth is litenning
-;      /     \  (c) Tim Menzies, 2021, unlicense.org
-;      \_,-._*  Cluster, then report just the
-;           v   deltas between nearby clusters.
+(defpackage :espy (:use :cl))
+(in-package :espy)
+(load "tricks")
 
+(defstruct about
+  (what "
+        ,-_|\   lispth is litenning
+       /     \  
+       \_,-._*  Cluster, then report just the
+            v   deltas between nearby clusters.")
+  (who "(c) 2021 Tim Menzies unlicense.org")
+  (flags '(
+    (knn 2 "kth nearest neighbors")
+    (loud nil "verbose mode (defaults to false)"))))
 
-; ## Misc utils
-; Macros
-(defun help-reader (stream char)
-   (declare (ignore char))
-   (let ((x (read stream t nil t)))
-     (print (second x) (print (fourth x)))
-     x))
-(set-macro-character #\% #'help-reader)
+(defstruct stuff
+  (runs 0) (fails 0)
+  (tests))
 
-; Anaphoric if (the result of the condition ;is cached in `it`).
-;%(defmacro aif (test yes &optional no) `(let ((it ,test)) (if it ,yes ,no)))
+(defvar *stuff* (make-stuff))
+
+;(defun test (x) (push fun (? *stuff* tests)))
+
+(defmacro aif (test yes &optional no) 
+  "anaphoric if"
+  `(let ((it ,test)) (if it ,yes ,no)))
+
+   (dolist(fun  (funs :espy))
+       (print (documentation fun 'function)))
+
+(halt)
 
 ; Anaphoric while (the current of the loop controller is cached in `a`).
 (defmacro whale (expr &body body) 
@@ -180,10 +194,11 @@
 ; ### Sym
 (defstruct (sym (:include col))  seen mode (most 0))
 (defmethod add1 ((s sym) y &optional (n 1))
-  (let ((new (inca y (o s seen) n)))
-    (when (> new (o s most))
-      (setf most new
-            mode y)))
+  (with-slots (most mode) s
+    (let ((new (inca y (o s seen) n)))
+      (when (> new (o s most))
+        (setf most new
+              mode y))))
   y)
 
 (defmethod mid ((s sym)) (o s mode))
@@ -204,11 +219,11 @@
 (defmethod add1 ((n num) (x string) &optional (r 1))
   (add1 n (read-from-string x) r))
 
-(defmethod add1 ((n num) (x number) &optional (r 1))
-  (loop do repeat r do (push-vector-extend x (o n all))
-  (setf (o n sorted) nil)
-  y)
-
+; (defmethod add1 ((n num) (x number) &optional (r 1))
+;   (loop repeat r do (push-vector-extend x (o n all))
+;   (setf (o n sorted) nil)
+;   x)
+;
 (defmethod all ((n num))
   (unless (o n sorted)
     (setf (o n _all)   (sort (o n _all) #'<)
@@ -224,7 +239,8 @@
     (svref v (floor (* p s)))))
 
 (defmethod lo ((n  num)) (svref (all n) 0))
-(defmethod hi ((n  num) &aux (a (all  n))) (svref a (1- (length a)))))
+(defmethod hi ((n  num) &aux (a (all  n))) 
+  (svref a (1- (length a))))
 
 (defmethod dist1 ((n num) a b)
   (cond ((eq a #\?) (setf b (norm n b)
