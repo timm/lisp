@@ -8,10 +8,15 @@
 
 ; ## Misc utils
 ; Macros
+(defun help-reader (stream char)
+   (declare (ignore char))
+   (let ((x (read stream t nil t)))
+     (print (second x) (print (fourth x)))
+     x))
+(set-macro-character #\% #'help-reader)
 
 ; Anaphoric if (the result of the condition ;is cached in `it`).
-(defmacro aif (test yes &optional no)
-  `(let ((it ,test)) (if it ,yes ,no)))
+;%(defmacro aif (test yes &optional no) `(let ((it ,test)) (if it ,yes ,no)))
 
 ; Anaphoric while (the current of the loop controller is cached in `a`).
 (defmacro whale (expr &body body) 
