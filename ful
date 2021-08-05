@@ -21,9 +21,9 @@ hi() {
   tput sgr0
 }
 
-if [ -z "$Ful" ]; then
-  Ful="$(cd $( dirname "${BASH_SOURCE[0]}" ) && pwd )"
-  Ful="$Ful" bash --init-file "${BASH_SOURCE[0]}" -i
+if [ -z "$timmLispFul" ]; then
+  timmLispFul="$(cd $( dirname "${BASH_SOURCE[0]}" ) && pwd )"
+  timmLispFul="$timmLispFul" bash --init-file "${BASH_SOURCE[0]}" -i
 else
   alias ..='cd ..'
   alias ...='cd ../../../'
@@ -37,9 +37,12 @@ else
   alias hello="git pull"
   alias ls="ls -G"
   alias repl="rlwrap sbcl --noinform " 
-  alias tmux="tmux -f $Ful/etc/dottmux "
-  alias vi="vim -u $Ful/etc/dotvimrc "
+  alias docs="docco -o $timmLispFul/docs "
+  alias tmux="tmux -f $timmLispFul/etc/dottmux "
+  alias vi="vim -u $timmLispFul/etc/dotvimrc "
   alias vims="vim +PluginInstall +qall"         
+
+  mkdir -p $timmLispFul/docs
 
   lisp()  {
     f=$1

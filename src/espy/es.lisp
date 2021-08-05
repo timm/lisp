@@ -1,5 +1,6 @@
 ; vim: ts=2 sw=2 et:
 
+; -----------------------------------------------
 ; ## Columns
 ; ### Col
 (defstruct col (n 0) txt (w -1) (pos 0))
