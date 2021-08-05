@@ -57,8 +57,16 @@
               <div class="sswrap ">
                 <a class="ss" href="#section-3">&#x00a7;</a>
               </div>
-              <h2 id="misc-utils">Misc utils</h2>
-<p>Macros</p>
+              <pre><code>                     *       +
+  *     &#x27;                  |
+    ()    .-.,-<span class="hljs-string">&quot;``&quot;</span>-.    - o -
+          &#x27;=/_       \     |
+       *   |::&#x27;=._    <span class="hljs-comment">;      &#x27;</span>
+  &#x27;         \::.  `=./`,   &#x27;
+    +    .   &#x27;-::..-&#x27;``&#x27;    *
+jgs   O    *     .       +  .
+         *     .       +
+</code></pre>
 
             </div>
             
@@ -71,12 +79,10 @@
               <div class="sswrap ">
                 <a class="ss" href="#section-4">&#x00a7;</a>
               </div>
-              <p>Anaphoric if (the result of the condition ;is cached in <code>it</code>).</p>
+              <h2 id="misc-utils">Misc utils</h2>
+<p>Macros</p>
 
             </div>
-            
-            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defmacro</span> aif (<span class="hljs-name">test</span> yes <span class="hljs-symbol">&amp;optional</span> no)
-  `(let ((it ,test)) (if it ,yes ,no)))</pre></div></div>
             
         </li>
         
@@ -86,6 +92,25 @@
               
               <div class="sswrap ">
                 <a class="ss" href="#section-5">&#x00a7;</a>
+              </div>
+              <p>asdasdsads
+asdaads
+Anaphoric if (the result of the condition ;is cached in <code>it</code>).</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defmacro</span> aif (<span class="hljs-name">test</span> yes <span class="hljs-symbol">&amp;optional</span> no)
+  <span class="hljs-string">&quot;asdasasd&quot;</span>
+  `(let ((it ,test)) (if it ,yes ,no)))</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-6">
+            <div class="annotation">
+              
+              <div class="sswrap ">
+                <a class="ss" href="#section-6">&#x00a7;</a>
               </div>
               <p>Anaphoric while (the current of the loop controller is cached in <code>a</code>).</p>
 
@@ -97,11 +122,11 @@
         </li>
         
         
-        <li id="section-6">
+        <li id="section-7">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-6">&#x00a7;</a>
+                <a class="ss" href="#section-7">&#x00a7;</a>
               </div>
               <p>Recursive  plist accessor; e.g. <code>(? p :outer :inner)</code>.</p>
 
@@ -113,11 +138,11 @@
         </li>
         
         
-        <li id="section-7">
+        <li id="section-8">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-7">&#x00a7;</a>
+                <a class="ss" href="#section-8">&#x00a7;</a>
               </div>
               <p>Recurse struct accessor; e.g. <code>(o s address street number)</code>.</p>
 
@@ -129,11 +154,11 @@
         </li>
         
         
-        <li id="section-8">
+        <li id="section-9">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-8">&#x00a7;</a>
+                <a class="ss" href="#section-9">&#x00a7;</a>
               </div>
               <p>Simpler assert statement.</p>
 
@@ -145,11 +170,11 @@
         </li>
         
         
-        <li id="section-9">
+        <li id="section-10">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-9">&#x00a7;</a>
+                <a class="ss" href="#section-10">&#x00a7;</a>
               </div>
               <p>Return  number with <code>places</code> number of decimals.”</p>
 
@@ -162,11 +187,11 @@
         </li>
         
         
-        <li id="section-10">
+        <li id="section-11">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-10">&#x00a7;</a>
+                <a class="ss" href="#section-11">&#x00a7;</a>
               </div>
               <hr>
 
@@ -175,11 +200,11 @@
         </li>
         
         
-        <li id="section-11">
+        <li id="section-12">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-11">&#x00a7;</a>
+                <a class="ss" href="#section-12">&#x00a7;</a>
               </div>
               <h2 id="random-numbers">Random Numbers</h2>
 <p>I confess that I never found a way to do
@@ -194,11 +219,11 @@ CommonLisp. So I write my own.”</p>
         </li>
         
         
-        <li id="section-12">
+        <li id="section-13">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-12">&#x00a7;</a>
+                <a class="ss" href="#section-13">&#x00a7;</a>
               </div>
               <h3 id="srand">srand</h3>
 <p>Reset random number seed,</p>
@@ -211,11 +236,11 @@ CommonLisp. So I write my own.”</p>
         </li>
         
         
-        <li id="section-13">
+        <li id="section-14">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-13">&#x00a7;</a>
+                <a class="ss" href="#section-14">&#x00a7;</a>
               </div>
               <h3 id="randi">randi</h3>
 <p>Return a random integer 0.. n-1.</p>
@@ -228,11 +253,11 @@ CommonLisp. So I write my own.”</p>
         </li>
         
         
-        <li id="section-14">
+        <li id="section-15">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-14">&#x00a7;</a>
+                <a class="ss" href="#section-15">&#x00a7;</a>
               </div>
               <h3 id="randf">randf</h3>
 <p>Return a random flaot 0..n-1.</p>
@@ -251,11 +276,11 @@ CommonLisp. So I write my own.”</p>
         </li>
         
         
-        <li id="section-15">
+        <li id="section-16">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-15">&#x00a7;</a>
+                <a class="ss" href="#section-16">&#x00a7;</a>
               </div>
               <h2 id="system">System</h2>
 <p>Wrapper functions to SBCL system functions with strange names.</p>
@@ -265,11 +290,11 @@ CommonLisp. So I write my own.”</p>
         </li>
         
         
-        <li id="section-16">
+        <li id="section-17">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-16">&#x00a7;</a>
+                <a class="ss" href="#section-17">&#x00a7;</a>
               </div>
               <h3 id="halt">halt</h3>
 <p>Exit</p>
@@ -281,11 +306,11 @@ CommonLisp. So I write my own.”</p>
         </li>
         
         
-        <li id="section-17">
+        <li id="section-18">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-17">&#x00a7;</a>
+                <a class="ss" href="#section-18">&#x00a7;</a>
               </div>
               <h3 id="argv">argv</h3>
 <p>Arguments</p>
@@ -297,11 +322,11 @@ CommonLisp. So I write my own.”</p>
         </li>
         
         
-        <li id="section-18">
+        <li id="section-19">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-18">&#x00a7;</a>
+                <a class="ss" href="#section-19">&#x00a7;</a>
               </div>
               <h3 id="cli">cli</h3>
 <p>Given a plist with keywords, if  the command line 
@@ -327,11 +352,11 @@ command-line values.keywords that </p>
         </li>
         
         
-        <li id="section-19">
+        <li id="section-20">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-19">&#x00a7;</a>
+                <a class="ss" href="#section-20">&#x00a7;</a>
               </div>
               <h2 id="types">Types</h2>
 <h3 id="cell">cell?</h3>
@@ -350,11 +375,11 @@ command-line values.keywords that </p>
         </li>
         
         
-        <li id="section-20">
+        <li id="section-21">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-20">&#x00a7;</a>
+                <a class="ss" href="#section-21">&#x00a7;</a>
               </div>
               <h2 id="list-stuff">List stuff</h2>
 <h3 id="inca">inca</h3>
@@ -370,11 +395,11 @@ command-line values.keywords that </p>
         </li>
         
         
-        <li id="section-21">
+        <li id="section-22">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-21">&#x00a7;</a>
+                <a class="ss" href="#section-22">&#x00a7;</a>
               </div>
               <h3 id="powerset">Powerset</h3>
 <p>Return all subsets of a list.</p>
@@ -390,11 +415,11 @@ command-line values.keywords that </p>
         </li>
         
         
-        <li id="section-22">
+        <li id="section-23">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-22">&#x00a7;</a>
+                <a class="ss" href="#section-23">&#x00a7;</a>
               </div>
               <h2 id="colors">Colors</h2>
 <h3 id="color">color</h3>
@@ -410,11 +435,11 @@ command-line values.keywords that </p>
         </li>
         
         
-        <li id="section-23">
+        <li id="section-24">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-23">&#x00a7;</a>
+                <a class="ss" href="#section-24">&#x00a7;</a>
               </div>
               <h3 id="red">red</h3>
 
@@ -425,11 +450,11 @@ command-line values.keywords that </p>
         </li>
         
         
-        <li id="section-24">
+        <li id="section-25">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-24">&#x00a7;</a>
+                <a class="ss" href="#section-25">&#x00a7;</a>
               </div>
               <h3 id="green">green</h3>
 
@@ -440,11 +465,11 @@ command-line values.keywords that </p>
         </li>
         
         
-        <li id="section-25">
+        <li id="section-26">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-25">&#x00a7;</a>
+                <a class="ss" href="#section-26">&#x00a7;</a>
               </div>
               <h3 id="yellow">yellow</h3>
 
@@ -455,11 +480,11 @@ command-line values.keywords that </p>
         </li>
         
         
-        <li id="section-26">
+        <li id="section-27">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-26">&#x00a7;</a>
+                <a class="ss" href="#section-27">&#x00a7;</a>
               </div>
               <h2 id="string-stuff">String stuff</h2>
 <h3 id="str-words">str-&gt;words</h3>
@@ -479,11 +504,11 @@ command-line values.keywords that </p>
         </li>
         
         
-        <li id="section-27">
+        <li id="section-28">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-27">&#x00a7;</a>
+                <a class="ss" href="#section-28">&#x00a7;</a>
               </div>
               <h3 id="file-words">file-&gt;words</h3>
 <p>For each line  in file <code>f</code>, call a function <code>fn</code> on a list of words in each line.</p>
@@ -498,11 +523,11 @@ command-line values.keywords that </p>
         </li>
         
         
-        <li id="section-28">
+        <li id="section-29">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-28">&#x00a7;</a>
+                <a class="ss" href="#section-29">&#x00a7;</a>
               </div>
               <hr>
 
@@ -511,11 +536,11 @@ command-line values.keywords that </p>
         </li>
         
         
-        <li id="section-29">
+        <li id="section-30">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-29">&#x00a7;</a>
+                <a class="ss" href="#section-30">&#x00a7;</a>
               </div>
               <h2 id="columns">Columns</h2>
 <h3 id="col">Col</h3>
@@ -537,11 +562,11 @@ command-line values.keywords that </p>
         </li>
         
         
-        <li id="section-30">
+        <li id="section-31">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-30">&#x00a7;</a>
+                <a class="ss" href="#section-31">&#x00a7;</a>
               </div>
               <h3 id="skip">Skip</h3>
 
@@ -553,11 +578,11 @@ command-line values.keywords that </p>
         </li>
         
         
-        <li id="section-31">
+        <li id="section-32">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-31">&#x00a7;</a>
+                <a class="ss" href="#section-32">&#x00a7;</a>
               </div>
               <h3 id="sym">Sym</h3>
 
@@ -584,11 +609,11 @@ command-line values.keywords that </p>
         </li>
         
         
-        <li id="section-32">
+        <li id="section-33">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-32">&#x00a7;</a>
+                <a class="ss" href="#section-33">&#x00a7;</a>
               </div>
               <h3 id="num">Num</h3>
 
