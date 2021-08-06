@@ -44,6 +44,19 @@ else
 
   mkdir -p $timmLispFul/docs
 
+  doc() {  
+      (cat $timmLispFul/README.md | gawk '
+            BEGIN { FS="\n"; RS="" }
+                  { print  $0 "\n"; exit}' |
+       gawk '{print "; " $0}
+             END {print("\n\n;\n\n")}'  
+      cat $1 | gawk '
+      BEGIN {FS="\n";RS=""}
+      NR==1 { print("\n\n"); next}
+            {print $0 ""}'
+      ) > $timmLispFul/docs/$1
+      (cd $timmLispFul/docs; docco -o . $1) 
+  }
   lisp()  {
     f=$1
     shift
