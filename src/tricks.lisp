@@ -15,14 +15,14 @@
   (if xs `(? (slot-value ,s ',x) ,@xs) `(slot-value ,s ',x)))
 
 ; Shorthand for recursive calls to getf
-(defmacro ! (s x &rest xs) 
-  (if xs `(! (getf ,s ',x) ,@xs) `(getf ,s ',x)))
+(defmacro ?? (s x &rest xs) 
+  (if xs `(?? (getf ,s ',x) ,@xs) `(getf ,s ',x)))
 
-; Anaphoric if.
+; Anaphoric if (and `it` is the anaphoric variable).
 (defmacro aif (test yes &optional no) 
   `(let ((it ,test)) (if it ,yes ,no)))
 
-; Anaphoric while
+; Anaphoric while (and `now` is the anaphoric variable).
 (defmacro while (expr &body body) 
   `(do ((now ,expr ,expr)) ((not now)) ,@body))
 
@@ -34,11 +34,9 @@
                (blue . 34)  (magenta . 35) (cyan . 36) (white .37))))
     (format str "~c[~a;1m~a~c[0m" #\ESC (cdr (assoc c all)) s #\ESC)))
 
-; red
+; Red, green, yellow
 (defun red (s) (color s 'red nil))
-; green
 (defun green (s) (color s 'green nil))
-; yellow
 (defun yellow (s) (color s 'yellow nil))
 
 ; Meta
@@ -73,46 +71,63 @@
 ; Get command line
 (defun argv () sb-ext:*posix-argv*)
 
+; Command-Line Interface
+; ----------------------
 ; Given a plist with `flags`, if  the command line
 ; has any of the same keys, then update `flags` with the
-; command-line values.  
-;
-; e.g. Consider the command line        
-; `lisp tricks.lisp -loud -dom -k 23 -col -p 10`   
-; and the following call to `cli`:
-;
-;     (print (cli '(-all (-seed 10013
-;                         -data "../data/aaa.csv"
-;                         -loud nil)
-;                   -col (-p 2)
-;                   -dom (-samples 100 
-;                         -k 23))))
-;
-; This will set `-loud` to true and update the other flags: 
-;
-;     (-ALL (-SEED 10013 -DATA "../data/aaa.csv" -LOUD T) 
-;      -COL (-P 10) 
-;      -DOM (-SAMPLES 100 -K 23)) 
-;
+; command-line values.If a flag is `-h` then print some help.
+; Flags are `grouped` by flags starting with two
+; hypherns. THE default group is `--all`.
+; To change groups, just mention it before mentioning
+; the flags in that group.
 (defun cli (flags &key 
                  (help   "help")
                  (args   (cdr (deepcopy (argv))))
-                 (group  (getf flags '-all)))
+                 (group  (getf flags '--all)))
    (while (pop args)
      (setf now (read-from-string now))
      (cond ((equalp now '-h)   (format t "~a~%" help))
            ((getf flags now)   (setf group (getf flags now)))
-           ((getf group now)   (setf (getf group now) 
-                                     (read-from-string (car args))))
+           ((getf group now)   (assert (not (null args)) (args))
+                               (setf (getf group now) 
+                                     (read-from-string (pop args))))
            ((member now group) (setf (getf group now) t))
            (t                  (format t "~a ~a" (red "??") now))))
 
    flags)
 
-(print 
-   (cli '(-all (-seed 10013  "asdasd"
-                            -data "../data/loud2.csv" "asd"
-                            -loud nil "asdsa")
-                -col (-p 2)
-                -dom (-samples 100 -k 23))))
+; Just to give an example of its use, consider the command line        
+;
+; `lisp tricks.lisp -loud --dom -k 23 -samples 1`
+;
+; and this `eg-cli`  call to `cli`. 
+; Since the default group is `--all``, the the
+; intiial referece to `-loud` is really `--all -loud`.
+; Note how once we change goupds (with `--dom` then
+; we can set multiple flags in that group.
+;
+; This will set `-loud` to true and update the other flags: 
+;
+;     > (print (cli '(--all (-seed 10013
+;                          -data "../data/aaa.csv"
+;                          -loud nil)
+;                   --col (-p 2)
+;                   --dom (-samples 100 
+;                         -k 23))))
+;
+;     (--ALL (-SEED 10013 
+;             -DATA "../data/aa" 
+;             -LOUD T) 
+;      --COL (-P 2) 
+;      --DOM (-SAMPLES 1 
+;             -K 23))
+;
+(defun eg-cli()
+  (pprint 
+    (cli '(--all (-seed 10013  
+                        -data "../data/aa" 
+                        -loud nil )
+                 --col (-p 2)
+                 --dom (-samples 100 -k 23)))))
 
+(eg-cli)

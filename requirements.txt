@@ -1,1 +1,2 @@
- sudo npm install -g docco
+sudo npm install -g docco
+brew install rlwrap
