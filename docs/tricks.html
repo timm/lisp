@@ -125,8 +125,8 @@ passes to <code>fun</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defmacro</span> whale (<span class="hljs-name">expr</span> <span class="hljs-symbol">&amp;body</span> body) 
-  `(do ((il ,expr ,expr)) ((not il)) ,@body))</pre></div></div>
+            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defmacro</span> while (<span class="hljs-name">expr</span> <span class="hljs-symbol">&amp;body</span> body) 
+  `(do ((now ,expr ,expr)) ((not now)) ,@body))</pre></div></div>
             
         </li>
         
@@ -339,31 +339,44 @@ passes to <code>fun</code>.</p>
               <div class="sswrap ">
                 <a class="ss" href="#section-21">&#x00a7;</a>
               </div>
-              <p>Given a plist with keywords, if  the command line 
-has any of the same keywords, then update the plist with the
-command-line values.keywords that </p>
+              <p>Given a plist with <code>flags</code>, if  the command line
+has any of the same keys, then update <code>flags</code> with the
+command-line values.  </p>
+<p>e.g. Consider the command line<br><code>lisp tricks.lisp -loud -dom -k 23 -col -p 10</code><br>and the following call to <code>cli</code>:</p>
+<pre><code>(<span class="hljs-name">print</span> (<span class="hljs-name">cli</span> &#x27;(-all (-seed <span class="hljs-number">10013</span>
+                    -data <span class="hljs-string">&quot;../data/aaa.csv&quot;</span>
+                    -loud <span class="hljs-literal">nil</span>)
+              -col (-p <span class="hljs-number">2</span>)
+              -dom (-samples <span class="hljs-number">100</span> 
+                    -k <span class="hljs-number">23</span>))))
+</code></pre>
+<p>This will set <code>-loud</code> to true and update the other flags: </p>
+<pre><code>(<span class="hljs-name">-ALL</span> (<span class="hljs-name">-SEED</span> <span class="hljs-number">10013</span> -DATA <span class="hljs-string">&quot;../data/aaa.csv&quot;</span> -LOUD T) 
+ -COL (<span class="hljs-name">-P</span> <span class="hljs-number">10</span>) 
+ -DOM (<span class="hljs-name">-SAMPLES</span> <span class="hljs-number">100</span> -K <span class="hljs-number">23</span>)) 
+</code></pre>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> cli (<span class="hljs-name">&amp;key</span> (<span class="hljs-name">plist</span> <span class="hljs-literal">nil</span>)
+            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> cli (<span class="hljs-name">flags</span> <span class="hljs-symbol">&amp;key</span> 
                  (<span class="hljs-name">help</span>   <span class="hljs-string">&quot;&quot;</span>)
                  (<span class="hljs-name">args</span>   (<span class="hljs-name">cdr</span> (<span class="hljs-name">deepcopy</span> (<span class="hljs-name">argv</span>))))
-                 (<span class="hljs-name">now</span>    (<span class="hljs-name">getf</span> plist &#x27;-all)))
-   (<span class="hljs-name">whale</span> (<span class="hljs-name">pop</span> args)
-     (<span class="hljs-name">setf</span> il (<span class="hljs-name">read-from-string</span> il))
-     (<span class="hljs-name">cond</span> ((<span class="hljs-name">equalp</span> il &#x27;-h) (<span class="hljs-name">format</span> <span class="hljs-literal">t</span> <span class="hljs-string">&quot;~a~%&quot;</span> help))
-           ((<span class="hljs-name">getf</span> plist il) (<span class="hljs-name">setf</span> now (<span class="hljs-name">getf</span> plist il)))
-           ((<span class="hljs-name">getf</span> now il)   (<span class="hljs-name">setf</span> (<span class="hljs-name">getf</span> now il) 
-                                  (<span class="hljs-name">read-from-string</span> (<span class="hljs-name">car</span> args))))
-           ((<span class="hljs-name">member</span> il now) (<span class="hljs-name">setf</span> (<span class="hljs-name">getf</span> now il) <span class="hljs-literal">t</span>))
-           (<span class="hljs-name">t</span>               (<span class="hljs-name">format</span> <span class="hljs-literal">t</span> <span class="hljs-string">&quot;~a ~a&quot;</span> (<span class="hljs-name">red</span> <span class="hljs-string">&quot;??&quot;</span>) il))))
-   plist)
+                 (<span class="hljs-name">group</span>  (<span class="hljs-name">getf</span> flags &#x27;-all)))
+   (<span class="hljs-name">while</span> (<span class="hljs-name">pop</span> args)
+     (<span class="hljs-name">setf</span> now (<span class="hljs-name">read-from-string</span> now))
+     (<span class="hljs-name">cond</span> ((<span class="hljs-name">equalp</span> now &#x27;-h)   (<span class="hljs-name">format</span> <span class="hljs-literal">t</span> <span class="hljs-string">&quot;~a~%&quot;</span> help))
+           ((<span class="hljs-name">getf</span> flags now)   (<span class="hljs-name">setf</span> group (<span class="hljs-name">getf</span> flags now)))
+           ((<span class="hljs-name">getf</span> group now)   (<span class="hljs-name">setf</span> (<span class="hljs-name">getf</span> group now) 
+                                     (<span class="hljs-name">read-from-string</span> (<span class="hljs-name">car</span> args))))
+           ((<span class="hljs-name">member</span> now group) (<span class="hljs-name">setf</span> (<span class="hljs-name">getf</span> group now) <span class="hljs-literal">t</span>))
+           (<span class="hljs-name">t</span>                  (<span class="hljs-name">format</span> <span class="hljs-literal">t</span> <span class="hljs-string">&quot;~a ~a&quot;</span> (<span class="hljs-name">red</span> <span class="hljs-string">&quot;??&quot;</span>) now))))
+   flags)
 (<span class="hljs-name">print</span> 
-  (<span class="hljs-name">cli</span> <span class="hljs-symbol">:plist</span> &#x27;(-all (-seed <span class="hljs-number">10013</span>
+  (<span class="hljs-name">cli</span> &#x27;(-all (-seed <span class="hljs-number">10013</span>
                             -data <span class="hljs-string">&quot;../data/aaa.csv&quot;</span>
                             -loud <span class="hljs-literal">nil</span>)
                 -col (-p <span class="hljs-number">2</span>)
-                -dom (-samples <span class="hljs-number">100</span> -kkk <span class="hljs-number">23</span>))))</pre></div></div>
+                -dom (-samples <span class="hljs-number">100</span> -k <span class="hljs-number">23</span>))))</pre></div></div>
             
         </li>
         

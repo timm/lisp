@@ -14,13 +14,17 @@
 (defmacro ? (s x &rest xs) 
   (if xs `(? (slot-value ,s ',x) ,@xs) `(slot-value ,s ',x)))
 
+; Shorthand for recursive calls to getf
+(defmacro ! (s x &rest xs) 
+  (if xs `(! (getf ,s ',x) ,@xs) `(getf ,s ',x)))
+
 ; Anaphoric if.
 (defmacro aif (test yes &optional no) 
   `(let ((it ,test)) (if it ,yes ,no)))
 
 ; Anaphoric while
-(defmacro whale (expr &body body) 
-  `(do ((il ,expr ,expr)) ((not il)) ,@body))
+(defmacro while (expr &body body) 
+  `(do ((now ,expr ,expr)) ((not now)) ,@body))
 
 ; Colors
 ; -------
@@ -69,28 +73,46 @@
 ; Get command line
 (defun argv () sb-ext:*posix-argv*)
 
-; Given a plist with keywords, if  the command line 
-; has any of the same keywords, then update the plist with the
-; command-line values.keywords that 
-(defun cli (&key (plist nil)
-                 (help   "")
+; Given a plist with `flags`, if  the command line
+; has any of the same keys, then update `flags` with the
+; command-line values.  
+;
+; e.g. Consider the command line        
+; `lisp tricks.lisp -loud -dom -k 23 -col -p 10`   
+; and the following call to `cli`:
+;
+;     (print (cli '(-all (-seed 10013
+;                         -data "../data/aaa.csv"
+;                         -loud nil)
+;                   -col (-p 2)
+;                   -dom (-samples 100 
+;                         -k 23))))
+;
+; This will set `-loud` to true and update the other flags: 
+;
+;     (-ALL (-SEED 10013 -DATA "../data/aaa.csv" -LOUD T) 
+;      -COL (-P 10) 
+;      -DOM (-SAMPLES 100 -K 23)) 
+;
+(defun cli (flags &key 
+                 (help   "help")
                  (args   (cdr (deepcopy (argv))))
-                 (now    (getf plist '-all)))
-   (whale (pop args)
-     (setf il (read-from-string il))
-     (cond ((equalp il '-h) (format t "~a~%" help))
-           ((getf plist il) (setf now (getf plist il)))
-           ((getf now il)   (setf (getf now il) 
-                                  (read-from-string (car args))))
-           ((member il now) (setf (getf now il) t))
-           (t               (format t "~a ~a" (red "??") il))))
+                 (group  (getf flags '-all)))
+   (while (pop args)
+     (setf now (read-from-string now))
+     (cond ((equalp now '-h)   (format t "~a~%" help))
+           ((getf flags now)   (setf group (getf flags now)))
+           ((getf group now)   (setf (getf group now) 
+                                     (read-from-string (car args))))
+           ((member now group) (setf (getf group now) t))
+           (t                  (format t "~a ~a" (red "??") now))))
 
-   plist)
+   flags)
 
 (print 
-  (cli :plist '(-all (-seed 10013
-                            -data "../data/aaa.csv"
-                            -loud nil)
+   (cli '(-all (-seed 10013  "asdasd"
+                            -data "../data/loud2.csv" "asd"
+                            -loud nil "asdsa")
                 -col (-p 2)
-                -dom (-samples 100 -kkk 23))))
+                -dom (-samples 100 -k 23))))
 
