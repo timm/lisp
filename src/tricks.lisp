@@ -66,9 +66,7 @@
                                      (read-from-string (pop args))))
            ((getf flags now)   (setf group (getf flags now)))
            ((member now group) (setf (getf group now) t))
-           ((equalp now 'h)   (format t "~a~%" help))
-           (t                  (format t "~a ~a" (red "??") now))))
-
+           ((equalp now 'h)   (format t "~a~%" help))))
    flags)
 
 ; Just to give an example of its use, suppose we run `eg-cl`
@@ -105,7 +103,7 @@
 ;       DOM (SAMPLES 100 
 ;            K 23)) 
 ;
-(defun eg-cli()
+(defun eg.cli(_)
   "demo cli"
   (pprint 
     (cli '(all (fails 0  tries 0
@@ -156,7 +154,6 @@
 
 (defun run (fun my)
   (setf my       (deepcopy my)
-        fun      (intern fun)
         *seed*  (! my all seed))
   (if (! my all un)
     (funcall fun my)
@@ -168,10 +165,7 @@
         (format t "~&~a [~a] ~a~%" (red "✖") fun (yellow e))
         (format t "~&~a [~a]~%" (green "✔") fun )))))
 
-(defun  doco(s) 
-  (documentation  (intern  (string-upcase s)) 'function))
-
-(defun main(my &key (package :common-lisp-user) (b4 "EG-"))
+(defun main(my &key (package :common-lisp-user) (b4 "EG."))
    (let* ((all   (loop for fun in (funs package) 
                    if (b4-sym b4 fun) collect fun))
           (my    (cli my))
@@ -179,11 +173,11 @@
      (case eg
       (all       (loop for fun in all do (run fun my)))
       (ls        (loop for fun in all do 
-                    (format t "  :eg ~a~%" 
-                      fun (or (doco fun) ""))))
+                    (format t "  :eg ~15a : ~a~%" 
+                      fun (or (documentation fun 'function) ""))))
       (otherwise (if (member eg all) (run eg my))))))
 
-(main '(all (eg   "eg-cli"
+(main '(all (eg   "eg.cli"
              fails 0  tries 0
              seed 10013  
              data "../data/aa" 
