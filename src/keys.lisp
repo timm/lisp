@@ -7,9 +7,9 @@
   (format *error-output* "; loading ~(~a~) ...~%" f)
   (handler-bind ((style-warning #'muffle-warning)) (load f)))
 
+(loads "structs")
 (loads "tricks")
 (loads "config")
-(loads "structs")
 (loads "col")
 (loads "num")
 (loads "sym")

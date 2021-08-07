@@ -127,9 +127,23 @@
     (setf *seed* (mod (* multiplier *seed*) modulus))
     (* n (- 1.0d0 (/ *seed* modulus)))))
 
+; Strings
+(defmethod print-object ((i thing) str)
+  (labels 
+    ((skip (x) 
+           (and (symbolp x) (equal (elt (symbol-name x) 0) #\_)))
+     (pairs (s &aux (x (slot-value i s))) 
+            (if x (list s x) (list s)))
+     (slots (klass)
+            (remove-if #'skip
+                       (mapcar #'sb-mop:slot-definition-name 
+                               (sb-mop:class-slots klass)))))
+    (format 
+      str "{~a~{ ~a~}}" (class-name (class-of i)) 
+      (mapcar #'pairs (sort (slots (class-of i)) #'string<)))))
+
 ; Meta
 ; ----
-
 ; Does a symbol name start with `b4`?
 (defun b4-sym (b4 sym &aux (n (length b4)) (s (symbol-name sym)))
   (and (>= (length s) n) (equalp b4 (subseq s 0 n))))
