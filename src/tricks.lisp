@@ -152,18 +152,23 @@
         (push s out))))
   out)
 
-(defun run (fun my)
+; Start-up
+; --------
+
+; To run one of the examples, reset the **seed**,
+; take a deepcopy of `my` (so `fun`
+(defun run (eg my)
   (setf my       (deepcopy my)
         *seed*  (! my all seed))
   (if (! my all un)
-    (funcall fun my)
+    (funcall eg my)
     (multiple-value-bind (_ e)
-      (ignore-errors (funcall fun my))
+      (ignore-errors (funcall eg my))
       (incf (! my all tries))
       (incf (! my all fails) (if e 1 0))
       (if e 
-        (format t "~&~a [~a] ~a~%" (red "✖") fun (yellow e))
-        (format t "~&~a [~a]~%" (green "✔") fun )))))
+        (format t "~&~a [~a] ~a~%" (red "✖") eg (yellow e))
+        (format t "~&~a [~a]~%" (green "✔") eg )))))
 
 (defun main(my &key (package :common-lisp-user) (b4 "EG."))
    (let* ((all   (loop for fun in (funs package) 
