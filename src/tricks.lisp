@@ -154,9 +154,12 @@
 
 ; Start-up
 ; --------
-
-; To run one of the examples, reset the **seed**,
-; take a deepcopy of `my` (so `fun`
+;
+; To run one of the examples `eg`, first reset the **seed**,
+; take a deepcopy of `my` (to ensure that any changes ti it
+; happen isolation.
+; If `un`safe is set, then just run the  code.
+; Else run the code, tracking `tries`, `fails`.
 (defun run (eg my)
   (setf my       (deepcopy my)
         *seed*  (! my all seed))
@@ -170,6 +173,9 @@
         (format t "~&~a [~a] ~a~%" (red "✖") eg (yellow e))
         (format t "~&~a [~a]~%" (green "✔") eg )))))
 
+; Update `my` from the command  line.
+; Run the apporpiate test functions  (or if `eg` is "ls"
+; then just list everything).
 (defun main(my &key (package :common-lisp-user) (b4 "EG."))
    (let* ((all   (loop for fun in (funs package) 
                    if (b4-sym b4 fun) collect fun))

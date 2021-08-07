@@ -25,8 +25,8 @@
 (defmacro ? (s x &rest xs) 
   (if xs `(? (slot-value ,s ',x) ,@xs) `(slot-value ,s ',x)))
 ; Shorthand for recursive calls to getf
-(defmacro ?? (s x &rest xs) 
-  (if xs `(?? (getf ,s ',x) ,@xs) `(getf ,s ',x)))
+(defmacro ! (s x &rest xs) 
+  (if xs `(! (getf ,s ',x) ,@xs) `(getf ,s ',x)))
 ; Anaphoric if (and `it` is the anaphoric variable).
 (defmacro aif (test yes &optional no) 
   `(let ((it ,test)) (if it ,yes ,no)))
@@ -55,58 +55,67 @@
 ; ----------------------
 ; Given a plist with `flags`, if  the command line
 ; has any of the same keys, then update `flags` with the
-; command-line values.If a flag is `-h` then print some help.
-; Flags are `grouped` by flags starting with two
-; hypherns. THE default group is `--all`.
+; command-line values.If a flag is `all` then print some help.
+; Flags are `grouped` and the the default group is `all`.
 ; To change groups, just mention it before mentioning
 ; the flags in that group.
 (defun cli (flags &key 
-                 (help   "help")
-                 (args   (cdr (deepcopy (argv))))
-                 (group  (getf flags '--all)))
+            (help   "help")
+            (args   (cdr (deepcopy (argv))))
+            (group  (getf flags 'all)))
    (while (pop args)
-     (setf now (read-from-string now))
-     (cond ((equalp now '-h)   (format t "~a~%" help))
-           ((getf flags now)   (setf group (getf flags now)))
-           ((getf group now)   (assert (not (null args)) (args))
+     (setf now (read-from-string (remove #\- now)))
+     (cond ((getf group now)   (assert (not (null args)) (args))
                                (setf (getf group now) 
                                      (read-from-string (pop args))))
+           ((getf flags now)   (setf group (getf flags now)))
            ((member now group) (setf (getf group now) t))
-           (t                  (format t "~a ~a" (red "??") now))))
+           ((equalp now 'h)   (format t "~a~%" help))))
    flags)
-; Just to give an example of its use, consider the command line        
+; Just to give an example of its use, suppose we run `eg-cl`
+; with this command line:
 ;
 ; `lisp tricks.lisp -loud --dom -k 23 -samples 1`
 ;
-; and this `eg-cli`  call to `cli`. 
-; Since the default group is `--all``, the the
-; intiial referece to `-loud` is really `--all -loud`.
-; Note how once we change goupds (with `--dom` then
+; The  dashes at the start of the flags are  for human
+; readers (internally, the code just deletes them).
+; Since the default group is `all`, then the
+; intiial referece to `loud` is really `all loud`.
+; Note how once we change goupds (with `dom` then
 ; we can set multiple flags in that group.
 ;
-; This will set `-loud` to true and update the other flags: 
+; This will set `loud` to true and update the other flags: 
 ;
-;     > (print (cli '(--all (-seed 10013
-;                          -data "../data/aaa.csv"
-;                          -loud nil)
-;                   --col (-p 2)
-;                   --dom (-samples 100 
-;                         -k 23))))
+;     > (print (cli '(all (tries 0
+;                          fails 0
+;                          un    nil
+;                          seed  10013
+;                          data  "../data/aaa.csv"
+;                          loud  nil)
+;                     col (p 2)
+;                     dom (samples 100 
+;                          k 23))))
 ;
-;     (--ALL (-SEED 10013 
-;             -DATA "../data/aa" 
-;             -LOUD T) 
-;      --COL (-P 2) 
-;      --DOM (-SAMPLES 1 
-;             -K 23))
+;      (ALL (FAILS 0  
+;            TRIES 0 
+;            SEED 11 
+;            DATA "../data/aa" 
+;            LOUD T  
+;            UN NIL) 
+;       COL (P 2) 
+;       DOM (SAMPLES 100 
+;            K 23)) 
 ;
-(defun eg-cli()
+(defun eg.cli(_)
+  "demo cli"
   (pprint 
-    (cli '(--all (-seed 10013  
-                        -data "../data/aa" 
-                        -loud nil )
-           --col (-p 2)
-            --dom (-samples 100 -k 23)))))
+    (cli '(all (fails 0  tries 0
+                seed 10013  
+                data "../data/aa" 
+                loud nil un nil)
+           col (p 2)
+           dom (samples 100 
+                k        23)))))
 ; Random Numbers
 ; --------------
 ; I confess that I never found a way to do
@@ -133,12 +142,51 @@
 (defun deepcopy (x)
    (if (atom x) x (mapcar #'deepcopy x)))
 ; Returns all functions in a package.
-(defun funs (package &aux out)
+(defun funs (&optional (package :common-lisp-user) &aux out)
   (aif (find-package package)
     (do-all-symbols (s package)
       (if (and (fboundp s) (eql it (symbol-package s)))
         (push s out))))
   out)
-; Find function names starting with `b4`?
-(defun tests (&key (package :common-lisp-user) (b4 "EG-"))
-  (loop for fun in (funs package) if (b4-sym b4 fun) collect fun))
+; Start-up
+; --------
+;
+; To run one of the examples `eg`, first reset the **seed**,
+; take a deepcopy of `my` (to ensure that any changes ti it
+; happen isolation.
+; If `un`safe is set, then just run the  code.
+; Else run the code, tracking `tries`, `fails`.
+(defun run (eg my)
+  (setf my       (deepcopy my)
+        *seed*  (! my all seed))
+  (if (! my all un)
+    (funcall eg my)
+    (multiple-value-bind (_ e)
+      (ignore-errors (funcall eg my))
+      (incf (! my all tries))
+      (incf (! my all fails) (if e 1 0))
+      (if e 
+        (format t "~&~a [~a] ~a~%" (red "✖") eg (yellow e))
+        (format t "~&~a [~a]~%" (green "✔") eg )))))
+; Update `my` from the command  line.
+; Run the apporpiate test functions  (or if `eg` is "ls"
+; then just list everything).
+(defun main(my &key (package :common-lisp-user) (b4 "EG."))
+   (let* ((all   (loop for fun in (funs package) 
+                   if (b4-sym b4 fun) collect fun))
+          (my    (cli my))
+          (eg    (! my all eg)))
+     (case eg
+      (all       (loop for fun in all do (run fun my)))
+      (ls        (loop for fun in all do 
+                    (format t "  :eg ~15a : ~a~%" 
+                      fun (or (documentation fun 'function) ""))))
+      (otherwise (if (member eg all) (run eg my))))))
+(main '(all (eg   "eg.cli"
+             fails 0  tries 0
+             seed 10013  
+             data "../data/aa" 
+             loud nil un nil)
+        col (p 2)
+        dom (samples 100 
+             k        23)))

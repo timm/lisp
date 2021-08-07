@@ -108,8 +108,8 @@ passes to <code>fun</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defmacro</span> ?? (<span class="hljs-name">s</span> x <span class="hljs-symbol">&amp;rest</span> xs) 
-  (<span class="hljs-name">if</span> xs `(?? (getf ,s &#x27;,x) ,@xs) `(getf ,s &#x27;,x)))</pre></div></div>
+            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defmacro</span> ! (<span class="hljs-name">s</span> x <span class="hljs-symbol">&amp;rest</span> xs) 
+  (<span class="hljs-name">if</span> xs `(! (getf ,s &#x27;,x) ,@xs) `(getf ,s &#x27;,x)))</pre></div></div>
             
         </li>
         
@@ -259,27 +259,25 @@ passes to <code>fun</code>.</p>
               </div>
               <p>Given a plist with <code>flags</code>, if  the command line
 has any of the same keys, then update <code>flags</code> with the
-command-line values.If a flag is <code>-h</code> then print some help.
-Flags are <code>grouped</code> by flags starting with two
-hypherns. THE default group is <code>--all</code>.
+command-line values.If a flag is <code>all</code> then print some help.
+Flags are <code>grouped</code> and the the default group is <code>all</code>.
 To change groups, just mention it before mentioning
 the flags in that group.</p>
 
             </div>
             
             <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> cli (<span class="hljs-name">flags</span> <span class="hljs-symbol">&amp;key</span> 
-                 (<span class="hljs-name">help</span>   <span class="hljs-string">&quot;help&quot;</span>)
-                 (<span class="hljs-name">args</span>   (<span class="hljs-name">cdr</span> (<span class="hljs-name">deepcopy</span> (<span class="hljs-name">argv</span>))))
-                 (<span class="hljs-name">group</span>  (<span class="hljs-name">getf</span> flags &#x27;--all)))
+            (<span class="hljs-name">help</span>   <span class="hljs-string">&quot;help&quot;</span>)
+            (<span class="hljs-name">args</span>   (<span class="hljs-name">cdr</span> (<span class="hljs-name">deepcopy</span> (<span class="hljs-name">argv</span>))))
+            (<span class="hljs-name">group</span>  (<span class="hljs-name">getf</span> flags &#x27;all)))
    (<span class="hljs-name">while</span> (<span class="hljs-name">pop</span> args)
-     (<span class="hljs-name">setf</span> now (<span class="hljs-name">read-from-string</span> now))
-     (<span class="hljs-name">cond</span> ((<span class="hljs-name">equalp</span> now &#x27;-h)   (<span class="hljs-name">format</span> <span class="hljs-literal">t</span> <span class="hljs-string">&quot;~a~%&quot;</span> help))
-           ((<span class="hljs-name">getf</span> flags now)   (<span class="hljs-name">setf</span> group (<span class="hljs-name">getf</span> flags now)))
-           ((<span class="hljs-name">getf</span> group now)   (<span class="hljs-name">assert</span> (<span class="hljs-name">not</span> (<span class="hljs-name">null</span> args)) (<span class="hljs-name">args</span>))
+     (<span class="hljs-name">setf</span> now (<span class="hljs-name">read-from-string</span> (<span class="hljs-name">remove</span> #\- now)))
+     (<span class="hljs-name">cond</span> ((<span class="hljs-name">getf</span> group now)   (<span class="hljs-name">assert</span> (<span class="hljs-name">not</span> (<span class="hljs-name">null</span> args)) (<span class="hljs-name">args</span>))
                                (<span class="hljs-name">setf</span> (<span class="hljs-name">getf</span> group now) 
                                      (<span class="hljs-name">read-from-string</span> (<span class="hljs-name">pop</span> args))))
+           ((<span class="hljs-name">getf</span> flags now)   (<span class="hljs-name">setf</span> group (<span class="hljs-name">getf</span> flags now)))
            ((<span class="hljs-name">member</span> now group) (<span class="hljs-name">setf</span> (<span class="hljs-name">getf</span> group now) <span class="hljs-literal">t</span>))
-           (<span class="hljs-name">t</span>                  (<span class="hljs-name">format</span> <span class="hljs-literal">t</span> <span class="hljs-string">&quot;~a ~a&quot;</span> (<span class="hljs-name">red</span> <span class="hljs-string">&quot;??&quot;</span>) now))))
+           ((<span class="hljs-name">equalp</span> now &#x27;h)   (<span class="hljs-name">format</span> <span class="hljs-literal">t</span> <span class="hljs-string">&quot;~a~%&quot;</span> help))))
    flags)</pre></div></div>
             
         </li>
@@ -291,36 +289,49 @@ the flags in that group.</p>
               <div class="sswrap ">
                 <a class="ss" href="#section-17">&#x00a7;</a>
               </div>
-              <p>Just to give an example of its use, consider the command line        </p>
+              <p>Just to give an example of its use, suppose we run <code>eg-cl</code>
+with this command line:</p>
 <p><code>lisp tricks.lisp -loud --dom -k 23 -samples 1</code></p>
-<p>and this <code>eg-cli</code>  call to <code>cli</code>. 
-Since the default group is <code>--all``, the the intiial referece to </code>-loud<code>is really</code>–all -loud<code>. Note how once we change goupds (with </code>–dom` then
+<p>The  dashes at the start of the flags are  for human
+readers (internally, the code just deletes them).
+Since the default group is <code>all</code>, then the
+intiial referece to <code>loud</code> is really <code>all loud</code>.
+Note how once we change goupds (with <code>dom</code> then
 we can set multiple flags in that group.</p>
-<p>This will set <code>-loud</code> to true and update the other flags: </p>
-<pre><code>&gt; (<span class="hljs-name">print</span> (<span class="hljs-name">cli</span> &#x27;(--all (-seed <span class="hljs-number">10013</span>
-                     -data <span class="hljs-string">&quot;../data/aaa.csv&quot;</span>
-                     -loud <span class="hljs-literal">nil</span>)
-              --col (-p <span class="hljs-number">2</span>)
-              --dom (-samples <span class="hljs-number">100</span> 
-                    -k <span class="hljs-number">23</span>))))
+<p>This will set <code>loud</code> to true and update the other flags: </p>
+<pre><code>&gt; (<span class="hljs-name">print</span> (<span class="hljs-name">cli</span> &#x27;(all (tries <span class="hljs-number">0</span>
+                     fails <span class="hljs-number">0</span>
+                     un    <span class="hljs-literal">nil</span>
+                     seed  <span class="hljs-number">10013</span>
+                     data  <span class="hljs-string">&quot;../data/aaa.csv&quot;</span>
+                     loud  <span class="hljs-literal">nil</span>)
+                col (p <span class="hljs-number">2</span>)
+                dom (samples <span class="hljs-number">100</span> 
+                     k <span class="hljs-number">23</span>))))
 
-(<span class="hljs-name">--ALL</span> (<span class="hljs-name">-SEED</span> <span class="hljs-number">10013</span> 
-        -DATA <span class="hljs-string">&quot;../data/aa&quot;</span> 
-        -LOUD T) 
- --COL (<span class="hljs-name">-P</span> <span class="hljs-number">2</span>) 
- --DOM (<span class="hljs-name">-SAMPLES</span> <span class="hljs-number">1</span> 
-        -K <span class="hljs-number">23</span>))
+ (<span class="hljs-name">ALL</span> (<span class="hljs-name">FAILS</span> <span class="hljs-number">0</span>  
+       TRIES <span class="hljs-number">0</span> 
+       SEED <span class="hljs-number">11</span> 
+       DATA <span class="hljs-string">&quot;../data/aa&quot;</span> 
+       LOUD T  
+       UN NIL) 
+  COL (<span class="hljs-name">P</span> <span class="hljs-number">2</span>) 
+  DOM (<span class="hljs-name">SAMPLES</span> <span class="hljs-number">100</span> 
+       K <span class="hljs-number">23</span>)) 
 </code></pre>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> eg-cli()
+            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> eg.cli(<span class="hljs-name">_</span>)
+  <span class="hljs-string">&quot;demo cli&quot;</span>
   (<span class="hljs-name">pprint</span> 
-    (<span class="hljs-name">cli</span> &#x27;(--all (-seed <span class="hljs-number">10013</span>  
-                        -data <span class="hljs-string">&quot;../data/aa&quot;</span> 
-                        -loud <span class="hljs-literal">nil</span> )
-           --col (-p <span class="hljs-number">2</span>)
-            --dom (-samples <span class="hljs-number">100</span> -k <span class="hljs-number">23</span>)))))</pre></div></div>
+    (<span class="hljs-name">cli</span> &#x27;(all (fails <span class="hljs-number">0</span>  tries <span class="hljs-number">0</span>
+                seed <span class="hljs-number">10013</span>  
+                data <span class="hljs-string">&quot;../data/aa&quot;</span> 
+                loud <span class="hljs-literal">nil</span> un <span class="hljs-literal">nil</span>)
+           col (p <span class="hljs-number">2</span>)
+           dom (samples <span class="hljs-number">100</span> 
+                k        <span class="hljs-number">23</span>)))))</pre></div></div>
             
         </li>
         
@@ -446,7 +457,7 @@ CommonLisp. So I write my own.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> funs (<span class="hljs-name">package</span> <span class="hljs-symbol">&amp;aux</span> out)
+            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> funs (<span class="hljs-name">&amp;optional</span> (<span class="hljs-name">package</span> <span class="hljs-symbol">:common-lisp-user</span>) <span class="hljs-symbol">&amp;aux</span> out)
   (<span class="hljs-name">aif</span> (<span class="hljs-name">find-package</span> package)
     (<span class="hljs-name">do-all-symbols</span> (<span class="hljs-name">s</span> package)
       (<span class="hljs-name">if</span> (<span class="hljs-name">and</span> (<span class="hljs-name">fboundp</span> s) (<span class="hljs-name">eql</span> it (<span class="hljs-name">symbol-package</span> s)))
@@ -462,12 +473,74 @@ CommonLisp. So I write my own.</p>
               <div class="sswrap ">
                 <a class="ss" href="#section-26">&#x00a7;</a>
               </div>
-              <p>Find function names starting with <code>b4</code>?</p>
+              <h2 id="start-up">Start-up</h2>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> tests (<span class="hljs-name">&amp;key</span> (<span class="hljs-name">package</span> <span class="hljs-symbol">:common-lisp-user</span>) (<span class="hljs-name">b4</span> <span class="hljs-string">&quot;EG-&quot;</span>))
-  (<span class="hljs-name">loop</span> for fun in (<span class="hljs-name">funs</span> package) if (<span class="hljs-name">b4-sym</span> b4 fun) collect fun))</pre></div></div>
+        </li>
+        
+        
+        <li id="section-27">
+            <div class="annotation">
+              
+              <div class="sswrap ">
+                <a class="ss" href="#section-27">&#x00a7;</a>
+              </div>
+              <p>To run one of the examples <code>eg</code>, first reset the <strong>seed</strong>,
+take a deepcopy of <code>my</code> (to ensure that any changes ti it
+happen isolation.
+If <code>un</code>safe is set, then just run the  code.
+Else run the code, tracking <code>tries</code>, <code>fails</code>.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> run (<span class="hljs-name">eg</span> my)
+  (<span class="hljs-name">setf</span> my       (<span class="hljs-name">deepcopy</span> my)
+        *seed*  (! my all seed))
+  (<span class="hljs-name">if</span> (! my all un)
+    (<span class="hljs-name">funcall</span> eg my)
+    (<span class="hljs-name">multiple-value-bind</span> (<span class="hljs-name">_</span> e)
+      (<span class="hljs-name">ignore-errors</span> (<span class="hljs-name">funcall</span> eg my))
+      (<span class="hljs-name">incf</span> (! my all tries))
+      (<span class="hljs-name">incf</span> (! my all fails) (<span class="hljs-name">if</span> e <span class="hljs-number">1</span> <span class="hljs-number">0</span>))
+      (<span class="hljs-name">if</span> e 
+        (<span class="hljs-name">format</span> <span class="hljs-literal">t</span> <span class="hljs-string">&quot;~&amp;~a [~a] ~a~%&quot;</span> (<span class="hljs-name">red</span> <span class="hljs-string">&quot;✖&quot;</span>) eg (<span class="hljs-name">yellow</span> e))
+        (<span class="hljs-name">format</span> <span class="hljs-literal">t</span> <span class="hljs-string">&quot;~&amp;~a [~a]~%&quot;</span> (<span class="hljs-name">green</span> <span class="hljs-string">&quot;✔&quot;</span>) eg )))))</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-28">
+            <div class="annotation">
+              
+              <div class="sswrap ">
+                <a class="ss" href="#section-28">&#x00a7;</a>
+              </div>
+              <p>Update <code>my</code> from the command  line.
+Run the apporpiate test functions  (or if <code>eg</code> is “ls”
+then just list everything).</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> main(<span class="hljs-name">my</span> <span class="hljs-symbol">&amp;key</span> (<span class="hljs-name">package</span> <span class="hljs-symbol">:common-lisp-user</span>) (<span class="hljs-name">b4</span> <span class="hljs-string">&quot;EG.&quot;</span>))
+   (<span class="hljs-name">let*</span> ((<span class="hljs-name">all</span>   (<span class="hljs-name">loop</span> for fun in (<span class="hljs-name">funs</span> package) 
+                   if (<span class="hljs-name">b4-sym</span> b4 fun) collect fun))
+          (<span class="hljs-name">my</span>    (<span class="hljs-name">cli</span> my))
+          (<span class="hljs-name">eg</span>    (! my all eg)))
+     (<span class="hljs-name">case</span> eg
+      (<span class="hljs-name">all</span>       (<span class="hljs-name">loop</span> for fun in all do (<span class="hljs-name">run</span> fun my)))
+      (<span class="hljs-name">ls</span>        (<span class="hljs-name">loop</span> for fun in all do 
+                    (<span class="hljs-name">format</span> <span class="hljs-literal">t</span> <span class="hljs-string">&quot;  :eg ~15a : ~a~%&quot;</span> 
+                      fun (<span class="hljs-name">or</span> (<span class="hljs-name">documentation</span> fun &#x27;function) <span class="hljs-string">&quot;&quot;</span>))))
+      (<span class="hljs-name">otherwise</span> (<span class="hljs-name">if</span> (<span class="hljs-name">member</span> eg all) (<span class="hljs-name">run</span> eg my))))))
+(<span class="hljs-name">main</span> &#x27;(all (eg   <span class="hljs-string">&quot;eg.cli&quot;</span>
+             fails <span class="hljs-number">0</span>  tries <span class="hljs-number">0</span>
+             seed <span class="hljs-number">10013</span>  
+             data <span class="hljs-string">&quot;../data/aa&quot;</span> 
+             loud <span class="hljs-literal">nil</span> un <span class="hljs-literal">nil</span>)
+        col (p <span class="hljs-number">2</span>)
+        dom (samples <span class="hljs-number">100</span> 
+             k        <span class="hljs-number">23</span>)))</pre></div></div>
             
         </li>
         
