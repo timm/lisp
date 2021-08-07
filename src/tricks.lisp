@@ -186,7 +186,8 @@
       (ls        (loop for fun in all do 
                     (format t "  :eg ~15a : ~a~%" 
                       fun (or (documentation fun 'function) ""))))
-      (otherwise (if (member eg all) (run eg my))))))
+      (otherwise (if (member eg all) (run eg my))))
+      (halt (! my all fails))))
 
 (main '(all (eg   "eg.cli"
              fails 0  tries 0
