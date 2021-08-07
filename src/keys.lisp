@@ -7,15 +7,9 @@
   (format *error-output* "; loading ~(~a~) ...~%" f)
   (handler-bind ((style-warning #'muffle-warning)) (load f)))
 
-(defvar +config+
-  `(all (fails 0  tries 0
-         seed 10013  
-         data "../data/aa" 
-         loud nil un nil)
-    col (p 2)
-    dom (samples 100)))
-
 (loads "tricks")
+(loads "config")
+(loads "structs")
 (loads "col")
 (loads "num")
 (loads "sym")

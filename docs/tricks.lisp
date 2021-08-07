@@ -25,14 +25,11 @@
 (defmacro ? (s x &rest xs) 
   (if xs `(? (slot-value ,s ',x) ,@xs) `(slot-value ,s ',x)))
 ; Shorthand for recursive calls to getf
-(defmacro ! (s x &rest xs) 
-  (if xs `(! (getf ,s ',x) ,@xs) `(getf ,s ',x)))
+(defmacro ! (s x &rest xs) (if xs `(! (getf ,s ',x) ,@xs) `(getf ,s ',x)))
 ; Anaphoric if (and `it` is the anaphoric variable).
-(defmacro aif (test yes &optional no) 
-  `(let ((it ,test)) (if it ,yes ,no)))
+(defmacro aif (test yes &optional no) `(let ((it ,test)) (if it ,yes ,no)))
 ; Anaphoric while (and `now` is the anaphoric variable).
-(defmacro while (expr &body body) 
-  `(do ((now ,expr ,expr)) ((not now)) ,@body))
+(defmacro while (expr &body body) `(do ((now ,expr ,expr)) ((not now)) ,@body))
 ; Colors
 ; -------
 ; all colors
@@ -47,8 +44,7 @@
 ; System Stuff
 ; ------------
 ; Exit LISP.
-(defun halt (&optional (status 0)) 
-  (sb-ext:exit :code status))
+(defun halt (&optional (status 0)) (sb-ext:exit :code status))
 ; Get command line
 (defun argv () sb-ext:*posix-argv*)
 ; Command-Line Interface
@@ -65,12 +61,11 @@
             (group  (getf flags 'all)))
    (while (pop args)
      (setf now (read-from-string (remove #\- now)))
-     (cond ((getf group now)   (assert (not (null args)) (args))
-                               (setf (getf group now) 
+     (cond ((getf group now)   (setf (getf group now) 
                                      (read-from-string (pop args))))
            ((getf flags now)   (setf group (getf flags now)))
            ((member now group) (setf (getf group now) t))
-           ((equalp now 'h)   (format t "~a~%" help))))
+           ((equalp now 'h)    (format t "~a~%" help))))
    flags)
 ; Just to give an example of its use, suppose we run `eg-cl`
 ; with this command line:
@@ -123,8 +118,7 @@
 ; CommonLisp. So I write my own.
 (defvar *seed* 10013)
 ; Return a random integer 0.. n-1.
-(defun randi (&optional (n 1)) 
-  (floor (* n (/ (randf 1000000.0) 1000000))))
+(defun randi (&optional (n 1)) (floor (* n (/ (randf 1000000.0) 1000000))))
 ; Return a random flaot 0..n-1.
 (defun randf (&optional (n 1.0)) 
   (let ((multiplier 16807.0d0)
@@ -135,12 +129,10 @@
 ; ----
 ; Does a symbol name start with `b4`?
 (defun b4-sym (b4 sym &aux (n (length b4)) (s (symbol-name sym)))
-  (and (>= (length s) n) 
-       (equalp b4 (subseq s 0 n))))
+  (and (>= (length s) n) (equalp b4 (subseq s 0 n))))
  
 ; Deepcopy
-(defun deepcopy (x)
-   (if (atom x) x (mapcar #'deepcopy x)))
+(defun deepcopy (x) (if (atom x) x (mapcar #'deepcopy x)))
 ; Returns all functions in a package.
 (defun funs (&optional (package :common-lisp-user) &aux out)
   (aif (find-package package)
@@ -164,29 +156,21 @@
     (multiple-value-bind (_ e)
       (ignore-errors (funcall eg my))
       (incf (! my all tries))
-      (incf (! my all fails) (if e 1 0))
-      (if e 
-        (format t "~&~a [~a] ~a~%" (red "✖") eg (yellow e))
-        (format t "~&~a [~a]~%" (green "✔") eg )))))
+      (cond (e (incf (! my all fails))
+               (format t "~&~a [~a] ~a~%" (red "✖") eg (yellow e)))
+            (t (format t "~&~a [~a]~%" (green "✔") eg ))))))
 ; Update `my` from the command  line.
-; Run the apporpiate test functions  (or if `eg` is "ls"
+; Run the appropriate test functions  (or if `eg` is "ls"
 ; then just list everything).
+; Return to the operating system  the number of failures.
 (defun main(my &key (package :common-lisp-user) (b4 "EG."))
-   (let* ((all   (loop for fun in (funs package) 
-                   if (b4-sym b4 fun) collect fun))
-          (my    (cli my))
-          (eg    (! my all eg)))
-     (case eg
-      (all       (loop for fun in all do (run fun my)))
-      (ls        (loop for fun in all do 
-                    (format t "  :eg ~15a : ~a~%" 
+  (let* ((egs (loop for fun in (funs package) if (b4-sym b4 fun) collect fun))
+         (eg  (! my all eg))
+         (my  (cli my)))
+    (case eg
+      (all       (loop for fun in egs do (run fun my)))
+      (ls        (loop for fun in egs do 
+                   (format t "  :eg ~15a : ~a~%" 
                       fun (or (documentation fun 'function) ""))))
-      (otherwise (if (member eg all) (run eg my))))))
-(main '(all (eg   "eg.cli"
-             fails 0  tries 0
-             seed 10013  
-             data "../data/aa" 
-             loud nil un nil)
-        col (p 2)
-        dom (samples 100 
-             k        23)))
+      (t  (if (member eg egs) (run eg my))))
+    (halt (! my all fails))))

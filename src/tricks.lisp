@@ -129,6 +129,7 @@
 
 ; Meta
 ; ----
+
 ; Does a symbol name start with `b4`?
 (defun b4-sym (b4 sym &aux (n (length b4)) (s (symbol-name sym)))
   (and (>= (length s) n) (equalp b4 (subseq s 0 n))))
@@ -169,14 +170,13 @@
 ; then just list everything).
 ; Return to the operating system  the number of failures.
 (defun main(my &key (package :common-lisp-user) (b4 "EG."))
-  (let* ((egs (loop for fun in (funs package) 
-                  if (b4-sym b4 fun) collect fun))
-         (my (cli my))
-         (eg (! my all eg)))
+  (let* ((egs (loop for fun in (funs package) if (b4-sym b4 fun) collect fun))
+         (eg  (intern (string-upcase (! my all eg))))
+         (my  (cli my)))
     (case eg
-      (all (loop for fun in egs do (run fun my)))
-      (ls  (loop for fun in egs do 
-              (format t "  :eg ~15a : ~a~%" 
-                 fun (or (documentation fun 'function) ""))))
+      (all       (loop for fun in egs do (run fun my)))
+      (ls        (loop for fun in egs do 
+                   (format t "  :eg ~15a : ~a~%" 
+                      fun (or (documentation fun 'function) ""))))
       (otherwise (if (member eg egs) (run eg my))))
     (halt (! my all fails))))
