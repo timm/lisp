@@ -174,8 +174,9 @@
         (format t "~&~a [~a]~%" (green "✔") eg )))))
 
 ; Update `my` from the command  line.
-; Run the apporpiate test functions  (or if `eg` is "ls"
+; Run the appropriate test functions  (or if `eg` is "ls"
 ; then just list everything).
+; Return to the operating system  the number of failures.
 (defun main(my &key (package :common-lisp-user) (b4 "EG."))
    (let* ((all   (loop for fun in (funs package) 
                    if (b4-sym b4 fun) collect fun))
