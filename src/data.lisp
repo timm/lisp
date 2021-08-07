@@ -1,4 +1,5 @@
  ; vim: filetype=lisp ts=2 sw=3 sts=2 et :
+ vim: ts=2 sw=2 et:
 
 (defpackage :espy (:use :cl))
 (in-package :espy)
