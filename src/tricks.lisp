@@ -6,17 +6,16 @@
 ; ever we see c(sex) then (sexp) will be
 ; passes to `fun`.
 (defmacro reader (com fun)
-  `(set-macro-character ,com #'(lambda (stream char)
-                                 (declare (ignore char))
-                                 (,fun (read stream t nil t)))))
+  `(set-macro-character ,com 
+     #'(lambda (str _) (declare (ignore _)) (,fun (read str t nil t)))))
 
 ; Shorthand for recursive calls to slot-value.
 (defmacro ? (s x &rest xs) 
   (if xs `(? (slot-value ,s ',x) ,@xs) `(slot-value ,s ',x)))
 
 ; Shorthand for recursive calls to getf
-(defmacro ?? (s x &rest xs) 
-  (if xs `(?? (getf ,s ',x) ,@xs) `(getf ,s ',x)))
+(defmacro ! (s x &rest xs) 
+  (if xs `(! (getf ,s ',x) ,@xs) `(getf ,s ',x)))
 
 ; Anaphoric if (and `it` is the anaphoric variable).
 (defmacro aif (test yes &optional no) 
@@ -39,29 +38,6 @@
 (defun green (s) (color s 'green nil))
 (defun yellow (s) (color s 'yellow nil))
 
-; Meta
-; ----
-; Does a symbol name start with `b4`?
-(defun b4-sym (b4 sym &aux (n (length b4)) (s (symbol-name sym)))
-  (and (>= (length s) n) 
-       (equalp b4 (subseq s 0 n))))
- 
-; Deepcopy
-(defun deepcopy (x)
-   (if (atom x) x (mapcar #'deepcopy x)))
-
-; Returns all functions in a package.
-(defun funs (package &aux out)
-  (aif (find-package package)
-    (do-all-symbols (s package)
-      (if (and (fboundp s) (eql it (symbol-package s)))
-        (push s out))))
-  out)
-
-; Find function names starting with `b4`?
-(defun tests (&key (package :common-lisp-user) (b4 "EG-"))
-  (loop for fun in (funs package) if (b4-sym b4 fun) collect fun))
-
 ; System Stuff
 ; ------------
 ; Exit LISP.
@@ -75,59 +51,144 @@
 ; ----------------------
 ; Given a plist with `flags`, if  the command line
 ; has any of the same keys, then update `flags` with the
-; command-line values.If a flag is `-h` then print some help.
-; Flags are `grouped` by flags starting with two
-; hypherns. THE default group is `--all`.
+; command-line values.If a flag is `all` then print some help.
+; Flags are `grouped` and the the default group is `all`.
 ; To change groups, just mention it before mentioning
 ; the flags in that group.
 (defun cli (flags &key 
-                 (help   "help")
-                 (args   (cdr (deepcopy (argv))))
-                 (group  (getf flags '--all)))
+            (help   "help")
+            (args   (cdr (deepcopy (argv))))
+            (group  (getf flags 'all)))
    (while (pop args)
-     (setf now (read-from-string now))
-     (cond ((equalp now '-h)   (format t "~a~%" help))
-           ((getf flags now)   (setf group (getf flags now)))
-           ((getf group now)   (assert (not (null args)) (args))
+     (setf now (read-from-string (remove #\- now)))
+     (cond ((getf group now)   (assert (not (null args)) (args))
                                (setf (getf group now) 
                                      (read-from-string (pop args))))
+           ((getf flags now)   (setf group (getf flags now)))
            ((member now group) (setf (getf group now) t))
+           ((equalp now 'h)   (format t "~a~%" help))
            (t                  (format t "~a ~a" (red "??") now))))
 
    flags)
 
-; Just to give an example of its use, consider the command line        
+; Just to give an example of its use, suppose we run `eg-cl`
+; with this command line:
 ;
 ; `lisp tricks.lisp -loud --dom -k 23 -samples 1`
 ;
-; and this `eg-cli`  call to `cli`. 
-; Since the default group is `--all``, the the
-; intiial referece to `-loud` is really `--all -loud`.
-; Note how once we change goupds (with `--dom` then
+; The  dashes at the start of the flags are  for human
+; readers (internally, the code just deletes them).
+; Since the default group is `all`, then the
+; intiial referece to `loud` is really `all loud`.
+; Note how once we change goupds (with `dom` then
 ; we can set multiple flags in that group.
 ;
-; This will set `-loud` to true and update the other flags: 
+; This will set `loud` to true and update the other flags: 
 ;
-;     > (print (cli '(--all (-seed 10013
-;                          -data "../data/aaa.csv"
-;                          -loud nil)
-;                   --col (-p 2)
-;                   --dom (-samples 100 
-;                         -k 23))))
+;     > (print (cli '(all (tries 0
+;                          fails 0
+;                          un    nil
+;                          seed  10013
+;                          data  "../data/aaa.csv"
+;                          loud  nil)
+;                     col (p 2)
+;                     dom (samples 100 
+;                          k 23))))
 ;
-;     (--ALL (-SEED 10013 
-;             -DATA "../data/aa" 
-;             -LOUD T) 
-;      --COL (-P 2) 
-;      --DOM (-SAMPLES 1 
-;             -K 23))
+;      (ALL (FAILS 0  
+;            TRIES 0 
+;            SEED 11 
+;            DATA "../data/aa" 
+;            LOUD T  
+;            UN NIL) 
+;       COL (P 2) 
+;       DOM (SAMPLES 100 
+;            K 23)) 
 ;
 (defun eg-cli()
+  "demo cli"
   (pprint 
-    (cli '(--all (-seed 10013  
-                        -data "../data/aa" 
-                        -loud nil )
-                 --col (-p 2)
-                 --dom (-samples 100 -k 23)))))
+    (cli '(all (fails 0  tries 0
+                seed 10013  
+                data "../data/aa" 
+                loud nil un nil)
+           col (p 2)
+           dom (samples 100 
+                k        23)))))
 
-(eg-cli)
+; Random Numbers
+; --------------
+; I confess that I never found a way to do
+; platform independent random number generation with
+; CommonLisp. So I write my own.
+
+(defvar *seed* 10013)
+
+; Return a random integer 0.. n-1.
+(defun randi (&optional (n 1)) 
+  (floor (* n (/ (randf 1000000.0) 1000000))))
+
+; Return a random flaot 0..n-1.
+(defun randf (&optional (n 1.0)) 
+  (let ((multiplier 16807.0d0)
+        (modulus    2147483647.0d0))
+    (setf *seed* (mod (* multiplier *seed*) modulus))
+    (* n (- 1.0d0 (/ *seed* modulus)))))
+
+; Meta
+; ----
+; Does a symbol name start with `b4`?
+(defun b4-sym (b4 sym &aux (n (length b4)) (s (symbol-name sym)))
+  (and (>= (length s) n) 
+       (equalp b4 (subseq s 0 n))))
+ 
+; Deepcopy
+(defun deepcopy (x)
+   (if (atom x) x (mapcar #'deepcopy x)))
+
+; Returns all functions in a package.
+(defun funs (&optional (package :common-lisp-user) &aux out)
+  (aif (find-package package)
+    (do-all-symbols (s package)
+      (if (and (fboundp s) (eql it (symbol-package s)))
+        (push s out))))
+  out)
+
+(defun run (fun my)
+  (setf my       (deepcopy my)
+        fun      (intern fun)
+        *seed*  (! my all seed))
+  (if (! my all un)
+    (funcall fun my)
+    (multiple-value-bind (_ e)
+      (ignore-errors (funcall fun my))
+      (incf (! my all tries))
+      (incf (! my all fails) (if e 1 0))
+      (if e 
+        (format t "~&~a [~a] ~a~%" (red "✖") fun (yellow e))
+        (format t "~&~a [~a]~%" (green "✔") fun )))))
+
+(defun  doco(s) 
+  (documentation  (intern  (string-upcase s)) 'function))
+
+(defun main(my &key (package :common-lisp-user) (b4 "EG-"))
+   (let* ((all   (loop for fun in (funs package) 
+                   if (b4-sym b4 fun) collect fun))
+          (my    (cli my))
+          (eg    (! my all eg)))
+     (case eg
+      (all       (loop for fun in all do (run fun my)))
+      (ls        (loop for fun in all do 
+                    (format t "  :eg ~a~%" 
+                      fun (or (doco fun) ""))))
+      (otherwise (if (member eg all) (run eg my))))))
+
+(main '(all (eg   "eg-cli"
+             fails 0  tries 0
+             seed 10013  
+             data "../data/aa" 
+             loud nil un nil)
+        col (p 2)
+        dom (samples 100 
+             k        23)))
+

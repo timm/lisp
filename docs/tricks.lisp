@@ -19,9 +19,8 @@
 ; ever we see c(sex) then (sexp) will be
 ; passes to `fun`.
 (defmacro reader (com fun)
-  `(set-macro-character ,com #'(lambda (stream char)
-                                 (declare (ignore char))
-                                 (,fun (read stream t nil t)))))
+  `(set-macro-character ,com 
+     #'(lambda (str _) (declare (ignore _)) (,fun (read str t nil t)))))
 ; Shorthand for recursive calls to slot-value.
 (defmacro ? (s x &rest xs) 
   (if xs `(? (slot-value ,s ',x) ,@xs) `(slot-value ,s ',x)))
@@ -45,26 +44,6 @@
 (defun red (s) (color s 'red nil))
 (defun green (s) (color s 'green nil))
 (defun yellow (s) (color s 'yellow nil))
-; Meta
-; ----
-; Does a symbol name start with `b4`?
-(defun b4-sym (b4 sym &aux (n (length b4)) (s (symbol-name sym)))
-  (and (>= (length s) n) 
-       (equalp b4 (subseq s 0 n))))
- 
-; Deepcopy
-(defun deepcopy (x)
-   (if (atom x) x (mapcar #'deepcopy x)))
-; Returns all functions in a package.
-(defun funs (package &aux out)
-  (aif (find-package package)
-    (do-all-symbols (s package)
-      (if (and (fboundp s) (eql it (symbol-package s)))
-        (push s out))))
-  out)
-; Find function names starting with `b4`?
-(defun tests (&key (package :common-lisp-user) (b4 "EG-"))
-  (loop for fun in (funs package) if (b4-sym b4 fun) collect fun))
 ; System Stuff
 ; ------------
 ; Exit LISP.
@@ -126,6 +105,40 @@
     (cli '(--all (-seed 10013  
                         -data "../data/aa" 
                         -loud nil )
-                 --col (-p 2)
-                 --dom (-samples 100 -k 23)))))
-(eg-cli)
+           --col (-p 2)
+            --dom (-samples 100 -k 23)))))
+; Random Numbers
+; --------------
+; I confess that I never found a way to do
+; platform independent random number generation with
+; CommonLisp. So I write my own.
+(defvar *seed* 10013)
+; Return a random integer 0.. n-1.
+(defun randi (&optional (n 1)) 
+  (floor (* n (/ (randf 1000000.0) 1000000))))
+; Return a random flaot 0..n-1.
+(defun randf (&optional (n 1.0)) 
+  (let ((multiplier 16807.0d0)
+        (modulus    2147483647.0d0))
+    (setf *seed* (mod (* multiplier *seed*) modulus))
+    (* n (- 1.0d0 (/ *seed* modulus)))))
+; Meta
+; ----
+; Does a symbol name start with `b4`?
+(defun b4-sym (b4 sym &aux (n (length b4)) (s (symbol-name sym)))
+  (and (>= (length s) n) 
+       (equalp b4 (subseq s 0 n))))
+ 
+; Deepcopy
+(defun deepcopy (x)
+   (if (atom x) x (mapcar #'deepcopy x)))
+; Returns all functions in a package.
+(defun funs (package &aux out)
+  (aif (find-package package)
+    (do-all-symbols (s package)
+      (if (and (fboundp s) (eql it (symbol-package s)))
+        (push s out))))
+  out)
+; Find function names starting with `b4`?
+(defun tests (&key (package :common-lisp-user) (b4 "EG-"))
+  (loop for fun in (funs package) if (b4-sym b4 fun) collect fun))

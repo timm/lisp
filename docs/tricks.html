@@ -76,9 +76,8 @@ passes to <code>fun</code>.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defmacro</span> reader (<span class="hljs-name">com</span> fun)
-  `(set-macro-character ,com #&#x27;(lambda (stream char)
-                                 (declare (ignore char))
-                                 (,fun (read stream <span class="hljs-literal">t</span> <span class="hljs-literal">nil</span> <span class="hljs-literal">t</span>)))))</pre></div></div>
+  `(set-macro-character ,com 
+     #&#x27;(lambda (str _) (declare (ignore _)) (,fun (read str <span class="hljs-literal">t</span> <span class="hljs-literal">nil</span> <span class="hljs-literal">t</span>)))))</pre></div></div>
             
         </li>
         
@@ -201,7 +200,7 @@ passes to <code>fun</code>.</p>
               <div class="sswrap ">
                 <a class="ss" href="#section-12">&#x00a7;</a>
               </div>
-              <h2 id="meta">Meta</h2>
+              <h2 id="system-stuff">System Stuff</h2>
 
             </div>
             
@@ -214,88 +213,6 @@ passes to <code>fun</code>.</p>
               <div class="sswrap ">
                 <a class="ss" href="#section-13">&#x00a7;</a>
               </div>
-              <p>Does a symbol name start with <code>b4</code>?</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> b4-sym (<span class="hljs-name">b4</span> sym <span class="hljs-symbol">&amp;aux</span> (<span class="hljs-name">n</span> (<span class="hljs-name">length</span> b4)) (<span class="hljs-name">s</span> (<span class="hljs-name">symbol-name</span> sym)))
-  (<span class="hljs-name">and</span> (<span class="hljs-name">&gt;=</span> (<span class="hljs-name">length</span> s) n) 
-       (<span class="hljs-name">equalp</span> b4 (<span class="hljs-name">subseq</span> s <span class="hljs-number">0</span> n))))</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-14">
-            <div class="annotation">
-              
-              <div class="sswrap ">
-                <a class="ss" href="#section-14">&#x00a7;</a>
-              </div>
-              <p>Deepcopy</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> deepcopy (<span class="hljs-name">x</span>)
-   (<span class="hljs-name">if</span> (<span class="hljs-name">atom</span> x) x (<span class="hljs-name">mapcar</span> #&#x27;deepcopy x)))</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-15">
-            <div class="annotation">
-              
-              <div class="sswrap ">
-                <a class="ss" href="#section-15">&#x00a7;</a>
-              </div>
-              <p>Returns all functions in a package.</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> funs (<span class="hljs-name">package</span> <span class="hljs-symbol">&amp;aux</span> out)
-  (<span class="hljs-name">aif</span> (<span class="hljs-name">find-package</span> package)
-    (<span class="hljs-name">do-all-symbols</span> (<span class="hljs-name">s</span> package)
-      (<span class="hljs-name">if</span> (<span class="hljs-name">and</span> (<span class="hljs-name">fboundp</span> s) (<span class="hljs-name">eql</span> it (<span class="hljs-name">symbol-package</span> s)))
-        (<span class="hljs-name">push</span> s out))))
-  out)</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-16">
-            <div class="annotation">
-              
-              <div class="sswrap ">
-                <a class="ss" href="#section-16">&#x00a7;</a>
-              </div>
-              <p>Find function names starting with <code>b4</code>?</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> tests (<span class="hljs-name">&amp;key</span> (<span class="hljs-name">package</span> <span class="hljs-symbol">:common-lisp-user</span>) (<span class="hljs-name">b4</span> <span class="hljs-string">&quot;EG-&quot;</span>))
-  (<span class="hljs-name">loop</span> for fun in (<span class="hljs-name">funs</span> package) if (<span class="hljs-name">b4-sym</span> b4 fun) collect fun))</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-17">
-            <div class="annotation">
-              
-              <div class="sswrap ">
-                <a class="ss" href="#section-17">&#x00a7;</a>
-              </div>
-              <h2 id="system-stuff">System Stuff</h2>
-
-            </div>
-            
-        </li>
-        
-        
-        <li id="section-18">
-            <div class="annotation">
-              
-              <div class="sswrap ">
-                <a class="ss" href="#section-18">&#x00a7;</a>
-              </div>
               <p>Exit LISP.</p>
 
             </div>
@@ -306,11 +223,11 @@ passes to <code>fun</code>.</p>
         </li>
         
         
-        <li id="section-19">
+        <li id="section-14">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-19">&#x00a7;</a>
+                <a class="ss" href="#section-14">&#x00a7;</a>
               </div>
               <p>Get command line</p>
 
@@ -321,11 +238,11 @@ passes to <code>fun</code>.</p>
         </li>
         
         
-        <li id="section-20">
+        <li id="section-15">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-20">&#x00a7;</a>
+                <a class="ss" href="#section-15">&#x00a7;</a>
               </div>
               <h2 id="command-line-interface">Command-Line Interface</h2>
 
@@ -334,11 +251,11 @@ passes to <code>fun</code>.</p>
         </li>
         
         
-        <li id="section-21">
+        <li id="section-16">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-21">&#x00a7;</a>
+                <a class="ss" href="#section-16">&#x00a7;</a>
               </div>
               <p>Given a plist with <code>flags</code>, if  the command line
 has any of the same keys, then update <code>flags</code> with the
@@ -368,11 +285,11 @@ the flags in that group.</p>
         </li>
         
         
-        <li id="section-22">
+        <li id="section-17">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-22">&#x00a7;</a>
+                <a class="ss" href="#section-17">&#x00a7;</a>
               </div>
               <p>Just to give an example of its use, consider the command line        </p>
 <p><code>lisp tricks.lisp -loud --dom -k 23 -samples 1</code></p>
@@ -402,9 +319,155 @@ we can set multiple flags in that group.</p>
     (<span class="hljs-name">cli</span> &#x27;(--all (-seed <span class="hljs-number">10013</span>  
                         -data <span class="hljs-string">&quot;../data/aa&quot;</span> 
                         -loud <span class="hljs-literal">nil</span> )
-                 --col (-p <span class="hljs-number">2</span>)
-                 --dom (-samples <span class="hljs-number">100</span> -k <span class="hljs-number">23</span>)))))
-(<span class="hljs-name">eg-cli</span>)</pre></div></div>
+           --col (-p <span class="hljs-number">2</span>)
+            --dom (-samples <span class="hljs-number">100</span> -k <span class="hljs-number">23</span>)))))</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-18">
+            <div class="annotation">
+              
+              <div class="sswrap ">
+                <a class="ss" href="#section-18">&#x00a7;</a>
+              </div>
+              <h2 id="random-numbers">Random Numbers</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-19">
+            <div class="annotation">
+              
+              <div class="sswrap ">
+                <a class="ss" href="#section-19">&#x00a7;</a>
+              </div>
+              <p>I confess that I never found a way to do
+platform independent random number generation with
+CommonLisp. So I write my own.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defvar</span> *seed* <span class="hljs-number">10013</span>)</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-20">
+            <div class="annotation">
+              
+              <div class="sswrap ">
+                <a class="ss" href="#section-20">&#x00a7;</a>
+              </div>
+              <p>Return a random integer 0.. n-1.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> randi (<span class="hljs-name">&amp;optional</span> (<span class="hljs-name">n</span> <span class="hljs-number">1</span>)) 
+  (<span class="hljs-name">floor</span> (<span class="hljs-name">*</span> n (<span class="hljs-name">/</span> (<span class="hljs-name">randf</span> <span class="hljs-number">1000000.0</span>) <span class="hljs-number">1000000</span>))))</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-21">
+            <div class="annotation">
+              
+              <div class="sswrap ">
+                <a class="ss" href="#section-21">&#x00a7;</a>
+              </div>
+              <p>Return a random flaot 0..n-1.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> randf (<span class="hljs-name">&amp;optional</span> (<span class="hljs-name">n</span> <span class="hljs-number">1.0</span>)) 
+  (<span class="hljs-name">let</span> ((<span class="hljs-name">multiplier</span> <span class="hljs-number">16807.0d0</span>)
+        (<span class="hljs-name">modulus</span>    <span class="hljs-number">2147483647.0d0</span>))
+    (<span class="hljs-name">setf</span> *seed* (<span class="hljs-name">mod</span> (<span class="hljs-name">*</span> multiplier *seed*) modulus))
+    (<span class="hljs-name">*</span> n (<span class="hljs-name">-</span> <span class="hljs-number">1.0d0</span> (<span class="hljs-name">/</span> *seed* modulus)))))</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-22">
+            <div class="annotation">
+              
+              <div class="sswrap ">
+                <a class="ss" href="#section-22">&#x00a7;</a>
+              </div>
+              <h2 id="meta">Meta</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-23">
+            <div class="annotation">
+              
+              <div class="sswrap ">
+                <a class="ss" href="#section-23">&#x00a7;</a>
+              </div>
+              <p>Does a symbol name start with <code>b4</code>?</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> b4-sym (<span class="hljs-name">b4</span> sym <span class="hljs-symbol">&amp;aux</span> (<span class="hljs-name">n</span> (<span class="hljs-name">length</span> b4)) (<span class="hljs-name">s</span> (<span class="hljs-name">symbol-name</span> sym)))
+  (<span class="hljs-name">and</span> (<span class="hljs-name">&gt;=</span> (<span class="hljs-name">length</span> s) n) 
+       (<span class="hljs-name">equalp</span> b4 (<span class="hljs-name">subseq</span> s <span class="hljs-number">0</span> n))))</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-24">
+            <div class="annotation">
+              
+              <div class="sswrap ">
+                <a class="ss" href="#section-24">&#x00a7;</a>
+              </div>
+              <p>Deepcopy</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> deepcopy (<span class="hljs-name">x</span>)
+   (<span class="hljs-name">if</span> (<span class="hljs-name">atom</span> x) x (<span class="hljs-name">mapcar</span> #&#x27;deepcopy x)))</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-25">
+            <div class="annotation">
+              
+              <div class="sswrap ">
+                <a class="ss" href="#section-25">&#x00a7;</a>
+              </div>
+              <p>Returns all functions in a package.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> funs (<span class="hljs-name">package</span> <span class="hljs-symbol">&amp;aux</span> out)
+  (<span class="hljs-name">aif</span> (<span class="hljs-name">find-package</span> package)
+    (<span class="hljs-name">do-all-symbols</span> (<span class="hljs-name">s</span> package)
+      (<span class="hljs-name">if</span> (<span class="hljs-name">and</span> (<span class="hljs-name">fboundp</span> s) (<span class="hljs-name">eql</span> it (<span class="hljs-name">symbol-package</span> s)))
+        (<span class="hljs-name">push</span> s out))))
+  out)</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-26">
+            <div class="annotation">
+              
+              <div class="sswrap ">
+                <a class="ss" href="#section-26">&#x00a7;</a>
+              </div>
+              <p>Find function names starting with <code>b4</code>?</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> tests (<span class="hljs-name">&amp;key</span> (<span class="hljs-name">package</span> <span class="hljs-symbol">:common-lisp-user</span>) (<span class="hljs-name">b4</span> <span class="hljs-string">&quot;EG-&quot;</span>))
+  (<span class="hljs-name">loop</span> for fun in (<span class="hljs-name">funs</span> package) if (<span class="hljs-name">b4-sym</span> b4 fun) collect fun))</pre></div></div>
             
         </li>
         
