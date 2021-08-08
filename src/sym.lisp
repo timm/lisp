@@ -6,6 +6,11 @@
             (? s mode) x)))
   x)
 
-(defmethod mid   ((s sym))     (? s mode))
-(defmethod var   ((s sym))     (entropy (? s seen)))
+; Central tendency.
+(defmethod mid ((s sym)) (? s mode))
+
+; Variable around centrality.
+(defmethod var ((s sym)) (entropy (? s seen)))
+
+; Seperation of two items.
 (defmethod dist1 ((s sym) x y) (if (eql x y) 0 1))

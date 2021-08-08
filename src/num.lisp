@@ -31,8 +31,8 @@
 (defmethod norm ((n num) x)
   (if (eq x #\?)
       x
-    (let ((n1 (lo n)) (n2 (hi n)))
+    (let ((n1 (lo n)) 
+          (n2 (hi n)))
       (if (eql n1 n2)
           0
         (max 0 (min 1 (/ (- x n1) (- n2 n1 1E-32))))))))
- 

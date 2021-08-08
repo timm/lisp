@@ -54,8 +54,10 @@
   (loop for (_ . v) in a sum (* -1 (/ v n) (log (/ v n) 2)))) 
 ; Vector
 ; -----
-(defun per (a &optional (p .5) &aux (n  (length a)))
-  (svref a (floor (* p n))))
+; Return the nth percentile point.
+(defun per (a &optional (nth .5) &aux (n  (length a)))
+  (svref a (floor (* nth n))))
+; The standard deviation is `(90th - 10th)/2,56`.
 (defun sd (a &optional sorted)
   (if sorted 
     (/ (- (per a .9) (per a .1)) 2.56) 
@@ -75,8 +77,6 @@
     (loop
       (funcall fun (s->cells (or (read-line str nil)
                                  (return-from csv)))))))
-; (let ((*readtable* (copy-readtable nil)))
- ;     (setf (readtable-case *readtable*) :preserve)
 ; System Stuff
 ; ------------
 ; Exit LISP.
@@ -139,14 +139,13 @@
 ;
 (defun eg.cli(_)
   "demo cli"
-  (pprint 
-    (cli '(all (fails 0  tries 0
-                seed 10013  
-                data "../data/aa" 
-                loud nil un nil)
-           col (p 2)
-           dom (samples 100 
-                k        23)))))
+  (pprint (cli '(all (fails 0  tries 0
+                      seed 10013  
+                      data "../data/aa" 
+                      loud nil un nil)
+                 col (p 2)
+                 dom (samples 100 
+                      k        23)))))
 ; Random Numbers
 ; --------------
 ; I confess that I never found a way to do
@@ -199,9 +198,9 @@
 ; If `un`safe is set, then just run the  code.
 ; Else run the code, tracking `tries`, `fails`.
 (defun run (eg my)
-  (setf my       (deepcopy my)
+  (setf my      (deepcopy my)
         *seed*  (! my all seed))
-  (if (! my all un)
+  (if (! my all meek)
     (funcall eg my)
     (multiple-value-bind (_ e)
       (ignore-errors (funcall eg my))
@@ -215,12 +214,15 @@
 ; Return to the operating system  the number of failures.
 (defun main(my &key (package :common-lisp-user) (b4 "EG."))
   (let* ((egs (loop for fun in (funs package) if (b4-sym b4 fun) collect fun))
+         (my  (cli my))
          (eg  (intern (string-upcase (! my all eg))))
-         (my  (cli my)))
+         )
     (case eg
-      (all       (loop for fun in egs do (run fun my)))
-      (ls        (loop for fun in egs do 
-                   (format t "  :eg ~15a : ~a~%" 
-                      fun (or (documentation fun 'function) ""))))
+      (all (loop for fun in egs do (run fun my)))
+      (ls  (loop for fun in egs do 
+             (format t "  :eg ~15a : ~a~%" 
+                     fun (or (documentation fun 'function) ""))))
       (otherwise (if (member eg egs) (run eg my))))
     (halt (! my all fails))))
+; (let ((!readtable! (copy-readtable nil)))
+; (setf (readtable-case !readtable!) :preserve)

@@ -245,15 +245,12 @@ Return the incremented value. </p>
               <div class="sswrap ">
                 <a class="ss" href="#section-15">&#x00a7;</a>
               </div>
-              
+              <p>Return the nth percentile point.</p>
+
             </div>
             
-            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> per (<span class="hljs-name">a</span> <span class="hljs-symbol">&amp;optional</span> (<span class="hljs-name">p</span> .<span class="hljs-number">5</span>) <span class="hljs-symbol">&amp;aux</span> (<span class="hljs-name">n</span>  (<span class="hljs-name">length</span> a)))
-  (<span class="hljs-name">svref</span> a (<span class="hljs-name">floor</span> (<span class="hljs-name">*</span> p n))))
-(<span class="hljs-name">defun</span> sd (<span class="hljs-name">a</span> <span class="hljs-symbol">&amp;optional</span> sorted)
-  (<span class="hljs-name">if</span> sorted 
-    (<span class="hljs-name">/</span> (<span class="hljs-name">-</span> (<span class="hljs-name">per</span> a .<span class="hljs-number">9</span>) (<span class="hljs-name">per</span> a .<span class="hljs-number">1</span>)) <span class="hljs-number">2.56</span>) 
-    (<span class="hljs-name">sd</span> (<span class="hljs-name">sort</span> a #&#x27;&lt;) <span class="hljs-literal">t</span>)))</pre></div></div>
+            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> per (<span class="hljs-name">a</span> <span class="hljs-symbol">&amp;optional</span> (<span class="hljs-name">nth</span> .<span class="hljs-number">5</span>) <span class="hljs-symbol">&amp;aux</span> (<span class="hljs-name">n</span>  (<span class="hljs-name">length</span> a)))
+  (<span class="hljs-name">svref</span> a (<span class="hljs-name">floor</span> (<span class="hljs-name">*</span> nth n))))</pre></div></div>
             
         </li>
         
@@ -264,9 +261,14 @@ Return the incremented value. </p>
               <div class="sswrap ">
                 <a class="ss" href="#section-16">&#x00a7;</a>
               </div>
-              <h2 id="comma-seperated-files">Comma-seperated-files</h2>
+              <p>The standard deviation is <code>(90th - 10th)/2,56</code>.</p>
 
             </div>
+            
+            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> sd (<span class="hljs-name">a</span> <span class="hljs-symbol">&amp;optional</span> sorted)
+  (<span class="hljs-name">if</span> sorted 
+    (<span class="hljs-name">/</span> (<span class="hljs-name">-</span> (<span class="hljs-name">per</span> a .<span class="hljs-number">9</span>) (<span class="hljs-name">per</span> a .<span class="hljs-number">1</span>)) <span class="hljs-number">2.56</span>) 
+    (<span class="hljs-name">sd</span> (<span class="hljs-name">sort</span> a #&#x27;&lt;) <span class="hljs-literal">t</span>)))</pre></div></div>
             
         </li>
         
@@ -276,6 +278,19 @@ Return the incremented value. </p>
               
               <div class="sswrap ">
                 <a class="ss" href="#section-17">&#x00a7;</a>
+              </div>
+              <h2 id="comma-seperated-files">Comma-seperated-files</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-18">
+            <div class="annotation">
+              
+              <div class="sswrap ">
+                <a class="ss" href="#section-18">&#x00a7;</a>
               </div>
               <p>split strings on commans</p>
 
@@ -288,11 +303,11 @@ Return the incremented value. </p>
         </li>
         
         
-        <li id="section-18">
+        <li id="section-19">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-18">&#x00a7;</a>
+                <a class="ss" href="#section-19">&#x00a7;</a>
               </div>
               <p>macro for reading csv files</p>
 
@@ -304,11 +319,11 @@ Return the incremented value. </p>
         </li>
         
         
-        <li id="section-19">
+        <li id="section-20">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-19">&#x00a7;</a>
+                <a class="ss" href="#section-20">&#x00a7;</a>
               </div>
               <p>function read csv files</p>
 
@@ -323,33 +338,15 @@ Return the incremented value. </p>
         </li>
         
         
-        <li id="section-20">
-            <div class="annotation">
-              
-              <div class="sswrap ">
-                <a class="ss" href="#section-20">&#x00a7;</a>
-              </div>
-              <p>(let ((<em>readtable</em> (copy-readtable nil)))
-    (setf (readtable-case <em>readtable</em>) :preserve)
-System Stuff</p>
-<hr>
-
-            </div>
-            
-        </li>
-        
-        
         <li id="section-21">
             <div class="annotation">
               
               <div class="sswrap ">
                 <a class="ss" href="#section-21">&#x00a7;</a>
               </div>
-              <p>Exit LISP.</p>
+              <h2 id="system-stuff">System Stuff</h2>
 
             </div>
-            
-            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> halt (<span class="hljs-name">&amp;optional</span> (<span class="hljs-name">status</span> <span class="hljs-number">0</span>)) (<span class="hljs-name">sb-ext</span><span class="hljs-symbol">:exit</span> <span class="hljs-symbol">:code</span> status))</pre></div></div>
             
         </li>
         
@@ -360,11 +357,11 @@ System Stuff</p>
               <div class="sswrap ">
                 <a class="ss" href="#section-22">&#x00a7;</a>
               </div>
-              <p>Get command line</p>
+              <p>Exit LISP.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> argv () sb-ext<span class="hljs-symbol">:*posix-argv*</span>)</pre></div></div>
+            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> halt (<span class="hljs-name">&amp;optional</span> (<span class="hljs-name">status</span> <span class="hljs-number">0</span>)) (<span class="hljs-name">sb-ext</span><span class="hljs-symbol">:exit</span> <span class="hljs-symbol">:code</span> status))</pre></div></div>
             
         </li>
         
@@ -375,9 +372,11 @@ System Stuff</p>
               <div class="sswrap ">
                 <a class="ss" href="#section-23">&#x00a7;</a>
               </div>
-              <h2 id="command-line-interface">Command-Line Interface</h2>
+              <p>Get command line</p>
 
             </div>
+            
+            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> argv () sb-ext<span class="hljs-symbol">:*posix-argv*</span>)</pre></div></div>
             
         </li>
         
@@ -387,6 +386,19 @@ System Stuff</p>
               
               <div class="sswrap ">
                 <a class="ss" href="#section-24">&#x00a7;</a>
+              </div>
+              <h2 id="command-line-interface">Command-Line Interface</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-25">
+            <div class="annotation">
+              
+              <div class="sswrap ">
+                <a class="ss" href="#section-25">&#x00a7;</a>
               </div>
               <p>Given a plist with <code>flags</code>, if  the command line
 has any of the same keys, then update <code>flags</code> with the
@@ -413,11 +425,11 @@ the flags in that group.</p>
         </li>
         
         
-        <li id="section-25">
+        <li id="section-26">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-25">&#x00a7;</a>
+                <a class="ss" href="#section-26">&#x00a7;</a>
               </div>
               <p>Just to give an example of its use, suppose we run <code>eg-cl</code>
 with this command line:</p>
@@ -454,27 +466,13 @@ we can set multiple flags in that group.</p>
             
             <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> eg.cli(<span class="hljs-name">_</span>)
   <span class="hljs-string">&quot;demo cli&quot;</span>
-  (<span class="hljs-name">pprint</span> 
-    (<span class="hljs-name">cli</span> &#x27;(all (fails <span class="hljs-number">0</span>  tries <span class="hljs-number">0</span>
-                seed <span class="hljs-number">10013</span>  
-                data <span class="hljs-string">&quot;../data/aa&quot;</span> 
-                loud <span class="hljs-literal">nil</span> un <span class="hljs-literal">nil</span>)
-           col (p <span class="hljs-number">2</span>)
-           dom (samples <span class="hljs-number">100</span> 
-                k        <span class="hljs-number">23</span>)))))</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-26">
-            <div class="annotation">
-              
-              <div class="sswrap ">
-                <a class="ss" href="#section-26">&#x00a7;</a>
-              </div>
-              <h2 id="random-numbers">Random Numbers</h2>
-
-            </div>
+  (<span class="hljs-name">pprint</span> (<span class="hljs-name">cli</span> &#x27;(all (fails <span class="hljs-number">0</span>  tries <span class="hljs-number">0</span>
+                      seed <span class="hljs-number">10013</span>  
+                      data <span class="hljs-string">&quot;../data/aa&quot;</span> 
+                      loud <span class="hljs-literal">nil</span> un <span class="hljs-literal">nil</span>)
+                 col (p <span class="hljs-number">2</span>)
+                 dom (samples <span class="hljs-number">100</span> 
+                      k        <span class="hljs-number">23</span>)))))</pre></div></div>
             
         </li>
         
@@ -484,6 +482,19 @@ we can set multiple flags in that group.</p>
               
               <div class="sswrap ">
                 <a class="ss" href="#section-27">&#x00a7;</a>
+              </div>
+              <h2 id="random-numbers">Random Numbers</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-28">
+            <div class="annotation">
+              
+              <div class="sswrap ">
+                <a class="ss" href="#section-28">&#x00a7;</a>
               </div>
               <p>I confess that I never found a way to do
 platform independent random number generation with
@@ -496,11 +507,11 @@ CommonLisp. So I write my own.</p>
         </li>
         
         
-        <li id="section-28">
+        <li id="section-29">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-28">&#x00a7;</a>
+                <a class="ss" href="#section-29">&#x00a7;</a>
               </div>
               <p>Return a random integer 0.. n-1.</p>
 
@@ -511,11 +522,11 @@ CommonLisp. So I write my own.</p>
         </li>
         
         
-        <li id="section-29">
+        <li id="section-30">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-29">&#x00a7;</a>
+                <a class="ss" href="#section-30">&#x00a7;</a>
               </div>
               <p>Return a random flaot 0..n-1.</p>
 
@@ -530,11 +541,11 @@ CommonLisp. So I write my own.</p>
         </li>
         
         
-        <li id="section-30">
+        <li id="section-31">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-30">&#x00a7;</a>
+                <a class="ss" href="#section-31">&#x00a7;</a>
               </div>
               <p>Strings</p>
 
@@ -557,11 +568,11 @@ CommonLisp. So I write my own.</p>
         </li>
         
         
-        <li id="section-31">
+        <li id="section-32">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-31">&#x00a7;</a>
+                <a class="ss" href="#section-32">&#x00a7;</a>
               </div>
               <h2 id="meta">Meta</h2>
 
@@ -570,11 +581,11 @@ CommonLisp. So I write my own.</p>
         </li>
         
         
-        <li id="section-32">
+        <li id="section-33">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-32">&#x00a7;</a>
+                <a class="ss" href="#section-33">&#x00a7;</a>
               </div>
               <p>Does a symbol name start with <code>b4</code>?</p>
 
@@ -586,11 +597,11 @@ CommonLisp. So I write my own.</p>
         </li>
         
         
-        <li id="section-33">
+        <li id="section-34">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-33">&#x00a7;</a>
+                <a class="ss" href="#section-34">&#x00a7;</a>
               </div>
               <p>Deepcopy</p>
 
@@ -601,11 +612,11 @@ CommonLisp. So I write my own.</p>
         </li>
         
         
-        <li id="section-34">
+        <li id="section-35">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-34">&#x00a7;</a>
+                <a class="ss" href="#section-35">&#x00a7;</a>
               </div>
               <p>Returns all functions in a package.</p>
 
@@ -621,11 +632,11 @@ CommonLisp. So I write my own.</p>
         </li>
         
         
-        <li id="section-35">
+        <li id="section-36">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-35">&#x00a7;</a>
+                <a class="ss" href="#section-36">&#x00a7;</a>
               </div>
               <h2 id="start-up">Start-up</h2>
 
@@ -634,11 +645,11 @@ CommonLisp. So I write my own.</p>
         </li>
         
         
-        <li id="section-36">
+        <li id="section-37">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-36">&#x00a7;</a>
+                <a class="ss" href="#section-37">&#x00a7;</a>
               </div>
               <p>To run one of the examples <code>eg</code>, first reset the <strong>seed</strong>,
 take a deepcopy of <code>my</code> (to ensure that any changes ti it
@@ -649,9 +660,9 @@ Else run the code, tracking <code>tries</code>, <code>fails</code>.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> run (<span class="hljs-name">eg</span> my)
-  (<span class="hljs-name">setf</span> my       (<span class="hljs-name">deepcopy</span> my)
+  (<span class="hljs-name">setf</span> my      (<span class="hljs-name">deepcopy</span> my)
         *seed*  (! my all seed))
-  (<span class="hljs-name">if</span> (! my all un)
+  (<span class="hljs-name">if</span> (! my all meek)
     (<span class="hljs-name">funcall</span> eg my)
     (<span class="hljs-name">multiple-value-bind</span> (<span class="hljs-name">_</span> e)
       (<span class="hljs-name">ignore-errors</span> (<span class="hljs-name">funcall</span> eg my))
@@ -663,11 +674,11 @@ Else run the code, tracking <code>tries</code>, <code>fails</code>.</p>
         </li>
         
         
-        <li id="section-37">
+        <li id="section-38">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-37">&#x00a7;</a>
+                <a class="ss" href="#section-38">&#x00a7;</a>
               </div>
               <p>Update <code>my</code> from the command  line.
 Run the appropriate test functions  (or if <code>eg</code> is “ls”
@@ -678,15 +689,30 @@ Return to the operating system  the number of failures.</p>
             
             <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> main(<span class="hljs-name">my</span> <span class="hljs-symbol">&amp;key</span> (<span class="hljs-name">package</span> <span class="hljs-symbol">:common-lisp-user</span>) (<span class="hljs-name">b4</span> <span class="hljs-string">&quot;EG.&quot;</span>))
   (<span class="hljs-name">let*</span> ((<span class="hljs-name">egs</span> (<span class="hljs-name">loop</span> for fun in (<span class="hljs-name">funs</span> package) if (<span class="hljs-name">b4-sym</span> b4 fun) collect fun))
+         (<span class="hljs-name">my</span>  (<span class="hljs-name">cli</span> my))
          (<span class="hljs-name">eg</span>  (<span class="hljs-name">intern</span> (<span class="hljs-name">string-upcase</span> (! my all eg))))
-         (<span class="hljs-name">my</span>  (<span class="hljs-name">cli</span> my)))
+         )
     (<span class="hljs-name">case</span> eg
-      (<span class="hljs-name">all</span>       (<span class="hljs-name">loop</span> for fun in egs do (<span class="hljs-name">run</span> fun my)))
-      (<span class="hljs-name">ls</span>        (<span class="hljs-name">loop</span> for fun in egs do 
-                   (<span class="hljs-name">format</span> <span class="hljs-literal">t</span> <span class="hljs-string">&quot;  :eg ~15a : ~a~%&quot;</span> 
-                      fun (<span class="hljs-name">or</span> (<span class="hljs-name">documentation</span> fun &#x27;function) <span class="hljs-string">&quot;&quot;</span>))))
+      (<span class="hljs-name">all</span> (<span class="hljs-name">loop</span> for fun in egs do (<span class="hljs-name">run</span> fun my)))
+      (<span class="hljs-name">ls</span>  (<span class="hljs-name">loop</span> for fun in egs do 
+             (<span class="hljs-name">format</span> <span class="hljs-literal">t</span> <span class="hljs-string">&quot;  :eg ~15a : ~a~%&quot;</span> 
+                     fun (<span class="hljs-name">or</span> (<span class="hljs-name">documentation</span> fun &#x27;function) <span class="hljs-string">&quot;&quot;</span>))))
       (<span class="hljs-name">otherwise</span> (<span class="hljs-name">if</span> (<span class="hljs-name">member</span> eg egs) (<span class="hljs-name">run</span> eg my))))
     (<span class="hljs-name">halt</span> (! my all fails))))</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-39">
+            <div class="annotation">
+              
+              <div class="sswrap ">
+                <a class="ss" href="#section-39">&#x00a7;</a>
+              </div>
+              <p>(let ((!readtable! (copy-readtable nil)))
+(setf (readtable-case !readtable!) :preserve)</p>
+
+            </div>
             
         </li>
         

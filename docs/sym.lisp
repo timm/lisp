@@ -13,6 +13,9 @@
 
 
 
+; central tendancy
 (defmethod mid   ((s sym))     (? s mode))
+; variable around centrality
 (defmethod var   ((s sym))     (entropy (? s seen)))
+; seperation of two ite,s
 (defmethod dist1 ((s sym) x y) (if (eql x y) 0 1))
