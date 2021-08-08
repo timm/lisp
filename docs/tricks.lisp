@@ -41,6 +41,42 @@
 (defun red (s) (color s 'red nil))
 (defun green (s) (color s 'green nil))
 (defun yellow (s) (color s 'yellow nil))
+; Lists
+; -----
+; A counter, implemented as an association list.
+; If `x` is not there, add it in. 
+; Return the incremented value. 
+(defmacro inca (x a &optional (inc  1))
+  `(incf (cdr (or (assoc ,x ,a :test #'equal)
+                  (car (setf ,a (cons (cons ,x 0) ,a))))) ,inc))
+(defun entropy (a &optional (n 0))
+  (loop for (_ . v) in a do (incf n v))
+  (loop for (_ . v) in a sum (* -1 (/ v n) (log (/ v n) 2)))) 
+; Vector
+; -----
+(defun per (a &optional (p .5) &aux (n  (length a)))
+  (svref a (floor (* p n))))
+(defun sd (a &optional sorted)
+  (if sorted 
+    (/ (- (per a .9) (per a .1)) 2.56) 
+    (sd (sort a #'<) t)))
+; Comma-seperated-files
+; --------------------
+; split strings on commans
+(defun s->cells (s &optional (x 0) (y (position #\, s :start (1+ x))))
+  (cons (subseq s x y)
+        (and y (s->cells s (1+ y)))))
+; macro for reading csv files
+(defmacro with-csv ((lst file &optional out) &body body)
+   `(progn (csv ,file #'(lambda (,lst) ,@body)) ,out))
+; function read csv files
+(defun csv (file fun)
+  (with-open-file (str file)
+    (loop
+      (funcall fun (s->cells (or (read-line str nil)
+                                 (return-from csv)))))))
+; (let ((*readtable* (copy-readtable nil)))
+ ;     (setf (readtable-case *readtable*) :preserve)
 ; System Stuff
 ; ------------
 ; Exit LISP.
@@ -125,6 +161,20 @@
         (modulus    2147483647.0d0))
     (setf *seed* (mod (* multiplier *seed*) modulus))
     (* n (- 1.0d0 (/ *seed* modulus)))))
+; Strings
+(defmethod print-object ((i thing) str)
+  (labels 
+    ((skip (x) 
+           (and (symbolp x) (equal (elt (symbol-name x) 0) #\_)))
+     (pairs (s &aux (x (slot-value i s))) 
+            (if x (list s x) (list s)))
+     (slots (klass)
+            (remove-if #'skip
+                       (mapcar #'sb-mop:slot-definition-name 
+                               (sb-mop:class-slots klass)))))
+    (format 
+      str "{~a~{ ~a~}}" (class-name (class-of i)) 
+      (mapcar #'pairs (sort (slots (class-of i)) #'string<)))))
 ; Meta
 ; ----
 ; Does a symbol name start with `b4`?
@@ -165,12 +215,12 @@
 ; Return to the operating system  the number of failures.
 (defun main(my &key (package :common-lisp-user) (b4 "EG."))
   (let* ((egs (loop for fun in (funs package) if (b4-sym b4 fun) collect fun))
-         (eg  (! my all eg))
+         (eg  (intern (string-upcase (! my all eg))))
          (my  (cli my)))
     (case eg
       (all       (loop for fun in egs do (run fun my)))
       (ls        (loop for fun in egs do 
                    (format t "  :eg ~15a : ~a~%" 
                       fun (or (documentation fun 'function) ""))))
-      (t  (if (member eg egs) (run eg my))))
+      (otherwise (if (member eg egs) (run eg my))))
     (halt (! my all fails))))

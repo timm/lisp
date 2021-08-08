@@ -1,10 +1,10 @@
 ; vim: ts=2 sw=2 et:
 (defmethod add1 ((n num) (x string))
-  (add1 n (read-from-string x) r))
+  (add1 n (read-from-string x)))
 
 (defmethod add1 ((n num) (x number))
-  (push-vector-extend x (? n all))
-  (setf (o n sorted) nil)
+  (push-vector-extend x (? n _all))
+  (setf (? n sorted) nil)
   x)
 
 (defmethod all ((n num))

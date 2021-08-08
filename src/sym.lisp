@@ -8,4 +8,4 @@
 
 (defmethod mid   ((s sym))     (? s mode))
 (defmethod var   ((s sym))     (entropy (? s seen)))
-(defmethod dist1 ((s sym) x y) (if (eql x l 0 1)))
+(defmethod dist1 ((s sym) x y) (if (eql x y) 0 1))

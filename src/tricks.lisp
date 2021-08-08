@@ -53,11 +53,31 @@
 (defun per (a &optional (p .5) &aux (n  (length a)))
   (svref a (floor (* p n))))
 
-(defun sd ((a cons)  &optional sorted)
+(defun sd (a &optional sorted)
   (if sorted 
     (/ (- (per a .9) (per a .1)) 2.56) 
     (sd (sort a #'<) t)))
 
+; Comma-seperated-files
+; --------------------
+; split strings on commans
+(defun s->cells (s &optional (x 0) (y (position #\, s :start (1+ x))))
+  (cons (subseq s x y)
+        (and y (s->cells s (1+ y)))))
+
+; macro for reading csv files
+(defmacro with-csv ((lst file &optional out) &body body)
+   `(progn (csv ,file #'(lambda (,lst) ,@body)) ,out))
+
+; function read csv files
+(defun csv (file fun)
+  (with-open-file (str file)
+    (loop
+      (funcall fun (s->cells (or (read-line str nil)
+                                 (return-from csv)))))))
+
+; (let ((*readtable* (copy-readtable nil)))
+ ;     (setf (readtable-case *readtable*) :preserve)
 ; System Stuff
 ; ------------
 ; Exit LISP.
