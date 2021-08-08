@@ -35,6 +35,29 @@
 (defun green (s) (color s 'green nil))
 (defun yellow (s) (color s 'yellow nil))
 
+; Lists
+; -----
+; A counter, implemented as an association list.
+; If `x` is not there, add it in. 
+; Return the incremented value. 
+(defmacro inca (x a &optional (inc  1))
+  `(incf (cdr (or (assoc ,x ,a :test #'equal)
+                  (car (setf ,a (cons (cons ,x 0) ,a))))) ,inc))
+
+(defun entropy (a &optional (n 0))
+  (loop for (_ . v) in a do (incf n v))
+  (loop for (_ . v) in a sum (* -1 (/ v n) (log (/ v n) 2)))) 
+
+; Vector
+; -----
+(defun per (a &optional (p .5) &aux (n  (length a)))
+  (svref a (floor (* p n))))
+
+(defun sd ((a cons)  &optional sorted)
+  (if sorted 
+    (/ (- (per a .9) (per a .1)) 2.56) 
+    (sd (sort a #'<) t)))
+
 ; System Stuff
 ; ------------
 ; Exit LISP.

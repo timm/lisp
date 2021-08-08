@@ -26,4 +26,3 @@
   rows               ; list of "row"
   (cols (make-cols)) ; column information
 )
-

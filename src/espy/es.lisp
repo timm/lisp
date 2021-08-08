@@ -36,7 +36,7 @@
     (let ((p (/ (cdr x) (o s n))))
       (decf e (* p (log p 2))))))
                      
-(defmethod dist1 ((c sym) x y) (if (eql x y) 1 0))
+(defmethod dist1 ((c sym) x y) (if (eql x y) 0 1))
 
 ; ### Num
 (defstruct (num (:include col))
