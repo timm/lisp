@@ -56,7 +56,7 @@
 ; -----
 ; Return the nth percentile point.
 (defun per (a &optional (nth .5) &aux (n  (length a)))
-  (svref a (floor (* nth n))))
+  (aref a (floor (* nth n))))
 
 ; The standard deviation is `(90th - 10th)/2,56`.
 (defun sd (a &optional sorted)

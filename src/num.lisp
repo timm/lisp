@@ -31,8 +31,8 @@
   (? n _all))
 
 ; `Lo` and `hi` is computed from `all`.
-(defun lo (n)                  (svref (all n) 0))
-(defun hi (n &aux (a (all n))) (svref a (1- (length a))))
+(defun lo (n)                  (aref (all n) 0))
+(defun hi (n &aux (a (all n))) (aref a (1- (length a))))
 
 ; Normalized `n` 0..1 lo..hi.
 (defun norm (n x &aux (n1 (lo n)) (n2 (hi n)))

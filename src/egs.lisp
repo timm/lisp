@@ -24,10 +24,15 @@
             (equal 1 (cdr (assoc 'z lst)))
             (equal 2 (cdr (assoc 'a lst)))) "nad inca")))
 
+(defun eg.sym (the)
+  (let ((n (make-sym)))
+    (add n '("a" "b" "b" "c" "c" "c" "c"))
+    (want (< 1.378 (var n) 1.379) "bad ent")))
+
 (defun eg.num (the)
   (let ((n (make-num)))
-    (add n '(9 2 5 4 12 7 8 11 9 3 7 4 12 5 4 10 9 6 9 4))
-    ;(want (< 3.06 (var n) 3.07) "bad sd")
-    (print  (var  n))
-    (print  (mid  n))))
+    (add n '(2 3 4 4 4 4  5  5  6  7 
+             7 8 9 9 9 9 10 11 12 12))
+    (want (= 3.125 (var n)) "bad sd")
+    (want (= 7     (mid n)) "bad mean")))
 
