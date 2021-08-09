@@ -1,10 +1,19 @@
 (defstruct thing)
 
+; abstract super-class for columns
 (defstruct (col (:include thing))
-  (n 0) (txt "") (w 1) (at 0))
+  (txt "") ; column name
+  (at 0)   ; column position
+  (n 0)    ; number of summarizes itemd
+  (w 1)    ; weight
+  _rows    ; optiona back to col's container
+  )
 
+; columns we are going to count
 (defstruct (skip (:include col)))
 
+; columns where we cound symbols (and the most common symbol,
+; a.k.a the mode)
 (defstruct (sym (:include col))  
   seen mode (most 0))
 

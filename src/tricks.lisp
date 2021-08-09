@@ -40,6 +40,11 @@
 
 ; Lists
 ; -----
+
+; find anything  in `lst`
+(defun has (x &rest lst)
+  (dolist (y lst) (if (find y x) (return-from has t))))
+
 ; A counter, implemented as an association list.
 ; If `x` is not there, add it in. 
 ; Return the incremented value. 

@@ -2,6 +2,11 @@
 
 ; Methods
 ; -------
+(defmethod init ((n num))
+   (if (find #\- (? n txt))
+     (setf (? n w) -1)) 
+  n)
+
 ; Keep numbers (or numbers taken from  strings), in `_all`.
 ; Set `sorted` to nil
 (defmethod add1 ((n num) (x string)) (add1 n (read-from-string x)))

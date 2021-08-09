@@ -30,7 +30,8 @@
     (want (< 1.378 (var n) 1.379) "bad ent")))
 
 (defun eg.num (the)
-  (let ((n (make-num)))
+  (let ((n (init(make-num  :txt "asd-"))))
+    (print n)
     (add n '(2 3 4 4 4 4  5  5  6  7 
              7 8 9 9 9 9 10 11 12 12))
     (want (= 3.125 (var n)) "bad sd")
