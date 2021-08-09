@@ -6,7 +6,6 @@
   (at 0)   ; column position
   (n 0)    ; number of summarizes itemd
   (w 1)    ; weight
-  _rows    ; optiona back to col's container
   )
 
 ; columns we are going to count
