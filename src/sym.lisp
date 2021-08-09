@@ -1,4 +1,6 @@
 ; vim: ts=2 sw=2 et:
+
+; Add a symbo, update symbol counts,  update mode
 (defmethod add1 ((s sym) x)
   (let ((n (inca x (? s seen))))
     (when (> n (? s most))

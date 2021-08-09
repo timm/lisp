@@ -53,7 +53,11 @@
 
 
 (<span class="hljs-name">defun</span> eg.hi(<span class="hljs-name">my</span>) (<span class="hljs-name">format</span> <span class="hljs-literal">t</span> <span class="hljs-string">&quot;~&amp;Welcome to keys~%&quot;</span>))
-(<span class="hljs-name">defun</span> eg.a(<span class="hljs-name">my</span>) (<span class="hljs-name">print</span> <span class="hljs-number">1</span>))</pre></div></div>
+(<span class="hljs-name">defun</span> eg.a(<span class="hljs-name">my</span>) (<span class="hljs-name">print</span> <span class="hljs-number">1</span>))
+(<span class="hljs-name">defun</span> eg.csv(<span class="hljs-name">my</span>  <span class="hljs-symbol">&amp;aux</span>  (<span class="hljs-name">n</span> <span class="hljs-number">0</span>))
+  (<span class="hljs-name">setf</span> (! my all eg) <span class="hljs-string">&quot;../data/auto93.csv&quot;</span>)
+  (<span class="hljs-name">assert</span> (<span class="hljs-name">=</span> <span class="hljs-number">3192</span> (<span class="hljs-name">with-csv</span> (<span class="hljs-name">row</span> (! my all data) n)
+                    (<span class="hljs-name">incf</span> n (<span class="hljs-name">length</span> row))))))</pre></div></div>
             
         </li>
         

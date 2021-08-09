@@ -52,26 +52,25 @@
 
 
 
-(<span class="hljs-name">defstruct</span> (<span class="hljs-name">col</span>  (<span class="hljs-symbol">:include</span> thing))
+(<span class="hljs-name">defstruct</span> (<span class="hljs-name">col</span> (<span class="hljs-symbol">:include</span> thing))
   (<span class="hljs-name">n</span> <span class="hljs-number">0</span>) (<span class="hljs-name">txt</span> <span class="hljs-string">&quot;&quot;</span>) (<span class="hljs-name">w</span> <span class="hljs-number">1</span>) (<span class="hljs-name">at</span> <span class="hljs-number">0</span>))
 (<span class="hljs-name">defstruct</span> (<span class="hljs-name">skip</span> (<span class="hljs-symbol">:include</span> col)))
-(<span class="hljs-name">defstruct</span> (<span class="hljs-name">sym</span>  (<span class="hljs-symbol">:include</span> col))  
+(<span class="hljs-name">defstruct</span> (<span class="hljs-name">sym</span> (<span class="hljs-symbol">:include</span> col))  
   seen mode (<span class="hljs-name">most</span> <span class="hljs-number">0</span>))
-(<span class="hljs-name">defstruct</span> (<span class="hljs-name">num</span>  (<span class="hljs-symbol">:include</span> col))
+(<span class="hljs-name">defstruct</span> (<span class="hljs-name">num</span> (<span class="hljs-symbol">:include</span> col))
   (<span class="hljs-name">_all</span> (<span class="hljs-name">make-array</span> <span class="hljs-number">32</span> <span class="hljs-symbol">:fill-pointer</span> <span class="hljs-number">0</span> <span class="hljs-symbol">:adjustable</span> <span class="hljs-literal">t</span>))
   sorted)
 (<span class="hljs-name">defstruct</span> (<span class="hljs-name">row</span> (<span class="hljs-symbol">:include</span> thing))
-  _rows <span class="hljs-comment">; pointer to &quot;rows&quot; holding this</span>
-  cells)<span class="hljs-comment">; values in this row </span>
+  _rows   <span class="hljs-comment">; pointer to &quot;rows&quot; holding this</span>
+  cells)  <span class="hljs-comment">; values in this row </span>
 (<span class="hljs-name">defstruct</span> (<span class="hljs-name">cols</span> (<span class="hljs-symbol">:include</span> thing))
    all    <span class="hljs-comment">; all the cols</span>
    x      <span class="hljs-comment">; just the indendeont columns</span>
    y      <span class="hljs-comment">; just the dependent columns</span>
    klass) <span class="hljs-comment">; the klass column (if it exists)</span>
 (<span class="hljs-name">defstruct</span> (<span class="hljs-name">rows</span> (<span class="hljs-symbol">:include</span> thing))
-  rows               <span class="hljs-comment">; list of &quot;row&quot;</span>
-  (<span class="hljs-name">cols</span> (<span class="hljs-name">make-cols</span>)) <span class="hljs-comment">; column information</span>
-)</pre></div></div>
+  rows                <span class="hljs-comment">; list of &quot;row&quot;</span>
+  (<span class="hljs-name">cols</span> (<span class="hljs-name">make-cols</span>))) <span class="hljs-comment">; column information</span></pre></div></div>
             
         </li>
         

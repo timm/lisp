@@ -22,11 +22,6 @@
 ; Anaphoric while (and `now` is the anaphoric variable).
 (defmacro while (expr &body body) `(do ((now ,expr ,expr)) ((not now)) ,@body))
 
-(defmacro cased (&body body)
-  `(let ((*readtable* (copy-readtable nil)))
-     (setf (readtable-case *readtable*) :preserve)
-     ,@body))
-
 ; Colors
 ; -------
 ; all colors
@@ -49,6 +44,7 @@
   `(incf (cdr (or (assoc ,x ,a :test #'equal)
                   (car (setf ,a (cons (cons ,x 0) ,a))))) ,inc))
 
+; Entrooy of set of symbols is - sum p*log(p,2)
 (defun entropy (a &optional (n 0))
   (loop for (_ . v) in a do (incf n v))
   (loop for (_ . v) in a sum (* -1 (/ v n) (log (/ v n) 2)))) 
@@ -69,8 +65,10 @@
 ; ----
 
 ; If a string contains a nun, return that num. Else return the string.
-(defun num? (s &aux (n (read-from-string s)))
-  (if (numberp n) n s))
+(defun s2cell (s &aux (n (read-from-string s)))
+  (if (numberp n) 
+    n 
+    (if (equals s "?") #\? s)))
 
 ; Does a symbol name start with `b4`?
 (defun b4-sym (b4 sym &aux (n (length b4)) (s (symbol-name sym)))

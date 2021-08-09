@@ -76,7 +76,8 @@
 (<span class="hljs-name">defmethod</span> norm ((<span class="hljs-name">n</span> num) x)
   (<span class="hljs-name">if</span> (<span class="hljs-name">eq</span> x #\?)
       x
-    (<span class="hljs-name">let</span> ((<span class="hljs-name">n1</span> (<span class="hljs-name">lo</span> n)) (<span class="hljs-name">n2</span> (<span class="hljs-name">hi</span> n)))
+    (<span class="hljs-name">let</span> ((<span class="hljs-name">n1</span> (<span class="hljs-name">lo</span> n)) 
+          (<span class="hljs-name">n2</span> (<span class="hljs-name">hi</span> n)))
       (<span class="hljs-name">if</span> (<span class="hljs-name">eql</span> n1 n2)
           <span class="hljs-number">0</span>
         (<span class="hljs-name">max</span> <span class="hljs-number">0</span> (<span class="hljs-name">min</span> <span class="hljs-number">1</span> (<span class="hljs-name">/</span> (<span class="hljs-name">-</span> x n1) (<span class="hljs-name">-</span> n2 n1 <span class="hljs-number">1E-32</span>))))))))</pre></div></div>

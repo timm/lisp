@@ -14,7 +14,7 @@
   (? n _all))
 
 (defmethod mid ((n num)) (per (all n) .5))
-(defmethod var ((n num)) (sd  (all n))
+(defmethod var ((n num)) (sd  (all n) t))
 
 (defmethod lo ((n  num)) (svref (all n) 0))
 (defmethod hi ((n  num) &aux (a (all  n))) (svref a (1- (length a)))))

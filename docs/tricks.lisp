@@ -30,6 +30,10 @@
 (defmacro aif (test yes &optional no) `(let ((it ,test)) (if it ,yes ,no)))
 ; Anaphoric while (and `now` is the anaphoric variable).
 (defmacro while (expr &body body) `(do ((now ,expr ,expr)) ((not now)) ,@body))
+(defmacro cased (&body body)
+  `(let ((*readtable* (copy-readtable nil)))
+     (setf (readtable-case *readtable*) :preserve)
+     ,@body))
 ; Colors
 ; -------
 ; all colors
@@ -62,11 +66,35 @@
   (if sorted 
     (/ (- (per a .9) (per a .1)) 2.56) 
     (sd (sort a #'<) t)))
+; Meta
+; ----
+; If a string contains a nun, return that num. Else return the string.
+(defun num? (s &aux (n (read-from-string s)))
+  (if (numberp n) n s))
+; Does a symbol name start with `b4`?
+(defun b4-sym (b4 sym &aux (n (length b4)) (s (symbol-name sym)))
+  (and (>= (length s) n) (equalp b4 (subseq s 0 n))))
+ 
+; Deepcopy
+(defun deepcopy (x) (if (atom x) x (mapcar #'deepcopy x)))
+; Returns all functions in a package.
+(defun funs (&optional (package :common-lisp-user) &aux out)
+  (aif (find-package package)
+    (do-all-symbols (s package)
+      (if (and (fboundp s) (eql it (symbol-package s)))
+        (push s out))))
+  out)
+(defun timings (function)
+  (let ((real-base (get-internal-real-time))
+        (run-base (get-internal-run-time)))
+    (funcall function)
+    (values (/ (- (get-internal-real-time) real-base) internal-time-units-per-second)
+            (/ (- (get-internal-run-time) run-base) internal-time-units-per-second))))
 ; Comma-seperated-files
 ; --------------------
 ; split strings on commans
 (defun s->cells (s &optional (x 0) (y (position #\, s :start (1+ x))))
-  (cons (subseq s x y)
+  (cons (num? (subseq s x y))
         (and y (s->cells s (1+ y)))))
 ; macro for reading csv files
 (defmacro with-csv ((lst file &optional out) &body body)
@@ -74,9 +102,8 @@
 ; function read csv files
 (defun csv (file fun)
   (with-open-file (str file)
-    (loop
-      (funcall fun (s->cells (or (read-line str nil)
-                                 (return-from csv)))))))
+    (loop (funcall fun (s->cells (or (read-line str nil)
+                                     (return-from csv)))))))
 ; System Stuff
 ; ------------
 ; Exit LISP.
@@ -92,17 +119,16 @@
 ; To change groups, just mention it before mentioning
 ; the flags in that group.
 (defun cli (flags &key 
-            (help   "help")
-            (args   (cdr (deepcopy (argv))))
-            (group  (getf flags 'all)))
-   (while (pop args)
-     (setf now (read-from-string (remove #\- now)))
-     (cond ((getf group now)   (setf (getf group now) 
-                                     (read-from-string (pop args))))
-           ((getf flags now)   (setf group (getf flags now)))
-           ((member now group) (setf (getf group now) t))
-           ((equalp now 'h)    (format t "~a~%" help))))
-   flags)
+                  (help   "help")
+                  (args   (cdr (deepcopy (argv))))
+                  (group  (getf flags 'all)))
+  (while (pop args)
+    (setf now (read-from-string (remove #\- now)))
+    (cond ((getf group now)   (setf (getf group now) (num? (pop args))))
+          ((getf flags now)   (setf group (getf flags now)))
+          ((member now group) (setf (getf group now) t))
+          ((equalp now 'h)    (format t "~a~%" help))))
+  flags)
 ; Just to give an example of its use, suppose we run `eg-cl`
 ; with this command line:
 ;
@@ -160,7 +186,7 @@
         (modulus    2147483647.0d0))
     (setf *seed* (mod (* multiplier *seed*) modulus))
     (* n (- 1.0d0 (/ *seed* modulus)))))
-; Strings
+; ## Strings
 (defmethod print-object ((i thing) str)
   (labels 
     ((skip (x) 
@@ -174,21 +200,6 @@
     (format 
       str "{~a~{ ~a~}}" (class-name (class-of i)) 
       (mapcar #'pairs (sort (slots (class-of i)) #'string<)))))
-; Meta
-; ----
-; Does a symbol name start with `b4`?
-(defun b4-sym (b4 sym &aux (n (length b4)) (s (symbol-name sym)))
-  (and (>= (length s) n) (equalp b4 (subseq s 0 n))))
- 
-; Deepcopy
-(defun deepcopy (x) (if (atom x) x (mapcar #'deepcopy x)))
-; Returns all functions in a package.
-(defun funs (&optional (package :common-lisp-user) &aux out)
-  (aif (find-package package)
-    (do-all-symbols (s package)
-      (if (and (fboundp s) (eql it (symbol-package s)))
-        (push s out))))
-  out)
 ; Start-up
 ; --------
 ;
@@ -213,16 +224,14 @@
 ; then just list everything).
 ; Return to the operating system  the number of failures.
 (defun main(my &key (package :common-lisp-user) (b4 "EG."))
-  (let* ((egs (loop for fun in (funs package) if (b4-sym b4 fun) collect fun))
+  (let* ((egs (loop for fun in (funs package) 
+                if (b4-sym b4 fun) collect fun))
          (my  (cli my))
-         (eg  (intern (string-upcase (! my all eg))))
-         )
+         (eg  (intern (string-upcase (! my all eg)))))
     (case eg
       (all (loop for fun in egs do (run fun my)))
       (ls  (loop for fun in egs do 
              (format t "  :eg ~15a : ~a~%" 
                      fun (or (documentation fun 'function) ""))))
-      (otherwise (if (member eg egs) (run eg my))))
+      (otherwise (when (member eg egs) (run eg my))))
     (halt (! my all fails))))
-; (let ((!readtable! (copy-readtable nil)))
-; (setf (readtable-case !readtable!) :preserve)

@@ -14,8 +14,7 @@
 
 
 (defvar +config+
-  `(all (
-         eg  "eg.hi"       ; default thing to run
+  `(all (eg    "eg.hi"     ; default thing to run
          tries 0           ; number of runs
          fails 0           ; number of failed runs 
          seed 10013        ; random number seed
