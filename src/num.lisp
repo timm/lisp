@@ -6,7 +6,7 @@
 ; Set `sorted` to nil
 (defmethod add1 ((n num) (x string)) (add1 n (read-from-string x)))
 (defmethod add1 ((n num) (x number))
-  (push-vector-extend x (? n _all))
+  (vector-push-extend x (? n _all))
   (setf (? n sorted) nil))
 
 ; Central tendancy.
