@@ -22,6 +22,9 @@
 ; Anaphoric while (and `now` is the anaphoric variable).
 (defmacro while (expr &body body) `(do ((now ,expr ,expr)) ((not now)) ,@body))
 
+; Simpler assert syntax
+(defmacro want (x &rest y) `(assert ,x () ,@y))
+
 ; Colors
 ; -------
 ; all colors
@@ -76,9 +79,6 @@
 (defun b4-sym (b4 sym &aux (n (length b4)) (s (symbol-name sym)))
   (and (>= (length s) n) (equalp b4 (subseq s 0 n))))
  
-; Deepcopy
-(defun deepcopy (x) (if (atom x) x (mapcar #'deepcopy x)))
-
 ; Returns all functions in a package.
 (defun funs (&optional (package :common-lisp-user) &aux out)
   (aif (find-package package)
@@ -87,11 +87,11 @@
         (push s out))))
   out)
 
-(defun timeit (function)
-  (let ((real-base (get-internal-real-time)))
-    (funcall function)
-    (/ (- (get-internal-real-time) real-base)
-       internal-time-units-per-second)))
+; 
+(defun timeit (fun &aux (tick internal-time-units-per-second))
+  (let ((b4 (get-internal-real-time)))
+    (funcall fun)
+    (/ (- (get-internal-real-time) b4) tick)))
 
 ; Comma-seperated-files
 ; --------------------
@@ -129,7 +129,7 @@
 ; the flags in that group.
 (defun cli (flags &key 
                   (help   "help")
-                  (args   (cdr (deepcopy (argv))))
+                  (args   (cdr (copy-tree (argv))))
                   (group  (getf flags 'all)))
   (while (pop args)
     (setf now (read-from-string (remove #\- now)))
@@ -220,12 +220,12 @@
 ; --------
 ;
 ; To run one of the examples `eg`, first reset the **seed**,
-; take a deepcopy of `my` (to ensure that any changes ti it
+; take a deep copy of `my` (to ensure that any changes ti it
 ; happen isolation.
 ; If `un`safe is set, then just run the  code.
 ; Else run the code, tracking `tries`, `fails`.
 (defun run (eg my)
-  (setf my      (deepcopy my)
+  (setf my      (copy-tree my)
         *seed*  (! my all seed))
   (if (! my all meek)
     (funcall eg my)

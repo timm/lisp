@@ -138,11 +138,7 @@ passes to <code>fun</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defmacro</span> while (<span class="hljs-name">expr</span> <span class="hljs-symbol">&amp;body</span> body) `(do ((now ,expr ,expr)) ((not now)) ,@body))
-(<span class="hljs-name">defmacro</span> cased (<span class="hljs-name">&amp;body</span> body)
-  `(let ((*readtable* (copy-readtable <span class="hljs-literal">nil</span>)))
-     (setf (readtable-case *readtable*) :preserve)
-     ,@body))</pre></div></div>
+            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defmacro</span> while (<span class="hljs-name">expr</span> <span class="hljs-symbol">&amp;body</span> body) `(do ((now ,expr ,expr)) ((not now)) ,@body))</pre></div></div>
             
         </li>
         
@@ -222,10 +218,7 @@ Return the incremented value. </p>
             
             <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defmacro</span> inca (<span class="hljs-name">x</span> a <span class="hljs-symbol">&amp;optional</span> (<span class="hljs-name">inc</span>  <span class="hljs-number">1</span>))
   `(incf (cdr (or (assoc ,x ,a :test #&#x27;equal)
-                  (car (setf ,a (cons (cons ,x <span class="hljs-number">0</span>) ,a))))) ,inc))
-(<span class="hljs-name">defun</span> entropy (<span class="hljs-name">a</span> <span class="hljs-symbol">&amp;optional</span> (<span class="hljs-name">n</span> <span class="hljs-number">0</span>))
-  (<span class="hljs-name">loop</span> for (<span class="hljs-name">_</span> . v) in a do (<span class="hljs-name">incf</span> n v))
-  (<span class="hljs-name">loop</span> for (<span class="hljs-name">_</span> . v) in a sum (<span class="hljs-name">*</span> <span class="hljs-number">-1</span> (<span class="hljs-name">/</span> v n) (<span class="hljs-name">log</span> (<span class="hljs-name">/</span> v n) <span class="hljs-number">2</span>))))</pre></div></div>
+                  (car (setf ,a (cons (cons ,x <span class="hljs-number">0</span>) ,a))))) ,inc))</pre></div></div>
             
         </li>
         
@@ -236,9 +229,13 @@ Return the incremented value. </p>
               <div class="sswrap ">
                 <a class="ss" href="#section-14">&#x00a7;</a>
               </div>
-              <h2 id="vector">Vector</h2>
+              <p>Entrooy of set of symbols is - sum p*log(p,2)</p>
 
             </div>
+            
+            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> entropy (<span class="hljs-name">a</span> <span class="hljs-symbol">&amp;optional</span> (<span class="hljs-name">n</span> <span class="hljs-number">0</span>))
+  (<span class="hljs-name">loop</span> for (<span class="hljs-name">_</span> . v) in a do (<span class="hljs-name">incf</span> n v))
+  (<span class="hljs-name">loop</span> for (<span class="hljs-name">_</span> . v) in a sum (<span class="hljs-name">*</span> <span class="hljs-number">-1</span> (<span class="hljs-name">/</span> v n) (<span class="hljs-name">log</span> (<span class="hljs-name">/</span> v n) <span class="hljs-number">2</span>))))</pre></div></div>
             
         </li>
         
@@ -248,6 +245,19 @@ Return the incremented value. </p>
               
               <div class="sswrap ">
                 <a class="ss" href="#section-15">&#x00a7;</a>
+              </div>
+              <h2 id="vector">Vector</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-16">
+            <div class="annotation">
+              
+              <div class="sswrap ">
+                <a class="ss" href="#section-16">&#x00a7;</a>
               </div>
               <p>Return the nth percentile point.</p>
 
@@ -259,11 +269,11 @@ Return the incremented value. </p>
         </li>
         
         
-        <li id="section-16">
+        <li id="section-17">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-16">&#x00a7;</a>
+                <a class="ss" href="#section-17">&#x00a7;</a>
               </div>
               <p>The standard deviation is <code>(90th - 10th)/2,56</code>.</p>
 
@@ -277,11 +287,11 @@ Return the incremented value. </p>
         </li>
         
         
-        <li id="section-17">
+        <li id="section-18">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-17">&#x00a7;</a>
+                <a class="ss" href="#section-18">&#x00a7;</a>
               </div>
               <h2 id="meta">Meta</h2>
 
@@ -290,11 +300,11 @@ Return the incremented value. </p>
         </li>
         
         
-        <li id="section-18">
+        <li id="section-19">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-18">&#x00a7;</a>
+                <a class="ss" href="#section-19">&#x00a7;</a>
               </div>
               <p>If a string contains a nun, return that num. Else return the string.</p>
 
@@ -306,11 +316,27 @@ Return the incremented value. </p>
         </li>
         
         
-        <li id="section-19">
+        <li id="section-20">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-19">&#x00a7;</a>
+                <a class="ss" href="#section-20">&#x00a7;</a>
+              </div>
+              <p>Turn “?” into #?, else, try for a number.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> s-&gt;cell (<span class="hljs-name">s</span> <span class="hljs-symbol">&amp;aux</span> (<span class="hljs-name">n</span> (<span class="hljs-name">read-from-string</span> s)))
+  (<span class="hljs-name">if</span> (<span class="hljs-name">eql</span> <span class="hljs-string">&quot;?&quot;</span> s) #\? (<span class="hljs-name">num</span>? s)))</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-21">
+            <div class="annotation">
+              
+              <div class="sswrap ">
+                <a class="ss" href="#section-21">&#x00a7;</a>
               </div>
               <p>Does a symbol name start with <code>b4</code>?</p>
 
@@ -322,11 +348,11 @@ Return the incremented value. </p>
         </li>
         
         
-        <li id="section-20">
+        <li id="section-22">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-20">&#x00a7;</a>
+                <a class="ss" href="#section-22">&#x00a7;</a>
               </div>
               <p>Deepcopy</p>
 
@@ -337,11 +363,11 @@ Return the incremented value. </p>
         </li>
         
         
-        <li id="section-21">
+        <li id="section-23">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-21">&#x00a7;</a>
+                <a class="ss" href="#section-23">&#x00a7;</a>
               </div>
               <p>Returns all functions in a package.</p>
 
@@ -353,42 +379,11 @@ Return the incremented value. </p>
       (<span class="hljs-name">if</span> (<span class="hljs-name">and</span> (<span class="hljs-name">fboundp</span> s) (<span class="hljs-name">eql</span> it (<span class="hljs-name">symbol-package</span> s)))
         (<span class="hljs-name">push</span> s out))))
   out)
-(<span class="hljs-name">defun</span> timings (<span class="hljs-name">function</span>)
-  (<span class="hljs-name">let</span> ((<span class="hljs-name">real-base</span> (<span class="hljs-name">get-internal-real-time</span>))
-        (<span class="hljs-name">run-base</span> (<span class="hljs-name">get-internal-run-time</span>)))
+(<span class="hljs-name">defun</span> timeit (<span class="hljs-name">function</span>)
+  (<span class="hljs-name">let</span> ((<span class="hljs-name">real-base</span> (<span class="hljs-name">get-internal-real-time</span>)))
     (<span class="hljs-name">funcall</span> function)
-    (<span class="hljs-name">values</span> (<span class="hljs-name">/</span> (<span class="hljs-name">-</span> (<span class="hljs-name">get-internal-real-time</span>) real-base) internal-time-units-per-second)
-            (<span class="hljs-name">/</span> (<span class="hljs-name">-</span> (<span class="hljs-name">get-internal-run-time</span>) run-base) internal-time-units-per-second))))</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-22">
-            <div class="annotation">
-              
-              <div class="sswrap ">
-                <a class="ss" href="#section-22">&#x00a7;</a>
-              </div>
-              <h2 id="comma-seperated-files">Comma-seperated-files</h2>
-
-            </div>
-            
-        </li>
-        
-        
-        <li id="section-23">
-            <div class="annotation">
-              
-              <div class="sswrap ">
-                <a class="ss" href="#section-23">&#x00a7;</a>
-              </div>
-              <p>split strings on commans</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> s-&gt;cells (<span class="hljs-name">s</span> <span class="hljs-symbol">&amp;optional</span> (<span class="hljs-name">x</span> <span class="hljs-number">0</span>) (<span class="hljs-name">y</span> (<span class="hljs-name">position</span> #\, s <span class="hljs-symbol">:start</span> (<span class="hljs-number">1</span>+ x))))
-  (<span class="hljs-name">cons</span> (<span class="hljs-name">num</span>? (<span class="hljs-name">subseq</span> s x y))
-        (<span class="hljs-name">and</span> y (<span class="hljs-name">s-&gt;cells</span> s (<span class="hljs-number">1</span>+ y)))))</pre></div></div>
+    (<span class="hljs-name">/</span> (<span class="hljs-name">-</span> (<span class="hljs-name">get-internal-real-time</span>) real-base)
+       internal-time-units-per-second)))</pre></div></div>
             
         </li>
         
@@ -398,6 +393,36 @@ Return the incremented value. </p>
               
               <div class="sswrap ">
                 <a class="ss" href="#section-24">&#x00a7;</a>
+              </div>
+              <h2 id="comma-seperated-files">Comma-seperated-files</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-25">
+            <div class="annotation">
+              
+              <div class="sswrap ">
+                <a class="ss" href="#section-25">&#x00a7;</a>
+              </div>
+              <p>split strings on commans</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> s-&gt;cells (<span class="hljs-name">s</span> <span class="hljs-symbol">&amp;optional</span> (<span class="hljs-name">x</span> <span class="hljs-number">0</span>) (<span class="hljs-name">y</span> (<span class="hljs-name">position</span> #\, s <span class="hljs-symbol">:start</span> (<span class="hljs-number">1</span>+ x))))
+  (<span class="hljs-name">cons</span> (<span class="hljs-name">s-&gt;cell</span> (<span class="hljs-name">subseq</span> s x y))
+        (<span class="hljs-name">and</span> y (<span class="hljs-name">s-&gt;cells</span> s (<span class="hljs-number">1</span>+ y)))))</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-26">
+            <div class="annotation">
+              
+              <div class="sswrap ">
+                <a class="ss" href="#section-26">&#x00a7;</a>
               </div>
               <p>macro for reading csv files</p>
 
@@ -409,11 +434,11 @@ Return the incremented value. </p>
         </li>
         
         
-        <li id="section-25">
+        <li id="section-27">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-25">&#x00a7;</a>
+                <a class="ss" href="#section-27">&#x00a7;</a>
               </div>
               <p>function read csv files</p>
 
@@ -427,45 +452,15 @@ Return the incremented value. </p>
         </li>
         
         
-        <li id="section-26">
-            <div class="annotation">
-              
-              <div class="sswrap ">
-                <a class="ss" href="#section-26">&#x00a7;</a>
-              </div>
-              <h2 id="system-stuff">System Stuff</h2>
-
-            </div>
-            
-        </li>
-        
-        
-        <li id="section-27">
-            <div class="annotation">
-              
-              <div class="sswrap ">
-                <a class="ss" href="#section-27">&#x00a7;</a>
-              </div>
-              <p>Exit LISP.</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> halt (<span class="hljs-name">&amp;optional</span> (<span class="hljs-name">status</span> <span class="hljs-number">0</span>)) (<span class="hljs-name">sb-ext</span><span class="hljs-symbol">:exit</span> <span class="hljs-symbol">:code</span> status))</pre></div></div>
-            
-        </li>
-        
-        
         <li id="section-28">
             <div class="annotation">
               
               <div class="sswrap ">
                 <a class="ss" href="#section-28">&#x00a7;</a>
               </div>
-              <p>Get command line</p>
+              <h2 id="system-stuff">System Stuff</h2>
 
             </div>
-            
-            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> argv () sb-ext<span class="hljs-symbol">:*posix-argv*</span>)</pre></div></div>
             
         </li>
         
@@ -476,9 +471,11 @@ Return the incremented value. </p>
               <div class="sswrap ">
                 <a class="ss" href="#section-29">&#x00a7;</a>
               </div>
-              <h2 id="command-line-interface">Command-Line Interface</h2>
+              <p>Exit LISP.</p>
 
             </div>
+            
+            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> halt (<span class="hljs-name">&amp;optional</span> (<span class="hljs-name">status</span> <span class="hljs-number">0</span>)) (<span class="hljs-name">sb-ext</span><span class="hljs-symbol">:exit</span> <span class="hljs-symbol">:code</span> status))</pre></div></div>
             
         </li>
         
@@ -488,6 +485,34 @@ Return the incremented value. </p>
               
               <div class="sswrap ">
                 <a class="ss" href="#section-30">&#x00a7;</a>
+              </div>
+              <p>Get command line</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> argv () sb-ext<span class="hljs-symbol">:*posix-argv*</span>)</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-31">
+            <div class="annotation">
+              
+              <div class="sswrap ">
+                <a class="ss" href="#section-31">&#x00a7;</a>
+              </div>
+              <h2 id="command-line-interface">Command-Line Interface</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-32">
+            <div class="annotation">
+              
+              <div class="sswrap ">
+                <a class="ss" href="#section-32">&#x00a7;</a>
               </div>
               <p>Given a plist with <code>flags</code>, if  the command line
 has any of the same keys, then update <code>flags</code> with the
@@ -513,11 +538,11 @@ the flags in that group.</p>
         </li>
         
         
-        <li id="section-31">
+        <li id="section-33">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-31">&#x00a7;</a>
+                <a class="ss" href="#section-33">&#x00a7;</a>
               </div>
               <p>Just to give an example of its use, suppose we run <code>eg-cl</code>
 with this command line:</p>
@@ -565,11 +590,11 @@ we can set multiple flags in that group.</p>
         </li>
         
         
-        <li id="section-32">
+        <li id="section-34">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-32">&#x00a7;</a>
+                <a class="ss" href="#section-34">&#x00a7;</a>
               </div>
               <h2 id="random-numbers">Random Numbers</h2>
 
@@ -578,11 +603,11 @@ we can set multiple flags in that group.</p>
         </li>
         
         
-        <li id="section-33">
+        <li id="section-35">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-33">&#x00a7;</a>
+                <a class="ss" href="#section-35">&#x00a7;</a>
               </div>
               <p>I confess that I never found a way to do
 platform independent random number generation with
@@ -595,11 +620,11 @@ CommonLisp. So I write my own.</p>
         </li>
         
         
-        <li id="section-34">
+        <li id="section-36">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-34">&#x00a7;</a>
+                <a class="ss" href="#section-36">&#x00a7;</a>
               </div>
               <p>Return a random integer 0.. n-1.</p>
 
@@ -610,11 +635,11 @@ CommonLisp. So I write my own.</p>
         </li>
         
         
-        <li id="section-35">
+        <li id="section-37">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-35">&#x00a7;</a>
+                <a class="ss" href="#section-37">&#x00a7;</a>
               </div>
               <p>Return a random flaot 0..n-1.</p>
 
@@ -629,11 +654,11 @@ CommonLisp. So I write my own.</p>
         </li>
         
         
-        <li id="section-36">
+        <li id="section-38">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-36">&#x00a7;</a>
+                <a class="ss" href="#section-38">&#x00a7;</a>
               </div>
               <h2 id="strings">Strings</h2>
 
@@ -656,11 +681,11 @@ CommonLisp. So I write my own.</p>
         </li>
         
         
-        <li id="section-37">
+        <li id="section-39">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-37">&#x00a7;</a>
+                <a class="ss" href="#section-39">&#x00a7;</a>
               </div>
               <h2 id="start-up">Start-up</h2>
 
@@ -669,11 +694,11 @@ CommonLisp. So I write my own.</p>
         </li>
         
         
-        <li id="section-38">
+        <li id="section-40">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-38">&#x00a7;</a>
+                <a class="ss" href="#section-40">&#x00a7;</a>
               </div>
               <p>To run one of the examples <code>eg</code>, first reset the <strong>seed</strong>,
 take a deepcopy of <code>my</code> (to ensure that any changes ti it
@@ -698,11 +723,11 @@ Else run the code, tracking <code>tries</code>, <code>fails</code>.</p>
         </li>
         
         
-        <li id="section-39">
+        <li id="section-41">
             <div class="annotation">
               
               <div class="sswrap ">
-                <a class="ss" href="#section-39">&#x00a7;</a>
+                <a class="ss" href="#section-41">&#x00a7;</a>
               </div>
               <p>Update <code>my</code> from the command  line.
 Run the appropriate test functions  (or if <code>eg</code> is “ls”

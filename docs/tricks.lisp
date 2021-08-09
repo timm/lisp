@@ -30,10 +30,6 @@
 (defmacro aif (test yes &optional no) `(let ((it ,test)) (if it ,yes ,no)))
 ; Anaphoric while (and `now` is the anaphoric variable).
 (defmacro while (expr &body body) `(do ((now ,expr ,expr)) ((not now)) ,@body))
-(defmacro cased (&body body)
-  `(let ((*readtable* (copy-readtable nil)))
-     (setf (readtable-case *readtable*) :preserve)
-     ,@body))
 ; Colors
 ; -------
 ; all colors
@@ -53,6 +49,7 @@
 (defmacro inca (x a &optional (inc  1))
   `(incf (cdr (or (assoc ,x ,a :test #'equal)
                   (car (setf ,a (cons (cons ,x 0) ,a))))) ,inc))
+; Entrooy of set of symbols is - sum p*log(p,2)
 (defun entropy (a &optional (n 0))
   (loop for (_ . v) in a do (incf n v))
   (loop for (_ . v) in a sum (* -1 (/ v n) (log (/ v n) 2)))) 
@@ -71,6 +68,9 @@
 ; If a string contains a nun, return that num. Else return the string.
 (defun num? (s &aux (n (read-from-string s)))
   (if (numberp n) n s))
+; Turn "?" into #\?, else, try for a number.
+(defun s->cell (s &aux (n (read-from-string s)))
+  (if (eql "?" s) #\? (num? s)))
 ; Does a symbol name start with `b4`?
 (defun b4-sym (b4 sym &aux (n (length b4)) (s (symbol-name sym)))
   (and (>= (length s) n) (equalp b4 (subseq s 0 n))))
@@ -84,17 +84,16 @@
       (if (and (fboundp s) (eql it (symbol-package s)))
         (push s out))))
   out)
-(defun timings (function)
-  (let ((real-base (get-internal-real-time))
-        (run-base (get-internal-run-time)))
+(defun timeit (function)
+  (let ((real-base (get-internal-real-time)))
     (funcall function)
-    (values (/ (- (get-internal-real-time) real-base) internal-time-units-per-second)
-            (/ (- (get-internal-run-time) run-base) internal-time-units-per-second))))
+    (/ (- (get-internal-real-time) real-base)
+       internal-time-units-per-second)))
 ; Comma-seperated-files
 ; --------------------
 ; split strings on commans
 (defun s->cells (s &optional (x 0) (y (position #\, s :start (1+ x))))
-  (cons (num? (subseq s x y))
+  (cons (s->cell (subseq s x y))
         (and y (s->cells s (1+ y)))))
 ; macro for reading csv files
 (defmacro with-csv ((lst file &optional out) &body body)

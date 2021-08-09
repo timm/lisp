@@ -47,40 +47,153 @@
               
             </div>
             
-            <div class="content"><div class='highlight'><pre>
+        </li>
+        
+        
+        <li id="section-3">
+            <div class="annotation">
+              
+              <div class="sswrap ">
+                <a class="ss" href="#section-3">&#x00a7;</a>
+              </div>
+              <h2 id="methods">Methods</h2>
 
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-4">
+            <div class="annotation">
+              
+              <div class="sswrap ">
+                <a class="ss" href="#section-4">&#x00a7;</a>
+              </div>
+              <p>Keep numbers (or numbers taken from  strings), in <code>_all</code>.
+Set <code>sorted</code> to nil</p>
 
-
-
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defmethod</span> add1 ((<span class="hljs-name">n</span> num) (<span class="hljs-name">x</span> string)) (<span class="hljs-name">add1</span> n (<span class="hljs-name">read-from-string</span> x)))
 (<span class="hljs-name">defmethod</span> add1 ((<span class="hljs-name">n</span> num) (<span class="hljs-name">x</span> number))
   (<span class="hljs-name">push-vector-extend</span> x (? n _all))
   (<span class="hljs-name">setf</span> (? n sorted) <span class="hljs-literal">nil</span>)
-  x)
-(<span class="hljs-name">defmethod</span> all ((<span class="hljs-name">n</span> num))
+  x)</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-5">
+            <div class="annotation">
+              
+              <div class="sswrap ">
+                <a class="ss" href="#section-5">&#x00a7;</a>
+              </div>
+              <p>Central tendancy.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defmethod</span> mid ((<span class="hljs-name">n</span> num)) (<span class="hljs-name">per</span> (<span class="hljs-name">all</span> n) .<span class="hljs-number">5</span>))</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-6">
+            <div class="annotation">
+              
+              <div class="sswrap ">
+                <a class="ss" href="#section-6">&#x00a7;</a>
+              </div>
+              <p>Variations around the mid.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defmethod</span> var ((<span class="hljs-name">n</span> num)) (<span class="hljs-name">sd</span>  (<span class="hljs-name">all</span> n) <span class="hljs-literal">t</span>))</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-7">
+            <div class="annotation">
+              
+              <div class="sswrap ">
+                <a class="ss" href="#section-7">&#x00a7;</a>
+              </div>
+              <p>Normalize numbers before we do numbers.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defmethod</span> dist1 ((<span class="hljs-name">n</span> num) a b)
+  (<span class="hljs-name">cond</span> ((<span class="hljs-name">eq</span> a #\?) (<span class="hljs-name">setf</span> b (<span class="hljs-name">norm</span> n b) a (<span class="hljs-name">if</span> (<span class="hljs-name">&gt;</span> b <span class="hljs-number">0.5</span>) <span class="hljs-number">1</span> <span class="hljs-number">0</span>)))
+        ((<span class="hljs-name">eq</span> b #\?) (<span class="hljs-name">setf</span> a (<span class="hljs-name">norm</span> n a) b (<span class="hljs-name">if</span> (<span class="hljs-name">&gt;</span> a <span class="hljs-number">0.5</span>) <span class="hljs-number">1</span> <span class="hljs-number">0</span>)))
+        (<span class="hljs-name">t</span>          (<span class="hljs-name">setf</span> a (<span class="hljs-name">norm</span> n a) b (<span class="hljs-name">norm</span> n b))))
+  (<span class="hljs-name">abs</span> (<span class="hljs-name">-</span> a b)))</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-8">
+            <div class="annotation">
+              
+              <div class="sswrap ">
+                <a class="ss" href="#section-8">&#x00a7;</a>
+              </div>
+              <h2 id="functions">Functions</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-9">
+            <div class="annotation">
+              
+              <div class="sswrap ">
+                <a class="ss" href="#section-9">&#x00a7;</a>
+              </div>
+              <p>Return <code>_all</code>, sorted.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> all (<span class="hljs-name">n</span>)
   (<span class="hljs-name">unless</span> (? n sorted)
     (<span class="hljs-name">setf</span> (? n _all)   (<span class="hljs-name">sort</span> (? n _all) #&#x27;&lt;)
           (? n sorted) <span class="hljs-literal">t</span>))
-  (? n _all))
-(<span class="hljs-name">defmethod</span> mid ((<span class="hljs-name">n</span> num)) (<span class="hljs-name">per</span> (<span class="hljs-name">all</span> n) .<span class="hljs-number">5</span>))
-(<span class="hljs-name">defmethod</span> var ((<span class="hljs-name">n</span> num)) (<span class="hljs-name">sd</span>  (<span class="hljs-name">all</span> n))
-(<span class="hljs-name">defmethod</span> lo ((<span class="hljs-name">n</span>  num)) (<span class="hljs-name">svref</span> (<span class="hljs-name">all</span> n) <span class="hljs-number">0</span>))
-(<span class="hljs-name">defmethod</span> hi ((<span class="hljs-name">n</span>  num) <span class="hljs-symbol">&amp;aux</span> (<span class="hljs-name">a</span> (<span class="hljs-name">all</span>  n))) (<span class="hljs-name">svref</span> a (<span class="hljs-number">1</span>- (<span class="hljs-name">length</span> a)))))
-(<span class="hljs-name">defmethod</span> dist1 ((<span class="hljs-name">n</span> num) a b)
-  (<span class="hljs-name">cond</span> ((<span class="hljs-name">eq</span> a #\?) (<span class="hljs-name">setf</span> b (<span class="hljs-name">norm</span> n b)
-                          a (<span class="hljs-name">if</span> (<span class="hljs-name">&gt;</span> b <span class="hljs-number">0.5</span>) <span class="hljs-number">1</span> <span class="hljs-number">0</span>)))
-        ((<span class="hljs-name">eq</span> b #\?) (<span class="hljs-name">setf</span> a (<span class="hljs-name">norm</span> n  a)
-                          b (<span class="hljs-name">if</span> (<span class="hljs-name">&gt;</span> a <span class="hljs-number">0.5</span>) <span class="hljs-number">1</span> <span class="hljs-number">0</span>)))
-        (<span class="hljs-name">t</span>          (<span class="hljs-name">setf</span> a (<span class="hljs-name">norm</span> n a)
-                          b (<span class="hljs-name">norm</span> n b))))
-  (<span class="hljs-name">abs</span> (<span class="hljs-name">-</span> a b)))
-(<span class="hljs-name">defmethod</span> norm ((<span class="hljs-name">n</span> num) x)
-  (<span class="hljs-name">if</span> (<span class="hljs-name">eq</span> x #\?)
-      x
-    (<span class="hljs-name">let</span> ((<span class="hljs-name">n1</span> (<span class="hljs-name">lo</span> n)) 
-          (<span class="hljs-name">n2</span> (<span class="hljs-name">hi</span> n)))
-      (<span class="hljs-name">if</span> (<span class="hljs-name">eql</span> n1 n2)
-          <span class="hljs-number">0</span>
-        (<span class="hljs-name">max</span> <span class="hljs-number">0</span> (<span class="hljs-name">min</span> <span class="hljs-number">1</span> (<span class="hljs-name">/</span> (<span class="hljs-name">-</span> x n1) (<span class="hljs-name">-</span> n2 n1 <span class="hljs-number">1E-32</span>))))))))</pre></div></div>
+  (? n _all))</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-10">
+            <div class="annotation">
+              
+              <div class="sswrap ">
+                <a class="ss" href="#section-10">&#x00a7;</a>
+              </div>
+              <p><code>Lo</code> and <code>hi</code> is computed from <code>all</code>.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> lo (<span class="hljs-name">n</span>) (<span class="hljs-name">svref</span> (<span class="hljs-name">all</span> n) <span class="hljs-number">0</span>))
+(<span class="hljs-name">defun</span> hi (<span class="hljs-name">n</span>) <span class="hljs-symbol">&amp;aux</span> (<span class="hljs-name">a</span> (<span class="hljs-name">all</span>  n))) (<span class="hljs-name">svref</span> a (<span class="hljs-number">1</span>- (<span class="hljs-name">length</span> a))))</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-11">
+            <div class="annotation">
+              
+              <div class="sswrap ">
+                <a class="ss" href="#section-11">&#x00a7;</a>
+              </div>
+              <p>Normalized <code>n</code> 0..1 lo..hi.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> norm (<span class="hljs-name">n</span> x <span class="hljs-symbol">&amp;aux</span> (<span class="hljs-name">n1</span> (<span class="hljs-name">lo</span> n)) (<span class="hljs-name">n2</span> (<span class="hljs-name">hi</span> n)))
+  (<span class="hljs-name">cond</span> ((<span class="hljs-name">eq</span> x #\?)  x)
+        ((<span class="hljs-name">eql</span> n1 n2) <span class="hljs-number">0</span>)
+        (<span class="hljs-name">t</span> (<span class="hljs-name">max</span> <span class="hljs-number">0</span> (<span class="hljs-name">min</span> <span class="hljs-number">1</span> (<span class="hljs-name">/</span> (<span class="hljs-name">-</span> x n1) (<span class="hljs-name">-</span> n2 n1 <span class="hljs-number">1E-32</span>)))))))</pre></div></div>
             
         </li>
         

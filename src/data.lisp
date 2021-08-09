@@ -98,9 +98,9 @@
 ; Given a plist with keywords, if  the command line 
 ; has any of the same keywords, then update the plist with the
 ; command-line values.keywords that 
-(defun cli (&key (plist  (deepcopy +config+)) 
+(defun cli (&key (plist  (copy-tree +config+)) 
                  (help   "")
-                 (args   (cdr (deepcopy (argv))))
+                 (args   (cdr (copy-tree (argv))))
                  (now    (getf plist :all)))
    (whale (pop args)
      (print a)
