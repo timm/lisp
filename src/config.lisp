@@ -1,5 +1,14 @@
 ; vim: ts=2 sw=2 et:
 
+; accessible via e.g. 
+;
+;    (? my all tries)
+; 
+; or on the command line   
+; 
+;    keys -seed 10013 -data ../data/fred.csv \
+;         --dom -samples 23
+;
 (defvar +config+
   `(all (eg    "eg.hi"     ; default thing to run
          tries 0           ; number of runs

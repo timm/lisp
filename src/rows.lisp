@@ -2,11 +2,11 @@
 
 ; create the  right  kind of column,
 ; place it in  the  right kind  of places
-(defun column (txt at rows)
-  (let* ((what (if (upper-case-p (subseq txt 0 1)) 'num 'sym))
+(defun column-factory (txt at rows)
+  (let* ((what (if (upper-case-p (char txt 0)) 'num 'sum))
          (it   (make-instance what :txt txt :at at)))
     (if (has txt #\-) ; something to minimize
-      (setf (? it w -1)))
+      (setf (? it w)  -1))
     (push it (? rows cols all)) 
     (when (not (has txt #\?)); not skipping
       (if (has txt #\!)  ; klass column
@@ -15,5 +15,3 @@
         (push it (? rows cols y))
         (push it (? rows cols x))))
     it))
-
-

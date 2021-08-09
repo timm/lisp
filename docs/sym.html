@@ -56,16 +56,9 @@
               <div class="sswrap ">
                 <a class="ss" href="#section-3">&#x00a7;</a>
               </div>
-              <p>Add a symbo, update symbol counts,  update mode</p>
+              <h2 id="methods">Methods</h2>
 
             </div>
-            
-            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defmethod</span> add1 ((<span class="hljs-name">s</span> sym) x)
-  (<span class="hljs-name">let</span> ((<span class="hljs-name">n</span> (<span class="hljs-name">inca</span> x (? s seen))))
-    (<span class="hljs-name">when</span> (<span class="hljs-name">&gt;</span> n (? s most))
-      (<span class="hljs-name">setf</span> (? s most) n
-            (? s mode) x)))
-  x)</pre></div></div>
             
         </li>
         
@@ -76,11 +69,15 @@
               <div class="sswrap ">
                 <a class="ss" href="#section-4">&#x00a7;</a>
               </div>
-              <p>Central tendency.</p>
+              <p>Add a symbo, update symbol counts,  update mode</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defmethod</span> mid ((<span class="hljs-name">s</span> sym)) (? s mode))</pre></div></div>
+            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defmethod</span> add1 ((<span class="hljs-name">s</span> sym) x)
+  (<span class="hljs-name">let</span> ((<span class="hljs-name">n</span> (<span class="hljs-name">inca</span> x (? s seen))))
+    (<span class="hljs-name">when</span> (<span class="hljs-name">&gt;</span> n (? s most))
+      (<span class="hljs-name">setf</span> (? s most) n
+            (? s mode) x))))</pre></div></div>
             
         </li>
         
@@ -91,11 +88,11 @@
               <div class="sswrap ">
                 <a class="ss" href="#section-5">&#x00a7;</a>
               </div>
-              <p>Variable around centrality.</p>
+              <p>Central tendency.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defmethod</span> var ((<span class="hljs-name">s</span> sym)) (<span class="hljs-name">entropy</span> (? s seen)))</pre></div></div>
+            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defmethod</span> mid ((<span class="hljs-name">s</span> sym)) (? s mode))</pre></div></div>
             
         </li>
         
@@ -105,6 +102,21 @@
               
               <div class="sswrap ">
                 <a class="ss" href="#section-6">&#x00a7;</a>
+              </div>
+              <p>Variable around centrality.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defmethod</span> var ((<span class="hljs-name">s</span> sym)) (<span class="hljs-name">entropy</span> (? s seen)))</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-7">
+            <div class="annotation">
+              
+              <div class="sswrap ">
+                <a class="ss" href="#section-7">&#x00a7;</a>
               </div>
               <p>Seperation of two items.</p>
 

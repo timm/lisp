@@ -49,6 +49,34 @@
             
         </li>
         
+        
+        <li id="section-3">
+            <div class="annotation">
+              
+              <div class="sswrap ">
+                <a class="ss" href="#section-3">&#x00a7;</a>
+              </div>
+              <p>create the  right  kind of column,
+place it in  the  right kind  of places</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> column (<span class="hljs-name">txt</span> at rows)
+  (<span class="hljs-name">let*</span> ((<span class="hljs-name">what</span> (<span class="hljs-name">if</span> (<span class="hljs-name">upper-case-p</span> (<span class="hljs-name">subseq</span> txt <span class="hljs-number">0</span> <span class="hljs-number">1</span>)) &#x27;num &#x27;sym))
+         (<span class="hljs-name">it</span>   (<span class="hljs-name">make-instance</span> what <span class="hljs-symbol">:txt</span> txt <span class="hljs-symbol">:at</span> at)))
+    (<span class="hljs-name">if</span> (<span class="hljs-name">has</span> txt #\-) <span class="hljs-comment">; something to minimize</span>
+      (<span class="hljs-name">setf</span> (? it w <span class="hljs-number">-1</span>)))
+    (<span class="hljs-name">push</span> it (? rows cols all)) 
+    (<span class="hljs-name">when</span> (<span class="hljs-name">not</span> (<span class="hljs-name">has</span> txt #\?))<span class="hljs-comment">; not skipping</span>
+      (<span class="hljs-name">if</span> (<span class="hljs-name">has</span> txt #\!)  <span class="hljs-comment">; klass column</span>
+        (<span class="hljs-name">setf</span> (? it rows cols klass) it))
+      (<span class="hljs-name">if</span> (<span class="hljs-name">has</span> txt #\- #\+ #\!) <span class="hljs-comment">; goal column</span>
+        (<span class="hljs-name">push</span> it (? rows cols y))
+        (<span class="hljs-name">push</span> it (? rows cols x))))
+    it))</pre></div></div>
+            
+        </li>
+        
     </ul>
   </div>
 </body>

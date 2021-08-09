@@ -76,9 +76,8 @@ Set <code>sorted</code> to nil</p>
             
             <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defmethod</span> add1 ((<span class="hljs-name">n</span> num) (<span class="hljs-name">x</span> string)) (<span class="hljs-name">add1</span> n (<span class="hljs-name">read-from-string</span> x)))
 (<span class="hljs-name">defmethod</span> add1 ((<span class="hljs-name">n</span> num) (<span class="hljs-name">x</span> number))
-  (<span class="hljs-name">push-vector-extend</span> x (? n _all))
-  (<span class="hljs-name">setf</span> (? n sorted) <span class="hljs-literal">nil</span>)
-  x)</pre></div></div>
+  (<span class="hljs-name">vector-push-extend</span> x (? n _all))
+  (<span class="hljs-name">setf</span> (? n sorted) <span class="hljs-literal">nil</span>))</pre></div></div>
             
         </li>
         
@@ -174,8 +173,8 @@ Set <code>sorted</code> to nil</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> lo (<span class="hljs-name">n</span>) (<span class="hljs-name">svref</span> (<span class="hljs-name">all</span> n) <span class="hljs-number">0</span>))
-(<span class="hljs-name">defun</span> hi (<span class="hljs-name">n</span>) <span class="hljs-symbol">&amp;aux</span> (<span class="hljs-name">a</span> (<span class="hljs-name">all</span>  n))) (<span class="hljs-name">svref</span> a (<span class="hljs-number">1</span>- (<span class="hljs-name">length</span> a))))</pre></div></div>
+            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> lo (<span class="hljs-name">n</span>)                  (<span class="hljs-name">aref</span> (<span class="hljs-name">all</span> n) <span class="hljs-number">0</span>))
+(<span class="hljs-name">defun</span> hi (<span class="hljs-name">n</span> <span class="hljs-symbol">&amp;aux</span> (<span class="hljs-name">a</span> (<span class="hljs-name">all</span> n))) (<span class="hljs-name">aref</span> a (<span class="hljs-number">1</span>- (<span class="hljs-name">length</span> a))))</pre></div></div>
             
         </li>
         

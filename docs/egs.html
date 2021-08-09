@@ -57,7 +57,32 @@
 (<span class="hljs-name">defun</span> eg.csv(<span class="hljs-name">my</span>  <span class="hljs-symbol">&amp;aux</span>  (<span class="hljs-name">n</span> <span class="hljs-number">0</span>))
   (<span class="hljs-name">setf</span> (! my all eg) <span class="hljs-string">&quot;../data/auto93.csv&quot;</span>)
   (<span class="hljs-name">assert</span> (<span class="hljs-name">=</span> <span class="hljs-number">3192</span> (<span class="hljs-name">with-csv</span> (<span class="hljs-name">row</span> (! my all data) n)
-                    (<span class="hljs-name">incf</span> n (<span class="hljs-name">length</span> row))))))</pre></div></div>
+                    (<span class="hljs-name">incf</span> n (<span class="hljs-name">length</span> row))))))
+(<span class="hljs-name">defun</span> eg.seed (<span class="hljs-name">my</span>)                    
+  (<span class="hljs-name">let</span> ((<span class="hljs-name">n</span> <span class="hljs-number">100</span>) a b)
+    (<span class="hljs-name">setf</span> *seed* <span class="hljs-number">1</span>
+          a      (<span class="hljs-name">loop</span> for x below  n collect (<span class="hljs-name">randf</span> <span class="hljs-number">1000</span>)) 
+          *seed* <span class="hljs-number">1</span>
+          b      (<span class="hljs-name">loop</span> for x below  n collect (<span class="hljs-name">randf</span> <span class="hljs-number">1000</span>)))
+    (<span class="hljs-name">want</span>  (<span class="hljs-name">equal</span> a b) <span class="hljs-string">&quot;lists not equal&quot;</span>)))
+(<span class="hljs-name">defun</span> eg.inca (<span class="hljs-name">the</span>)
+  (<span class="hljs-name">let</span> ((<span class="hljs-name">lst</span> &#x27;((a . <span class="hljs-number">1</span>)  (b . <span class="hljs-number">2</span>) (c . <span class="hljs-number">3</span>) (d . <span class="hljs-number">4</span>))))
+    (<span class="hljs-name">inca</span> &#x27;a lst)
+    (<span class="hljs-name">inca</span> &#x27;z lst)
+    (<span class="hljs-name">want</span> (<span class="hljs-name">and</span> 
+            (<span class="hljs-name">equal</span> <span class="hljs-number">1</span> (<span class="hljs-name">cdr</span> (<span class="hljs-name">assoc</span> &#x27;z lst)))
+            (<span class="hljs-name">equal</span> <span class="hljs-number">2</span> (<span class="hljs-name">cdr</span> (<span class="hljs-name">assoc</span> &#x27;a lst)))) <span class="hljs-string">&quot;nad inca&quot;</span>)))
+(<span class="hljs-name">defun</span> eg.sym (<span class="hljs-name">the</span>)
+  (<span class="hljs-name">let</span> ((<span class="hljs-name">n</span> (<span class="hljs-name">make-sym</span>)))
+    (<span class="hljs-name">add</span> n &#x27;(<span class="hljs-string">&quot;a&quot;</span> <span class="hljs-string">&quot;b&quot;</span> <span class="hljs-string">&quot;b&quot;</span> <span class="hljs-string">&quot;c&quot;</span> <span class="hljs-string">&quot;c&quot;</span> <span class="hljs-string">&quot;c&quot;</span> <span class="hljs-string">&quot;c&quot;</span>))
+    (<span class="hljs-name">want</span> (<span class="hljs-name">&lt;</span> <span class="hljs-number">1.378</span> (<span class="hljs-name">var</span> n) <span class="hljs-number">1.379</span>) <span class="hljs-string">&quot;bad ent&quot;</span>)))
+(<span class="hljs-name">defun</span> eg.num (<span class="hljs-name">the</span>)
+  (<span class="hljs-name">let</span> ((<span class="hljs-name">n</span> (<span class="hljs-name">init</span>(<span class="hljs-name">make-num</span>  <span class="hljs-symbol">:txt</span> <span class="hljs-string">&quot;asd-&quot;</span>))))
+    (<span class="hljs-name">print</span> n)
+    (<span class="hljs-name">add</span> n &#x27;(<span class="hljs-number">2</span> <span class="hljs-number">3</span> <span class="hljs-number">4</span> <span class="hljs-number">4</span> <span class="hljs-number">4</span> <span class="hljs-number">4</span>  <span class="hljs-number">5</span>  <span class="hljs-number">5</span>  <span class="hljs-number">6</span>  <span class="hljs-number">7</span> 
+             <span class="hljs-number">7</span> <span class="hljs-number">8</span> <span class="hljs-number">9</span> <span class="hljs-number">9</span> <span class="hljs-number">9</span> <span class="hljs-number">9</span> <span class="hljs-number">10</span> <span class="hljs-number">11</span> <span class="hljs-number">12</span> <span class="hljs-number">12</span>))
+    (<span class="hljs-name">want</span> (<span class="hljs-name">=</span> <span class="hljs-number">3.125</span> (<span class="hljs-name">var</span> n)) <span class="hljs-string">&quot;bad sd&quot;</span>)
+    (<span class="hljs-name">want</span> (<span class="hljs-name">=</span> <span class="hljs-number">7</span>     (<span class="hljs-name">mid</span> n)) <span class="hljs-string">&quot;bad mean&quot;</span>)))</pre></div></div>
             
         </li>
         

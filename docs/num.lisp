@@ -19,9 +19,8 @@
 ; Set `sorted` to nil
 (defmethod add1 ((n num) (x string)) (add1 n (read-from-string x)))
 (defmethod add1 ((n num) (x number))
-  (push-vector-extend x (? n _all))
-  (setf (? n sorted) nil)
-  x)
+  (vector-push-extend x (? n _all))
+  (setf (? n sorted) nil))
 ; Central tendancy.
 (defmethod mid ((n num)) (per (all n) .5))
 ; Variations around the mid.
@@ -41,8 +40,8 @@
           (? n sorted) t))
   (? n _all))
 ; `Lo` and `hi` is computed from `all`.
-(defun lo (n) (svref (all n) 0))
-(defun hi (n) &aux (a (all  n))) (svref a (1- (length a))))
+(defun lo (n)                  (aref (all n) 0))
+(defun hi (n &aux (a (all n))) (aref a (1- (length a))))
 ; Normalized `n` 0..1 lo..hi.
 (defun norm (n x &aux (n1 (lo n)) (n2 (hi n)))
   (cond ((eq x #\?)  x)

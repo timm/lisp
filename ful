@@ -38,16 +38,24 @@ else
   alias gp="git add *;git commit -am save;git push;git status"
   alias grep='grep --color=auto'
   alias h="history"
+  alias keys="lisp keys.lisp "
   alias hello="git pull"
   alias ls="ls -G"
   alias repl="rlwrap sbcl --noinform " 
-  alias docs="docco -o $timmLispFul/docs "
   alias tmux="tmux -f $timmLispFul/etc/dottmux "
   alias vi="vim -u $timmLispFul/etc/dotvimrc "
   alias vims="vim +PluginInstall +qall"         
 
   mkdir -p $timmLispFul/docs
 
+  htmls() {  
+    (cd $timmLispFul/src
+    for i in *.lisp
+    do
+       doc $i
+    done
+    )
+  }
   doc() {  
       (cat $timmLispFul/README.md | gawk '
             BEGIN { FS="\n"; RS="" }
