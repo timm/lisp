@@ -60,13 +60,15 @@
 ; Vector
 ; -----
 ; Return the nth percentile point.
-(defun per (a &optional (nth .5) &aux (n  (length a)))
-  (aref a (floor (* nth n))))
+(defun per (a &optional (nth .5) sorted &aux (n  (length a)))
+  (if sorted
+    (aref a (floor (* nth n)))
+    (per (sort a #'<) nth t)))
 
 ; The standard deviation is `(90th - 10th)/2,56`.
 (defun sd (a &optional sorted)
   (if sorted 
-    (/ (- (per a .9) (per a .1)) 2.56) 
+    (/ (- (per a .9 t) (per a .1 t)) 2.56) 
     (sd (sort a #'<) t)))
 
 ; Meta

@@ -10,7 +10,7 @@
   (setf (? n sorted) nil))
 
 ; Central tendancy.
-(defmethod mid ((n num)) (per (all n) .5))
+(defmethod mid ((n num)) (per (all n) .5 t))
 ; Variations around the mid.
 (defmethod var ((n num)) (sd  (all n) t))
 
