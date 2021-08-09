@@ -65,10 +65,12 @@
 ; ----
 
 ; If a string contains a nun, return that num. Else return the string.
-(defun s2cell (s &aux (n (read-from-string s)))
-  (if (numberp n) 
-    n 
-    (if (equals s "?") #\? s)))
+(defun num? (s &aux (n (read-from-string s)))
+  (if (numberp n) n s))
+
+; Turn "?" into #\?, else, try for a number.
+(defun s->cell (s &aux (n (read-from-string s)))
+  (if (eql "?" s) #\? (num? s)))
 
 ; Does a symbol name start with `b4`?
 (defun b4-sym (b4 sym &aux (n (length b4)) (s (symbol-name sym)))
@@ -95,7 +97,7 @@
 ; --------------------
 ; split strings on commans
 (defun s->cells (s &optional (x 0) (y (position #\, s :start (1+ x))))
-  (cons (num? (subseq s x y))
+  (cons (s->cell (subseq s x y))
         (and y (s->cells s (1+ y)))))
 
 ; macro for reading csv files
