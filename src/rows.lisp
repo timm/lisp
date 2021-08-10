@@ -1,5 +1,11 @@
 ; vim: ts=2 sw=2 et:
 
+; Methods
+; -------
+
+
+; Functions
+; ---------
 ; create the  right  kind of column,
 ; place it in  the  right kind  of places
 (defun column-factory (txt at rows)
