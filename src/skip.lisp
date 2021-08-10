@@ -1,4 +1,5 @@
 ; vim: ts=2 sw=2 et:
-(defmethod add1 ((s skip) y)
-   (
 
+; Methods
+; -------
+(defmethod add1  ((s skip) x) x)

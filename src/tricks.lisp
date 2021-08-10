@@ -79,7 +79,7 @@
   (if (numberp n) n s))
 
 ; Turn "?" into #\?, else, try for a number.
-(defun s->cell (s &aux (n (read-from-string s)))
+(defun s2cell (s &aux (n (read-from-string s)))
   (if (eql "?" s) #\? (num? s)))
 
 ; Does a symbol name start with `b4`?
@@ -103,9 +103,9 @@
 ; Comma-seperated-files
 ; --------------------
 ; split strings on commans
-(defun s->cells (s &optional (x 0) (y (position #\, s :start (1+ x))))
-  (cons (s->cell (subseq s x y))
-        (and y (s->cells s (1+ y)))))
+(defun s2cells (s &optional (x 0) (y (position #\, s :start (1+ x))))
+  (cons (s2cell (subseq s x y))
+        (and y (s2cells s (1+ y)))))
 
 ; macro for reading csv files
 (defmacro with-csv ((lst file &optional out) &body body)
@@ -114,7 +114,7 @@
 ; function read csv files
 (defun csv (file fun)
   (with-open-file (str file)
-    (loop (funcall fun (s->cells (or (read-line str nil)
+    (loop (funcall fun (s2cells (or (read-line str nil)
                                      (return-from csv)))))))
 
 ; System Stuff

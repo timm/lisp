@@ -20,16 +20,20 @@
   (_all (make-array 32 :fill-pointer 0 :adjustable t))
   sorted)
 
+(defstruct xy all x y)
+
 (defstruct (row (:include thing))
-  _rows   ; pointer to "rows" holding this
-  cells)  ; values in this row 
+  _rows              ; pointer to "rows" holding this
+  (cells (make-xy))) ; values in this row 
 
 (defstruct (cols (:include thing))
-   all    ; all the cols
-   x      ; just the indendeont columns
-   y      ; just the dependent columns
-   klass) ; the klass column (if it exists)
+   names           ; all the row1 names
+   all
+   x
+   y
+   klass)          ; the klass column (if it exists)
 
 (defstruct (rows (:include thing))
+  (txt "")            ; text description of source
   rows                ; list of "row"
   (cols (make-cols))) ; column information
