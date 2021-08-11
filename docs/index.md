@@ -19,10 +19,10 @@ choice."
 ;
 ```
 
-How to do anything
-------------------
+How to 
+------
 
 ```lisp
-(defun lisp () print (eval (read)))
+(defun do-anything () (print (eval (read))))
 
 ```
