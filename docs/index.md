@@ -19,5 +19,10 @@ How to...
 
 ```lisp
 (defun ...do-anything () (print (eval (read))))
+```
+
+Have fun!
+
+```lisp
 
 ```

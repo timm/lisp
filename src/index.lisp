@@ -11,3 +11,4 @@
 ; How to...
 ; ---------
 (defun ...do-anything () (print (eval (read))))
+; Have fun!
