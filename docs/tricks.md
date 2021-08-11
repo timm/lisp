@@ -97,22 +97,30 @@ Entrooy of set of symbols is - sum p*log(p,2)
 
 Vector
 -----
-Return the nth percentile point.
+least
 
 ```lisp
-(defun per (a &optional (nth .5) sorted &aux (n  (length a)))
-  (if sorted
-    (aref a (floor (* nth n)))
-    (per (sort a #'<) nth t)))
+(defun lo (a &optional ok) (if ok (aref a 0)) (lo (sort a #'<) t)))
 ```
 
-The standard deviation is `(90th - 10th)/2,56`.
+most
 
 ```lisp
-(defun sd (a &optional sorted)
-  (if sorted 
-    (/ (- (per a .9 t) (per a .1 t)) 2.56) 
-    (sd (sort a #'<) t)))
+(defun hi (a &optional ok) (if ok (aref a (length a)) (hi (sort a #'<) t)))
+```
+
+Return the nth percentile point. Default is to return the mid-point
+
+```lisp
+(defun per (a &optional (nth .5) ok &aux (n  (length a)))
+  (if ok (aref a (floor (* nth n))) (per (sort a #'<) nth t)))
+```
+
+The standard deviation is `(90th - 10th)/2.56`.
+
+```lisp
+(defun sd (a &optional ok)
+  (if ok (/ (- (per a .9 t) (per a .1 t)) 2.56) (sd (sort a #'<) t)))
 ```
 
 Meta

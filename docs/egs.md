@@ -29,15 +29,13 @@ title: "egs: "
             (equal 2 (cdr (assoc 'a lst)))) "nad inca")))
 
 (defun eg.sym (the)
-  (let ((n (make-sym)))
-    (add n '("a" "b" "b" "c" "c" "c" "c"))
+  (let ((n (add (make-sym) '("a" "b" "b" "c" "c" "c" "c"))))
     (want (< 1.378 (var n) 1.379) "bad ent")))
 
 (defun eg.num (the)
-  (let ((n (init(make-num  :txt "asd-"))))
-    (print n)
-    (add n '(2 3 4 4 4 4  5  5  6  7 
-             7 8 9 9 9 9 10 11 12 12))
+  (let ((n (add (init(make-num  :txt "asd-"))
+                '(2 3 4 4 4 4  5  5  6  7 
+                  7 8 9 9 9 9 10 11 12 12))))
     (want (= 3.125 (var n)) "bad sd")
     (want (= 7     (mid n)) "bad mean")))
 
