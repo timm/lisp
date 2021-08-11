@@ -1,7 +1,11 @@
-; vim: ts=2 sw=2 et:
+---
+title: "rows: "
+---
 
-; Methods
-; -------
+Methods
+-------
+
+```lisp
 (defmethod data ((rs rows) (x cons)) (data rs (coerce x 'vector)))
 (defmethod data ((rs rows) (x row)) (data rs (? x cells0)))
 (defmethod data ((rs rows) (x vector)) 
@@ -13,11 +17,14 @@
        (dolist (,col (slot-value (? row _rows cols) ,col1))
          (let ((,cell (aref (? row cells) (? ,col at))))
            ,&body)))))
+```
 
-; Functions
-; ---------
-; create the  right  kind of column,
-; place it in  the  right kind  of places
+Functions
+---------
+create the  right  kind of column,
+place it in  the  right kind  of places
+
+```lisp
 (defun column-factory (txt at rows)
   (let* ((what (if (upper-case-p (char txt 0)) 'num 'sum))
          (it   (make-instance what :txt txt :at at)))
@@ -31,3 +38,5 @@
         (push it (? rows cols y))
         (push it (? rows cols x))))
     it))
+
+```
