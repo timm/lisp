@@ -14,3 +14,12 @@
 (aif nil (print it) (print 'nl))
 
 (format t "as ~s ~s ~%" 1 2)
+
+(defstruct (foo (:constructor %make-foo)) 
+  y x)
+
+(defun make-foo (&key x y) 
+  ;; non-trivial initial values 
+  (%make-foo :x (+ x y) :y 9 ))
+
+(print (macroexpand-1 '(defstruct x a b)))

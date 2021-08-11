@@ -2,6 +2,8 @@
 
 ; Methods
 ; -------
+(defmethod initialize-instance :after ((s sym) &key) (print 1) s)
+
 ; Add a symbo, update symbol counts,  update mode
 (defmethod add1 ((s sym) x)
   (let ((n (inca x (? s seen))))
