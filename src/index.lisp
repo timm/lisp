@@ -5,7 +5,10 @@
 ; language in the world" and expect such comments to be taken as
 ; objective truth. I have never heard a Java, C++, C, Perl, or
 ; Python advocate make the same claim about their own language of
-; choice." --Anon
+; choice." 
+;
+; --Anon
+;
 
 (defun lisp () print (eval (read)))
 
