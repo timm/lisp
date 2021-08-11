@@ -6,7 +6,7 @@ How to...
 ---------
 
 ```lisp
-(defun ...do-anything () (print (eval (read))))
+(defun ...do-anything () (print (eval (read)))) ;
 ```
 
 "I have heard more than one LISP advocate state such subjective

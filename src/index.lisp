@@ -2,7 +2,7 @@
 
 ; How to...
 ; ---------
-(defun ...do-anything () (print (eval (read))))
+(defun ...do-anything () (print (eval (read)))) ;
 ; "I have heard more than one LISP advocate state such subjective
 ; comments as, "LISP is the most powerful and elegant programming
 ; language in the world" and expect such comments to be taken as
