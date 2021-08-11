@@ -10,7 +10,7 @@
 ; --Anon
 ;
 
-; How to do anything
-; ------------------
-(defun lisp () print (eval (read)))
+; How to 
+; ------
+(defun do-anything () (print (eval (read))))
 
