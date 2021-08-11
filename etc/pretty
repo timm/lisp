@@ -19,7 +19,8 @@ apply() { gawk '
         last=$0
         b4=now} 
 END   { apply(now,b4,last)
-        if (now=="CODE") print "```" }
+;        if (now=="CODE") print "```" 
+}
 
 function apply(now,b4,last) {
   gsub(/^; /,"",last)
