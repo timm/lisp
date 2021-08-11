@@ -7,6 +7,7 @@
 ; Python advocate make the same claim about their own language of
 ; choice."       
 ; --Anon
+;
 ; How to...
 ; ---------
 (defun ...do-anything () (print (eval (read))))

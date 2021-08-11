@@ -9,6 +9,11 @@ objective truth. I have never heard a Java, C++, C, Perl, or
 Python advocate make the same claim about their own language of
 choice."       
 --Anon
+
+```lisp
+;
+```
+
 How to...
 ---------
 
