@@ -11,4 +11,6 @@ choice." --Anon
 
 ```lisp
 
+(defun lisp () print (eval (read)))
+
 ```
