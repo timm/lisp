@@ -39,4 +39,3 @@ title: "egs: "
     (want (= 3.125 (var n)) "bad sd")
     (want (= 7     (mid n)) "bad mean")))
 
-```

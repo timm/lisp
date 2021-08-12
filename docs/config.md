@@ -29,4 +29,3 @@ or on the command line
     dom (samples 100)      ; samples for exploring domination
 ))
 
-```

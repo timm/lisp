@@ -7,10 +7,15 @@ noPara1()  { gawk '
 }
 
 classify() { gawk '
+  END    { exit }
   /^; /  { print "DOC " $0; next;}
-         { print "CODE "$0}' 
+         { print "CODE " $0}' 
 }
 
+ends() { gawk '{N[NR]=$0}
+  END { if (N[NR-1]=="```lisp") N[NR-1]=""
+        for(i=1;i<=NR;i++) print N[i] }'
+}
 apply() { gawk '
   BEGIN {top=1}
       { now=$1
@@ -18,9 +23,7 @@ apply() { gawk '
         apply(now,b4,last) 
         last=$0
         b4=now} 
-END   { apply(now,b4,last)
-;        if (now=="CODE") print "```" 
-}
+END   { apply(now,b4,last) }
 
 function apply(now,b4,last) {
   gsub(/^; /,"",last)
@@ -34,7 +37,6 @@ function apply(now,b4,last) {
                     top=0}}' 
 }
 
-
 one() {
   f=${1%.*}
   shift
@@ -45,10 +47,13 @@ title: "$title"
 ---
 
 EOF
-  cat $f.lisp | noPara1 | classify  | apply) > ../docs/$f.md
+  cat $f.lisp | 
+  noPara1 | 
+  classify  |  apply | ends) > ../docs/$f.md 
+
 }
 
 for i in *.lisp
- do
-   one $i
- done
+   do
+     one $i
+   done

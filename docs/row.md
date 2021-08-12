@@ -7,4 +7,3 @@ title: "row: "
 (defun at (r n)
   (aref (? r cells) n))
 
-```

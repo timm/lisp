@@ -63,4 +63,3 @@ Normalized `n` 0..1 lo..hi.
         ((eql n1 n2) 0)
         (t (max 0 (min 1 (/ (- x n1) (- n2 n1 1E-32)))))))
 
-```

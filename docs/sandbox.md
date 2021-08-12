@@ -22,4 +22,3 @@ title: "sandbox: "
 
 (print (macroexpand-1 '(defstruct x a b)))
 
-```

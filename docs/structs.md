@@ -48,4 +48,3 @@ a.k.a the mode)
   rows                ; list of "row"
   (cols (make-cols))) ; column information
 
-```

@@ -17,6 +17,5 @@ Python advocate make the same claim about their own language of
 choice."       
 -- Anon
 
-```lisp
 
-```
+

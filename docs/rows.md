@@ -39,4 +39,3 @@ place it in  the  right kind  of places
         (push it (? rows cols x))))
     it))
 
-```

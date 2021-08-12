@@ -394,4 +394,3 @@ Return to the operating system  the number of failures.
       (otherwise (when (member eg egs) (run eg my))))
     (halt (! my all fails))))
 
-```

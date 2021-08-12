@@ -36,4 +36,3 @@ Seperation of two items.
 ```lisp
 (defmethod dist1 ((s sym) x y) (if (eql x y) 0 1))
 
-```
