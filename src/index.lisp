@@ -10,7 +10,7 @@
 ; Python advocate make the same claim about their own language of
 ; choice."       
 ; -- Anon
-;
+;  
 ; "As computers have grown more powerful, the new languages being
 ; eveloped have been moving steadily toward the Lisp model. A popular
 ; recipe for new programming languages in the past 20 years has been
