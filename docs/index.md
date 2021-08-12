@@ -17,5 +17,16 @@ Python advocate make the same claim about their own language of
 choice."       
 -- Anon
 
+```lisp
+;
+```
+
+"As computers have grown more powerful, the new languages being
+eveloped have been moving steadily toward the Lisp model. A popular
+recipe for new programming languages in the past 20 years has been
+to take the C model of computing and add to it, piecemeal, parts
+taken from Lisp."
+-- Paul Graham
+
 
 
