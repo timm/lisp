@@ -13,10 +13,10 @@
 
 (defmethod add ((s sample) lst &aux (n -1))
   (if cols
-    (mapc #'(lambda (col x) (datum s col x (incf n))) (? s col) lst)
-    (mapc #'(lambda (x)     (cell s      (incf n) x)) lst)))
+    (mapc #'(lambda (col x) (datum s col x (incf n)  )) lst (? s col) lst)
+    (mapc #'(lambda (x)     (cell s        (incf n) x)) lst)))
 
-(defun datum (sample col val)
+(defun datum (sample col val at)
   (loop for i from 0 and x across lst
       do (format t "~a = ~a~%" i x))
   (loop for col across (? s cols) do
