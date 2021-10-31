@@ -1,7 +1,8 @@
 ; vim:  ts=2 sw=3 sts=2 et :
+(load "etc")
 
-(defvar +config+
-  `(all (eg    "eg.hi"     ; default thing to run
+(defvar our
+  '(all (eg    "eg.hi"     ; default thing to run
          tries 0           ; number of runs
          fails 0           ; number of failed runs 
          seed 10013        ; random number seed
@@ -15,30 +16,24 @@
 ;------------------;-------------------;-------------------;-------------------;
 ; structs
 (defstruct thing)
-
-(defstruct (col (:include thing))
-  (txt "") ; column name
-  (at 0)   ; column position
-  (n 0)    ; number of summarizes itemd
-  (w 1)    ; weight
-  )
+(defstruct (col    (:include thing)) (txt "") (at 0)  (n 0)  (w 1) )
+(defstruct (skip   (:include col)))
+(defstruct (sym    (:include col))  seen mode (most 0))
+(defstruct (row    (:include thing)) _rows cells)
+(defstruct (cols   (:include thing)) names all x y klass)
+(defstruct (sample (:include thing)) rows cols)
+(defstruct (num    (:include col)) 
+  (_all (make-array 32 :fill-pointer 0 :adjustable t))
+  sorted)
 
 (defmethod add ((c col) (x cons)) (dolist (y x c) (add c y)))
-
-; Unless we are skipping  stuff, increment `n`.
 (defmethod add ((c col) x)
   (unless (eq #\? x) 
     (incf (? c n)) 
     (add1 c x))
   x)
 
-; columns we are going to count
-(defstruct (skip (:include col)))
 (defmethod add1  ((s skip) x) x)
-
-; columns where we count symbols (and track the mode)
-(defstruct (sym (:include col))  
-  seen mode (most 0))
 
 (defmethod add1 ((s sym) x)
   (let ((n (inca x (? s seen))))
@@ -46,70 +41,40 @@
       (setf (? s most) n
             (? s mode) x))))
 
-(defstruct (num (:include col))
-  (_all (make-array 32 :fill-pointer 0 :adjustable t))
-  sorted)
-
 (defmethod add1 ((n num) (x string)) (add1 n (read-from-string x)))
 (defmethod add1 ((n num) (x number))
   (vector-push-extend x (? n _all))
   (setf (? n sorted) nil))
 
-(defstruct (row (:include thing))
-  _rows              ; pointer to "rows" holding this
-  cells ) ; values in this row 
-
-(defstruct (cols (:include thing))
-   names           ; all the row1 names
-   all
-   x
-   y
-   klass)          ; the klass column (if it exists)
-
-(defstruct (sample (:include thing))
-  (txt "")            ; text description of source
-  rows                ; list of "row"
-  (cols (make-cols))) ; column information
-
-(defun columns (txt at sample)
-  (let* ((what (cond ((find #\? txt) 'skip)
-                     ((upper-case-p (char txt 0) 'num))
-                     (t 'sym))) 
-         (it (make-instance what :txt txt :at at 
-                            :w (if (find #\- txt) -1 1))))
+(defun col+ (txt at sample)
+  (let* G
+    ((w  (if (find #\- txt) -1 1))
+     (it (cond 
+           ((find #\? txt)              (make-skip :txt txt :at at :w w))
+           ((upper-case-p (char txt 0)) (make-num  :txt txt :at at :w w))
+           (t                           (make-sym  :txt txt :at at :w w)))))
     (push (? sample cols all) it)
     (unless (find #\? txt)
       (cond ((find #\- txt) (push (? sample cols y) it))
             ((find #\+ txt) (push (? sample cols y) it))
-            (t              (push (? sample cols x) it))))))
+            (t              (push (? sample cols x) it))))
+    it))
 
-(defmethod slurp ((s sample) file)
-  (csv 
-;------------------;-------------------;-------------------;-------------------;
-; macros
-(defmacro want (x &rest y) `(assert ,x () ,@y))
+(defmethod update ((s sample) (file string)) 
+  (with-csv (lst file s) (print 1000) (update s lst)))
 
-(defmacro ? (s x &rest xs) 
-  (if xs `(? (slot-value ,s ',x) ,@xs) `(slot-value ,s ',x)))
-
-;------------------;-------------------;-------------------;-------------------;
-; csv reading
-(defun num? (s)
-  (if (eql "?" s)
-    s
-    (let ((n (read-from-string s)))
-      (if (numberp n) n s))))
-
-(defun s2cells (s &optional (x 0) (y (position #\, s :start (1+ x))))
-  (cons (num? (subseq s x y))
-        (and y (s2cells s (1+ y)))))
-
-(defun csv (file fn)
-  (with-open-file (str file)
-    (loop (funcall fn (s2cells (or (read-line str nil) (return-from csv)))))))
-
-(defmacro with-csv ((lst file &optional out) &body body)
-   `(progn (csv ,file #'(lambda (,lst) ,@body)) ,out))
+(defmethod update ((s sample) lst ) 
+  (let ((n 0))
+    (labels ((head  (x)     (col+ x (incf n) s))
+             (datum (x col) (add col x))
+             (data  (lst)   (mapcar #'datum lst (? s cols))))
+      (if (? s cols)
+        (push (? s rows) (make-row :_rows s :cells (data lst)))
+        (setf (? s cols) (mapcar #'head lst)))
+      s)))
 
 
+(defun eg.sample ()
+  (update (make-sample) (! our all data)))
 
+(with-csv (lst  "../data/auto93.csv") (print  lst))
