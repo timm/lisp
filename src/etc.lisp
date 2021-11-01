@@ -22,8 +22,9 @@
       (if (numberp n) n s))))
 
 (defun s2cells (s &optional (x 0) (y (position #\, s :start (1+ x))))
-  (cons (num? (subseq s x y))
-        (and y (s2cells s (1+ y)))))
+  (labels ((white(x) (member x '(#\Space #\Tab #\Newline))))
+    (cons (num? (remove-if #'white (subseq s x y)))
+          (and y (s2cells s (1+ y))))))
 
 (defun csv (file fn)
   (with-open-file (str file)

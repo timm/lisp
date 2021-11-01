@@ -1,7 +1,8 @@
 ; vim:  ts=2 sw=3 sts=2 et :
 (load "etc")
+(defvar our nil)
 
-(defvar our
+(defun _our()
   '(all (eg    "eg.hi"     ; default thing to run
          tries 0           ; number of runs
          fails 0           ; number of failed runs 
@@ -18,13 +19,11 @@
 (defstruct thing)
 (defstruct (col    (:include thing)) (txt "") (at 0)  (n 0)  (w 1) )
 (defstruct (skip   (:include col)))
-(defstruct (sym    (:include col))  seen mode (most 0))
+(defstruct (sym    (:include col))   seen mode (most 0))
+(defstruct (num    (:include col))   _all sorted)
 (defstruct (row    (:include thing)) _rows cells)
 (defstruct (cols   (:include thing)) names all x y klass)
 (defstruct (sample (:include thing)) rows cols)
-(defstruct (num    (:include col)) 
-  (_all (make-array 32 :fill-pointer 0 :adjustable t))
-  sorted)
 
 (defmethod add ((c col) (x cons)) (dolist (y x c) (add c y)))
 (defmethod add ((c col) x)
@@ -43,11 +42,14 @@
 
 (defmethod add1 ((n num) (x string)) (add1 n (read-from-string x)))
 (defmethod add1 ((n num) (x number))
-  (vector-push-extend x (? n _all))
+  (push (? n _all) x)
   (setf (? n sorted) nil))
+(defmethod  all ((n num))
+  (unless (? n sorted) (setf (? n sorted) t)  (sort (? n _all) #'<))
+  (? n _all))
 
 (defun col+ (txt at sample)
-  (let* G
+  (let* 
     ((w  (if (find #\- txt) -1 1))
      (it (cond 
            ((find #\? txt)              (make-skip :txt txt :at at :w w))
@@ -61,20 +63,23 @@
     it))
 
 (defmethod update ((s sample) (file string)) 
-  (with-csv (lst file s) (print 1000) (update s lst)))
+  (print file)
+  (with-csv (lst file) (print `(lst ,lst)) (update1 s lst)))
 
-(defmethod update ((s sample) lst ) 
-  (let ((n 0))
-    (labels ((head  (x)     (col+ x (incf n) s))
-             (datum (x col) (add col x))
-             (data  (lst)   (mapcar #'datum lst (? s cols))))
-      (if (? s cols)
-        (push (? s rows) (make-row :_rows s :cells (data lst)))
-        (setf (? s cols) (mapcar #'head lst)))
-      s)))
-
+(defun update1 (s lst &aux (n 0)) 
+  (labels ((head  (x)     (col+ x (incf n) s))
+           (datum (x col) (add col x))
+           (data  (lst)   (mapcar #'datum lst (? s cols))))
+    (print 11000)
+    (if (? s cols)
+      (push (? s rows) (make-row :_rows s :cells (data lst)))
+      (setf (? s cols) (mapcar #'head lst)))
+    s))
 
 (defun eg.sample ()
-  (update (make-sample) (! our all data)))
+  (let ((s (update (make-sample) (! our all data))))
+    (print (? s cols))))
 
-(with-csv (lst  "../data/auto93.csv") (print  lst))
+;(with-csv (lst  "../data/auto93.csv") (print  lst))
+(setf our (_our))
+;(eg.sample)
