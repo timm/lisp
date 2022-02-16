@@ -44,5 +44,7 @@
 (recentf-mode 1)
 (display-time-mode 1)
 (column-mode 1)
-;(require 'highlight-function-calls)
+                                        ;(require 'highlight-function-calls)
+
+(display-line-numbers-mode 1)
 

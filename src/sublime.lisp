@@ -17,44 +17,37 @@ Lets have some fun."
   (make-cli 'todo    "-t" "start up action          " ""))))
 
 ;;;; lib
+;;; tricks
+(defmacro ? (p x &rest xs) (if (null xs) `(getf ,p ,x) `(? (getf ,p ,x) ,@xs)))
+
+(defmethod char1 ((x symbol) c) (char1 (symbol-name x) c))
+(defmethod char1 ((x string) c) (equal (elt x 0) c))
+
 ;;; system
-(defun klass-slots (it)
- "what are the slots of a class?"
- #+clisp (class-slots (class-of it))
- #+sbcl  (sb-mop:class-slots (class-of it)))
-
-(defun slot-name (x)
-  "what is a slot's name?"
-  #+clisp (slot-definition-name x)
-  #+sbcl (sb-mop:slot-definition-name x))
-
-(defun args ()
- "what are the command line args?"
-  #+clisp ext:*args*
-  #+sbcl sb-ext:*posix-argv*)
-
-(defun stop (&optional (status 0))
-  "how to halt?"
-  #+sbcl (sb-ext:exit :code status)
-  #+:clisp (ext:exit status))
+(defun args () sb-ext:*posix-argv*)
+(defun stop (&optional (status 0)) (sb-ext:exit :code status))
 
 ;;; structs
-(defmethod print-object ((it thing) out)
-  "print string for all public slot names"
-  (labels ((hide  (x) (char1 x #\_))
-           (show  ()  (remove-if #'hide (mapcar #'slot-name (klass-slots it))))
-           (pair  (s) (,s ,(slot-value it s)))
-           (pairs ()  (mapcar  #'pair (sort (show) #'string<))))
-    (format out "~a" (cons (class-name (class-of it)) (pairs)))))
+(defstruct thing)
+(defmethod print-object ((x thing) out)
+  (labels ((pair (z) (let ((v (slot-value x z))) (if v `(,z ,v) z))))
+    (print-object (cons (class-name (class-of x)) (mapcar #'pair (show x))) out)))
 
-;;; strings
-(defmethod char1 ((x symbol) c) (char1 (symbol-name x) c))
-(defmethod char1 ((x string) c) (equal (elt (symbol-name x) 0) c)
+(defmacro defthing (x &rest slots &aux (id (gensym)))
+  (labels ((hidep (z) (char1 z #\_))
+           (name  (z) (if (consp z) (car z) z)))
+    `(let ((,id 0))
+       (defstruct
+           (,x (:include thing)
+               (:constructor ,(intern (format nil "%MAKE-~a" (symbol-name x)))))
+         (_id (incf ,id)) ,@slots)
+       (defmethod show ((x ,x)) ',(remove-if #'hidep (mapcar #'name slots))))))
 
-
-(defstruct (num    (:constructor %num))  n mu m3 sd)
-(defstruct (cols   (:constructor %col)) all x y klass)
-(defstruct (sample (:constructor %sample)) rows (cols (make-cols)))
+(defthing num n mu m3 sd)
+(defthing cols all x  klass y)
+(defthing sample rows (cols (%make-cols)))
+
+(defun make-num () (%make-num))
 
 ;;;; coerce
 (defun item (x)
@@ -72,9 +65,9 @@ Lets have some fun."
 
 (defun file2items (file &optional (fn #'print))
   (with-open-file (s file)
-    (loop (funcall fn (items (or (read-line s nil) (return-from csv)))))))
+    (loop (funcall fn (str2items (or (read-line s nil) (return-from file2items)))))))
 
-(defun file2sample (file &aux ((s (make-sample))))
+;(defun file2sample (file &aux ((s (make-sample))))
 ;;;; lib
 ;;; lists
 (defun nshuffle (lst)
@@ -82,3 +75,7 @@ Lets have some fun."
     (loop for i from (length tmp) downto 2
           do (rotatef (elt tmp (random i)) (elt tmp (1- i))))
     (coerce tmp 'list)))
+
+(print (sample-_id (%make-sample)))
+(print (sample-_id (%make-sample)))
+(print (sample-_id (%make-sample)))
