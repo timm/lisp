@@ -22,4 +22,9 @@
   ;; non-trivial initial values 
   (%make-foo :x (+ x y) :y 9 ))
 
-(print (macroexpand-1 '(defstruct x a b)))
+
+(print (make-foo :x 10 :y 20))
+; (defun point0 (&key (x 0) (y 0) (z 0))
+;   (make-instance 'point :x x :y y :z z))
+;
+; (print (point0 :z 23))
