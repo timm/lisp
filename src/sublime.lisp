@@ -1,7 +1,10 @@
 ;(defpackage :sublime (:use :cl))
 ;(in-package :sublime)
 
-(defvar *config* '(make-our 
+(defun make () (load "sublime.lisp"))
+
+(defun config()
+  (make-our 
   :help "sbcl --noinform --script expose.lisp [OPTIONS]
 (c) 2022, Tim Menzies, MIT license
 
@@ -14,13 +17,15 @@ Lets have some fun."
   (make-cli 'license "-l" "show license             " nil)
   (make-cli 'p       "-p" "euclidean coefficient    " 2)
   (make-cli 'seed    "-s" "random number seed       " 10019)
-  (make-cli 'todo    "-t" "start up action          " ""))))
+  (make-cli 'todo    "-t" "start up action          " ""))))
 
-;;;; lib
+;;;; lib 
 ;;; tricks
-(defmacro ?  (p x &rest xs) (if (null xs) `(getf ,p ,x) `(? (getf ,p ,x) ,@xs)))
+;; misc
+(defmacro ?   (p x &rest xs) (if (null xs) `(getf ,p ,x) `(? (getf ,p ,x) ,@xs)))
+(defmacro aif (? y &optional n) `(let ((it ,?)) (if it ,y ,n)))
 
-(defun args   ()     sb-ext:*posix-argv*)
+(defun args   ()     (cdr sb-ext:*posix-argv*))
 (defun 2alist (x xs) (mapcar (lambda (s) (cons s (slot-value x s))) xs))
 (defun stop   (out)  (sb-ext:exit :code out))
 
@@ -31,6 +36,7 @@ Lets have some fun."
           do (rotatef (elt tmp (random i)) (elt tmp (1- i))))
     (coerce tmp 'list)))
 
+;; thing
 (defmacro defthing (x &rest slots &aux (id (gensym)) (it (gensym)))
   "Defines structs with uniq ids `_id` and a constuctor `(%make-x)`
    and a print method that hides privates slots (those starting with `_`)."
@@ -42,10 +48,37 @@ Lets have some fun."
        (defstruct (,x  (:constructor ,(%make))) (_id (incf ,id)) ,@slots)
        (defmethod print-object ((,it ,x) out)
          (print-object (cons ',x (2alist ,it ',(names))) out)))))
-  
-(defthing num n mu m3 sd)
-(defthing cols all x  klass y)
-(defthing sample rows (cols (%make-cols)))
+
+;;;; my structs
+;;; my things
+(defthing out    help options)
+(defthing cli    key flag help value)
+(defthing num    at pos n w mu m2 sd)
+(defthing sym    at pos n seen mode most)
+(defthing cols   all x y klass)
+(defthing sample rows cols)
+
+;;;; classes
+;;;  cli
+(defun make-cli (key flag help value)
+  (aif (member flag (args) :test #'equal)
+       (setf value (cond ((equal it t)   nil)
+                         ((equal it nil) t)
+                         (t              (item (second it))))))
+  (%make-cli :key key :flag flag :help help :value value))
+
+(defun print-object ((c cli) out)
+  (with-slots (flag help value) c
+    (format out "   ~5a  ~a " flag help)
+    (if (member value '(t nil)) (terpri out) (format out "= ~a~%" value))))
+
+;;;  our   
+(defmacro $ (x) `(cdr (assoc ',x (our-options *the*))))
+
+(defun print-objects ((o our) out)
+  (format out "~a~%~%OPTIONS:~%" (our-help o))
+  (dolist (x (our-options o)) (print-object (cdr x) out)))
+
 
 (defun make-num () (%make-num))
 
@@ -64,8 +97,9 @@ Lets have some fun."
       (list (item (subseq s n)))))
 
 (defun %csv (file &optional (fn 'print))
+  "Run a function `fn` over file (sub-function of `with-csv`)."
   (with-open-file (str file)
-    (loop (funcall fn (s2cells (or (read-line str nil) (return-from %csv)))))))
+    (loop (funcall fn (or (read-line str nil) (return-from %csv))))))
 
 (defmacro with-csv ((lst file &optional out) &body body)
   `(progn (%with-csv ,file (lambda (,lst) ,@body)) ,out))
@@ -74,7 +108,3 @@ Lets have some fun."
 ;;;; lib
 ;;; lists
 
-
-(print  (%make-sample :rows 12))
-(print (sample-_id (%make-sample)))
-(print (sample-_id (%make-sample)))
