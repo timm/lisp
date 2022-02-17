@@ -14,4 +14,6 @@
 ; Functions
 ; ---------
 (defmethod dist (c x y)
+
   (if (and (eq x #\?) (eq y #\?)) 1 (dist1 x y)))
+
