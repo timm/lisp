@@ -1,4 +1,5 @@
-(setq column-number-mode t)
+(progn
+  (setq column-number-mode t)
 ;(menu-bar-mode 0)
 
 (progn
@@ -47,4 +48,4 @@
                                         ;(require 'highlight-function-calls)
 
 (display-line-numbers-mode 1)
-
+)
