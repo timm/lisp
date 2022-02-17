@@ -19,9 +19,17 @@ Lets have some fun."
 ;;;; lib
 ;;; tricks
 (defmacro ?  (p x &rest xs) (if (null xs) `(getf ,p ,x) `(? (getf ,p ,x) ,@xs)))
-(defun args  () sb-ext:*posix-argv*)
-(defun slots (x xs) (mapcar (lambda (s) (cons s (slot-value x s))) xs))
-(defun stop  (&optional (status 0)) (sb-ext:exit :code status))
+
+(defun args   ()     sb-ext:*posix-argv*)
+(defun 2alist (x xs) (mapcar (lambda (s) (cons s (slot-value x s))) xs))
+(defun stop   (out)  (sb-ext:exit :code out))
+
+(defun nshuffle (lst)
+  "Return a new list that randomizes over of lst"
+  (let ((tmp (coerce lst 'vector)))
+    (loop for i from (length tmp) downto 2
+          do (rotatef (elt tmp (random i)) (elt tmp (1- i))))
+    (coerce tmp 'list)))
 
 (defmacro defthing (x &rest slots &aux (id (gensym)) (it (gensym)))
   "Defines structs with uniq ids `_id` and a constuctor `(%make-x)`
@@ -33,7 +41,7 @@ Lets have some fun."
     `(let ((,id 0))
        (defstruct (,x  (:constructor ,(%make))) (_id (incf ,id)) ,@slots)
        (defmethod print-object ((,it ,x) out)
-         (print-object (cons ',x (slots ,it ',(names))) out)))))
+         (print-object (cons ',x (2alist ,it ',(names))) out)))))
   
 (defthing num n mu m3 sd)
 (defthing cols all x  klass y)
@@ -65,11 +73,7 @@ Lets have some fun."
 ;(defun file2sample (file &aux ((s (make-sample))))
 ;;;; lib
 ;;; lists
-(defun nshuffle (lst)
-  (let ((tmp (coerce lst 'vector)))
-    (loop for i from (length tmp) downto 2
-          do (rotatef (elt tmp (random i)) (elt tmp (1- i))))
-    (coerce tmp 'list)))
+
 
 (print  (%make-sample :rows 12))
 (print (sample-_id (%make-sample)))
