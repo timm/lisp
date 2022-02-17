@@ -1,6 +1,11 @@
 ;(defpackage :sublime (:use :cl))
 ;(in-package :sublime)
 
+                                        ; file to samples
+                                        ; samples to clusters
+                                        ; clusters to ranges
+                                        ; ranges to tree
+
 (defun make () (load "sublime.lisp"))
 
 (defun config()
@@ -23,11 +28,20 @@ Lets have some fun."
 ;;; tricks
 ;; misc
 (defmacro ?   (p x &rest xs) (if (null xs) `(getf ,p ,x) `(? (getf ,p ,x) ,@xs)))
+(defmacro !   `(fourth (
 (defmacro aif (? y &optional n) `(let ((it ,?)) (if it ,y ,n)))
 
 (defun args   ()     (cdr sb-ext:*posix-argv*))
 (defun 2alist (x xs) (mapcar (lambda (s) (cons s (slot-value x s))) xs))
 (defun stop   (out)  (sb-ext:exit :code out))
+
+(defun srand (&optional (n 10013))  
+  (setf *seed* n))
+
+(defun randi (&optional (n 1)) (floor (* n (/ (randf 1000.0) 1000))))
+(defun randf (&optional (n 1.0)) 
+  (setf xx (mod (* 16807.0d0 *seed*) 2147483647.0d0))
+  (* n (- 1.0d0 (/ *seed* 2147483647.0d0)))))
 
 (defun nshuffle (lst)
   "Return a new list that randomizes over of lst"
@@ -65,7 +79,7 @@ Lets have some fun."
        (setf value (cond ((equal it t)   nil)
                          ((equal it nil) t)
                          (t              (item (second it))))))
-  (%make-cli :key key :flag flag :help help :value value))
+  (cons key (%make-cli :key key :flag flag :help help :value value)))
 
 (defun print-object ((c cli) out)
   (with-slots (flag help value) c
@@ -103,6 +117,34 @@ Lets have some fun."
 
 (defmacro with-csv ((lst file &optional out) &body body)
   `(progn (%with-csv ,file (lambda (,lst) ,@body)) ,out))
+
+
+(defvar *tests* nil)
+(defvar *fails* 0)
+
+; ## Unit  Tests
+; ### deftest
+; Add a function to the `\*tests\*`.
+(defmacro deftest (name params  doc  &body body)
+  `(progn (pushnew  ',name *tests*) 
+          (defun ,name ,params ,doc ,@body)))
+
+; ### demos
+; Run the `\*tests\*`.
+(defun demos (my &optional what)
+  (dolist (one *tests*)
+    (let ((doc (documentation one 'function)))
+    (when (or (not what) (eql one what))
+      (srand (? my :rand :seed))
+      (multiple-value-bind (_ err)
+         (ignore-errors (funcall one (deepcopy my)))
+         (incf *fails* (if err 1 0))
+         (if err
+           (format t "~&~a [~a] ~a ~a~%" 
+             (red "✖") one doc (yellow err))
+           (format t "~&~a [~a] ~a~%"    
+             (green "✔") one doc)))))))
+
 
 ;(defun file2sample (file &aux ((s (make-sample))))
 ;;;; lib
