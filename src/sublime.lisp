@@ -8,13 +8,12 @@
 
 (defun make () (load "sublime.lisp"))
 
-(defun config()
-  (make-our 
-  :help "sbcl --noinform --script expose.lisp [OPTIONS]
+(defstruct our
+  (help "sbcl --noinform --script expose.lisp [OPTIONS]
 (c) 2022, Tim Menzies, MIT license
 
-Lets have some fun."
-  :options (list 
+Lets have some fun.")
+  (options (list 
   (make-cli 'enough  "-e" "enough items for a sample" 512)
   (make-cli 'far     "-F" "far away                 " .9)
   (make-cli 'file    "-f" "read data from file      " "../data/auto93.csv")
@@ -26,22 +25,21 @@ Lets have some fun."
 
 ;;;; lib 
 ;;; tricks
-;; misc
+;; misc                                                           ;;;;     ;;;;;
 (defmacro ?   (p x &rest xs) (if (null xs) `(getf ,p ,x) `(? (getf ,p ,x) ,@xs)))
-(defmacro !   `(fourth (
 (defmacro aif (? y &optional n) `(let ((it ,?)) (if it ,y ,n)))
 
 (defun args   ()     (cdr sb-ext:*posix-argv*))
 (defun 2alist (x xs) (mapcar (lambda (s) (cons s (slot-value x s))) xs))
 (defun stop   (out)  (sb-ext:exit :code out))
 
-(defun srand (&optional (n 10013))  
-  (setf *seed* n))
-
+(defvar *seed* 10013)
 (defun randi (&optional (n 1)) (floor (* n (/ (randf 1000.0) 1000))))
 (defun randf (&optional (n 1.0)) 
-  (setf xx (mod (* 16807.0d0 *seed*) 2147483647.0d0))
-  (* n (- 1.0d0 (/ *seed* 2147483647.0d0)))))
+  (setf *seed* (mod (* 16807.0d0 *seed*) 2147483647.0d0))
+  (* n (- 1.0d0 (/ *seed* 2147483647.0d0))))
+
+(dotimes (i 10) (print (randf )))
 
 (defun nshuffle (lst)
   "Return a new list that randomizes over of lst"
@@ -65,7 +63,6 @@ Lets have some fun."
 
 ;;;; my structs
 ;;; my things
-(defthing out    help options)
 (defthing cli    key flag help value)
 (defthing num    at pos n w mu m2 sd)
 (defthing sym    at pos n seen mode most)
@@ -81,25 +78,25 @@ Lets have some fun."
                          (t              (item (second it))))))
   (cons key (%make-cli :key key :flag flag :help help :value value)))
 
-(defun print-object ((c cli) out)
+(defmethod print-object ((c cli) out)
   (with-slots (flag help value) c
     (format out "   ~5a  ~a " flag help)
     (if (member value '(t nil)) (terpri out) (format out "= ~a~%" value))))
 
-;;;  our   
+;;;  our
+(setf *the* (
 (defmacro $ (x) `(cdr (assoc ',x (our-options *the*))))
 
-(defun print-objects ((o our) out)
+(defmethod print-objects ((o our) out)
   (format out "~a~%~%OPTIONS:~%" (our-help o))
   (dolist (x (our-options o)) (print-object (cdr x) out)))
-
 
 (defun make-num () (%make-num))
 
 ;;;; coerce
 (defun item (x)
   "Return a number or a trimmed string."
-  (cond ((numberp x) x)
+  (cond ((numberp x)   x)
         ((equal x "?") nil)
         (t (let ((y (ignore-errors (read-from-string x))))
              (if (numberp y) y x))))) 
@@ -118,35 +115,27 @@ Lets have some fun."
 (defmacro with-csv ((lst file &optional out) &body body)
   `(progn (%with-csv ,file (lambda (,lst) ,@body)) ,out))
 
-
+;;;; tests          |                   |                   |                   |
 (defvar *tests* nil)
 (defvar *fails* 0)
 
-; ## Unit  Tests
-; ### deftest
-; Add a function to the `\*tests\*`.
 (defmacro deftest (name params  doc  &body body)
-  `(progn (pushnew  ',name *tests*) 
-          (defun ,name ,params ,doc ,@body)))
+  `(progn (pushnew ',name *tests*) (defun ,name ,params ,doc ,@body)))
 
-; ### demos
-; Run the `\*tests\*`.
 (defun demos (my &optional what)
   (dolist (one *tests*)
     (let ((doc (documentation one 'function)))
-    (when (or (not what) (eql one what))
-      (srand (? my :rand :seed))
-      (multiple-value-bind (_ err)
+      (when (or (not what) (eql one what))
+        (setf *seed* (! seed))
+        (multiple-value-bind
+         (_ err)
          (ignore-errors (funcall one (deepcopy my)))
          (incf *fails* (if err 1 0))
          (if err
-           (format t "~&~a [~a] ~a ~a~%" 
-             (red "✖") one doc (yellow err))
-           (format t "~&~a [~a] ~a~%"    
-             (green "✔") one doc)))))))
+             (format t "~&FAIL: [~a] ~a ~a~%" one doc  err)
+           (format t "~&PASS: [~a] ~a~%" one doc)))))))
 
 
 ;(defun file2sample (file &aux ((s (make-sample))))
 ;;;; lib
 ;;; lists
-
