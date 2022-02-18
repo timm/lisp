@@ -74,13 +74,14 @@ Lets have some fun.")
 (defmacro aif (test y &optional n) `(let ((it ,test)) (if it ,y ,n)))
 (defmacro ? (p x &rest xs) (if (null xs) `(getf ,p ',x) `(? (getf ,p ',x),@xs)))
 
-;;; misc 
+;;; random
 (defvar *seed* 10013)
 (defun randi (&optional (n 1)) (floor (* n (/ (randf 1000.0) 1000))))
 (defun randf (&optional (n 1.0)) 
   (setf *seed* (mod (* 16807.0d0 *seed*) 2147483647.0d0))
   (* n (- 1.0d0 (/ *seed* 2147483647.0d0))))
 
+;;; lists
 (defun nshuffle (lst)
   "Return a new list that randomizes over of lst"
   (let ((tmp (coerce lst 'vector)))
@@ -90,6 +91,7 @@ Lets have some fun.")
 
 (defun per (lst &optional (p .5)) (elt lst (floor (* p (length lst)))))
 
+;;; defthings
 (defmacro defthing (x &rest slots &aux (id (gensym)))
   "Defines structs with uniq ids `_id` and a constuctor `(%make-x)`
    and a print method that hides privates slots (those starting with `_`)."
@@ -107,15 +109,14 @@ Lets have some fun.")
                         (if v `(,k ,v) k))))
     (print-object (cons klass (mapcar #'show slots)) s)))
 
-(defun %csv (file &optional (fn 'print))
-  "Run a function `fn` over file (sub-function of `with-csv`)."
-  (with-open-file (str file)
-    (loop (funcall fn (or (read-line str nil) (return-from %csv))))))
-
+;;; files
 (defmacro with-csv ((lst file &optional out) &body body)
   `(progn (%with-csv ,file (lambda (,lst) ,@body)) ,out))
 
-(defmacro $ (x) `(cli-value (cdr (assoc ',x (options-options *the*)))))
+(defun %csv (file &optional (fn 'print))
+  "Run a function `fn` over file (sub-function of `with-csv`)."
+  (with-open-file (str file)
+    (loop (funcall fn (or (read-line str nil) (return-from %csv)))))))
 ;;  _     _      _                    
 ;; | |_  | |_   (_)  _ _    __ _   ___
 ;; |  _| | ' \  | | | ' \  / _` | (_-<
