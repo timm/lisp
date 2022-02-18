@@ -10,15 +10,16 @@
 
 Lets have some fun.")
   (options
-   (list 
-    (cli! 'enough  "-e" "enough items for a sample" 512)
-    (cli! 'far     "-F" "far away                 " .9)
-    (cli! 'file    "-f" "read data from file      " "../data/auto93.csv")
-    (cli! 'help    "-h" "show help                " nil)
-    (cli! 'license "-l" "show license             " nil)
-    (cli! 'p       "-p" "euclidean coefficient    " 2)
-    (cli! 'seed    "-s" "random number seed       " 10019)
-    (cli! 'todo    "-t" "start up action          " ""))))
+   (list
+    (cli! 'cautious "-c" "about on any error"        t)
+    (cli! 'enough   "-e" "enough items for a sample" 512)
+    (cli! 'far      "-F" "far away                 " .9)
+    (cli! 'file     "-f" "read data from file      " "../data/auto93.csv")
+    (cli! 'help     "-h" "show help                " nil)
+    (cli! 'license  "-l" "show license             " nil)
+    (cli! 'p        "-p" "euclidean coefficient    " 2)
+    (cli! 'seed     "-s" "random number seed       " 10019)
+    (cli! 'todo     "-t" "start up action          " ""))))
 
 (defmethod print-object ((c cli) s)
   (with-slots (key flag help value) c 
@@ -53,7 +54,7 @@ Lets have some fun.")
 (defmacro aif (test y &optional n) `(let ((it ,test)) (if it ,y ,n)))
 (defmacro ? (p x &rest xs) (if (null xs) `(getf ,p ',x) `(? (getf ,p ',x),@xs)))
 
-(defun per (lst &optiona (p .5)) (elt lst (floor (* p (length lst)))))
+(defun per (lst &optional (p .5)) (elt lst (floor (* p (length lst)))))
 
 ;;; misc 
 (defvar *seed* 10013)
@@ -119,19 +120,19 @@ Lets have some fun.")
             hi (max x hi)
             n  (1+ n))
       (cond ((> max (length _has))
+             (setf ok nil)
+             (vector-push-extend x _has))
+            ((< (randf) (/ max n))
              (setf ok nil
-                   (push-vector-extend x _has))
-             ((< (randf) (/ max n))
-              (setf ok nil
-                    (elt _has (randi (length _has))) x))))
-      x)))
+                   (elt _has (randi (length _has))) x)))))
+  x)
 
 (defmethod mid ((n num)) (per (has n) .5))
-(defmethod div ((n num)) (/ (per (has n) .9) (per (has n) .1) 2.56))
+(defmethod div ((n num)) (/ (- (per (has n) .9) (per (has n) .1)) 2.56))
 
 (defmethod has ((n num))
   (with-slots (ok _has) n
-    (unless ok  (setf ok t
+    (unless ok  (setf ok   t
                       _has (sort _has #'<)))
     _has))
 
@@ -156,21 +157,26 @@ Lets have some fun.")
 (defmacro deftest (name params  doc  &body body)
   `(progn (pushnew ',name *tests*) (defun ,name ,params ,doc ,@body)))
 
-(defun demos (&optional what &aux (fails 0))
-  (dolist (one *tests* (exit :code fails))
+(defun demos (&optional what quit &aux (fails 0))
+  (dolist (one *tests* (if quit (exit :code fails)))
     (let ((doc (documentation one 'function)))
       (when (or (not what) (eql one what))
         (setf *the* (make-options))
         (setf *seed* ($ seed))
         (multiple-value-bind
               (_ err)
-            (ignore-errors (funcall one *the*))
+            (if ($ cautious)
+                (values (funcall one) nil)
+                (ignore-errors (funcall one *the*)))
           (identity _)
           (incf fails (if err 1 0))
           (if err
-              (format t "~&FAIL: [~a] ~a ~a~%" one doc  err)
-              (format t "~&PASS: [~a] ~a~%"    one doc)))))))
+              (format t "~&~&FAIL: [~a] ~a ~a~%" one doc  err)
+              (format t "~&~&PASS: [~a] ~a~%"    one doc)))))))
 
+
+(deftest aa? () "ads" (print 1))
+(deftest bb? () "ads" (print 2))
 
 ;(defun file2sample (file &aux ((s (make-sample))))
 ;;;; lib
