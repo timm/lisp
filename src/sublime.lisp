@@ -1,23 +1,23 @@
 ;(defpackage :sublime (:use :cl))
 ;(in-package :sublime)
 
-;;   )\.--.       .-.     /(,-.   .')      .'(   )\   )\   )\.---.  
-;;  (   ._.'  ,'  /  )  ,' _   ) ( /       \  ) (  ',/ /  (   ,-._( 
-;;   `-.`.   (  ) | (  (  '-' (   ))       ) (   )    (    \  '-,   
-;;  ,_ (  \   ) '._\ )  )  _   )  )'._.-.  \  ) (  \(\ \    ) ,-`   
-;; (  '.)  ) (  ,   (  (  '-' /  (       )  ) \  `.) /  )  (  ``-.  
-;;  '._,_.'   )/ ._.'   )/._.'    )/,__.'    )/      '.(    )..-.(  
+;   )\.--.       .-.     /(,-.   .')      .'(   )\   )\   )\.---.  
+;  (   ._.'  ,'  /  )  ,' _   ) ( /       \  ) (  ',/ /  (   ,-._( 
+;   `-.`.   (  ) | (  (  '-' (   ))       ) (   )    (    \  '-,   
+;  ,_ (  \   ) '._\ )  )  _   )  )'._.-.  \  ) (  \(\ \    ) ,-`   
+; (  '.)  ) (  ,   (  (  '-' /  (       )  ) \  `.) /  )  (  ``-.  
+;  '._,_.'   )/ ._.'   )/._.'    )/,__.'    )/      '.(    )..-.(  
 
-;; (quote
-;;    (an (elegant (weapon 
-;;        (for (a (more 
-;;            (civilized age))))))))
+; (quote
+;    (an (elegant (weapon 
+;        (for (a (more 
+;            (civilized age))))))))
 
-;;                     __   _        
-;;  __   ___   _ _    / _| (_)  __ _ 
-;; / _| / _ \ | ' \  |  _| | | / _` |
-;; \__| \___/ |_||_| |_|   |_| \__, |
-;;                             |___/ 
+;                     __   _        
+;  __   ___   _ _    / _| (_)  __ _ 
+; / _| / _ \ | ' \  |  _| | | / _` |
+; \__| \___/ |_||_| |_|   |_| \__, |
+;                             |___/ 
 
 (defstruct cli key flag help value)
 (defstruct options
@@ -66,24 +66,24 @@ Lets have some fun.")
 
 (defvar *the* (make-options))
 
-;;  _   _   _    
-;; | | (_) | |__ 
-;; | | | | | '_ \
-;; |_| |_| |_.__/
+;  _   _   _    
+; | | (_) | |__ 
+; | | | | | '_ \
+; |_| |_| |_.__/
 
-;;; macros
+;; macros
 (defmacro $   (x)  `(cli-value (cdr (assoc ',x (options-options *the*)))))
 (defmacro aif (? y &optional n) `(let ((it ,?)) (if it ,y ,n)))
 (defmacro ?   (p x &rest xs) (if (null xs) `(getf ,p ',x) `(? (getf ,p ',x),@xs)))
 
-;;; random
+;; random
 (defvar *seed* 10013)
 (defun randi (&optional (n 1)) (floor (* n (/ (randf 1000.0) 1000))))
 (defun randf (&optional (n 1.0)) 
   (setf *seed* (mod (* 16807.0d0 *seed*) 2147483647.0d0))
   (* n (- 1.0d0 (/ *seed* 2147483647.0d0))))
 
-;;; lists
+;; lists
 (defun nshuffle (lst)
   "Return a new list that randomizes over of lst"
   (let ((tmp (coerce lst 'vector)))
@@ -93,7 +93,7 @@ Lets have some fun.")
 
 (defun per (lst &optional (p .5)) (elt lst (floor (* p (length lst)))))
 
-;;; defthings
+;; defthings
 (defmacro defthing (x &rest slots &aux (id (gensym)))
   "Defines structs with uniq ids `_id` and a constuctor `(%make-x)`
    and a print method that hides privates slots (those starting with `_`)."
@@ -111,7 +111,7 @@ Lets have some fun.")
                         (if v `(,k ,v) k))))
     (print-object (cons klass (mapcar #'show slots)) s)))
 
-;;; files
+;; files
 (defmacro with-csv ((lst file &optional out) &body body)
   `(progn (%with-csv ,file (lambda (,lst) ,@body)) ,out))
 
@@ -119,11 +119,11 @@ Lets have some fun.")
   "Run a function `fn` over file (sub-function of `with-csv`)."
   (with-open-file (str file)
     (loop (funcall fn (or (read-line str nil) (return-from %csv))))))
-;;  _     _      _                    
-;; | |_  | |_   (_)  _ _    __ _   ___
-;; |  _| | ' \  | | | ' \  / _` | (_-<
-;;  \__| |_||_| |_| |_||_| \__, | /__/
-;;                         |___/      
+;  _     _      _                    
+; | |_  | |_   (_)  _ _    __ _   ___
+; |  _| | ' \  | | | ' \  / _` | (_-<
+;  \__| |_||_| |_| |_||_| \__, | /__/
+;                         |___/      
 
 (defthing num (at 0) (txt "") (n 0) (w 1) (mu 0) (m2 0) (sd 0) max (ok t)
               (lo most-positive-fixnum) (hi most-negative-fixnum)
@@ -134,9 +134,9 @@ Lets have some fun.")
 (defthing sample rows cols)
 (defthing range  col lo hi has)
 
-;;  _ _    _  _   _ __  
-;; | ' \  | || | | '  \ 
-;; |_||_|  \_,_| |_|_|_|
+;  _ _    _  _   _ __  
+; | ' \  | || | | '  \ 
+; |_||_|  \_,_| |_|_|_|
 
 (labels ((final (x &aux (n (length x))) (and (> n 0) (subseq x (- n 1) n))))
   (defun lessp  (x) (equal "-" (final x)))
@@ -173,24 +173,24 @@ Lets have some fun.")
 (defmethod div ((n num)) (/ (- (per (has n) .9) (per (has n) .1)) 2.56))
 
 
-;;  ___  _  _   _ __  
-;; (_-< | || | | '  \ 
-;; /__/  \_, | |_|_|_|
-;;       |__/         
+;  ___  _  _   _ __  
+; (_-< | || | | '  \ 
+; /__/  \_, | |_|_|_|
+;       |__/         
 
 (defun make-sym (&optional (at 0) (txt ""))
   (%make-sym :at at :txt txt))
 
-;;;; coerce
+;; coerce
 (Defun str->items (s &optional (c #\,) (n 0) &aux (pos (position c s :start n)))
   "Divide string `s` on character `c`."
   (if pos
       (cons (item (subseq s n pos)) (str->items s (1+ pos)))
       (list (item (subseq s n)))))
-;;  _                _        
-;; | |_   ___   ___ | |_   ___
-;; |  _| / -_) (_-< |  _| (_-<
-;;  \__| \___| /__/  \__| /__/
+;  _                _        
+; | |_   ___   ___ | |_   ___
+; |  _| / -_) (_-< |  _| (_-<
+;  \__| \___| /__/  \__| /__/
                             
 (defvar *tests* nil)
 
@@ -224,17 +224,14 @@ Lets have some fun.")
 
 
 
-;(defun file2sample (file &aux ((s (make-sample))))
-;;;; lib
-;;; lists
-
-
-(defun make () (load "sublime.lisp"))
-
-
                                         ; file to samples
                                         ; samples to clusters
                                         ; clusters to ranges
-                                        ; ranges to tree
-(print ($ todo))
+                                        ; ranges to tree
+;        _                  _                       
+;   ___ | |_   __ _   _ _  | |_   ___   _  _   _ __ 
+;  (_-< |  _| / _` | | '_| |  _| |___| | || | | '_ \
+;  /__/  \__| \__,_| |_|    \__|        \_,_| | .__/
+;                                             |_|   
+(defun make () (load "sublime.lisp"))
 (demos ($ todo))
