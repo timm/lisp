@@ -1,4 +1,5 @@
 SHELL = /bin/bash
+PATH := /opt/homebrew/bin:$(PATH)
 LISP  = /opt/homebrew/bin/sbcl --script
 f    ?= sublime
 t    ?= all

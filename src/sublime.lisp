@@ -34,7 +34,8 @@ Lets have some fun.")
   "Return a number or a trimmed string."
   (cond ((numberp x)   x)
         ((equal x "?") nil)
-        (t (let ((y (ignore-errors (read-from-string x)))) (if (numberp y) y x)))))
+        (t (let ((y (ignore-errors (read-from-string x))))
+             (if (numberp y) y x)))))
 
 (defun cli! (key flag help value)
   (let* ((args (cdr sb-ext:*posix-argv*))
@@ -44,15 +45,15 @@ Lets have some fun.")
                              (t (item (second it))))))
     (cons key (make-cli :key key :flag flag :help help :value value))))
 
-(defvar *the* (make-options))
+(defvar *the* (make-options))
+(defmacro $ (x) `(cli-value (cdr (assoc ',x (options-options *the*)))))
 
 ;;;; lib ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; macros
 (defmacro aif (test y &optional n) `(let ((it ,test)) (if it ,y ,n)))
-(defmacro ?   (p x &rest xs)      (if (null xs) `(getf ,p ,x) `(? (getf ,p ,x) ,@xs)))
-(defmacro $   (x) `(cli-value     (cdr (assoc ',x (options-options *the*)))))
+(defmacro ? (p x &rest xs) (if (null xs) `(getf ,p ,x) `(? (getf ,p ,x) ,@xs)))
 
-;;; misc                                                           ;;;;     ;;;;;
+;;; misc 
 (defvar *seed* 10013)
 (defun randi (&optional (n 1)) (floor (* n (/ (randf 1000.0) 1000))))
 (defun randf (&optional (n 1.0)) 
@@ -78,29 +79,35 @@ Lets have some fun.")
        (defstruct (,x (:constructor ,(%make))) (_id (incf ,id)) ,@slots)
        (defmethod print-object ((,it ,x) s)           
          (print-object
-          (cons ',x (mapcar (lambda (z) (cons z (slot-value ,it z))) ,(names)))
+          (cons ',x (mapcar (lambda (z) (cons z (slot-value ,it z))) ',(names)))
          s)))))
 
 ;;;; my structs
 ;;; my things
-(defthing num    at pos n w mu m2 sd has)
-(defthing sym    at pos n has mode most)
+(defthing num (at 0) (txt "") (n 0) (w 1) (mu 0) (m2 0) (sd 0) max has
+                     (lo most-positive-fixnum) (hi most-negative-fixnum))
+(defthing sym    (at 0) (txt "") (n 0) has mode (most 0))
 (defthing cols   all x y klass)
 (defthing sample rows cols)
 (defthing range  col lo hi has)
+
 ;;;; classes
 ;;;  cli
+(defun lettern (x &aux (n (length x))) (subseq (1- x) n))
 
-;;;  our
-(defmacro $ (x) `(cdr (assoc ',x (our-options *the*))))
+(defun lessp  (x)  (equal "-" (lettern x)))
+(defun morep  (x)  (equal "+" (lettern x)))
+(defun klassp (x)  (equal "!" (lettern x)))
+(defun nump   (x)  (upper-case-p (char x 0)))
+(defun goalp  (x)  (or (klassp x) (lessp x) (morep x)))
 
+(defun make-num (n &optional (at 0) (txt ""))
+  (%make-num :at at :txt txt :max n :w (if (lessp txt) -1 1))))
 
-
-(defun make-num () (%make-num))
+(defun make-sym (&optional (at 0) (txt ""))
+  (%make-sym :at at :txt txt))
 
 ;;;; coerce
-
-
 (defun str->items (s &optional (c #\,) (n 0) &aux (pos (position c s :start n)))
   "Divide string `s` on character `c`."
   (if pos
@@ -110,7 +117,7 @@ Lets have some fun.")
 (defun %csv (file &optional (fn 'print))
   "Run a function `fn` over file (sub-function of `with-csv`)."
   (with-open-file (str file)
-                  (loop (funcall fn (or (read-line str nil) (return-from %csv))))))
+    (loop (funcall fn (or (read-line str nil) (return-from %csv))))))
 
 (defmacro with-csv ((lst file &optional out) &body body)
   `(progn (%with-csv ,file (lambda (,lst) ,@body)) ,out))
@@ -122,19 +129,20 @@ Lets have some fun.")
 (defmacro deftest (name params  doc  &body body)
   `(progn (pushnew ',name *tests*) (defun ,name ,params ,doc ,@body)))
 
-(defun demos (my &optional what)
+(defun demos (&optional what)
   (dolist (one *tests*)
     (let ((doc (documentation one 'function)))
       (when (or (not what) (eql one what))
         (setf *the* (make-options))
         (setf *seed* ($ seed))
         (multiple-value-bind
-         (_ err)
-         (ignore-errors (funcall one *the*))
-         (incf *fails* (if err 1 0))
-         (if err
-             (format t "~&FAIL: [~a] ~a ~a~%" one doc  err)
-           (format t "~&PASS: [~a] ~a~%" one doc)))))))
+              (_ err)
+            (ignore-errors (funcall one *the*))
+          (identity _)
+          (incf *fails* (if err 1 0))
+          (if err
+              (format t "~&FAIL: [~a] ~a ~a~%" one doc  err)
+              (format t "~&PASS: [~a] ~a~%"    one doc)))))))
 
 
 ;(defun file2sample (file &aux ((s (make-sample))))
