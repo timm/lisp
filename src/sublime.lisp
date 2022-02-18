@@ -51,7 +51,9 @@ Lets have some fun.")
 ;;;; lib ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; macros
 (defmacro aif (test y &optional n) `(let ((it ,test)) (if it ,y ,n)))
-(defmacro ? (p x &rest xs) (if (null xs) `(getf ,p ,x) `(? (getf ,p ,x) ,@xs)))
+(defmacro ? (p x &rest xs) (if (null xs) `(getf ,p ',x) `(? (getf ,p ',x),@xs)))
+
+(defun per (lst &optiona (p .5)) (elt lst (floor (* p (length lst)))))
 
 ;;; misc 
 (defvar *seed* 10013)
@@ -68,7 +70,7 @@ Lets have some fun.")
     (coerce tmp 'list)))
 
 ;;;; things ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro defthing (x &rest slots &aux (id (gensym)) (it (gensym)))
+(defmacro defthing (x &rest slots &aux (id (gensym)))
   "Defines structs with uniq ids `_id` and a constuctor `(%make-x)`
    and a print method that hides privates slots (those starting with `_`)."
   (labels ((hidep (z) (equal (char (symbol-name z) 0) #\_))
@@ -77,15 +79,18 @@ Lets have some fun.")
            (%make ()  (intern (format nil "%MAKE-~a" (symbol-name x)))))
     `(let ((,id 0))
        (defstruct (,x (:constructor ,(%make))) (_id (incf ,id)) ,@slots)
-       (defmethod print-object ((,it ,x) s)           
-         (print-object
-          (cons ',x (mapcar (lambda (z) (cons z (slot-value ,it z))) ',(names)))
-         s)))))
+       (defmethod print-object ((it ,x) s) (show-object it ',x ',(names) s)))))
 
-;;;; my structs
+(defun show-object (it klass slots s)
+  (labels ((show (z)  (let* ((k (intern (symbol-name z) "KEYWORD"))
+                             (v (slot-value it z)))
+                        (if v `(,k ,v) k))))
+    (print-object (cons klass (mapcar #'show slots)) s)))
+
 ;;; my things
-(defthing num (at 0) (txt "") (n 0) (w 1) (mu 0) (m2 0) (sd 0) max has
-                     (lo most-positive-fixnum) (hi most-negative-fixnum))
+(defthing num (at 0) (txt "") (n 0) (w 1) (mu 0) (m2 0) (sd 0) max (ok t)
+              (lo most-positive-fixnum) (hi most-negative-fixnum)
+              (_has (make-array  32 :fill-pointer 0 :adjustable t)))
 (defthing sym    (at 0) (txt "") (n 0) has mode (most 0))
 (defthing cols   all x y klass)
 (defthing sample rows cols)
@@ -102,13 +107,36 @@ Lets have some fun.")
 (defun goalp   (x) (or (klassp x) (lessp x) (morep x)))
 
 (defun make-num (n &optional (at 0) (txt ""))
-  (%make-num :at at :txt txt :max n :w (if (lessp txt) -1 1))))
+  (%make-num :at at :txt txt :max n :w (if (lessp txt) -1 1)))
 
 (defun make-sym (&optional (at 0) (txt ""))
   (%make-sym :at at :txt txt))
 
+(defmethod add ((nu num) x)
+  (with-slots (lo hi max ok n _has) nu
+    (unless (null x)
+      (setf lo (min x lo)
+            hi (max x hi)
+            n  (1+ n))
+      (cond ((> max (length _has))
+             (setf ok nil
+                   (push-vector-extend x _has))
+             ((< (randf) (/ max n))
+              (setf ok nil
+                    (elt _has (randi (length _has))) x))))
+      x)))
+
+(defmethod mid ((n num)) (per (has n) .5))
+(defmethod div ((n num)) (/ (per (has n) .9) (per (has n) .1) 2.56))
+
+(defmethod has ((n num))
+  (with-slots (ok _has) n
+    (unless ok  (setf ok t
+                      _has (sort _has #'<)))
+    _has))
+
 ;;;; coerce
-(defun str->items (s &optional (c #\,) (n 0) &aux (pos (position c s :start n)))
+(Defun str->items (s &optional (c #\,) (n 0) &aux (pos (position c s :start n)))
   "Divide string `s` on character `c`."
   (if pos
       (cons (item (subseq s n pos)) (str->items s (1+ pos)))
@@ -122,15 +150,14 @@ Lets have some fun.")
 (defmacro with-csv ((lst file &optional out) &body body)
   `(progn (%with-csv ,file (lambda (,lst) ,@body)) ,out))
 
-;;;; tests          |                   |                   |                   |
+;;;; tests ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defvar *tests* nil)
-(defvar *fails* 0)
 
 (defmacro deftest (name params  doc  &body body)
   `(progn (pushnew ',name *tests*) (defun ,name ,params ,doc ,@body)))
 
-(defun demos (&optional what)
-  (dolist (one *tests*)
+(defun demos (&optional what &aux (fails 0))
+  (dolist (one *tests* (exit :code fails))
     (let ((doc (documentation one 'function)))
       (when (or (not what) (eql one what))
         (setf *the* (make-options))
@@ -139,7 +166,7 @@ Lets have some fun.")
               (_ err)
             (ignore-errors (funcall one *the*))
           (identity _)
-          (incf *fails* (if err 1 0))
+          (incf fails (if err 1 0))
           (if err
               (format t "~&FAIL: [~a] ~a ~a~%" one doc  err)
               (format t "~&PASS: [~a] ~a~%"    one doc)))))))
