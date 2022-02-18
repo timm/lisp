@@ -2,6 +2,7 @@
 ;(in-package :sublime)
 
 ;;;; bootstrap ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defstruct cli key flag help value)
 (defstruct options
   (help
     "sbcl --noinform --script expose.lisp [OPTIONS]
@@ -27,14 +28,13 @@ Lets have some fun.")
 (defmethod print-object ((o options) s)
   (with-slots (help options) o
     (format s "~a~%~%OPTIONS:~%" help)
-    (dolist (x options) (print-object (cdr x) s)))
+    (dolist (x options) (print-object (cdr x) s))))
 
 (defun item (x)
   "Return a number or a trimmed string."
   (cond ((numberp x)   x)
         ((equal x "?") nil)
-        (t (let ((y (ignore-errors (read-from-string x))))
-             (if (numberp y) y x)))))
+        (t (let ((y (ignore-errors (read-from-string x)))) (if (numberp y) y x)))))
 
 (defun cli! (key flag help value)
   (let* ((args (cdr sb-ext:*posix-argv*))
@@ -42,25 +42,22 @@ Lets have some fun.")
     (if it (setf value (cond ((equal it t)   nil)
                              ((equal it nil) t)
                              (t (item (second it))))))
-    (cons key (%make-cli :key key :flag flag :help help :value value))))
+    (cons key (make-cli :key key :flag flag :help help :value value))))
 
 (defvar *the* (make-options))
 
-;;;; lib 
-;;; tricks
+;;;; lib ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; macros
 (defmacro aif (test y &optional n) `(let ((it ,test)) (if it ,y ,n)))
-(defmacro ? (p x &rest xs) (if (null xs) `(getf ,p ,x) `(? (getf ,p ,x) ,@xs)))
-;; misc                                                           ;;;;     ;;;;;
+(defmacro ?   (p x &rest xs)      (if (null xs) `(getf ,p ,x) `(? (getf ,p ,x) ,@xs)))
+(defmacro $   (x) `(cli-value     (cdr (assoc ',x (options-options *the*)))))
 
-(defun struct->alist (x xs) (mapcar (lambda (s) (cons s (slot-value x s))) xs))
-
+;;; misc                                                           ;;;;     ;;;;;
 (defvar *seed* 10013)
 (defun randi (&optional (n 1)) (floor (* n (/ (randf 1000.0) 1000))))
 (defun randf (&optional (n 1.0)) 
   (setf *seed* (mod (* 16807.0d0 *seed*) 2147483647.0d0))
   (* n (- 1.0d0 (/ *seed* 2147483647.0d0))))
-
-(dotimes (i 10) (print (randf )))
 
 (defun nshuffle (lst)
   "Return a new list that randomizes over of lst"
@@ -69,7 +66,7 @@ Lets have some fun.")
           do (rotatef (elt tmp (random i)) (elt tmp (1- i))))
     (coerce tmp 'list)))
 
-;; thing
+;;;; things ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro defthing (x &rest slots &aux (id (gensym)) (it (gensym)))
   "Defines structs with uniq ids `_id` and a constuctor `(%make-x)`
    and a print method that hides privates slots (those starting with `_`)."
@@ -78,22 +75,23 @@ Lets have some fun.")
            (names ()  (remove-if #'hidep (mapcar #'name slots)))
            (%make ()  (intern (format nil "%MAKE-~a" (symbol-name x)))))
     `(let ((,id 0))
-       (defstruct (,x  (:constructor ,(%make))) (_id (incf ,id)) ,@slots)
-       (defmethod print-object ((,it ,x) s)
-         (print-object (cons ',x (struct->alist ,it ',(names))) s)))))
+       (defstruct (,x (:constructor ,(%make))) (_id (incf ,id)) ,@slots)
+       (defmethod print-object ((,it ,x) s)           
+         (print-object
+          (cons ',x (mapcar (lambda (z) (cons z (slot-value ,it z))) ,(names)))
+         s)))))
 
 ;;;; my structs
 ;;; my things
-(defthing num    at pos n w mu m2 sd)
-(defthing sym    at pos n seen mode most)
+(defthing num    at pos n w mu m2 sd has)
+(defthing sym    at pos n has mode most)
 (defthing cols   all x y klass)
 (defthing sample rows cols)
-
+(defthing range  col lo hi has)
 ;;;; classes
 ;;;  cli
 
 ;;;  our
-(setf *the* (
 (defmacro $ (x) `(cdr (assoc ',x (our-options *the*))))
 
 
@@ -128,10 +126,11 @@ Lets have some fun.")
   (dolist (one *tests*)
     (let ((doc (documentation one 'function)))
       (when (or (not what) (eql one what))
-        (setf *seed* (! seed))
+        (setf *the* (make-options))
+        (setf *seed* ($ seed))
         (multiple-value-bind
          (_ err)
-         (ignore-errors (funcall one (deepcopy my)))
+         (ignore-errors (funcall one *the*))
          (incf *fails* (if err 1 0))
          (if err
              (format t "~&FAIL: [~a] ~a ~a~%" one doc  err)
