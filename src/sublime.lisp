@@ -93,13 +93,13 @@ Lets have some fun.")
 
 ;;;; classes
 ;;;  cli
-(defun lettern (x &aux (n (length x))) (subseq (1- x) n))
+(defun lettern (x &aux (n (length x))) (and (> n 0) (subseq x (- n 1) n)))
 
-(defun lessp  (x)  (equal "-" (lettern x)))
-(defun morep  (x)  (equal "+" (lettern x)))
-(defun klassp (x)  (equal "!" (lettern x)))
-(defun nump   (x)  (upper-case-p (char x 0)))
-(defun goalp  (x)  (or (klassp x) (lessp x) (morep x)))
+(defun lessp   (x) (equal "-" (lettern x)))
+(defun morep   (x) (equal "+" (lettern x)))
+(defun klassp  (x) (equal "!" (lettern x)))
+(defun nump    (x) (upper-case-p (char x 0)))
+(defun goalp   (x) (or (klassp x) (lessp x) (morep x)))
 
 (defun make-num (n &optional (at 0) (txt ""))
   (%make-num :at at :txt txt :max n :w (if (lessp txt) -1 1))))
