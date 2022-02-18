@@ -42,7 +42,7 @@ else
   alias hello="git pull"
   alias ls="ls -G"
   alias repl="rlwrap sbcl --noinform " 
-  alias tmux="tmux -f $timmLispFul/etc/dottmux "
+  alias tmux="/opt/homebrew/bin/tmux -f $timmLispFul/etc/dottmux "
   alias vi="vim -u $timmLispFul/etc/dotvimrc "
   alias macs="emacs   --load \"$here/etc/.spacemacs\" "
   alias vims="vim +PluginInstall +qall"         

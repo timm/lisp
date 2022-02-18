@@ -48,12 +48,13 @@ Lets have some fun.")
     (format s "~a~%~%OPTIONS:~%" help)
     (dolist (x options) (print-object (cdr x) s))))
 
-(defun item (x)
+(defmethod item ((x number)) x)
+(defmethod item ((x string))
   "Return a number or a trimmed string."
-  (cond ((numberp x)   x)
-        ((equal x "?") nil)
-        (t (let ((y (ignore-errors (read-from-string x))))
-             (if (numberp y) y x)))))
+  (setf x (string-trim '(#\Space #\Tab) x))
+  (unless (equal x "?") 
+    (let ((y (ignore-errors (read-from-string x))))
+      (if (numberp y) y x))))
 
 (defun cli! (key flag help value)
   (let* ((args (cdr sb-ext:*posix-argv*))
@@ -63,16 +64,17 @@ Lets have some fun.")
                              (t (item (second it))))))
     (cons key (make-cli :key key :flag flag :help help :value value))))
 
-(defvar *the* (make-options))
-(defmacro $ (x) `(cli-value (cdr (assoc ',x (options-options *the*)))))
+(defvar *the* (make-options))
+
 ;;  _   _   _    
 ;; | | (_) | |__ 
 ;; | | | | | '_ \
 ;; |_| |_| |_.__/
 
 ;;; macros
-(defmacro aif (test y &optional n) `(let ((it ,test)) (if it ,y ,n)))
-(defmacro ? (p x &rest xs) (if (null xs) `(getf ,p ',x) `(? (getf ,p ',x),@xs)))
+(defmacro $   (x)  `(cli-value (cdr (assoc ',x (options-options *the*)))))
+(defmacro aif (? y &optional n) `(let ((it ,?)) (if it ,y ,n)))
+(defmacro ?   (p x &rest xs) (if (null xs) `(getf ,p ',x) `(? (getf ,p ',x),@xs)))
 
 ;;; random
 (defvar *seed* 10013)
@@ -116,7 +118,7 @@ Lets have some fun.")
 (defun %csv (file &optional (fn 'print))
   "Run a function `fn` over file (sub-function of `with-csv`)."
   (with-open-file (str file)
-    (loop (funcall fn (or (read-line str nil) (return-from %csv)))))))
+    (loop (funcall fn (or (read-line str nil) (return-from %csv))))))
 ;;  _     _      _                    
 ;; | |_  | |_   (_)  _ _    __ _   ___
 ;; |  _| | ' \  | | | ' \  / _` | (_-<
@@ -136,18 +138,16 @@ Lets have some fun.")
 ;; | ' \  | || | | '  \ 
 ;; |_||_|  \_,_| |_|_|_|
 
-(labels ((lettern (x &aux (n (length x))) (and (> n 0) (subseq x (- n 1) n))))
-  (defun lessp  (x) (equal "-" (lettern x)))
-  (defun morep  (x) (equal "+" (lettern x)))
-  (defun klassp (x) (equal "!" (lettern x)))
+(labels ((final (x &aux (n (length x))) (and (> n 0) (subseq x (- n 1) n))))
+  (defun lessp  (x) (equal "-" (final x)))
+  (defun morep  (x) (equal "+" (final x)))
+  (defun klassp (x) (equal "!" (final x)))
   (defun nump   (x) (upper-case-p (char x 0)))
   (defun goalp  (x) (or (klassp x) (lessp x) (morep x))))
 
 (defun make-num (n &optional (at 0) (txt ""))
   (%make-num :at at :txt txt :max n :w (if (lessp txt) -1 1)))
 
-(defun make-sym (&optional (at 0) (txt ""))
-  (%make-sym :at at :txt txt))
 
 (defmethod add ((nu num) x)
   (with-slots (lo hi max ok n _has) nu
@@ -163,14 +163,23 @@ Lets have some fun.")
                    (elt _has (randi (length _has))) x)))))
   x)
 
-(defmethod mid ((n num)) (per (has n) .5))
-(defmethod div ((n num)) (/ (- (per (has n) .9) (per (has n) .1)) 2.56))
-
 (defmethod has ((n num))
   (with-slots (ok _has) n
     (unless ok  (setf ok   t
                       _has (sort _has #'<)))
     _has))
+
+(defmethod mid ((n num)) (per (has n) .5))
+(defmethod div ((n num)) (/ (- (per (has n) .9) (per (has n) .1)) 2.56))
+
+
+;;  ___  _  _   _ __  
+;; (_-< | || | | '  \ 
+;; /__/  \_, | |_|_|_|
+;;       |__/         
+
+(defun make-sym (&optional (at 0) (txt ""))
+  (%make-sym :at at :txt txt))
 
 ;;;; coerce
 (Defun str->items (s &optional (c #\,) (n 0) &aux (pos (position c s :start n)))
@@ -191,7 +200,7 @@ Lets have some fun.")
 (defun demos (&optional what quit &aux (fails 0))
   (dolist (one *tests* (if quit (exit :code fails)))
     (let ((doc (documentation one 'function)))
-      (when (or (not what) (eql one what))
+      (when (or (not what) (equalp (symbol-name one) what))
         (setf *the* (make-options))
         (setf *seed* ($ seed))
         (multiple-value-bind
@@ -205,13 +214,20 @@ Lets have some fun.")
               (format t "~&~&FAIL: [~a] ~a ~a~%" one doc  err)
               (format t "~&~&PASS: [~a] ~a~%"    one doc)))))))
 
+(deftest the? () "show config" (loop for x in (options-options *the*)
+                                     do (print x)))
+(deftest item? ()
+    "thing from string"
+  (dolist (x '("" "1" ".d"  "  2ddd " "?" 2))
+    (print `(x ,x = ,(item x)))))
 
-(deftest aa? () "ads" (print 1))
-(deftest bb? () "ads" (print 2))
+
+
 
 ;(defun file2sample (file &aux ((s (make-sample))))
 ;;;; lib
 ;;; lists
+
 
 (defun make () (load "sublime.lisp"))
 
@@ -220,3 +236,5 @@ Lets have some fun.")
                                         ; samples to clusters
                                         ; clusters to ranges
                                         ; ranges to tree
+(print ($ todo))
+(demos ($ todo))
