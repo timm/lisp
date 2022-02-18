@@ -1,7 +1,24 @@
 ;(defpackage :sublime (:use :cl))
 ;(in-package :sublime)
 
-;;;; bootstrap ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;   )\.--.       .-.     /(,-.   .')      .'(   )\   )\   )\.---.  
+;;  (   ._.'  ,'  /  )  ,' _   ) ( /       \  ) (  ',/ /  (   ,-._( 
+;;   `-.`.   (  ) | (  (  '-' (   ))       ) (   )    (    \  '-,   
+;;  ,_ (  \   ) '._\ )  )  _   )  )'._.-.  \  ) (  \(\ \    ) ,-`   
+;; (  '.)  ) (  ,   (  (  '-' /  (       )  ) \  `.) /  )  (  ``-.  
+;;  '._,_.'   )/ ._.'   )/._.'    )/,__.'    )/      '.(    )..-.(  
+
+;; (quote
+;;    (an (elegant (weapon 
+;;        (for (a (more 
+;;            (civilized age))))))))
+
+;;                     __   _        
+;;  __   ___   _ _    / _| (_)  __ _ 
+;; / _| / _ \ | ' \  |  _| | | / _` |
+;; \__| \___/ |_||_| |_|   |_| \__, |
+;;                             |___/ 
+
 (defstruct cli key flag help value)
 (defstruct options
   (help
@@ -48,13 +65,14 @@ Lets have some fun.")
 
 (defvar *the* (make-options))
 (defmacro $ (x) `(cli-value (cdr (assoc ',x (options-options *the*)))))
+;;  _   _   _    
+;; | | (_) | |__ 
+;; | | | | | '_ \
+;; |_| |_| |_.__/
 
-;;;; lib ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; macros
 (defmacro aif (test y &optional n) `(let ((it ,test)) (if it ,y ,n)))
 (defmacro ? (p x &rest xs) (if (null xs) `(getf ,p ',x) `(? (getf ,p ',x),@xs)))
-
-(defun per (lst &optional (p .5)) (elt lst (floor (* p (length lst)))))
 
 ;;; misc 
 (defvar *seed* 10013)
@@ -70,7 +88,8 @@ Lets have some fun.")
           do (rotatef (elt tmp (random i)) (elt tmp (1- i))))
     (coerce tmp 'list)))
 
-;;;; things ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun per (lst &optional (p .5)) (elt lst (floor (* p (length lst)))))
+
 (defmacro defthing (x &rest slots &aux (id (gensym)))
   "Defines structs with uniq ids `_id` and a constuctor `(%make-x)`
    and a print method that hides privates slots (those starting with `_`)."
@@ -88,24 +107,40 @@ Lets have some fun.")
                         (if v `(,k ,v) k))))
     (print-object (cons klass (mapcar #'show slots)) s)))
 
-;;; my things
+(defun %csv (file &optional (fn 'print))
+  "Run a function `fn` over file (sub-function of `with-csv`)."
+  (with-open-file (str file)
+    (loop (funcall fn (or (read-line str nil) (return-from %csv))))))
+
+(defmacro with-csv ((lst file &optional out) &body body)
+  `(progn (%with-csv ,file (lambda (,lst) ,@body)) ,out))
+
+(defmacro $ (x) `(cli-value (cdr (assoc ',x (options-options *the*)))))
+;;  _     _      _                    
+;; | |_  | |_   (_)  _ _    __ _   ___
+;; |  _| | ' \  | | | ' \  / _` | (_-<
+;;  \__| |_||_| |_| |_||_| \__, | /__/
+;;                         |___/      
+
 (defthing num (at 0) (txt "") (n 0) (w 1) (mu 0) (m2 0) (sd 0) max (ok t)
               (lo most-positive-fixnum) (hi most-negative-fixnum)
               (_has (make-array  32 :fill-pointer 0 :adjustable t)))
+
 (defthing sym    (at 0) (txt "") (n 0) has mode (most 0))
 (defthing cols   all x y klass)
 (defthing sample rows cols)
 (defthing range  col lo hi has)
 
-;;;; classes
-;;;  cli
-(defun lettern (x &aux (n (length x))) (and (> n 0) (subseq x (- n 1) n)))
+;;  _ _    _  _   _ __  
+;; | ' \  | || | | '  \ 
+;; |_||_|  \_,_| |_|_|_|
 
-(defun lessp   (x) (equal "-" (lettern x)))
-(defun morep   (x) (equal "+" (lettern x)))
-(defun klassp  (x) (equal "!" (lettern x)))
-(defun nump    (x) (upper-case-p (char x 0)))
-(defun goalp   (x) (or (klassp x) (lessp x) (morep x)))
+(labels ((lettern (x &aux (n (length x))) (and (> n 0) (subseq x (- n 1) n))))
+  (defun lessp  (x) (equal "-" (lettern x)))
+  (defun morep  (x) (equal "+" (lettern x)))
+  (defun klassp (x) (equal "!" (lettern x)))
+  (defun nump   (x) (upper-case-p (char x 0)))
+  (defun goalp  (x) (or (klassp x) (lessp x) (morep x))))
 
 (defun make-num (n &optional (at 0) (txt ""))
   (%make-num :at at :txt txt :max n :w (if (lessp txt) -1 1)))
@@ -141,17 +176,12 @@ Lets have some fun.")
   "Divide string `s` on character `c`."
   (if pos
       (cons (item (subseq s n pos)) (str->items s (1+ pos)))
-      (list (item (subseq s n)))))
-
-(defun %csv (file &optional (fn 'print))
-  "Run a function `fn` over file (sub-function of `with-csv`)."
-  (with-open-file (str file)
-    (loop (funcall fn (or (read-line str nil) (return-from %csv))))))
-
-(defmacro with-csv ((lst file &optional out) &body body)
-  `(progn (%with-csv ,file (lambda (,lst) ,@body)) ,out))
-
-;;;; tests ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+      (list (item (subseq s n)))))
+;;  _                _        
+;; | |_   ___   ___ | |_   ___
+;; |  _| / -_) (_-< |  _| (_-<
+;;  \__| \___| /__/  \__| /__/
+                            
 (defvar *tests* nil)
 
 (defmacro deftest (name params  doc  &body body)
