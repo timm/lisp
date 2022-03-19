@@ -27,7 +27,7 @@ hi() {
 
 if [ -z "$timmLispFul" ]; then
   timmLispFul="$(cd $( dirname "${BASH_SOURCE[0]}" ) && pwd )"
-  timmLispFul="$timmLispFul" bash --init-file "${BASH_SOURCE[0]}" -i
+  PATH="$PATH:/opt/homebrew/bin" timmLispFul="$timmLispFul" bash --init-file "${BASH_SOURCE[0]}" -i
 else
   alias ..='cd ..'
   alias ...='cd ../../../'
