@@ -1,3 +1,51 @@
+(defparameter *options* 
+  '("
+    aas asd as asdas asd as assaas dasdas
+    (c) 2022 
+
+    line 1 3wwesas
+    line 33323 3242323
+
+    OPTIONS:"
+    (cautious  "-c"   "abort on any error       "   t)
+    (enough    "-e"   "enough items for a sample"   512)
+    (far       "-F"   "far away                 "   .9)
+    (file      "-f"   "read data from file      "   "../data/auto93.csv")
+    (help      "-h"   "show help                "   nil)
+    (license   "-l"   "show license             "   nil)
+    (e         "-e"   "euclidean coefficient    "   2)
+    (seed      "-s"   "random number seed       "   10019)
+    (todo      "-t"   "start up action          "   "")))
+
+;;;;----------------------------------------------------------------------------
+(defun settings (help options)
+  (labels ((thing (x) (let ((y (ignore-errors (read-from-string x))))
+                        (if (numberp y) y x)))
+           (trim (s) (string-trim '(#\Tab #\Space) s))
+           (lines (s &optional (c #\,) (n 0) &aux (pos (position c s :start n)))
+                  (if pos 
+                    (cons (subseq s n pos) (lines s c (1+ pos)))
+                    (list (subseq s n))))
+           (args () #+clisp ext:*args* #+sbcl (cdr sb-ext:*posix-argv*))
+           (has (x) (member x (args) :test #'equal))
+           (cli (lst &aux (flag (second lst)) (b4 (fourth lst)))
+                (list (first lst) flag (third lst)
+                      (if (has flag) (cond ((equal b4 t)   nil)
+                                           ((equal b4 nil) t)
+                                           (t (thing (second (has flag)))))
+                        b4))))
+    (cons (cons 'about (mapcar #'trim (lines help #\Newline))) 
+          (mapcar #'cli options))))
+
+(defun print-settings (s &optional (str t))
+  (dolist (x (cdar s)) (format str "~&~a~%"   x))
+  (dolist (x (cdr s)) 
+    (format str "~&  ~a   ~a  =  ~a" (second x) (third x) (fourth x))))
+
+(setf *options* (settings (car *options*) (cdr *options*)))
+(defmacro ? (x) `(third (cdr (assoc ',x (cdr *options*)))))
+
+;;;;----------------------------------------------------------------------------
 (defun klassp (x) (eq (charn x) #\!))
 (defun lessp  (x) (eq (charn x) #\<))
 (defun morep  (x) (eq (charn x) #\>))
@@ -6,43 +54,7 @@
 (defun char0  (x) (char (symbol-name x) 0))
 (defun charn  (x &aux (s (symbol-name x))) (char s (1- (length s))))
 
-(defmacro options (help &rest lst)
-  (labels 
-    ((thing (x) (let ((y (ignore-errors (read-from-string x))))
-                  (if (numberp y) y x)))
-     (fun (lst)
-          (let* ((args #+sbcl  (cdr sb-ext:*posix-argv*) #+clisp ext:*args*)
-                 (it   (member (second lst) args :test #'equal)))
-            (list (first lst) 
-                  (if it (cond ((equal it t)   nil)
-                               ((equal it nil) t)
-                               (t (thing (second it)))) 
-                    (fourth lst))))))
-    `(defstruct settings 
-       (_help ,(with-output-to-string (s)
-                 (format s "~%~a~%~%OPTIONS:~%" help)
-                 (dolist (x lst) 
-                   (format s "~&  ~a ~a = ~a" (second x) (third x) (fourth x)))))
-       ,@(mapcar #'fun lst))))
-
-(options  
-  "aas asd as asdas asd as assaas dasdas
-(c) 2022 
-
-sdas "  
-  (cautious "-c" "abort on any error       " t)
-  (enough   "-e" "enough items for a sample" 512)
-  (far      "-F" "far away                 " .9)
-  (file     "-f" "read data from file      " "../data/auto93.csv")
-  (help     "-h" "show help                " nil)
-  (license  "-l" "show license             " nil)
-  (e        "-e" "euclidean coefficient    " 2)
-  (seed     "-s" "random number seed       " 10019)
-  (todo     "-t" "start up action          " ""))
-
-(defvar **my** (make-settings))
-
-(defmacro ? (x) `(slot-value **my** ',x))
+(print-settings *options*)
 
 (defmacro deca (x a &optional (inc 1)) 
   `(decf (cdr (assoc ,x ,a :test #'equal)) ,inc))
