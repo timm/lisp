@@ -108,11 +108,12 @@ OPTIONS:")
   (with-slots (cols rows) self
     (if cols
       (push (mapcar #'add cols row) rows)
-      (setf cols (make-cols row)))))
+      (setf cols (make-cols row))))
+  row)
 
 (defmethod add ((self sym) x)
-  (unless (eq x #\?)
-    (with-slots (n has mode most) self 
+  (with-slots (n has mode most) self 
+    (unless (eq x #\?)
       (incf n)
       (let ((now (incf (slot x has))))
         (if (> now most)
@@ -121,8 +122,8 @@ OPTIONS:")
   x)
 
 (defmethod add ((self num) x)
-  (unless (eq x #\?)
-    (with-slots (n lo hi has size) self 
+  (with-slots (n lo hi has size) self 
+    (unless (eq x #\?)
       (incf n)
       (setf lo (min x lo)
             hi (max x hi))
