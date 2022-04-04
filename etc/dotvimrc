@@ -165,6 +165,7 @@ autocmd Filetype python setlocal ts=2 sw=2 expandtab
 autocmd Filetype lisp setlocal ts=2 sw=2 expandtab  
 autocmd Filetype markdown setlocal ts=2 sw=2 expandtab  
 
+
 au VimEnter * RainbowParenthesesToggle
 au Syntax * RainbowParenthesesLoadRound
 au Syntax * RainbowParenthesesLoadSquare
