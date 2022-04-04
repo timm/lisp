@@ -1,69 +1,57 @@
-(defparameter *options* 
-  '("
-    aas asd as asdas asd as assaas dasdas
-    (c) 2022 
+(defun cli (key flag help b4)
+  (let* ((args #+clisp ext:*args* #+sbcl (cdr sb-ext:*posix-argv*))
+         (it   (member flag args :test #'equal)))
+    (list key flag help 
+          (if (not it) 
+            b4 
+            (cond ((eq b4 t) nil) ((eq b4 nil) t) (t (elt it 1)))))))
 
-    line 1 3wwesas
-    line 33323 3242323
+(defparameter *options* (list '(about "
+aas asd as asdas asd as assaas dasdas
+(c) 2022 
 
-    OPTIONS:"
-    (cautious  "-c"   "abort on any error       "   t)
-    (enough    "-e"   "enough items for a sample"   512)
-    (far       "-F"   "far away                 "   .9)
-    (file      "-f"   "read data from file      "   "../data/auto93.csv")
-    (help      "-h"   "show help                "   nil)
-    (license   "-l"   "show license             "   nil)
-    (e         "-e"   "euclidean coefficient    "   2)
-    (seed      "-s"   "random number seed       "   10019)
-    (todo      "-t"   "start up action          "   "")))
+line 1 3wwesas
+line 33323 3242323
 
-;;;;----------------------------------------------------------------------------
-(defun settings (help options)
-  (labels ((thing (x) (let ((y (ignore-errors (read-from-string x))))
-                        (if (numberp y) y x)))
-           (trim (s) (string-trim '(#\Tab #\Space) s))
-           (lines (s &optional (c #\,) (n 0) &aux (pos (position c s :start n)))
-                  (if pos 
-                    (cons (subseq s n pos) (lines s c (1+ pos)))
-                    (list (subseq s n))))
-           (args () #+clisp ext:*args* #+sbcl (cdr sb-ext:*posix-argv*))
-           (has (x) (member x (args) :test #'equal))
-           (cli (lst &aux (flag (second lst)) (b4 (fourth lst)))
-                (list (first lst) flag (third lst)
-                      (if (has flag) (cond ((equal b4 t)   nil)
-                                           ((equal b4 nil) t)
-                                           (t (thing (second (has flag)))))
-                        b4))))
-    (cons (cons 'about (mapcar #'trim (lines help #\Newline))) 
-          (mapcar #'cli options))))
-
-(defun print-settings (s &optional (str t))
-  (dolist (x (cdar s)) (format str "~&~a~%"   x))
-  (dolist (x (cdr s)) 
-    (format str "~&  ~a   ~a  =  ~a" (second x) (third x) (fourth x))))
-
-(setf *options* (settings (car *options*) (cdr *options*)))
-(defmacro ? (x) `(third (cdr (assoc ',x (cdr *options*)))))
+OPTIONS:")
+  (cli 'cautious  "-c"  "abort on any error        "  t)
+  (cli 'enough    "-e"  "enough items for a sample "  512)
+  (cli 'far       "-F"  "far away                  "  .9)
+  (cli 'file      "-f"  "read data from file       "  "../data/auto93.lisp")
+  (cli 'help      "-h"  "show help                 "  nil)
+  (cli 'license   "-l"  "show license              "  nil)
+  (cli 'p         "-p"  "euclidean coefficient     "  2)
+  (cli 'seed      "-s"  "random number seed        "  10019)
+  (cli 'todo      "-t"  "start up action           "  "")))
 
 ;;;;----------------------------------------------------------------------------
-(defun klassp (x) (eq (charn x) #\!))
-(defun lessp  (x) (eq (charn x) #\<))
-(defun morep  (x) (eq (charn x) #\>))
-(defun goalp  (x) (or (morep x) (lessp x) (klassp x)))
-(defun nump   (x) (eq (char0 x) #\.))
-(defun char0  (x) (char (symbol-name x) 0))
-(defun charn  (x &aux (s (symbol-name x))) (char s (1- (length s))))
+(defmacro !! (x) `(third (cdr (assoc ',x *options* :test #'equal))))
 
-(print-settings *options*)
+(defun show-options (o)
+  (format t "~&~a~%" (second (car o)))
+  (dolist (x (cdr o)) (format t "~& ~a ~a = ~a" (elt x 1) (elt x 2) (elt x 3))))
 
-(defmacro deca (x a &optional (inc 1)) 
-  `(decf (cdr (assoc ,x ,a :test #'equal)) ,inc))
+;;;;----------------------------------------------------------------------------
+(defun ignorep (x) (eq (charn x) #\:))
+(defun klassp  (x) (eq (charn x) #\!))
+(defun lessp   (x) (eq (charn x) #\-))
+(defun morep   (x) (eq (charn x) #\+))
+(defun goalp   (x) (or (morep x) (lessp x) (klassp x)))
+(defun nump    (x) (eq (char0 x) #\.))
+(defun char0   (x) (char (symbol-name x) 0))
+(defun charn   (x &aux (s (symbol-name x))) (char s (1- (length s))))
 
-(defmacro inca (x a &optional (inc  1))
-  `(incf (cdr (or (assoc ,x ,a :test #'equal)
-                  (car (setf ,a (cons (cons ,x 0) ,a))))) ,inc))
+(defmacro ? (s x &rest xs)
+   (if xs `(? (slot-value ,s ',x) ,@xs) `(slot-value ,s ',x)))
 
-(defun per (seq &optional (p .5)) (elt seq (floor (* p (length seq)))))
+(defmacro slot (x a)
+  `(cdr (or (assoc ,x ,a :test #'equal)
+            (car (setf ,a (cons (cons ,x 0) ,a))))))
+
+(defun per (seq &optional (p .5)) 
+  (let ((seq (coerce seq 'vector))) 
+    (elt seq (floor (* p (length seq))))))
+
 (defun sd  (seq &optional (key #'identity)) 
   (/ (- (funcall key (per seq .9)) (funcall key (per seq .1))) 2.56))
    
@@ -77,44 +65,45 @@
             (push it out)
             (return-from csv (reverse out))))))
 
-(defstruct range lo hi id here n div)
+(defstruct (egs  (:constructor %make-egs)) rows cols)
+(defstruct (cols (:constructor %make-cols)) all x y klass)
+(defstruct (sym  (:constructor %make-sym )) (n 0) at name has mode (most 0))
+(defstruct (num  (:constructor %make-num )) (n 0) at name has 
+                                            ok w (hi -1E32) (lo 1E32))
 
-(defun argmin (out xys lo hi b4 here trivial enough)
-  (labels ((y (i) (second (elt xys i)))
-           (x (i) (first  (elt xys i))))
-    (let (lhs rhs cut)
-      (loop for i from lo to hi do (inca (y i) rhs))
-      (let ((div (ent rhs)))
-        (if (> (- hi (1+ lo)) (* 2 enough))
-          (loop for i from lo to hi do
-                (inca (y i) lhs)
-                (deca (y i) rhs)
-                (let ((n1 (- i (1+ lo)))
-                      (n2 (- hi i)))
-                  (if (and (> n1 enough)
-                           (> n2 enough)
-                           (not (equal (x i) (x (1+ i))))
-                           (> (- (x i) (x lo)) trivial)
-                           (> (- (x hi) (x i)) trivial))
-                    (let ((xpect (/ (+ (* n1 (ent lhs)) (* n2 (ent rhs))) 
-                                    (+ n1 n2))))
-                      (if (< xpect div) (setf cut i
-                                              div xpect)))))))
-        (if cut 
-          (setf b4 (argmin out xys lo      cut b4 here trivial enough)
-                b4 (argmin out xys (1+ cut) hi b4 here trivial enough))
-          (push (make-range :lo b4 :hi (x hi) :id (length out)
-                            :here here :n (- hi (1+ lo)) :div div) out)))))
-  (range-hi (car out)))
+(defun make-num (&optional (at 0) (name ""))
+  (%make-sym :at at :name name :w (if (lessp name) -1 1)))
 
-(defun bins (xys where)
-  (let* (out
-          (n   (length xys))
-          (xys (sort (coerce xys 'vector) #'< :key #'first)))
-    (argmin out xys 0 (1- n) 1E32 where 
-            (* (? cohen) (sd xys #'first)) 
-            (floor (/ (length xys) (? bins))))
-    (setf (range-hi (elt out (1- n))) most-positive-fixnum)
-    out))
+(defun make-sym (&optional (at 0) (name ""))
+  (%make-num :at at :name name))
+
+(defun make-cols (names)
+  (let ((at -1) all x y klass)
+    (dolist (name names (%make-cols :all all :x x :y y :klass klass))
+      (let ((now (funcall (if (nump name)  #'make-name #'make-sym) 
+                          (incf at) name)))
+        (push now all)
+        (when (not (ignorep name))
+          (if (goalp name) (push x now) (push y now))
+          (if (klassp name) (setf klass now)))))))
+
+(defun make-egs (&optional from)
+  (let ((now (%make-egs)))
+    (cond ((stringp from) 
+           (dolist (row (csv (!! files))) (add now row)))
+          ((consp from)
+           (dolist (row from) (add now row))))))
+
+(defmethod add ((e egs) row)
+  (with-slots (cols rows) e
+    (if cols
+      (push (add cols row) rows)
+      (setf cols (make-cols row)))))
+
+(defun add ((c cols) row)
+  (mapcar #'(lambda (col val)
+              (if (not (eq val #\?)) (add col val)))
+          (cols-all c)  row)
+  row)
 
 (defun make () (load 'bnb))
