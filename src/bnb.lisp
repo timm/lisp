@@ -48,6 +48,13 @@ OPTIONS:")
   `(cdr (or (assoc ,x ,a :test #'equal)
             (car (setf ,a (cons (cons ,x 0) ,a))))))
 
+(defvar *seed* (!! seed))
+(labels ((park-miller (&aux (multipler 16807.0d0) (modulus 2147483647.0d0))
+                      (setf seed (mod (* multiplier seed) modulus))
+                      (/ seed modulus)))
+  (defun randf (&optional (n 1)) (* n (- 1.0d0 (park-miller))))
+  (defun randi (&optional (n 1)) (floor (* n (park-miller)))))
+
 (defun per (seq &optional (p .5)) 
   (let ((seq (coerce seq 'vector))) 
     (elt seq (floor (* p (length seq))))))
@@ -68,8 +75,10 @@ OPTIONS:")
 (defstruct (egs  (:constructor %make-egs)) rows cols)
 (defstruct (cols (:constructor %make-cols)) all x y klass)
 (defstruct (sym  (:constructor %make-sym )) (n 0) at name has mode (most 0))
-(defstruct (num  (:constructor %make-num )) (n 0) at name has 
-                                            ok w (hi -1E32) (lo 1E32))
+(defstruct (num  (:constructor %make-num )) (n 0) at name 
+  (has (make-array 5 :fill-pointer 0))
+  (size (!! enough)) (
+  ok w (hi -1E32) (lo 1E32))
 
 (defun make-num (&optional (at 0) (name ""))
   (%make-sym :at at :name name :w (if (lessp name) -1 1)))
@@ -80,30 +89,46 @@ OPTIONS:")
 (defun make-cols (names)
   (let ((at -1) all x y klass)
     (dolist (name names (%make-cols :all all :x x :y y :klass klass))
-      (let ((now (funcall (if (nump name)  #'make-name #'make-sym) 
-                          (incf at) name)))
+      (let* ((what (if (nump name)  #'make-name #'make-sym))
+             (now  (funcall what (incf at) name)))
         (push now all)
         (when (not (ignorep name))
           (if (goalp name) (push x now) (push y now))
           (if (klassp name) (setf klass now)))))))
 
 (defun make-egs (&optional from)
-  (let ((now (%make-egs)))
+  (let ((self (%make-egs)))
     (cond ((stringp from) 
-           (dolist (row (csv (!! files))) (add now row)))
+           (dolist (row (csv (!! files))) (add self row)))
           ((consp from)
-           (dolist (row from) (add now row))))))
+           (dolist (row from) (add self row))))
+    self))
 
-(defmethod add ((e egs) row)
-  (with-slots (cols rows) e
+(defmethod add ((self egs) row)
+  (with-slots (cols rows) self
     (if cols
-      (push (add cols row) rows)
+      (push (mapcar #'add cols row) rows)
       (setf cols (make-cols row)))))
 
-(defun add ((c cols) row)
-  (mapcar #'(lambda (col val)
-              (if (not (eq val #\?)) (add col val)))
-          (cols-all c)  row)
-  row)
+(defmethod add ((self sym) x)
+  (unless (eq x #\?)
+    (with-slots (n has mode most) self 
+      (incf n)
+      (let ((now (incf (slot x has))))
+        (if (> now most)
+          (setf most now
+                mode x)))))
+  x)
+
+(defmethod add ((self num) x)
+  (unless (eq x #\?)
+    (with-slots (n lo hi has size) self 
+      (incf n)
+      (setf lo (min x lo)
+            hi (max x hi))
+      (cond ((< (length has) size)  (vector-push x has) (setf ok nil))
+            ((< (randf) (/ size n)) (setf (elt (randi (length has))) x
+                                          ok nil)))))
+  x)
 
 (defun make () (load 'bnb))
