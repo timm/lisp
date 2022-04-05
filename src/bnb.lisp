@@ -24,16 +24,15 @@ OPTIONS:")
   (cli 'p         "-p"  "euclidean coefficient     "  2)
   (cli 'seed      "-s"  "random number seed        "  10019)
   (cli 'todo      "-t"  "start up action           "  "")))
-
 ---     ._ _    _.   _  ._   _    _ 
 ---     | | |  (_|  (_  |   (_)  _> 
 
+; short hand for querying options
 (defmacro !! (x) 
-  "short hand for querying options"
   `(third (cdr (assoc ',x *options* :test #'equal))))
 
+; print options
 (defun show-options (o)
-  "print options"
   (format t "~&~a~%" (second (car o)))
   (dolist (x (cdr o)) (format t "~& ~a ~a = ~a" (elt x 1) (elt x 2) (elt x 3))))
 
@@ -49,7 +48,6 @@ OPTIONS:")
 (defmacro with-csv ((lst file &optional out) &body body)
   "file reading iterator"
   `(progn (%with-csv ,file (lambda (,lst) ,@body)) ,out))
-
 ---      _       ._   ._    _   ._  _|_ 
 ---     _>  |_|  |_)  |_)  (_)  |    |_ 
 ---              |    |                 
@@ -61,7 +59,6 @@ OPTIONS:")
         (s  (symbol-name x)))
     (or (member (char s (1- (length s))) (cdr (assoc kind l1)))
         (member (char s 0)               (cdr (assoc kind l2))))))
----                                 _                           
 ---      _  _|_  ._  o  ._    _      )    _|_  |_   o  ._    _  
 ---     _>   |_  |   |  | |  (_|    /_     |_  | |  |  | |  (_| 
 ---                           _|                             _| 
@@ -79,7 +76,6 @@ OPTIONS:")
 (defun %with-csv (file)
   (with-open-file (str file)
     (loop (cells  (or (read-line str nil) (return-from %csv))))))
-
 ---     ._   _.  ._    _|   _   ._ _  
 ---     |   (_|  | |  (_|  (_)  | | | 
 
@@ -89,7 +85,6 @@ OPTIONS:")
                       (/ seed modulus)))
   (defun randf (&optional (n 1)) (* n (- 1.0d0 (park-miller))))
   (defun randi (&optional (n 1)) (floor (* n (park-miller)))))
-
 ---     |  o   _  _|_     _.        _   ._     
 ---     |  |  _>   |_    (_|  |_|  (/_  |   \/ 
 ---                        |                /  
@@ -145,8 +140,7 @@ OPTIONS:")
     self))
 
 (defmethod add ((self egs) row)
-  (with-slots (cols rows) self
-    (if cols
+  (with-slots (cols rows) self (if cols
       (push (mapcar #'add cols row) rows)
       (setf cols (make-cols row))))
   row)
@@ -171,7 +165,6 @@ OPTIONS:")
             ((< (randf) (/ size n)) (setf (elt (randi (length all))) x
                                           ok nil)))))
   x)
-
 ---      _       _  _|_   _   ._ _  
 ---     _>  \/  _>   |_  (/_  | | | 
 ---         /                       
