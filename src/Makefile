@@ -12,7 +12,7 @@ test:;     @$(LISP) sublime.lisp    -t $f $(SOME)
 cautious:; @$(LISP) sublime.lisp -c -t $t $(SOME)
 
 COMMENT= gawk ' /^[ \t]*$$/ {next} \
-                            {print "---    "$$0} \
+                            {print ";    "$$0} \
                         END {print""}'
 
 help:
