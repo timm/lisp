@@ -8,6 +8,9 @@
 ;              | Be   |   v  
 ;              |    4 | Better  
 ;              .------.  
+
+; TODO: move cols from push+reverse to mapcar
+
 (defmethod thing (x)  x)
 (defmethod thing ((x string))
   (if (equal x "?") 
