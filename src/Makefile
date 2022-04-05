@@ -11,6 +11,21 @@ lisp:;     @$(LISP) $f.lisp               $(SOME)
 test:;     @$(LISP) sublime.lisp    -t $f $(SOME)
 cautious:; @$(LISP) sublime.lisp -c -t $t $(SOME)
 
+COMMENT= gawk ' /^[ \t]*$$/ {next} \
+                            {print "---    "$$0} \
+                        END {print""}'
+
+help:
+	@printf "\n\033[33mmake [OPTIONS]\033[0m\n\nOPTIONS:\n"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
+	| sort \
+	| awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%10s :\033[0m %s\n", $$1, $$2}'
+
+h1:; @figlet -W -flarry3d     $t   | $(COMMENT)
+h4:; @figlet -W -fmini $${t%%.*}   | $(COMMENT)
+h3:; @figlet -W -fsmall  $${t%%.*} | $(COMMENT)
+h2:; @figlet -W -fcybermedium $t   | $(COMMENT)
+
 #----------------------------------------------------
 pdfs: ../docs/pdf/sublime.pdf
 ok:
