@@ -8,10 +8,12 @@
 ;              | Be   |   v  
 ;              |    4 | Better  
 ;              .------.  
-(defmethod thing ((x number)) x)
+(defmethod thing (x)  x)
 (defmethod thing ((x string))
-  (unless (equal x "?") (let ((y (ignore-errors (read-from-string x))))
-                          (if (numberp y) y x))))
+  (if (equal x "?") 
+    x
+    (let ((y (ignore-errors (read-from-string x))))
+      (if (numberp y) y x))))
 
 (defun cli (key flag help b4)
   "if the command line has `flag`, update `b4`."
@@ -68,11 +70,6 @@ OPTIONS:")
 ;      _  _|_  ._  o  ._    _      )    _|_  |_   o  ._    _  
 ;     _>   |_  |   |  | |  (_|    /_     |_  | |  |  | |  (_| 
 ;                           _|                             _| 
-; return a number (if appropriate) or a string
-(defun thing (x)
-  (unless (equal x "?") (let ((y (ignore-errors (read-from-string x))))
-                          (if (numberp y) y x))))
-
 ; return string `s` divided on comma
 (defun cells (s &optional (x 0) (y (position #\, s :start (1+ x))))
   (cons (string-trim '(#\Space #\Tab) (subseq s x y)) 
@@ -189,11 +186,10 @@ OPTIONS:")
   (format t "   ~a ~a" (if test "PASS" "FAIL") msg)
   (when (not test)
     (incf *fails*)
-    (if (!! dump) (assert nil nil msg)))))
+    (if (!! dump) (assert test nil msg))))
 
 (defmacro deftest (name params &body body)
   `(progn (pushnew ',name *tests*) (defun ,name ,params  ,@body)))
-
 (defun tests (&aux (defaults (copy-tree *options*)))
   (dolist (todo (if (!! todo) (list (!! todo)) *tests*))
     (setf *seed* (!! seed))
