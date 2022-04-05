@@ -17,7 +17,8 @@
 
 (defun cli (key flag help b4)
   "if the command line has `flag`, update `b4`."
-  (let* ((args #+clisp ext:*args* #+sbcl (cdr sb-ext:*posix-argv*))
+  (let* ((args #+clisp ext:*args* 
+               #+sbcl  (cdr sb-ext:*posix-argv*))
          (it   (member flag args :test #'equal)))
     (list key flag help 
           (if (not it) 
@@ -96,9 +97,9 @@ OPTIONS:")
 (defun ent (alist &aux (n 0) (e 0))
   (dolist (two alist)   (incf n (elt two 1)))
   (dolist (two alist e) (let ((p (/ (elt two 1) n))) (decf e (* p (log p 2))))))
-
-;     ._ _   o   _   _ 
-;     | | |  |  _>  (_ 
+;                                              _      
+;     |_    _    _.   _|   _   ._    o  ._   _|_   _  
+;     | |  (/_  (_|  (_|  (/_  |     |  | |   |   (_) 
 (defun ako (x kind)
   (let 
     ((l1 '((ignore #\:) (klass #\!) (less #\-) (more #\+) (goal #\+ #\- #\!)))
@@ -172,7 +173,8 @@ OPTIONS:")
     self))
 
 (defmethod add ((self egs) row)
-  (with-slots (cols rows) self (if cols
+  (with-slots (cols rows) self 
+    (if cols
       (push (mapcar #'add cols row) rows)
       (setf cols (make-cols row))))
   row)
@@ -184,12 +186,13 @@ OPTIONS:")
 
 (defun ok (test msg)
   (format t "   ~a ~a" (if test "PASS" "FAIL") msg)
-  (when (not test)
-    (incf *fails*)
-    (if (!! dump) (assert test nil msg))))
+  (unless test
+    (incf *fails* )
+    (if  (!! dump)) (assert test nil msg)))
 
 (defmacro deftest (name params &body body)
   `(progn (pushnew ',name *tests*) (defun ,name ,params  ,@body)))
+
 (defun tests (&aux (defaults (copy-tree *options*)))
   (dolist (todo (if (!! todo) (list (!! todo)) *tests*))
     (setf *seed* (!! seed))
