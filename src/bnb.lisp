@@ -8,15 +8,11 @@
 ;              | Be   |   v  
 ;              |    4 | Better  
 ;              .------.  
-
-; TODO: move cols from push+reverse to mapcar
-
-(defmethod thing (x)  x)
-(defmethod thing ((x string))
-  (if (equal x "?") 
-    x
-    (let ((y (ignore-errors (read-from-string x))))
-      (if (numberp y) y x))))
+(defun thing (x)
+  (cond ((not (stringp x)) x)
+        ((equal x "?")     x)
+        (t (let ((y (ignore-errors (read-from-string x))))
+             (if (numberp y) y x)))))
 
 (defun cli (key flag help b4)
   "if the command line has `flag`, update `b4`."
@@ -28,7 +24,9 @@
             b4 
             (if (eq b4 t) nil (if (eq b4 nil) t (thing (elt it 1))))))))
 
-(defparameter *options* (list '(about "
+
+(defun options () 
+  (list '(about "
 brknbad: explore the world better, explore the world for good.
 (c) 2022, Tim Menzies
 
@@ -41,8 +39,9 @@ OPTIONS:")
   (cli 'license   "-l"  "show license              "  nil)
   (cli 'p         "-p"  "euclidean coefficient     "  2)
   (cli 'seed      "-s"  "random number seed        "  10019)
-  (cli 'todo      "-t"  "start up action           "  "")))
+  (cli 'todo      "-t"  "start up action           "  'nothing)))
 
+(defvar *options* (options))
 ;     ._ _    _.   _  ._   _    _ 
 ;     | | |  (_|  (_  |   (_)  _> 
 ; short hand for querying options
@@ -52,7 +51,7 @@ OPTIONS:")
 ; print options
 (defun show-options (o)
   (format t "~&~a~%" (second (car o)))
-  (dolist (x (cdr o)) (format t "~& ~a ~a = ~a" (elt x 1) (elt x 2) (elt x 3))))
+  (dolist (x (cdr o)) (format t "  ~a ~a = ~a~%" (elt x 1) (elt x 2) (elt x 3))))
 
 ; shorthand for recurisve calls to slot-valyes
 (defmacro ? (s x &rest xs)
@@ -65,11 +64,11 @@ OPTIONS:")
 
 ; file reading iterator
 (defmacro with-csv ((lst file &optional out) &body body)
-  `(progn (%with-csv ,file (lambda (,lst) ,@body)) ,out))
-
-(defun %with-csv (file)
-  (with-open-file (str file)
-    (loop (cells  (or (read-line str nil) (return-from %csv))))))
+  (let ((str (gensym)))
+    `(let (,lst)
+       (with-open-file (,str ,file)
+         (loop while (setf ,lst (read-line ,str nil)) do ,@body)
+         ,out))))
 
 ;      _  _|_  ._  o  ._    _      )    _|_  |_   o  ._    _  
 ;     _>   |_  |   |  | |  (_|    /_     |_  | |  |  | |  (_| 
@@ -82,9 +81,9 @@ OPTIONS:")
 ;     ._   _.  ._    _|   _   ._ _  
 ;     |   (_|  | |  (_|  (_)  | | | 
 (defvar *seed* (!! seed))
-(labels ((park-miller (&aux (multipler 16807.0d0) (modulus 2147483647.0d0))
-                      (setf seed (mod (* multiplier seed) modulus))
-                      (/ seed modulus)))
+(labels ((park-miller (&aux (multiplier 16807.0d0) (modulus 2147483647.0d0))
+                      (setf *seed* (mod (* multiplier *seed*) modulus))
+                      (/ *seed* modulus)))
   (defun randf (&optional (n 1)) (* n (- 1.0d0 (park-miller))))
   (defun randi (&optional (n 1)) (floor (* n (park-miller)))))
 
@@ -117,7 +116,7 @@ OPTIONS:")
 (defstruct (sym  (:constructor %make-sym )) (n 0) at name all mode (most 0))
 
 (defun make-sym (&optional (at 0) (name "")) 
-  (%make-num :at at :name name))
+  (%make-sym :at at :name name))
 
 (defmethod add ((self sym) x)
   (with-slots (n all mode most) self 
@@ -136,31 +135,36 @@ OPTIONS:")
   ok w (hi -1E32) (lo 1E32))
 
 (defun make-num (&optional (at 0) (name ""))
-  (%make-sym :at at :name name :w (if (ako name 'less) -1 1)))
+  (%make-num :at at :name name :w (if (ako name 'less) -1 1)))
 
 (defmethod add ((self num) x)
-  (with-slots (n lo hi all size) self 
+  (with-slots (n lo hi ok all size) self 
     (unless (eq x #\?)
       (incf n)
       (setf lo (min x lo)
             hi (max x hi))
       (cond ((< (length all) size)  (vector-push x all) (setf ok nil))
-            ((< (randf) (/ size n)) (setf (elt (randi (length all))) x
+            ((< (randf) (/ size n)) (setf (elt all (randi (length all))) x
                                           ok nil)))))
   x)
+
+(defmethod holds ((self num))
+  (with-slots (ok all) self
+    (unless ok (setf all (sort all #'<)))
+    (setf ok t)
+    all))
 ;      _   _   |   _ 
 ;     (_  (_)  |  _> 
 (defstruct (cols (:constructor %make-cols)) all x y klass)
 
-(defun make-cols (names)
-  (let ((at -1) all x y klass)
-    (dolist (name names (%make-cols :all (reverse all) :x x :y y :klass klass))
-      (let* ((what (if (ako name 'num)  #'make-name #'make-sym))
-             (now  (funcall what (incf at) name)))
-        (push now all)
-        (when (not (ako name 'ignore))
-          (if (ako name 'goal) (push x now) (push y now))
-          (if (ako name 'klass) (setf klass now)))))))
+(defun make-cols (names &aux (at -1) x y klass all)
+  (dolist (name names (%make-cols :all (reverse all) :x x :y y :klass klass))
+    (let* ((what (if (ako name 'num)  #'make-num #'make-sym))
+           (now  (funcall what (incf at) name)))
+      (push now all)
+      (when (not (ako name 'ignore))
+        (if (ako name 'goal) (push x now) (push y now))
+        (if (ako name 'klass) (setf klass now))))))
 
 ;      _    _    _ 
 ;     (/_  (_|  _> 
@@ -169,10 +173,10 @@ OPTIONS:")
 
 (defun make-egs (&optional from)
   (let ((self (%make-egs)))
-    (cond ((stringp from) 
-           (dolist (row (csv (!! files))) (add self row)))
-          ((consp from)
-           (dolist (row from) (add self row))))
+    (cond ((consp from)
+           (dolist (row from) (add self row)))
+          ((stringp from) 
+           (with-csv (row (!! files)) (add self (mapcar #'thing (cells row))))))
     self))
 
 (defmethod add ((self egs) row)
@@ -181,7 +185,6 @@ OPTIONS:")
       (push (mapcar #'add cols row) rows)
       (setf cols (make-cols row))))
   row)
-
 ;     _|_   _    _  _|_   _ 
 ;      |_  (/_  _>   |_  _> 
 (defvar *tests* nil)
@@ -191,20 +194,26 @@ OPTIONS:")
   (format t "   ~a ~a" (if test "PASS" "FAIL") msg)
   (unless test
     (incf *fails* )
-    (if  (!! dump)) (assert test nil msg)))
+    (if  (!! dump) (assert test nil msg))))
 
 (defmacro deftest (name params &body body)
   `(progn (pushnew ',name *tests*) (defun ,name ,params  ,@body)))
 
 (defun tests (&aux (defaults (copy-tree *options*)))
+ (print *tests*)
+  (print (!! todo))
   (dolist (todo (if (!! todo) (list (!! todo)) *tests*))
-    (setf *seed* (!! seed))
-    (funcall todo)
-    (setf *options* (copy-tree defaults)))
+    (print todo)
+    (when (fboundp todo)
+      (setf *seed* (!! seed))
+      (funcall todo)
+      (setf *options* (copy-tree defaults))))
   #+clisp (exit *fails*)
   #+sbcl  (sb-ext:exit :code *fails*))
+
+(deftest aa () (print 1))
      
 ;      _       _  _|_   _   ._ _  
 ;     _>  \/  _>   |_  (/_  | | | 
 ;         /                       
-(defun make () (load 'bnb))
+(if (!! help) (show-options *options*) (tests))
