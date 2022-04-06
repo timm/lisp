@@ -104,13 +104,14 @@ OPTIONS:")
 ;                                              _      
 ;     |_    _    _.   _|   _   ._    o  ._   _|_   _  
 ;     | |  (/_  (_|  (_|  (/_  |     |  | |   |   (_) 
-(defun ako (x kind)
+(defmethod ako ((s symbol) kind) (ako (symbol-name s) kind))
+(defmethod ako ((s string) kind)
   (let 
     ((l1 '((ignore #\:) (klass #\!) (less #\-) (more #\+) (goal #\+ #\- #\!)))
-     (l2 '((num #\$)))
-     (s  (symbol-name x)))
-    (or (member (char s (1- (length s))) (cdr (assoc kind l1)))
-        (member (char s 0)               (cdr (assoc kind l2))))))
+     (l2 '((num #\$))))
+    (and (> (length s) 1)
+         (or (member (char s (1- (length s))) (cdr (assoc kind l1)))
+             (member (char s 0)               (cdr (assoc kind l2)))))))
 ;      _      ._ _  
 ;     _>  \/  | | | 
 ;         /         
@@ -148,7 +149,7 @@ OPTIONS:")
       (incf n)
       (setf lo (min x lo)
             hi (max x hi))
-      (cond ((< (length all) size)  (vector-push x all) (setf ok nil))
+      (cond ((< (length all) size)  (vector-push-extend x all) (setf ok nil))
             ((< (randf) (/ size n)) (setf (elt all (randi (length all))) x
                                           ok nil)))))
   x)
@@ -250,9 +251,14 @@ OPTIONS:")
     (ok (<= 1.378 (ent x) 1.379) "diversity")))
 
 (deftest .num (&aux (num (make-num)))
-  (print num))
+  (dotimes (i 100000 (print (holds num))) (add num i)))
 
-  ;(dotimes (i 100 num) (add num i)))
+(deftest .sym (&aux (sym (make-sym)))
+  (dotimes (i 100000 (print (sym-all sym))) (add sym (randi 10))))
+
+(deftest .cols (&aux c)
+  (setf c (make-cols '("$ss" "age!" "$weight-")))
+  (print c))
 
 ;      _       _  _|_   _   ._ _  
 ;     _>  \/  _>   |_  (/_  | | | 
