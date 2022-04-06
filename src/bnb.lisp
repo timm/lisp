@@ -21,45 +21,39 @@
                                      (cond ((eq b4 t) nil)
                                            ((eq b4 nil) t) 
                                            (t (thing (elt it 1))))))))
-(defstruct (brknbad (:constructor %make-brknbad))
-  (about "
+(setf *options* '(
+  about "
 brknbad: explore the world better, explore the world for good.
 (c) 2022, Tim Menzies
 
-OPTIONS: ")
-  (cautious  '("-c"  "abort on any error        "  t))
-  (dump      '("-d"  "stack dumps on error      "  nil))
-  (enough    '("-e"  "enough items for a sample "  512))
-  (far       '("-F"  "far away                  "  .9))
-  (file      '("-f"  "read data from file       "  "../data/auto93.csv"))
-  (help      '("-h"  "show help                 "  nil))
-  (license   '("-l"  "show license              "  nil))
-  (p         '("-p"  "euclidean coefficient     "  2))
-  (seed      '("-s"  "random number seed        "  10019))
-  (todo      '("-t"  "start up action           "  "nothing"))))
+OPTIONS: "
+  cautious  ("-c"  "abort on any error        "  t)
+  dump      ("-d"  "stack dumps on error      "  nil)
+  enough    ("-e"  "enough items for a sample "  512)
+  far       ("-F"  "far away                  "  .9)
+  file      ("-f"  "read data from file       "  "../data/auto93.csv")
+  help      ("-h"  "show help                 "  nil)
+  license   ("-l"  "show license              "  nil)
+  p         ("-p"  "euclidean coefficient     "  2)
+  seed      ("-s"  "random number seed        "  10019)
+  todo      ("-t"  "start up action           "  "nothing"))
 
-(defmacro doslots ((slot value it &optional out) &body body)
-  `(dolist (,slot (mapcar #'klass-slot-definition-names (klass-slots it)), ,out)
-     (let ((,value (slot-value ,self ',slot))) ,@body)))
-  
-(defun make-brknbad (&aux (it (%make-brknbad)))
-  (labels 
-    ((cli (flag help b4)
-          (let* ((args #+clisp ext:*args* #+sbcl  (cdr sb-ext:*posix-argv*))
-                 (val   (member flag args :test #'equal)))
-            (list flag help (if (not val) b4
-                              (cond ((eq b4 t) nil)
-                                    ((eq b4 nil) t) 
-                                    (t (thing (elt val 1)))))))))
-    (doslots (slot value it it)
-      (if (not (equalp slot 'about))
-        (setf (slot-value it 'slot) (cli (elt x 0) (elt x 1) (elt x 2)))))))
+          
+(defun cli (options)
+  (labels ((args () #+clisp ext:*args* #+sbcl (cdr sb-ext:*posix-argv*))
+           (cli1 (flag b4 &aux (val (member flag (args) :test #'equal)))
+                 (if (not val) b4 (cond ((eq b4 t) nil)
+                                        ((eq b4 nil) t) 
+                                        (t (thing (elt val 1)))))))
+    (loop for (slot (flag _ b4)) on options by #'cddr do 
+      (if (not (equalp slot 'about)) (setf (getf options slot) (cli flag b4))))
+    options))
 
-(defmethod print-object ((it brknbad) str)
-  (doslots (slot val it)
+(deffun show-options (options)
+  (loop for (slot (flag help b4)) on options by #'cddr do 
     (if (equalp slot 'about)
-      (format str "~&~a~%" value)
-      (format str "  ~a ~a = ~a~%" (elt val 0) (elt val 1) (elt val 2))))
+      (format t "~&~a~%" value)
+      (format t "  ~a ~a = ~a~%" flag help b4)))
 
 (defvar *options* (list '(about "
 brknbad: explore the world better, explore the world for good.
@@ -112,12 +106,6 @@ OPTIONS:")
                    (loop while (setf ,lst (read-line ,str nil)) do 
                      (setf ,lst (mapcar #'thing (cells ,lst))) ,@body))
        ,out)))
-
-(defun klass-slots (it)
-  #+clisp (class-slots (class-of it)) #+sbcl (sb-mop:class-slots (class-of it)))
-
-(defun klass-slot-definition-name (x)
-  #+clisp (slot-definition-name x) #+sbcl (sb-mop:slot-definition-name x))
 
 ;     ._   _.  ._    _|   _   ._ _  
 ;     |   (_|  | |  (_|  (_)  | | | 
