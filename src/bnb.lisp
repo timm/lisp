@@ -36,7 +36,7 @@ OPTIONS: "
   license   ("-l"  "show license              "  nil)
   p         ("-p"  "euclidean coefficient     "  2)
   seed      ("-s"  "random number seed        "  10019)
-  todo      ("-t"  "start up action           "  "nothing"))
+  todo      ("-t"  "start up action           "  "nothing")))
 
           
 (defun cli (options)
