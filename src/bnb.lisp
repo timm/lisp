@@ -8,7 +8,7 @@
 ;              |    4 | Better  
 ;              .------.  
 
-(setf *options* '(
+(defvar *options* '(
   about     "brknbad: explore the world better, explore the world for good.
              (c) 2022, Tim Menzies
             
@@ -26,16 +26,15 @@
 ;;;;---------------------------------------------------------------------------
 
 (defun str2list (s &optional (sep #\,) (x 0) (y (position sep s :start (1+ x))))
-  (cons (subseq s x y) (and y (cells s sep (1+ y)))))
+  (cons (subseq s x y) (and y (str2list s sep (1+ y)))))
 
 (defun show-options (lst)
   (labels ((trim (x) (string-left-trim '(#\Space #\Tab) x)))
-    (dolist (line (str2list (cadr lst) 0 #\Newline))
-      (format t "~&~a~%" (trim line))))
+    (dolist (line (str2list (cadr lst) #\Newline 0))
+      (format t "~&~a~%" (trim line)))
     (loop for (slot (flag help b4)) on (cddr lst) by #'cddr do 
       (format t "  ~a ~a = ~a~%" flag help b4))))
 
-(show-options *options*)
 ;     ._ _    _.   _  ._   _    _ 
 ;     | | |  (_|  (_  |   (_)  _> 
 ; short hand for querying options
@@ -176,7 +175,8 @@
     (cond ((consp from)
            (dolist (row from) (add self row)))
           ((stringp from) 
-           (with-csv (row (? files)) (add self (mapcar #'thing (cells row))))))
+           (with-csv (row (? files))
+             (add self (mapcar #'thing (str2lisp row))))))
     self))
 
 (defmethod add ((self egs) row)
@@ -200,53 +200,53 @@
 (defmacro deftest (name params &body body)
   `(progn (pushnew ',name *tests*) (defun ,name ,params  ,@body)))
 
-(deftest .cells () (print (mapcar #'thing (cells "23,asda,34.1"))))
+(deftest go.cells () (print (mapcar #'thing (str2cells "23,asda,34.1"))))
 
-(deftest .has () 
+(deftest go.has () 
   (let (x y)
     (incf (has 'aa x))
     (incf (has 'aa x))
     (print x)
     (ok (eql 2 (cdr (assoc 'aa x))) "inc assoc list")))
 
-(deftest .csv (&aux (n 0))
+(deftest go.csv (&aux (n 0))
   (with-csv (row (? file)) (incf n))
   (ok (eq 399 n) "reading lines"))
 
-(deftest .normal ()
+(deftest go.normal ()
   (dolist (n '(10000 5000 2500 1250 500 250 125 60 30 15))
     (let (l)
       (setf l (dotimes (i n (sort l #'<)) (push (normal) l)))
       (format t "~5@A : ~6,4f : ~6,4f ~%"  n (sd l) (per l)))))
 
-(deftest .rand (&aux l)
+(deftest go.rand (&aux l)
   (dotimes (i 50) (push (randi 4) l))
   (print (sort l #'<)))
 
-(deftest .ent () 
+(deftest go.ent () 
   (let (x)
     (incf (has 'this x) 4)
     (incf (has 'that x) 2)
     (incf (has 'other x) 1)
     (ok (<= 1.378 (ent x) 1.379) "diversity")))
 
-(deftest .num (&aux (num (make-num)))
+(deftest go.num (&aux (num (make-num)))
   (dotimes (i 100000 (print (holds num))) (add num i)))
 
-(deftest .sym (&aux (sym (make-sym)))
+(deftest go.sym (&aux (sym (make-sym)))
   (dotimes (i 100000 (print (sym-all sym))) (add sym (randi 10))))
 
-(deftest .cols (&aux c)
+(deftest go.cols (&aux c)
   (setf c (make-cols '("$ss" "age!" "$weight-")))
   (print c))
 
-(deftest .egs (&aux e)
+(deftest go.egs (&aux e)
  (make-egs (? file)))
 ;      _       _  _|_   _   ._ _  
 ;     _>  \/  _>   |_  (/_  | | | 
 ;         /                       
 (defun main (&aux (defaults (copy-tree *options*)))
-  (labels ((quit () #+clisp (exit *fails*)
+  (labels ((stop () #+clisp (exit *fails*)
                     #+sbcl  (sb-ext:exit :code *fails*))
            (args () #+clisp ext:*args* 
                     #+sbcl  sb-ext:*posix-argv*)
@@ -268,6 +268,6 @@
       (show-options *options*)
       (dolist (todo (if (equalp "all" (? todo)) *tests* (list (? todo))))
         (test (find-symbol (string-upcase todo)))))
-    (quit)))
+    (stop)))
 
 (main)

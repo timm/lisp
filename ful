@@ -33,6 +33,7 @@ else
   alias ...='cd ../../../'
 
   alias bye="gp; tmux detach"
+  alias bnb="lisp bnb.lisp "
   alias egrep='egrep --color=auto'
   alias fgrep='fgrep --color=auto'
   alias gp="git add *;git commit -am save;git push;git status"
