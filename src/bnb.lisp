@@ -8,11 +8,6 @@
 ;              | Be   |   v  
 ;              |    4 | Better  
 ;              .------.  
-(defun thing (x)
-  (cond ((not (stringp x)) x)
-        ((equal x "?")     #\?)
-        (t (let ((y (ignore-errors (read-from-string x))))
-             (if (numberp y) y x)))))
 
 (defun cli (key flag help b4)
   "if the command line has `flag`, update `b4`."
@@ -22,7 +17,15 @@
     (list key flag help 
           (if (not it) 
             b4 
-            (if (eq b4 t) nil (if (eq b4 nil) t (thing (elt it 1))))))))
+            (cond ((eq b4 t)   nil)
+                  ((eq b4 nil) t) 
+                  (t           (thing (elt it 1))))))))
+
+(defun thing (x)
+  (cond ((not (stringp x)) x)
+        ((equal x "?")     #\?)
+        (t (let ((y (ignore-errors (read-from-string x))))
+             (if (numberp y) y x)))))
 
 (defvar *options* (list '(about "
 brknbad: explore the world better, explore the world for good.
@@ -71,10 +74,9 @@ OPTIONS:")
 ; file reading iterator
 (defmacro with-csv ((lst file &optional out) &body body)
   (let ((str (gensym)))
-    `(let (,lst)
-       (with-open-file (,str ,file)
-         (loop while (setf ,lst (read-line ,str nil)) do 
-           (setf ,lst (mapcar #'thing (cells ,lst))) ,@body))
+    `(let (,lst) (with-open-file (,str ,file)
+                   (loop while (setf ,lst (read-line ,str nil)) do 
+                     (setf ,lst (mapcar #'thing (cells ,lst))) ,@body))
        ,out)))
 
 ;     ._   _.  ._    _|   _   ._ _  
@@ -109,9 +111,8 @@ OPTIONS:")
   (let 
     ((l1 '((ignore #\:) (klass #\!) (less #\-) (more #\+) (goal #\+ #\- #\!)))
      (l2 '((num #\$))))
-    (and (> (length s) 1)
-         (or (member (char s (1- (length s))) (cdr (assoc kind l1)))
-             (member (char s 0)               (cdr (assoc kind l2)))))))
+    (or (member (char s (1- (length s))) (cdr (assoc kind l1)))
+        (member (char s 0)               (cdr (assoc kind l2))))))
 ;      _      ._ _  
 ;     _>  \/  | | | 
 ;         /         
@@ -172,7 +173,7 @@ OPTIONS:")
            (now  (funcall what (incf at) name)))
       (push now all)
       (when (not (ako name 'ignore))
-        (if (ako name 'goal) (push x now) (push y now))
+        (if (ako name 'goal)  (push  now x) (push now y))
         (if (ako name 'klass) (setf klass now))))))
 
 ;      _    _    _ 
@@ -259,7 +260,7 @@ OPTIONS:")
 (deftest .cols (&aux c)
   (setf c (make-cols '("$ss" "age!" "$weight-")))
   (print c))
-
+ 
 ;      _       _  _|_   _   ._ _  
 ;     _>  \/  _>   |_  (/_  | | | 
 ;         /                       
