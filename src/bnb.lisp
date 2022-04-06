@@ -10,7 +10,7 @@
 ;              .------.  
 (defun thing (x)
   (cond ((not (stringp x)) x)
-        ((equal x "?")     x)
+        ((equal x "?")     #\?)
         (t (let ((y (ignore-errors (read-from-string x))))
              (if (numberp y) y x)))))
 
@@ -24,24 +24,22 @@
             b4 
             (if (eq b4 t) nil (if (eq b4 nil) t (thing (elt it 1))))))))
 
-
-(defun options () 
-  (list '(about "
+(defvar *options* (list '(about "
 brknbad: explore the world better, explore the world for good.
 (c) 2022, Tim Menzies
 
 OPTIONS:")
   (cli 'cautious  "-c"  "abort on any error        "  t)
+  (cli 'dump      "-d"  "stack dumps on error      "  nil)
   (cli 'enough    "-e"  "enough items for a sample "  512)
   (cli 'far       "-F"  "far away                  "  .9)
-  (cli 'file      "-f"  "read data from file       "  "../data/auto93.lisp")
+  (cli 'file      "-f"  "read data from file       "  "../data/auto93.csv")
   (cli 'help      "-h"  "show help                 "  nil)
   (cli 'license   "-l"  "show license              "  nil)
   (cli 'p         "-p"  "euclidean coefficient     "  2)
   (cli 'seed      "-s"  "random number seed        "  10019)
-  (cli 'todo      "-t"  "start up action           "  'nothing)))
+  (cli 'todo      "-t"  "start up action           "  "nothing")))
 
-(defvar *options* (options))
 ;     ._ _    _.   _  ._   _    _ 
 ;     | | |  (_|  (_  |   (_)  _> 
 ; short hand for querying options
@@ -62,14 +60,6 @@ OPTIONS:")
   `(cdr (or (assoc ,x ,a :test #'equal)
             (car (setf ,a (cons (cons ,x 0) ,a))))))
 
-; file reading iterator
-(defmacro with-csv ((lst file &optional out) &body body)
-  (let ((str (gensym)))
-    `(let (,lst)
-       (with-open-file (,str ,file)
-         (loop while (setf ,lst (read-line ,str nil)) do ,@body)
-         ,out))))
-
 ;      _  _|_  ._  o  ._    _      )    _|_  |_   o  ._    _  
 ;     _>   |_  |   |  | |  (_|    /_     |_  | |  |  | |  (_| 
 ;                           _|                             _| 
@@ -77,6 +67,15 @@ OPTIONS:")
 (defun cells (s &optional (x 0) (y (position #\, s :start (1+ x))))
   (cons (string-trim '(#\Space #\Tab) (subseq s x y)) 
         (and y (cells s (1+ y)))))
+
+; file reading iterator
+(defmacro with-csv ((lst file &optional out) &body body)
+  (let ((str (gensym)))
+    `(let (,lst)
+       (with-open-file (,str ,file)
+         (loop while (setf ,lst (read-line ,str nil)) do 
+           (setf ,lst (mapcar #'thing (cells ,lst))) ,@body))
+       ,out)))
 
 ;     ._   _.  ._    _|   _   ._ _  
 ;     |   (_|  | |  (_|  (_)  | | | 
@@ -90,6 +89,9 @@ OPTIONS:")
 ;     |  o   _  _|_     _.        _   ._     
 ;     |  |  _>   |_    (_|  |_|  (/_  |   \/ 
 ;                        |                /  
+(defun normal (&optional (mu 0) (sd 1))
+  (+ mu (* sd (sqrt (* -2 (log (randf)))) (cos (* 2 pi (randf))))))
+
 (defun per (seq &optional (p .5) &aux (v (coerce seq 'vector))) 
   (elt v (floor (* p (length v)))))
 
@@ -97,8 +99,8 @@ OPTIONS:")
   (/ (- (funcall key (per seq .9)) (funcall key (per seq .1))) 2.56))
    
 (defun ent (alist &aux (n 0) (e 0))
-  (dolist (two alist)   (incf n (elt two 1)))
-  (dolist (two alist e) (let ((p (/ (elt two 1) n))) (decf e (* p (log p 2))))))
+  (dolist (two alist) (incf n (cdr two)))
+  (dolist (two alist e) (let ((p (/ (cdr two) n))) (decf e (* p (log p 2))))))
 ;                                              _      
 ;     |_    _    _.   _|   _   ._    o  ._   _|_   _  
 ;     | |  (/_  (_|  (_|  (/_  |     |  | |   |   (_) 
@@ -127,6 +129,9 @@ OPTIONS:")
           (setf most now
                 mode x)))))
   x)
+
+(defmethod div ((self sym)) (ent (sym-all self)))
+(defmethod mid ((self sym)) (sym-mode self))
 ;     ._        ._ _  
 ;     | |  |_|  | | | 
 (defstruct (num  (:constructor %make-num )) (n 0) at name 
@@ -147,6 +152,9 @@ OPTIONS:")
             ((< (randf) (/ size n)) (setf (elt all (randi (length all))) x
                                           ok nil)))))
   x)
+
+(defmethod div ((self num)) (sd  (holds self)))
+(defmethod mid ((self num)) (per (holds self)))
 
 (defmethod holds ((self num))
   (with-slots (ok all) self
@@ -191,28 +199,61 @@ OPTIONS:")
 (defvar *fails* 0)
 
 (defun ok (test msg)
-  (format t "   ~a ~a" (if test "PASS" "FAIL") msg)
-  (unless test
-    (incf *fails* )
-    (if  (!! dump) (assert test nil msg))))
+  (cond (test (format t "~aPASS ~a~%" #\Tab  msg))
+        (t    (incf *fails* )
+              (if (!! dump) 
+                (assert test nil msg) 
+                (format t "~aFAIL ~a~%" #\Tab msg)))))
 
 (defmacro deftest (name params &body body)
   `(progn (pushnew ',name *tests*) (defun ,name ,params  ,@body)))
 
 (defun tests (&aux (defaults (copy-tree *options*)))
- (print *tests*)
-  (print (!! todo))
-  (dolist (todo (if (!! todo) (list (!! todo)) *tests*))
-    (print todo)
+  (dolist (todo (if (equalp "all" (!! todo)) *tests* (list (!! todo))))
+    (setf todo (find-symbol (string-upcase todo)))
     (when (fboundp todo)
+      (format t "~a~%" todo)
       (setf *seed* (!! seed))
       (funcall todo)
       (setf *options* (copy-tree defaults))))
   #+clisp (exit *fails*)
   #+sbcl  (sb-ext:exit :code *fails*))
 
-(deftest aa () (print 1))
-     
+(deftest .cells () (print (mapcar #'thing (cells "23,asda,34.1"))))
+
+(deftest .has () 
+  (let (x y)
+    (incf (has 'aa x))
+    (incf (has 'aa x))
+    (print x)
+    (ok (eql 2 (cdr (assoc 'aa x))) "inc assoc list")))
+
+(deftest .csv (&aux (n 0))
+  (with-csv (row (!! file)) (incf n))
+  (ok (eq 399 n) "reading lines"))
+
+(deftest .normal ()
+  (dolist (n '(10000 5000 2500 1250 500 250 125 60 30 15))
+    (let (l)
+      (setf l (dotimes (i n (sort l #'<)) (push (normal) l)))
+      (format t "~5@A : ~6,4f : ~6,4f ~%"  n (sd l) (per l)))))
+
+(deftest .rand (&aux l)
+  (dotimes (i 50) (push (randi 4) l))
+  (print (sort l #'<)))
+
+(deftest .ent () 
+  (let (x)
+    (incf (has 'this x) 4)
+    (incf (has 'that x) 2)
+    (incf (has 'other x) 1)
+    (ok (<= 1.378 (ent x) 1.379) "diversity")))
+
+(deftest .num (&aux (num (make-num)))
+  (print num))
+
+  ;(dotimes (i 100 num) (add num i)))
+
 ;      _       _  _|_   _   ._ _  
 ;     _>  \/  _>   |_  (/_  | | | 
 ;         /                       
