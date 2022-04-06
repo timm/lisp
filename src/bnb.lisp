@@ -8,25 +8,11 @@
 ;              |    4 | Better  
 ;              .------.  
 
-(defun thing (x)
-  (cond ((not (stringp x)) x)
-        ((equal x "?")     #\?)
-        (t (let ((y (ignore-errors (read-from-string x))))
-             (if (numberp y) y x)))))
-
-(defun cli (key flag help b4)
-  (let* ((args #+clisp ext:*args* #+sbcl  (cdr sb-ext:*posix-argv*))
-         (it   (member flag args :test #'equal)))
-    (list key flag help (if (not it) b4
-                                     (cond ((eq b4 t) nil)
-                                           ((eq b4 nil) t) 
-                                           (t (thing (elt it 1))))))))
 (setf *options* '(
-  about "
-brknbad: explore the world better, explore the world for good.
-(c) 2022, Tim Menzies
-
-OPTIONS: "
+  about     ("" "brknbad: explore the world better, explore the world for good.
+                 (c) 2022, Tim Menzies
+            
+                 OPTIONS: " "")
   cautious  ("-c"  "abort on any error        "  t)
   dump      ("-d"  "stack dumps on error      "  nil)
   enough    ("-e"  "enough items for a sample "  512)
@@ -37,50 +23,12 @@ OPTIONS: "
   p         ("-p"  "euclidean coefficient     "  2)
   seed      ("-s"  "random number seed        "  10019)
   todo      ("-t"  "start up action           "  "nothing")))
-
-          
-(defun cli (options)
-  (labels ((args () #+clisp ext:*args* #+sbcl (cdr sb-ext:*posix-argv*))
-           (cli1 (flag b4 &aux (val (member flag (args) :test #'equal)))
-                 (if (not val) b4 (cond ((eq b4 t) nil)
-                                        ((eq b4 nil) t) 
-                                        (t (thing (elt val 1)))))))
-    (loop for (slot (flag _ b4)) on options by #'cddr do 
-      (if (not (equalp slot 'about)) (setf (getf options slot) (cli flag b4))))
-    options))
-
-(deffun show-options (options)
-  (loop for (slot (flag help b4)) on options by #'cddr do 
-    (if (equalp slot 'about)
-      (format t "~&~a~%" value)
-      (format t "  ~a ~a = ~a~%" flag help b4)))
-
-(defvar *options* (list '(about "
-brknbad: explore the world better, explore the world for good.
-(c) 2022, Tim Menzies
-
-OPTIONS:")
-  (cli 'cautious  "-c"  "abort on any error        "  t)
-  (cli 'dump      "-d"  "stack dumps on error      "  nil)
-  (cli 'enough    "-e"  "enough items for a sample "  512)
-  (cli 'far       "-F"  "far away                  "  .9)
-  (cli 'file      "-f"  "read data from file       "  "../data/auto93.csv")
-  (cli 'help      "-h"  "show help                 "  nil)
-  (cli 'license   "-l"  "show license              "  nil)
-  (cli 'p         "-p"  "euclidean coefficient     "  2)
-  (cli 'seed      "-s"  "random number seed        "  10019)
-  (cli 'todo      "-t"  "start up action           "  "nothing")))
-
+;;;;---------------------------------------------------------------------------
 ;     ._ _    _.   _  ._   _    _ 
 ;     | | |  (_|  (_  |   (_)  _> 
 ; short hand for querying options
 (defmacro ? (x) 
-  `(third (cdr (assoc ',x *options* :test #'equal))))
-
-; print options
-(defun show-options (o)
-  (format t "~&~a~%" (second (car o)))
-  (dolist (x (cdr o)) (format t "  ~a ~a = ~a~%" (elt x 1) (elt x 2) (elt x 3))))
+  `(third (getf *options* ',x)))
 
 ; shorthand for recurisve calls to slot-valyes
 (defmacro o (s x &rest xs)
@@ -95,7 +43,13 @@ OPTIONS:")
 ;     _>   |_  |   |  | |  (_|    /_     |_  | |  |  | |  (_| 
 ;                           _|                             _| 
 ; return string `s` divided on comma
-(defun cells (s &optional (x 0) (y (position #\, s :start (1+ x))))
+(defun thing (x)
+  (cond ((not (stringp x)) x)
+        ((equal x "?")     #\?)
+        (t (let ((y (ignore-errors (read-from-string x))))
+             (if (numberp y) y x)))))
+         
+(defun str->list (s &optional (x 0) (y (position #\, s :start (1+ x))))
   (cons (string-trim '(#\Space #\Tab) (subseq s x y)) 
         (and y (cells s (1+ y)))))
 
@@ -104,7 +58,7 @@ OPTIONS:")
   (let ((str (gensym)))
     `(let (,lst) (with-open-file (,str ,file)
                    (loop while (setf ,lst (read-line ,str nil)) do 
-                     (setf ,lst (mapcar #'thing (cells ,lst))) ,@body))
+                     (setf ,lst (mapcar #'thing (str->list ,lst))) ,@body))
        ,out)))
 
 ;     ._   _.  ._    _|   _   ._ _  
@@ -238,17 +192,6 @@ OPTIONS:")
 (defmacro deftest (name params &body body)
   `(progn (pushnew ',name *tests*) (defun ,name ,params  ,@body)))
 
-(defun tests (&aux (defaults (copy-tree *options*)))
-  (dolist (todo (if (equalp "all" (? todo)) *tests* (list (? todo))))
-    (setf todo (find-symbol (string-upcase todo)))
-    (when (fboundp todo)
-      (format t "~a~%" todo)
-      (setf *seed* (? seed))
-      (funcall todo)
-      (setf *options* (copy-tree defaults))))
-  #+clisp (exit *fails*)
-  #+sbcl  (sb-ext:exit :code *fails*))
-
 (deftest .cells () (print (mapcar #'thing (cells "23,asda,34.1"))))
 
 (deftest .has () 
@@ -294,4 +237,29 @@ OPTIONS:")
 ;      _       _  _|_   _   ._ _  
 ;     _>  \/  _>   |_  (/_  | | | 
 ;         /                       
-(if (? help) (show-options *options*) (tests))
+(defun main (&aux (defaults (copy-tree *options*)))
+  (dolist (todo (if (equalp "all" (? todo)) *tests* (list (? todo))))
+    (setf todo (find-symbol (string-upcase todo)))
+    (when (fboundp todo)
+      (format t "~a~%" todo)
+      (setf *seed* (? seed))
+      (funcall todo)
+      (setf *options* (copy-tree defaults))))
+  #+clisp (exit *fails*)
+  #+sbcl  (sb-ext:exit :code *fails*))
+
+(labels ((trim (x) (string-left-trim '(#\Space #\Tab) x))
+         (args () #+clisp ext:*args* #+sbcl (cdr sb-ext:*posix-argv*))
+         (cli (flag b4 &aux (val (member flag (args) :test #'equal)))
+              (if (not val) b4 (cond ((eq b4 t) nil)
+                                     ((eq b4 nil) t) 
+                                     (t (thing (elt val 1))))))
+         (show () (loop for (slot (flag help b4)) on *options* by #'cddr do 
+                    (if (equalp slot 'about)
+                      (dolist (line (mapcar #'trim (str->list help 0 #\Newline)))
+                         (format t "~&~a~%" line))
+                      (format t "  ~a ~a = ~a~%" flag help b4)))))
+  (loop for (slot (flag help b4)) on *options* by #'cddr do 
+    (if (not (equalp slot 'about)) 
+      (setf (getf *options* slot) `(,flag ,help ,(cli flag b4)))))
+  (if (? help) (show) (main)))
