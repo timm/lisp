@@ -1,5 +1,4 @@
-; brknbad: explore the world better, explore the world for good.
-; (c) 2022, Tim Menzies
+; vim: ts=2 sw=2 et :
 ;
 ;      .-------.  
 ;      | Ba    | Bad <----.  planning= (better - bad)
@@ -9,23 +8,58 @@
 ;              |    4 | Better  
 ;              .------.  
 
-(defun cli (key flag help b4)
-  "if the command line has `flag`, update `b4`."
-  (let* ((args #+clisp ext:*args* 
-               #+sbcl  (cdr sb-ext:*posix-argv*))
-         (it   (member flag args :test #'equal)))
-    (list key flag help 
-          (if (not it) 
-            b4 
-            (cond ((eq b4 t)   nil)
-                  ((eq b4 nil) t) 
-                  (t           (thing (elt it 1))))))))
-
 (defun thing (x)
   (cond ((not (stringp x)) x)
         ((equal x "?")     #\?)
         (t (let ((y (ignore-errors (read-from-string x))))
              (if (numberp y) y x)))))
+
+(defun cli (key flag help b4)
+  (let* ((args #+clisp ext:*args* #+sbcl  (cdr sb-ext:*posix-argv*))
+         (it   (member flag args :test #'equal)))
+    (list key flag help (if (not it) b4
+                                     (cond ((eq b4 t) nil)
+                                           ((eq b4 nil) t) 
+                                           (t (thing (elt it 1))))))))
+(defstruct (brknbad (:constructor %make-brknbad))
+  (about "
+brknbad: explore the world better, explore the world for good.
+(c) 2022, Tim Menzies
+
+OPTIONS: ")
+  (cautious  '("-c"  "abort on any error        "  t))
+  (dump      '("-d"  "stack dumps on error      "  nil))
+  (enough    '("-e"  "enough items for a sample "  512))
+  (far       '("-F"  "far away                  "  .9))
+  (file      '("-f"  "read data from file       "  "../data/auto93.csv"))
+  (help      '("-h"  "show help                 "  nil))
+  (license   '("-l"  "show license              "  nil))
+  (p         '("-p"  "euclidean coefficient     "  2))
+  (seed      '("-s"  "random number seed        "  10019))
+  (todo      '("-t"  "start up action           "  "nothing"))))
+
+(defmacro doslots ((slot value it &optional out) &body body)
+  `(dolist (,slot (mapcar #'klass-slot-definition-names (klass-slots it)), ,out)
+     (let ((,value (slot-value ,self ',slot))) ,@body)))
+  
+(defun make-brknbad (&aux (it (%make-brknbad)))
+  (labels 
+    ((cli (flag help b4)
+          (let* ((args #+clisp ext:*args* #+sbcl  (cdr sb-ext:*posix-argv*))
+                 (val   (member flag args :test #'equal)))
+            (list flag help (if (not val) b4
+                              (cond ((eq b4 t) nil)
+                                    ((eq b4 nil) t) 
+                                    (t (thing (elt val 1)))))))))
+    (doslots (slot value it it)
+      (if (not (equalp slot 'about))
+        (setf (slot-value it 'slot) (cli (elt x 0) (elt x 1) (elt x 2)))))))
+
+(defmethod print-object ((it brknbad) str)
+  (doslots (slot val it)
+    (if (equalp slot 'about)
+      (format str "~&~a~%" value)
+      (format str "  ~a ~a = ~a~%" (elt val 0) (elt val 1) (elt val 2))))
 
 (defvar *options* (list '(about "
 brknbad: explore the world better, explore the world for good.
@@ -46,7 +80,7 @@ OPTIONS:")
 ;     ._ _    _.   _  ._   _    _ 
 ;     | | |  (_|  (_  |   (_)  _> 
 ; short hand for querying options
-(defmacro !! (x) 
+(defmacro ? (x) 
   `(third (cdr (assoc ',x *options* :test #'equal))))
 
 ; print options
@@ -55,8 +89,8 @@ OPTIONS:")
   (dolist (x (cdr o)) (format t "  ~a ~a = ~a~%" (elt x 1) (elt x 2) (elt x 3))))
 
 ; shorthand for recurisve calls to slot-valyes
-(defmacro ? (s x &rest xs)
-  (if xs `(? (slot-value ,s ',x) ,@xs) `(slot-value ,s ',x)))
+(defmacro o (s x &rest xs)
+  (if xs `(o (slot-value ,s ',x) ,@xs) `(slot-value ,s ',x)))
 
 ; ensure `a` has a cells `(x . number)` (where number defaults to 0)
 (defmacro has (x a)
@@ -79,9 +113,15 @@ OPTIONS:")
                      (setf ,lst (mapcar #'thing (cells ,lst))) ,@body))
        ,out)))
 
+(defun klass-slots (it)
+  #+clisp (class-slots (class-of it)) #+sbcl (sb-mop:class-slots (class-of it)))
+
+(defun klass-slot-definition-name (x)
+  #+clisp (slot-definition-name x) #+sbcl (sb-mop:slot-definition-name x))
+
 ;     ._   _.  ._    _|   _   ._ _  
 ;     |   (_|  | |  (_|  (_)  | | | 
-(defvar *seed* (!! seed))
+(defvar *seed* (? seed))
 (labels ((park-miller (&aux (multiplier 16807.0d0) (modulus 2147483647.0d0))
                       (setf *seed* (mod (* multiplier *seed*) modulus))
                       (/ *seed* modulus)))
@@ -138,7 +178,7 @@ OPTIONS:")
 ;     | |  |_|  | | | 
 (defstruct (num  (:constructor %make-num )) (n 0) at name 
   (all (make-array 5 :fill-pointer 0))
-  (size (!! enough)) 
+  (size (? enough)) 
   ok w (hi -1E32) (lo 1E32))
 
 (defun make-num (&optional (at 0) (name ""))
@@ -186,7 +226,7 @@ OPTIONS:")
     (cond ((consp from)
            (dolist (row from) (add self row)))
           ((stringp from) 
-           (with-csv (row (!! files)) (add self (mapcar #'thing (cells row))))))
+           (with-csv (row (? files)) (add self (mapcar #'thing (cells row))))))
     self))
 
 (defmethod add ((self egs) row)
@@ -203,7 +243,7 @@ OPTIONS:")
 (defun ok (test msg)
   (cond (test (format t "~aPASS ~a~%" #\Tab  msg))
         (t    (incf *fails* )
-              (if (!! dump) 
+              (if (? dump) 
                 (assert test nil msg) 
                 (format t "~aFAIL ~a~%" #\Tab msg)))))
 
@@ -211,11 +251,11 @@ OPTIONS:")
   `(progn (pushnew ',name *tests*) (defun ,name ,params  ,@body)))
 
 (defun tests (&aux (defaults (copy-tree *options*)))
-  (dolist (todo (if (equalp "all" (!! todo)) *tests* (list (!! todo))))
+  (dolist (todo (if (equalp "all" (? todo)) *tests* (list (? todo))))
     (setf todo (find-symbol (string-upcase todo)))
     (when (fboundp todo)
       (format t "~a~%" todo)
-      (setf *seed* (!! seed))
+      (setf *seed* (? seed))
       (funcall todo)
       (setf *options* (copy-tree defaults))))
   #+clisp (exit *fails*)
@@ -231,7 +271,7 @@ OPTIONS:")
     (ok (eql 2 (cdr (assoc 'aa x))) "inc assoc list")))
 
 (deftest .csv (&aux (n 0))
-  (with-csv (row (!! file)) (incf n))
+  (with-csv (row (? file)) (incf n))
   (ok (eq 399 n) "reading lines"))
 
 (deftest .normal ()
@@ -260,8 +300,10 @@ OPTIONS:")
 (deftest .cols (&aux c)
   (setf c (make-cols '("$ss" "age!" "$weight-")))
   (print c))
- 
+
+(deftest .egs (&aux e)
+ (make-egs (? file)))
 ;      _       _  _|_   _   ._ _  
 ;     _>  \/  _>   |_  (/_  | | | 
 ;         /                       
-(if (!! help) (show-options *options*) (tests))
+(if (? help) (show-options *options*) (tests))
