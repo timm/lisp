@@ -25,14 +25,13 @@
   todo      ("-t"  "start up action           "  "nothing")))
 ;;;;---------------------------------------------------------------------------
 
-(defun str->list (s &optional (x 0) (y (position #\, s :start (1+ x))))
-  (cons (string-trim '(#\Space #\Tab) (subseq s x y)) 
-        (and y (cells s (1+ y)))))
+(defun str2list (s &optional (sep #\,) (x 0) (y (position sep s :start (1+ x))))
+  (cons (subseq s x y) (and y (cells s sep (1+ y)))))
 
 (defun show-options (lst)
-  (labels ((trim (x) (trim-string-left '(#\Space #\Tab) x)))
-    (dolist (line (mapcar #'trim (str->list (cadr lst) 0 #\Newline)))
-      (format t "~&~a~%" line))
+  (labels ((trim (x) (string-left-trim '(#\Space #\Tab) x)))
+    (dolist (line (str2list (cadr lst) 0 #\Newline))
+      (format t "~&~a~%" (trim line))))
     (loop for (slot (flag help b4)) on (cddr lst) by #'cddr do 
       (format t "  ~a ~a = ~a~%" flag help b4))))
 
@@ -60,7 +59,7 @@
   (cond ((not (stringp x)) x)
         ((equal x "?")     #\?)
         (t (let ((y (ignore-errors (read-from-string x))))
-             (if (numberp y) y x)))))
+             (if (numberp y) y (string-trim '(#\Space #\Tab) x))))))
          
 ; file reading iterator
 (defmacro with-csv ((lst file &optional out) &body body)
