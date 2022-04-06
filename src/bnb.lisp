@@ -9,10 +9,10 @@
 ;              .------.  
 
 (setf *options* '(
-  about     ("" "brknbad: explore the world better, explore the world for good.
-                 (c) 2022, Tim Menzies
+  about     "brknbad: explore the world better, explore the world for good.
+             (c) 2022, Tim Menzies
             
-                 OPTIONS: " "")
+             OPTIONS: "
   cautious  ("-c"  "abort on any error        "  t)
   dump      ("-d"  "stack dumps on error      "  nil)
   enough    ("-e"  "enough items for a sample "  512)
@@ -24,6 +24,19 @@
   seed      ("-s"  "random number seed        "  10019)
   todo      ("-t"  "start up action           "  "nothing")))
 ;;;;---------------------------------------------------------------------------
+
+(defun str->list (s &optional (x 0) (y (position #\, s :start (1+ x))))
+  (cons (string-trim '(#\Space #\Tab) (subseq s x y)) 
+        (and y (cells s (1+ y)))))
+
+(defun show-options (lst)
+  (labels ((trim (x) (trim-string-left '(#\Space #\Tab) x)))
+    (dolist (line (mapcar #'trim (str->list (cadr lst) 0 #\Newline)))
+      (format t "~&~a~%" line))
+    (loop for (slot (flag help b4)) on (cddr lst) by #'cddr do 
+      (format t "  ~a ~a = ~a~%" flag help b4))))
+
+(show-options *options*)
 ;     ._ _    _.   _  ._   _    _ 
 ;     | | |  (_|  (_  |   (_)  _> 
 ; short hand for querying options
@@ -49,10 +62,6 @@
         (t (let ((y (ignore-errors (read-from-string x))))
              (if (numberp y) y x)))))
          
-(defun str->list (s &optional (x 0) (y (position #\, s :start (1+ x))))
-  (cons (string-trim '(#\Space #\Tab) (subseq s x y)) 
-        (and y (cells s (1+ y)))))
-
 ; file reading iterator
 (defmacro with-csv ((lst file &optional out) &body body)
   (let ((str (gensym)))
@@ -238,28 +247,28 @@
 ;     _>  \/  _>   |_  (/_  | | | 
 ;         /                       
 (defun main (&aux (defaults (copy-tree *options*)))
-  (dolist (todo (if (equalp "all" (? todo)) *tests* (list (? todo))))
-    (setf todo (find-symbol (string-upcase todo)))
-    (when (fboundp todo)
-      (format t "~a~%" todo)
-      (setf *seed* (? seed))
-      (funcall todo)
-      (setf *options* (copy-tree defaults))))
-  #+clisp (exit *fails*)
-  #+sbcl  (sb-ext:exit :code *fails*))
+  (labels ((quit () #+clisp (exit *fails*)
+                    #+sbcl  (sb-ext:exit :code *fails*))
+           (args () #+clisp ext:*args* 
+                    #+sbcl  sb-ext:*posix-argv*)
+           (cli  (flag b4 &aux (val (member flag (args) :test #'equal)))
+                 (if (not val) b4 
+                   (cond ((eq b4 t) nil)
+                         ((eq b4 nil) t) 
+                         (t (thing (elt val 1))))))
+           (test  (todo)
+                  (when (fboundp todo) 
+                    (format t "~a~%" todo)
+                    (setf *seed* (? seed))
+                    (funcall todo)
+                    (setf *options* (copy-tree defaults)))))
+    (loop for (slot (flag help b4)) on (cddr *options*) by #'cddr do 
+      (setf (getf *options* slot) 
+            (list flag help (cli flag b4))))
+    (if (? help) 
+      (show-options *options*)
+      (dolist (todo (if (equalp "all" (? todo)) *tests* (list (? todo))))
+        (test (find-symbol (string-upcase todo)))))
+    (quit)))
 
-(labels ((trim (x) (string-left-trim '(#\Space #\Tab) x))
-         (args () #+clisp ext:*args* #+sbcl (cdr sb-ext:*posix-argv*))
-         (cli (flag b4 &aux (val (member flag (args) :test #'equal)))
-              (if (not val) b4 (cond ((eq b4 t) nil)
-                                     ((eq b4 nil) t) 
-                                     (t (thing (elt val 1))))))
-         (show () (loop for (slot (flag help b4)) on *options* by #'cddr do 
-                    (if (equalp slot 'about)
-                      (dolist (line (mapcar #'trim (str->list help 0 #\Newline)))
-                         (format t "~&~a~%" line))
-                      (format t "  ~a ~a = ~a~%" flag help b4)))))
-  (loop for (slot (flag help b4)) on *options* by #'cddr do 
-    (if (not (equalp slot 'about)) 
-      (setf (getf *options* slot) `(,flag ,help ,(cli flag b4)))))
-  (if (? help) (show) (main)))
+(main)
