@@ -16,10 +16,11 @@
 ;              .------.  
 
 (defvar *options* '(
-  about     "brknbad: explore the world better, explore the world for good.
-             (c) 2022, Tim Menzies
-            
-             OPTIONS: "
+  about     "
+    brknbad: explore the world better, explore the world for good.
+    (c) 2022, Tim Menzies
+         
+    OPTIONS: "
   cautious  ("-c"  "abort on any error        "  t)
   dump      ("-d"  "stack dumps on error      "  nil)
   enough    ("-e"  "enough items for a sample "  512)
@@ -71,78 +72,25 @@
 ;    ____ _  _ _  _ ____ ___ _ ____ _  _ ____ 
 ;    |___ |  | |\ | |     |  | |  | |\ | [__  
 ;    |    |__| | \| |___  |  | |__| | \| ___] 
-
-(defun str2list (s &optional (sep #\,) (x 0) (y (position sep s :start (1+ x))))
-  (cons (subseq s x y) (and y (str2list s sep (1+ y)))))
-
-(defun show-options (lst)
-  (labels ((trim (x) (string-left-trim '(#\Space #\Tab) x)))
-    (dolist (line (str2list (cadr lst) #\Newline 0))
-      (format t "~&~a~%" (trim line)))
-    (loop for (slot (flag help b4)) on (cddr lst) by #'cddr do 
-      (format t "  ~a ~a = ~a~%" flag help b4))))
-
-;; macros
+;;------------------------------------------------------------------------------
 (defmacro ? (x) 
-  " short hand for nested slot queries"
+  "short hand for access option fields"
   `(third (getf *options* ',x)))
 
 (defmacro o (s x &rest xs)
-  " shorthand for recurisve calls to slot-valyes"
+  "shorthand for recurisve calls to slot-valyes"
   (if xs `(o (slot-value ,s ',x) ,@xs) `(slot-value ,s ',x)))
 
 (defmacro has (x a)
-  " ensure `a` has a cells `(x . number)` (where number defaults to 0)"
+  "ensure `a` has a cells `(x . number)` (where number defaults to 0)"
   `(cdr (or (assoc ,x ,a :test #'equal)
             (car (setf ,a (cons (cons ,x 0) ,a))))))
-
-(defun thing (x)
-  "coerce `x` from a string to a non-string"
-  (cond ((not (stringp x)) x)
-        ((equal x "?")     #\?)
-        (t (let ((y (ignore-errors (read-from-string x))))
-             (if (numberp y) y (string-trim '(#\Space #\Tab) x))))))
-         
-(defmacro with-csv ((lst file &optional out) &body body)
-  " file reading iterator"
-  (let ((str (gensym)))
-    `(let (,lst) (with-open-file (,str ,file)
-                   (loop while (setf ,lst (read-line ,str nil)) do 
-                     (setf ,lst (mapcar #'thing (str2list ,lst))) ,@body))
-       ,out)))
-
-;; random
-(defvar *seed* (? seed))
-(labels ((park-miller (&aux (multiplier 16807.0d0) (modulus 2147483647.0d0))
-                      (setf *seed* (mod (* multiplier *seed*) modulus))
-                      (/ *seed* modulus)))
-  (defun randf (&optional (n 1)) (* n (- 1.0d0 (park-miller))))
-  (defun randi (&optional (n 1)) (floor (* n (park-miller)))))
-
-;; lists
-(defun triangle (&optional (c .5) &aux (u (randf)) (v (randf)))
-  "https://www.sciencedirect.com/science/article/pii/S0895717708002665"
-  (+ (* (- 1 c) (min u v)) (* c (max u v))))
-
-(defun normal (&optional (mu 0) (sd 1))
-  (+ mu (* sd (sqrt (* -2 (log (randf)))) (cos (* 2 pi (randf))))))
-
-(defun per (seq &optional (p .5) &aux (v (coerce seq 'vector))) 
-  (elt v (floor (* p (length v)))))
-
-(defun sd (seq &optional (key #'identity)) 
-  (/ (- (funcall key (per seq .9)) (funcall key (per seq .1))) 2.56))
-   
-(defun ent (alist &aux (n 0) (e 0))
-  (dolist (two alist) (incf n (cdr two)))
-  (dolist (two alist e) (let ((p (/ (cdr two) n))) (decf e (* p (log p 2))))))
-
-;     _|_   _    _  _|_   _ 
-;      |_  (/_  _>   |_  _> 
+;;------------------------------------------------------------------------------
 (defvar *tests* nil)
 (defvar *fails* 0)
 
 (defun ok (test msg)
+  "handle tests within a test function"
   (cond (test (format t "~aPASS ~a~%" #\Tab  msg))
         (t    (incf *fails* )
               (if (? dump) 
@@ -150,11 +98,66 @@
                 (format t "~aFAIL ~a~%" #\Tab msg)))))
 
 (defmacro deftest (name params &body body)
+  "define a test function"
   `(progn (pushnew ',name *tests*) (defun ,name ,params  ,@body)))
+;;------------------------------------------------------------------------------
+(defun thing (x)
+  "coerce `x` from a string to a non-string"
+  (cond ((not (stringp x)) x)
+        ((equal x "?")     #\?)
+        (t (let ((y (ignore-errors (read-from-string x))))
+             (if (numberp y) y (string-trim '(#\Space #\Tab) x))))))
+         
+(defun str2list (s &optional (sep #\,) (x 0) (y (position sep s :start (1+ x))))
+  "divide `s` on `sep`"
+  (cons (subseq s x y) (and y (str2list s sep (1+ y)))))
 
-;     ._ _    _.  o  ._  
-;     | | |  (_|  |  | | 
+(defmacro with-csv ((lst file &optional out) &body body)
+  "file reading iterator"
+  (let ((str (gensym)))
+    `(let (,lst) (with-open-file (,str ,file)
+                   (loop while (setf ,lst (read-line ,str nil)) do 
+                     (setf ,lst (mapcar #'thing (str2list ,lst))) ,@body))
+       ,out)))
+;;------------------------------------------------------------------------------
+(defun show-options (lst)
+  "pretty print *options*"
+  (labels ((trim (x) (string-left-trim '(#\Space #\Tab) x)))
+    (dolist (line (str2list (cadr lst) #\Newline 0))
+      (format t "~&~a~%" (trim line)))
+    (loop for (slot (flag help b4)) on (cddr lst) by #'cddr do 
+      (format t "  ~a ~a = ~a~%" flag help b4))))
+;;------------------------------------------------------------------------------
+(defvar *seed* (? seed))
+(labels ((park-miller (&aux (multiplier 16807.0d0) (modulus 2147483647.0d0))
+                      (setf *seed* (mod (* multiplier *seed*) modulus))
+                      (/ *seed* modulus)))
+  (defun randf (&optional (n 1)) (* n (- 1.0d0 (park-miller))))
+  (defun randi (&optional (n 1)) (floor (* n (park-miller)))))
+
+(defun triangle (&optional (c .5) &aux (u (randf)) (v (randf)))
+  "Return sample from triangular distribution doi.org/10.1016/j.mcm.2008.06.013"
+  (+ (* (- 1 c) (min u v)) (* c (max u v))))
+
+(defun normal (&optional (mu 0) (sd 1))
+  "Return sample from normal distribution"
+  (+ mu (* sd (sqrt (* -2 (log (randf)))) (cos (* 2 pi (randf))))))
+;;------------------------------------------------------------------------------
+(defun per (seq &optional (p .5) &aux (v (coerce seq 'vector))) 
+  "Return `p`-th item from seq"
+  (elt v (floor (* p (length v)))))
+
+(defun sd (seq &optional (key #'identity)) 
+  "Find sd from a sorted list"
+  (/ (- (funcall key (per seq .9)) (funcall key (per seq .1))) 2.56))
+   
+(defun ent (alist &aux (n 0) (e 0))
+  "Return entropy of symbols in an assoc list"
+  (dolist (two alist) (incf n (cdr two)))
+  (dolist (two alist e) (let ((p (/ (cdr two) n))) (decf e (* p (log p 2))))))
+;;------------------------------------------------------------------------------
 (defun main (&aux (defaults (copy-tree *options*)))
+  "Update *options* from command-line. Run the test suite."
   (labels ((stop () #+clisp (exit *fails*)
                     #+sbcl  (sb-ext:exit :code *fails*))
            (args () #+clisp ext:*args* 
@@ -167,7 +170,6 @@
            (test (todo)  (when (fboundp todo) 
                           (format t "~a~%" (type-of todo))
                           (setf *seed* (? seed))
-                          (print 11)
                           (funcall todo)
                           (setf *options* (copy-tree defaults)))))
     (loop for (slot (flag help b4)) on (cddr *options*) by #'cddr do 
@@ -257,7 +259,6 @@
 (defstruct (egs  (:constructor %make-egs )) rows cols)
 
 (defun make-egs (&optional from)
-  (print `(from ,from))
   (let ((self (%make-egs)))
     (cond ((consp from)
            (dolist (row from) (add self row)))
@@ -321,5 +322,4 @@
  (make-egs (? file)))
 
 ;;;;---------------------------------------------------------------------------
-(print *tests*)
 (main)
