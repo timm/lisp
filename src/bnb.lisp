@@ -1,6 +1,13 @@
 ; vim: ts=2 sw=2 et :
-;
-;      .-------.  
+;     __                __                   __                    __     
+;    /\ \              /\ \                 /\ \                  /\ \    
+;    \ \ \____   _ __  \ \ \/'\      ___    \ \ \____     __      \_\ \   
+;     \ \ '__`\ /\`'__\ \ \ , <    /' _ `\   \ \ '__`\  /'__`\    /'_` \  
+;      \ \ \L\ \\ \ \/   \ \ \\`\  /\ \/\ \   \ \ \L\ \/\ \L\.\_ /\ \L\ \ 
+;       \ \_,__/ \ \_\    \ \_\ \_\\ \_\ \_\   \ \_,__/\ \__/.\_\\ \___,_\
+;        \/___/   \/_/     \/_/\/_/ \/_/\/_/    \/___/  \/__/\/_/ \/__,_ /
+
+;      .-------.
 ;      | Ba    | Bad <----.  planning= (better - bad)
 ;      |    56 |          |  monitor = (bad - better)
 ;      .-------.------.   |  
@@ -23,7 +30,47 @@
   p         ("-p"  "euclidean coefficient     "  2)
   seed      ("-s"  "random number seed        "  10019)
   todo      ("-t"  "start up action           "  "nothing")))
-;;;;---------------------------------------------------------------------------
+
+; Copyright (c) 2021 Tim Menzies
+;
+; This is free and unencumbered software released into the public domain.
+;
+; Anyone is free to copy, modify, publish, use, compile, sell, or
+; distribute this software, either in source code form or as a compiled
+; binary, for any purpose, commercial or non-commercial, and by any
+; means.
+;
+; In jurisdictions that recognize copyright laws, the author or authors
+; of this software dedicate any and all copyright interest in the
+; software to the public domain. We make this dedication for the benefit
+; of the public at large and to the detriment of our heirs and
+; successors. We intend this dedication to be an overt act of
+; relinquishment in perpetuity of all present and future rights to this
+; software under copyright law.
+;
+; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+; EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+; MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+; IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+; OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+; ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+; OTHER DEALINGS IN THE SOFTWARE.
+;
+; For more information, please refer to <http://unlicense.org/>
+
+
+;             .---------.
+;             |         |
+;           -= _________ =-
+;              ___   ___
+;             |   )=(   |
+;              ---   ---
+;                 ###
+;               #  =  #            "This ain't chemistry.
+;               #######             This is art."
+;    ____ _  _ _  _ ____ ___ _ ____ _  _ ____ 
+;    |___ |  | |\ | |     |  | |  | |\ | [__  
+;    |    |__| | \| |___  |  | |__| | \| ___] 
 
 (defun str2list (s &optional (sep #\,) (x 0) (y (position sep s :start (1+ x))))
   (cons (subseq s x y) (and y (str2list s sep (1+ y)))))
@@ -35,41 +82,36 @@
     (loop for (slot (flag help b4)) on (cddr lst) by #'cddr do 
       (format t "  ~a ~a = ~a~%" flag help b4))))
 
-;     ._ _    _.   _  ._   _    _ 
-;     | | |  (_|  (_  |   (_)  _> 
-; short hand for querying options
+;; macros
 (defmacro ? (x) 
+  " short hand for nested slot queries"
   `(third (getf *options* ',x)))
 
-; shorthand for recurisve calls to slot-valyes
 (defmacro o (s x &rest xs)
+  " shorthand for recurisve calls to slot-valyes"
   (if xs `(o (slot-value ,s ',x) ,@xs) `(slot-value ,s ',x)))
 
-; ensure `a` has a cells `(x . number)` (where number defaults to 0)
 (defmacro has (x a)
+  " ensure `a` has a cells `(x . number)` (where number defaults to 0)"
   `(cdr (or (assoc ,x ,a :test #'equal)
             (car (setf ,a (cons (cons ,x 0) ,a))))))
 
-;      _  _|_  ._  o  ._    _      )    _|_  |_   o  ._    _  
-;     _>   |_  |   |  | |  (_|    /_     |_  | |  |  | |  (_| 
-;                           _|                             _| 
-; return string `s` divided on comma
 (defun thing (x)
+  "coerce `x` from a string to a non-string"
   (cond ((not (stringp x)) x)
         ((equal x "?")     #\?)
         (t (let ((y (ignore-errors (read-from-string x))))
              (if (numberp y) y (string-trim '(#\Space #\Tab) x))))))
          
-; file reading iterator
 (defmacro with-csv ((lst file &optional out) &body body)
+  " file reading iterator"
   (let ((str (gensym)))
     `(let (,lst) (with-open-file (,str ,file)
                    (loop while (setf ,lst (read-line ,str nil)) do 
-                     (setf ,lst (mapcar #'thing (str->list ,lst))) ,@body))
+                     (setf ,lst (mapcar #'thing (str2list ,lst))) ,@body))
        ,out)))
 
-;     ._   _.  ._    _|   _   ._ _  
-;     |   (_|  | |  (_|  (_)  | | | 
+;; random
 (defvar *seed* (? seed))
 (labels ((park-miller (&aux (multiplier 16807.0d0) (modulus 2147483647.0d0))
                       (setf *seed* (mod (* multiplier *seed*) modulus))
@@ -77,9 +119,11 @@
   (defun randf (&optional (n 1)) (* n (- 1.0d0 (park-miller))))
   (defun randi (&optional (n 1)) (floor (* n (park-miller)))))
 
-;     |  o   _  _|_     _.        _   ._     
-;     |  |  _>   |_    (_|  |_|  (/_  |   \/ 
-;                        |                /  
+;; lists
+(defun triangle (&optional (c .5) &aux (u (randf)) (v (randf)))
+  "https://www.sciencedirect.com/science/article/pii/S0895717708002665"
+  (+ (* (- 1 c) (min u v)) (* c (max u v))))
+
 (defun normal (&optional (mu 0) (sd 1))
   (+ mu (* sd (sqrt (* -2 (log (randf)))) (cos (* 2 pi (randf))))))
 
@@ -92,16 +136,58 @@
 (defun ent (alist &aux (n 0) (e 0))
   (dolist (two alist) (incf n (cdr two)))
   (dolist (two alist e) (let ((p (/ (cdr two) n))) (decf e (* p (log p 2))))))
-;                                              _      
-;     |_    _    _.   _|   _   ._    o  ._   _|_   _  
-;     | |  (/_  (_|  (_|  (/_  |     |  | |   |   (_) 
+
+;     _|_   _    _  _|_   _ 
+;      |_  (/_  _>   |_  _> 
+(defvar *tests* nil)
+(defvar *fails* 0)
+
+(defun ok (test msg)
+  (cond (test (format t "~aPASS ~a~%" #\Tab  msg))
+        (t    (incf *fails* )
+              (if (? dump) 
+                (assert test nil msg) 
+                (format t "~aFAIL ~a~%" #\Tab msg)))))
+
+(defmacro deftest (name params &body body)
+  `(progn (pushnew ',name *tests*) (defun ,name ,params  ,@body)))
+
+;     ._ _    _.  o  ._  
+;     | | |  (_|  |  | | 
+(defun main (&aux (defaults (copy-tree *options*)))
+  (labels ((stop () #+clisp (exit *fails*)
+                    #+sbcl  (sb-ext:exit :code *fails*))
+           (args () #+clisp ext:*args* 
+                    #+sbcl  sb-ext:*posix-argv*)
+           (cli  (flag b4 &aux (x (member flag (args) :test #'equal)))
+                 (cond ((not x) b4 )
+                       ((eq b4 t) nil)
+                       ((eq b4 nil) t)
+                       (t (thing (elt x 1)))))
+           (test (todo)  (when (fboundp todo) 
+                          (format t "~a~%" (type-of todo))
+                          (setf *seed* (? seed))
+                          (print 11)
+                          (funcall todo)
+                          (setf *options* (copy-tree defaults)))))
+    (loop for (slot (flag help b4)) on (cddr *options*) by #'cddr do 
+      (setf (getf *options* slot) (list flag help (cli flag b4))))
+    (if (? help) 
+      (show-options *options*)
+      (dolist (todo (if (equalp "all" (? todo)) *tests* (list (? todo))))
+        (test (find-symbol (string-upcase todo)))))
+    (stop)))
+;    ____ ___ ____ _  _ ____ ___ ____ 
+;    [__   |  |__/ |  | |     |  [__  
+;    ___]  |  |  \ |__| |___  |  ___] 
+
 (defmethod ako ((s symbol) kind) (ako (symbol-name s) kind))
 (defmethod ako ((s string) kind)
   (let 
     ((l1 '((ignore #\:) (klass #\!) (less #\-) (more #\+) (goal #\+ #\- #\!)))
      (l2 '((num #\$))))
     (or (member (char s (1- (length s))) (cdr (assoc kind l1)))
-        (member (char s 0)               (cdr (assoc kind l2))))))
+        (member (char s 0)               (cdr (assoc kind l2))))))
 ;      _      ._ _  
 ;     _>  \/  | | | 
 ;         /         
@@ -171,12 +257,13 @@
 (defstruct (egs  (:constructor %make-egs )) rows cols)
 
 (defun make-egs (&optional from)
+  (print `(from ,from))
   (let ((self (%make-egs)))
     (cond ((consp from)
            (dolist (row from) (add self row)))
           ((stringp from) 
-           (with-csv (row (? files))
-             (add self (mapcar #'thing (str2lisp row))))))
+           (with-csv (row from)
+             (add self (mapcar #'thing (str2list row))))))
     self))
 
 (defmethod add ((self egs) row)
@@ -185,22 +272,11 @@
       (push (mapcar #'add cols row) rows)
       (setf cols (make-cols row))))
   row)
-;     _|_   _    _  _|_   _ 
-;      |_  (/_  _>   |_  _> 
-(defvar *tests* nil)
-(defvar *fails* 0)
+;    _  _ _  _ _ ___    ___ ____ ____ ___ ____ 
+;    |  | |\ | |  |      |  |___ [__   |  [__  
+;    |__| | \| |  |      |  |___ ___]  |  ___] 
 
-(defun ok (test msg)
-  (cond (test (format t "~aPASS ~a~%" #\Tab  msg))
-        (t    (incf *fails* )
-              (if (? dump) 
-                (assert test nil msg) 
-                (format t "~aFAIL ~a~%" #\Tab msg)))))
-
-(defmacro deftest (name params &body body)
-  `(progn (pushnew ',name *tests*) (defun ,name ,params  ,@body)))
-
-(deftest go.cells () (print (mapcar #'thing (str2cells "23,asda,34.1"))))
+(deftest go.cells () (print (mapcar #'thing (str2list "23,asda,34.1"))))
 
 (deftest go.has () 
   (let (x y)
@@ -241,33 +317,9 @@
   (print c))
 
 (deftest go.egs (&aux e)
+ (print 1000000)
  (make-egs (? file)))
-;      _       _  _|_   _   ._ _  
-;     _>  \/  _>   |_  (/_  | | | 
-;         /                       
-(defun main (&aux (defaults (copy-tree *options*)))
-  (labels ((stop () #+clisp (exit *fails*)
-                    #+sbcl  (sb-ext:exit :code *fails*))
-           (args () #+clisp ext:*args* 
-                    #+sbcl  sb-ext:*posix-argv*)
-           (cli  (flag b4 &aux (val (member flag (args) :test #'equal)))
-                 (if (not val) b4 
-                   (cond ((eq b4 t) nil)
-                         ((eq b4 nil) t) 
-                         (t (thing (elt val 1))))))
-           (test  (todo)
-                  (when (fboundp todo) 
-                    (format t "~a~%" todo)
-                    (setf *seed* (? seed))
-                    (funcall todo)
-                    (setf *options* (copy-tree defaults)))))
-    (loop for (slot (flag help b4)) on (cddr *options*) by #'cddr do 
-      (setf (getf *options* slot) 
-            (list flag help (cli flag b4))))
-    (if (? help) 
-      (show-options *options*)
-      (dolist (todo (if (equalp "all" (? todo)) *tests* (list (? todo))))
-        (test (find-symbol (string-upcase todo)))))
-    (stop)))
 
+;;;;---------------------------------------------------------------------------
+(print *tests*)
 (main)
