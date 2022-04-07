@@ -97,13 +97,15 @@
 ;;;    |___ |  | |\ | |     |  | |  | |\ | [__  
 ;;;    |    |__| | \| |___  |  | |__| | \| ___] 
 
-(defun str2thing (x)
+(defmethod str2thing (x) x)
+(defmethod str2thing ((x string))
   "coerce `x` from a string to a non-string"
-  (cond ((not (stringp x)) x)
-        ((equal x "?")     #\?)
-        (t (let ((y (ignore-errors (read-from-string x))))
-             (if (numberp y) y (string-trim '(#\Space #\Tab) x))))))
-         
+  (let ((x (string-trim '(#\Sapce #\Tab) x)))
+    (if (equal x "?") 
+      #\?
+      (let ((y (ignore-errors (read-from-string x))))
+        (if (numberp y) y x))))))
+
 (defun str2list (s &optional (sep #\,) (x 0) (y (position sep s :start (1+ x))))
   "divide `s` on `sep`"
   (cons (subseq s x y) (and y (str2list s sep (1+ y)))))
