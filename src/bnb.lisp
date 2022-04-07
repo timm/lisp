@@ -100,7 +100,7 @@
 (defmethod str2thing (x) x)
 (defmethod str2thing ((x string))
   "coerce `x` from a string to a non-string"
-  (let ((x (string-trim '(#\Sapce #\Tab) x)))
+  (let ((x (string-trim '(#\Space #\Tab) x)))
     (if (equal x "?") 
       #\?
       (let ((y (ignore-errors (read-from-string x))))
