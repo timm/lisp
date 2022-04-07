@@ -188,8 +188,9 @@
   (let 
     ((l1 '((ignore #\:) (klass #\!) (less #\-) (more #\+) (goal #\+ #\- #\!)))
      (l2 '((num #\$))))
-    (or (member (char s (1- (length s))) (cdr (assoc kind l1)))
-        (member (char s 0)               (cdr (assoc kind l2))))))
+    (and (> (length s) 2)
+         (or (member (char s (1- (length s))) (cdr (assoc kind l1)))
+             (member (char s 0)               (cdr (assoc kind l2)))))))
 ;      _      ._ _  
 ;     _>  \/  | | | 
 ;         /         
@@ -323,4 +324,5 @@
  (make-egs (? file)))
 
 ;;;;---------------------------------------------------------------------------
-(main)
+(make-num)
+;(main)
