@@ -1,26 +1,25 @@
-; vim: ts=2 sw=2 et :
-;     __                __                   __                    __     
-;    /\ \              /\ \                 /\ \                  /\ \    
-;    \ \ \____   _ __  \ \ \/'\      ___    \ \ \____     __      \_\ \   
-;     \ \ '__`\ /\`'__\ \ \ , <    /' _ `\   \ \ '__`\  /'__`\    /'_` \  
-;      \ \ \L\ \\ \ \/   \ \ \\`\  /\ \/\ \   \ \ \L\ \/\ \L\.\_ /\ \L\ \ 
-;       \ \_,__/ \ \_\    \ \_\ \_\\ \_\ \_\   \ \_,__/\ \__/.\_\\ \___,_\
-;        \/___/   \/_/     \/_/\/_/ \/_/\/_/    \/___/  \/__/\/_/ \/__,_ /
+;;;; vim: ts=2 sw=2 et :
+;;;;     __                __                   __                    __     
+;;;;    /\ \              /\ \                 /\ \                  /\ \    
+;;;;    \ \ \____   _ __  \ \ \/'\      ___    \ \ \____     __      \_\ \   
+;;;;     \ \ '__`\ /\`'__\ \ \ , <    /' _ `\   \ \ '__`\  /'__`\    /'_` \  
+;;;;      \ \ \L\ \\ \ \/   \ \ \\`\  /\ \/\ \   \ \ \L\ \/\ \L\.\_ /\ \L\ \ 
+;;;;       \ \_,__/ \ \_\    \ \_\ \_\\ \_\ \_\   \ \_,__/\ \__/.\_\\ \___,_\
+;;;;        \/___/   \/_/     \/_/\/_/ \/_/\/_/    \/___/  \/__/\/_/ \/__,_ /
 
-;      .-------.
-;      | Ba    | Bad <----.  planning= (better - bad)
-;      |    56 |          |  monitor = (bad - better)
-;      .-------.------.   |  
-;              | Be   |   v  
-;              |    4 | Better  
-;              .------.  
+;;;;      .-------.
+;;;;      | Ba    | Bad <----.  planning= (better - bad)
+;;;;      |    56 |          |  monitor = (bad - better)
+;;;;      .-------.------.   |  
+;;;;              | Be   |   v  
+;;;;              |    4 | Better  
+;;;;              .------.  
 
 (defvar *options* '(
-  about     "
-    brknbad: explore the world better, explore the world for good.
-    (c) 2022, Tim Menzies
+  about     "brknbad: explore the world better, explore the world for good.
+            (c) 2022, Tim Menzies
          
-    OPTIONS: "
+            OPTIONS: "
   cautious  ("-c"  "abort on any error        "  t)
   dump      ("-d"  "stack dumps on error      "  nil)
   enough    ("-e"  "enough items for a sample "  512)
@@ -32,48 +31,46 @@
   seed      ("-s"  "random number seed        "  10019)
   todo      ("-t"  "start up action           "  "nothing")))
 
-; Copyright (c) 2021 Tim Menzies
-;
-; This is free and unencumbered software released into the public domain.
-;
-; Anyone is free to copy, modify, publish, use, compile, sell, or
-; distribute this software, either in source code form or as a compiled
-; binary, for any purpose, commercial or non-commercial, and by any
-; means.
-;
-; In jurisdictions that recognize copyright laws, the author or authors
-; of this software dedicate any and all copyright interest in the
-; software to the public domain. We make this dedication for the benefit
-; of the public at large and to the detriment of our heirs and
-; successors. We intend this dedication to be an overt act of
-; relinquishment in perpetuity of all present and future rights to this
-; software under copyright law.
-;
-; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-; EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-; MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-; IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
-; OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-; ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-; OTHER DEALINGS IN THE SOFTWARE.
-;
-; For more information, please refer to <http://unlicense.org/>
+;;;; Copyright (c) 2021 Tim Menzies
+;;;;
+;;;; This is free and unencumbered software released into the public domain.
+;;;;
+;;;; Anyone is free to copy, modify, publish, use, compile, sell, or
+;;;; distribute this software, either in source code form or as a compiled
+;;;; binary, for any purpose, commercial or non-commercial, and by any
+;;;; means.
+;;;;
+;;;; In jurisdictions that recognize copyright laws, the author or authors
+;;;; of this software dedicate any and all copyright interest in the
+;;;; software to the public domain. We make this dedication for the benefit
+;;;; of the public at large and to the detriment of our heirs and
+;;;; successors. We intend this dedication to be an overt act of
+;;;; relinquishment in perpetuity of all present and future rights to this
+;;;; software under copyright law.
+;;;;
+;;;; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+;;;; EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+;;;; MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+;;;; IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+;;;; OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+;;;; ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+;;;; OTHER DEALINGS IN THE SOFTWARE.
+;;;;
+;;;; For more information, please refer to <http://unlicense.org/>
 
+;;;    ____ _    ____ ___  ____ _    ____ 
+;;;    | __ |    |  | |__] |__| |    [__  
+;;;    |__] |___ |__| |__] |  | |___ ___] 
 
-;             .---------.
-;             |         |
-;           -= _________ =-
-;              ___   ___
-;             |   )=(   |
-;              ---   ---
-;                 ###
-;               #  =  #            "This ain't chemistry.
-;               #######             This is art."
-;    ____ _  _ _  _ ____ ___ _ ____ _  _ ____ 
-;    |___ |  | |\ | |     |  | |  | |\ | [__  
-;    |    |__| | \| |___  |  | |__| | \| ___] 
-;;------------------------------------------------------------------------------
-(defmacro ? (x) 
+(defvar *tests* nil)   ; list of test functions
+(defvar *fails* 0)     ; counter for test failires
+(defvar *seed* 10019)  ; initial value random nunber seed
+
+;;;    _  _ ____ ____ ____ ____ ____ 
+;;;    |\/| |__| |    |__/ |  | [__  
+;;;    |  | |  | |___ |  \ |__| ___] 
+
+(defmacro ? (x) ;;
   "short hand for access option fields"
   `(third (getf *options* ',x)))
 
@@ -85,23 +82,22 @@
   "ensure `a` has a cells `(x . number)` (where number defaults to 0)"
   `(cdr (or (assoc ,x ,a :test #'equal)
             (car (setf ,a (cons (cons ,x 0) ,a))))))
-;;------------------------------------------------------------------------------
-(defvar *tests* nil)
-(defvar *fails* 0)
-
-(defun ok (test msg)
-  "handle tests within a test function"
-  (cond (test (format t "~aPASS ~a~%" #\Tab  msg))
-        (t    (incf *fails* )
-              (if (? dump) 
-                (assert test nil msg) 
-                (format t "~aFAIL ~a~%" #\Tab msg)))))
 
 (defmacro deftest (name params &body body)
   "define a test function"
   `(progn (pushnew ',name *tests*) (defun ,name ,params  ,@body)))
-;;------------------------------------------------------------------------------
-(defun thing (x)
+
+(defmacro with-csv ((lst file &optional out) &body body)
+  "file reading iterator"
+  (let ((str (gensym)))
+    `(let (,lst) (with-open-file (,str ,file)
+                   (loop while (setf ,lst (read-line ,str nil)) do ,@body))
+       ,out)))
+;;;    ____ _  _ _  _ ____ ___ _ ____ _  _ ____ 
+;;;    |___ |  | |\ | |     |  | |  | |\ | [__  
+;;;    |    |__| | \| |___  |  | |__| | \| ___] 
+
+(defun str2thing (x)
   "coerce `x` from a string to a non-string"
   (cond ((not (stringp x)) x)
         ((equal x "?")     #\?)
@@ -112,23 +108,8 @@
   "divide `s` on `sep`"
   (cons (subseq s x y) (and y (str2list s sep (1+ y)))))
 
-(defmacro with-csv ((lst file &optional out) &body body)
-  "file reading iterator"
-  (let ((str (gensym)))
-    `(let (,lst) (with-open-file (,str ,file)
-                   (loop while (setf ,lst (read-line ,str nil)) do 
-                     (setf ,lst (mapcar #'thing (str2list ,lst))) ,@body))
-       ,out)))
-;;------------------------------------------------------------------------------
-(defun show-options (lst)
-  "pretty print *options*"
-  (labels ((trim (x) (string-left-trim '(#\Space #\Tab) x)))
-    (dolist (line (str2list (cadr lst) #\Newline 0))
-      (format t "~&~a~%" (trim line)))
-    (loop for (slot (flag help b4)) on (cddr lst) by #'cddr do 
-      (format t "  ~a ~a = ~a~%" flag help b4))))
-;;------------------------------------------------------------------------------
-(defvar *seed* (? seed))
+;; random stuff
+
 (labels ((park-miller (&aux (multiplier 16807.0d0) (modulus 2147483647.0d0))
                       (setf *seed* (mod (* multiplier *seed*) modulus))
                       (/ *seed* modulus)))
@@ -142,7 +123,9 @@
 (defun normal (&optional (mu 0) (sd 1))
   "Return sample from normal distribution"
   (+ mu (* sd (sqrt (* -2 (log (randf)))) (cos (* 2 pi (randf))))))
-;;------------------------------------------------------------------------------
+
+;; stats
+
 (defun per (seq &optional (p .5) &aux (v (coerce seq 'vector))) 
   "Return `p`-th item from seq"
   (elt v (floor (* p (length v)))))
@@ -155,46 +138,65 @@
   "Return entropy of symbols in an assoc list"
   (dolist (two alist) (incf n (cdr two)))
   (dolist (two alist e) (let ((p (/ (cdr two) n))) (decf e (* p (log p 2))))))
-;;------------------------------------------------------------------------------
+
+;; main command stuff
+
+(defun ok (test msg)
+  "handle tests within a test function"
+  (cond (test (format t "~aPASS ~a~%" #\Tab  msg))
+        (t    (incf *fails* )
+              (if (? dump) 
+                (assert test nil msg) 
+                (format t "~aFAIL ~a~%" #\Tab msg)))))
+
 (defun main (&aux (defaults (copy-tree *options*)))
   "Update *options* from command-line. Run the test suite."
   (labels ((stop () #+clisp (exit *fails*)
                     #+sbcl  (sb-ext:exit :code *fails*))
            (args () #+clisp ext:*args* 
                     #+sbcl  sb-ext:*posix-argv*)
+           (trim (x) (string-left-trim '(#\Space #\Tab) x))
+           (show  (lst)
+                  (terpri)
+                  (dolist (line (str2list (cadr lst) #\Newline 0))
+                    (format t "~&~a~%" (trim line)))
+                  (loop for (slot (flag help b4)) on (cddr lst) by #'cddr do 
+                    (format t "  ~a ~a = ~a~%" flag help b4)))
            (cli  (flag b4 &aux (x (member flag (args) :test #'equal)))
                  (cond ((not x) b4 )
                        ((eq b4 t) nil)
                        ((eq b4 nil) t)
-                       (t (thing (elt x 1)))))
+                       (t (str2thing (elt x 1)))))
            (test (todo)  (print 1) (when (fboundp todo) 
-                          (format t "~a~%" (type-of todo))
-                          (setf *seed* (? seed))
-                          (funcall todo)
-                          (setf *options* (copy-tree defaults)))))
+                                     (format t "~a~%" (type-of todo))
+                                     (setf *seed* (? seed))
+                                     (funcall todo)
+                                     (setf *options* (copy-tree defaults)))))
     (loop for (slot (flag help b4)) on (cddr *options*) by #'cddr do 
       (setf (getf *options* slot) (list flag help (cli flag b4))))
     (if (? help) 
-      (show-options *options*)
+      (show *options*)
       (dolist (todo (if (equalp "all" (? todo)) *tests* (list (? todo))))
         (test (find-symbol (string-upcase todo)))))
     (stop)))
-;    ____ ___ ____ _  _ ____ ___ ____ 
-;    [__   |  |__/ |  | |     |  [__  
-;    ___]  |  |  \ |__| |___  |  ___] 
 
-;(defmethod ako ((s symbol) kind) (ako (symbol-name s) kind))
-(defun ako (s kind)
+;;;    ____ ___ ____ _  _ ____ ___ ____ 
+;;;    [__   |  |__/ |  | |     |  [__  
+;;;    ___]  |  |  \ |__| |___  |  ___] 
+
+(defmethod ako ((s symbol) kind) (ako (symbol-name s) kind))
+(defmethod ako ((s string) kind)
+  "given a column header, comment on its the propertoes of that column"
   (let 
     ((l1 '((ignore #\:) (klass #\!) (less #\-) (more #\+) (goal #\+ #\- #\!)))
      (l2 '((num #\$))))
     (and (> (length s) 2)
          (or (member (char s (1- (length s))) (cdr (assoc kind l1)))
              (member (char s 0)               (cdr (assoc kind l2)))))))
-;      _      ._ _  
-;     _>  \/  | | | 
-;         /         
-; check for certain `kind`s or suffixes or prefixes
+;;      ___  _  _   _ __  
+;;     (_-< | || | | '  \ 
+;;     /__/  \_, | |_|_|_|
+;;           |__/         
 (defstruct (sym  (:constructor %make-sym )) (n 0) at name all mode (most 0))
 
 (defun make-sym (&optional (at 0) (name "")) 
@@ -212,8 +214,10 @@
 
 (defmethod div ((self sym)) (ent (sym-all self)))
 (defmethod mid ((self sym)) (sym-mode self))
-;     ._        ._ _  
-;     | |  |_|  | | | 
+;;      _ _    _  _   _ __  
+;;     | ' \  | || | | '  \ 
+;;     |_||_|  \_,_| |_|_|_|
+
 (defstruct (num  (:constructor %make-num )) (n 0) at name 
   (all (make-array 5 :fill-pointer 0))
   (size (? enough)) 
@@ -241,9 +245,11 @@
 
 (defmethod div ((self num)) (sd  (holds self)))
 (defmethod mid ((self num)) (per (holds self)))
+;;                 _      
+;;      __   ___  | |  ___
+;;     / _| / _ \ | | (_-<
+;;     \__| \___/ |_| /__/
 
-;      _   _   |   _ 
-;     (_  (_)  |  _> 
 (defstruct (cols (:constructor %make-cols)) all x y klass)
 
 (defun make-cols (names &aux (at -1) x y klass all)
@@ -254,10 +260,11 @@
       (when (not (ako name 'ignore))
         (if (ako name 'goal)  (push  now x) (push now y))
         (if (ako name 'klass) (setf klass now))))))
+;;      ___   __ _   ___
+;;     / -_) / _` | (_-<
+;;     \___| \__, | /__/
+;;           |___/      
 
-;      _    _    _ 
-;     (/_  (_|  _> 
-;           _|     
 (defstruct (egs  (:constructor %make-egs )) rows cols)
 
 (defun make-egs (&optional from)
@@ -267,7 +274,9 @@
           ((stringp from) 
             (print 22)
            (with-csv (row from)
-             (add self (mapcar #'thing (str2list row))))))
+             (print (make-cols (mapcar #'str2thing (str2list row))))
+             (return-from make-egs nil))))
+             ;(add self (mapcar #'str2thing (str2list row))))))
     self))
 
 (defmethod add ((self egs) row)
@@ -276,11 +285,11 @@
       (push (mapcar #'add cols row) rows)
       (setf cols (make-cols row))))
   row)
-;    _  _ _  _ _ ___    ___ ____ ____ ___ ____ 
-;    |  | |\ | |  |      |  |___ [__   |  [__  
-;    |__| | \| |  |      |  |___ ___]  |  ___] 
+;;;    _  _ _  _ _ ___    ___ ____ ____ ___ ____ 
+;;;    |  | |\ | |  |      |  |___ [__   |  [__  
+;;;    |__| | \| |  |      |  |___ ___]  |  ___] 
 
-(deftest .cells () (print (mapcar #'thing (str2list "23,asda,34.1"))))
+(deftest .cells () (print (mapcar #'str2thing (str2list "23,asda,34.1"))))
 
 (deftest .has () 
   (let (x)
@@ -326,3 +335,15 @@
 
 ;;;;---------------------------------------------------------------------------
 (main)
+
+;             .---------.
+;             |         |
+;           -= _________ =-
+;              ___   ___
+;             |   )=(   |
+;              ---   ---
+;                 ###
+;               #  =  #            "This ain't chemistry.
+;               #######             This is art."
+
+
