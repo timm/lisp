@@ -232,14 +232,15 @@
                                           ok nil)))))
   x)
 
-(defmethod div ((self num)) (sd  (holds self)))
-(defmethod mid ((self num)) (per (holds self)))
-
 (defmethod holds ((self num))
   (with-slots (ok all) self
     (unless ok (setf all (sort all #'<)))
     (setf ok t)
     all))
+
+(defmethod div ((self num)) (sd  (holds self)))
+(defmethod mid ((self num)) (per (holds self)))
+
 ;      _   _   |   _ 
 ;     (_  (_)  |  _> 
 (defstruct (cols (:constructor %make-cols)) all x y klass)
@@ -277,47 +278,47 @@
 ;    |  | |\ | |  |      |  |___ [__   |  [__  
 ;    |__| | \| |  |      |  |___ ___]  |  ___] 
 
-(deftest go.cells () (print (mapcar #'thing (str2list "23,asda,34.1"))))
+(deftest .cells () (print (mapcar #'thing (str2list "23,asda,34.1"))))
 
-(deftest go.has () 
-  (let (x y)
+(deftest .has () 
+  (let (x)
     (incf (has 'aa x))
     (incf (has 'aa x))
     (print x)
     (ok (eql 2 (cdr (assoc 'aa x))) "inc assoc list")))
 
-(deftest go.csv (&aux (n 0))
+(deftest .csv (&aux (n 0))
   (with-csv (row (? file)) (incf n))
   (ok (eq 399 n) "reading lines"))
 
-(deftest go.normal ()
+(deftest .normal ()
   (dolist (n '(10000 5000 2500 1250 500 250 125 60 30 15))
     (let (l)
       (setf l (dotimes (i n (sort l #'<)) (push (normal) l)))
       (format t "~5@A : ~6,4f : ~6,4f ~%"  n (sd l) (per l)))))
 
-(deftest go.rand (&aux l)
+(deftest .rand (&aux l)
   (dotimes (i 50) (push (randi 4) l))
   (print (sort l #'<)))
 
-(deftest go.ent () 
+(deftest .ent () 
   (let (x)
     (incf (has 'this x) 4)
     (incf (has 'that x) 2)
     (incf (has 'other x) 1)
     (ok (<= 1.378 (ent x) 1.379) "diversity")))
 
-(deftest go.num (&aux (num (make-num)))
+(deftest .num (&aux (num (make-num)))
   (dotimes (i 100000 (print (holds num))) (add num i)))
 
-(deftest go.sym (&aux (sym (make-sym)))
+(deftest .sym (&aux (sym (make-sym)))
   (dotimes (i 100000 (print (sym-all sym))) (add sym (randi 10))))
 
-(deftest go.cols (&aux c)
+(deftest .cols (&aux c)
   (setf c (make-cols '("$ss" "age!" "$weight-")))
   (print c))
 
-(deftest go.egs (&aux e)
+(deftest .egs ()
  (print 1000000)
  (make-egs (? file)))
 
