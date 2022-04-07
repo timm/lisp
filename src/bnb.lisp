@@ -167,7 +167,7 @@
                        ((eq b4 t) nil)
                        ((eq b4 nil) t)
                        (t (thing (elt x 1)))))
-           (test (todo)  (when (fboundp todo) 
+           (test (todo)  (print 1) (when (fboundp todo) 
                           (format t "~a~%" (type-of todo))
                           (setf *seed* (? seed))
                           (funcall todo)
@@ -183,8 +183,8 @@
 ;    [__   |  |__/ |  | |     |  [__  
 ;    ___]  |  |  \ |__| |___  |  ___] 
 
-(defmethod ako ((s symbol) kind) (ako (symbol-name s) kind))
-(defmethod ako ((s string) kind)
+;(defmethod ako ((s symbol) kind) (ako (symbol-name s) kind))
+(defun ako (s kind)
   (let 
     ((l1 '((ignore #\:) (klass #\!) (less #\-) (more #\+) (goal #\+ #\- #\!)))
      (l2 '((num #\$))))
@@ -265,6 +265,7 @@
     (cond ((consp from)
            (dolist (row from) (add self row)))
           ((stringp from) 
+            (print 22)
            (with-csv (row from)
              (add self (mapcar #'thing (str2list row))))))
     self))
@@ -324,5 +325,4 @@
  (make-egs (? file)))
 
 ;;;;---------------------------------------------------------------------------
-(make-num)
-;(main)
+(main)
