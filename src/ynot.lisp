@@ -13,8 +13,9 @@
 
 ; Show copyright
 (defun help (lst)
-  (format t "~&~%ynot v1 : not-so-supervised multi-objective optimization")
-  (format t "~%(c) 2021 Tim Menzies, MIT (2 clause) license~%~%OPTIONS:~%")
+  (format t "ynot v1 : not-so-supervised multi-objective optimization~%") 
+  (format t "(c) 2021 Tim Menzies, MIT (2 clause) license~%")
+  (format t "~%OPTIONS:~%") 
   (loop for (x(s y)) on lst by #'cddr do (format t "  -~(~a~)  ~a = ~a~%" x s y)))
 
 ; Define settings.
@@ -79,7 +80,7 @@
 ; Cull silly white space.
 (defun trim (s) (string-trim '(#\Space #\Tab) s))
 
-; String to atom
+; String to number (if we can).
 (defun asAtom (s &aux (s1 (trim s)))
   (if (equal s1 "?") #\? (let ((x (ignore-errors (read-from-string s1))))
                           (if (numberp x) x s1))))
@@ -95,10 +96,9 @@
 ;.     |   (_|  | |  (_|  (_)  | | |
 ;; Random
 ; Unlike LISP, it is easy to set the seed of this random number genertor.
-(labels ((park-miller (&aux (multiplier 16807.0d0) (modulus 2147483647.0d0))
-                      (setf *seed* (mod (* multiplier *seed*) modulus))
-                      (/ *seed* modulus)))
-  (defun randf (&optional (n 1)) (* n (- 1.0d0 (park-miller))))
+(labels ((park-miller () (setf *seed* (mod (* 16807.0d0 *seed*) 2147483647.0d00))
+                         (/ *seed* 2147483647.0d0)))
+  (defun randf (&optional (n 1)) (*   n (- 1.0d0 (park-miller)))) ;XX check this
   (defun randi (&optional (n 1)) (floor (* n (park-miller)))))
 
 ; Return sample from normal distribution.
