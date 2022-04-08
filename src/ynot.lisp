@@ -108,7 +108,8 @@
 ;.      _  _|_   _.  _|_   _
 ;.     _>   |_  (_|   |_  _>
 ;; Stats
-(defun norm(lo,hi,x) (if (< (abs (- hi lo)) 1E-9) 0 (- x lo)/(- hi lo)))
+(defun norm(lo,hi,x) 
+  (if (< (abs (- hi lo)) 1E-9) 0 (- x lo)/(- hi lo)))
 
 ; Return `p`-th item from seq.
 (defun per (seq &optional (p .5) &aux (v (coerce seq 'vector)))
