@@ -11,8 +11,8 @@
 (defun trim (x) (string-trim '(#\Space #\Tab) x))
 
 (defun thing (x)
-  (if (equal x "?") #\?  (let ((y (ignore-errors (read-from-string x))))
-                           (if (numberp y) y x))))
+  (if (equal x "?") #\? (let ((y (ignore-errors (read-from-string x))))
+                          (if (numberp y) y x))))
 
 (defun str2list (s &optional (sep #\,) (x 0) (y (position sep s :start (1+ x))))
   (cons (subseq s x y) (and y (str2list s sep (1+ y)))))
