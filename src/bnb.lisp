@@ -92,7 +92,19 @@
   (let ((str (gensym)))
     `(let (,lst) (with-open-file (,str ,file)
                    (loop while (setf ,lst (read-line ,str nil)) do ,@body))
-       ,out)))
+       ,out)))
+
+;   /')       /(    )\.--.     /`-.
+;  ( /       \  )  (   ._.'   / _  \
+;   ))       ) (    `-.`.    ( '-' (
+;   )'._.-.  \  )  ._ (  \   ) .._.'
+;  (       )  ) \ (  '.)  ) (  '
+;   )/.___/    )/  '._.__/   )/
+;
+;  (quote
+;     (an (elegant (weapon
+;         (for (a (more
+;             (civilized age))))))))
 ;;;    ____ _  _ _  _ ____ ___ _ ____ _  _ ____ 
 ;;;    |___ |  | |\ | |     |  | |  | |\ | [__  
 ;;;    |    |__| | \| |___  |  | |__| | \| ___] 
