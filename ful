@@ -33,6 +33,7 @@ else
   alias ...='cd ../../../'
 
   alias bye="gp; tmux detach"
+  alias ynot="lisp ynot.lisp "
   alias bnb="lisp bnb.lisp "
   alias egrep='egrep --color=auto'
   alias fgrep='fgrep --color=auto'

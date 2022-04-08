@@ -10,6 +10,7 @@
 ;.         \/__/                           
 
 ;;; Settings
+
 ; Show copyright
 (defun help (lst)
   (format t "~&~%ynot v1 : not-so-supervised multi-objective optimization")
@@ -18,10 +19,11 @@
 
 ; Define settings.
 (defvar *settings* 
-  '(help ("show help          " nil)
-    seed ("random number seed " 10019)
-    enough ("how many numbers to keep" 512)
-    file ("load data from file" "../data/auto93.csv")))
+  '(help   ("show help               "  nil)
+    seed   ("random number seed      "  10019)
+    enough ("how many numbers to keep"  512)
+    todo   ("start up action         "  "nothing")
+    file   ("load data from file     "  "../data/auto93.csv")))
 
 ; List for test cases
 (defvar *tests* nil)   ; list of test functions
@@ -33,7 +35,9 @@
 ;.    _  _ ____ ____ ____ ____ ____ 
 ;.    |\/| |__| |    |__/ |  | [__  
 ;.    |  | |  | |___ |  \ |__| ___] 
+
 ;;; Macros.
+
 ; Shorthand for accessing settings.
 (defmacro ? (x) `(second(getf *settings* ',x)))
 
@@ -58,6 +62,9 @@
   `(cdr (or (assoc ,key ,dictionary :test #'equal)
             (car (setf ,dictionary (cons (cons ,key 0) ,dictionary))))))
 
+; Define a test function (see examples at end of file).
+(defmacro deftest (name params &body body)
+  `(progn (pushnew ',name *tests*) (defun ,name ,params  ,@body)))
 ;.    ___ ____ ____ _    ____ 
 ;.     |  |  | |  | |    [__  
 ;.     |  |__| |__| |___ ___] 
@@ -99,6 +106,8 @@
 ;.      _  _|_   _.  _|_   _ 
 ;.     _>   |_  (_|   |_  _> 
 ;; Stats
+(defun norm(lo,hi,x) (if (< (abs (- hi lo)) 1E-9) 0 (- x lo)/(- hi lo)))
+
 ; Return `p`-th item from seq.
 (defun per (seq &optional (p .5) &aux (v (coerce seq 'vector))) 
   (elt v (floor (* p (length v)))))
@@ -147,31 +156,28 @@
                           (format t "~a~%" (type-of todo))
                           (setf *seed* (? seed))
                           (funcall todo)
-                          (setf *settings (copy-tree defaults)))))
-    (update-settings *settings)
+                          (setf *settings* (copy-tree defaults)))))
+    (update-settings *settings*)
     (if (? help) 
-      (help *settings)
+      (help *settings*)
       (dolist (todo (if (equalp "all" (? todo)) *tests* (list (? todo))))
         (test (find-symbol (string-upcase todo)))))
-    (stop)))
+    (stop)))
+;.    ____ _    ____ ____ ____ ____ ____ 
+;.    |    |    |__| [__  [__  |___ [__  
+;.    |___ |___ |  | ___] ___] |___ ___] 
 
-
-;.           _                             
-;.      __  | |  __ _   ___  ___  ___   ___
-;.     / _| | | / _` | (_-< (_-< / -_) (_-<
-;.     \__| |_| \__,_| /__/ /__/ \___| /__/
+;;; Classes
 
 ;.     o   _ 
 ;.     |  _> 
-;; Meta-knowledge about class headers
+
+;; The first/last char of a column name defines meta-knowledge for that column.
 (defun is (s kind)
   (let ((x '((ignore #\:) (klass #\!) (less #\-) (more #\+) (goal #\+ #\- #\!)))
         (y '((num #\$))))
     (or (member (char s (1- (length s))) (cdr (assoc kind x)))
         (member (char s 0)               (cdr (assoc kind y))))))
-
-
-;;; Classes
 
 ;.      _      ._ _  
 ;.     _>  \/  | | | 
@@ -194,6 +200,11 @@
 
 (defmethod div ((self sym)) (ent (sym-all self)))
 (defmethod mid ((self sym)) (sym-mode self))
+
+(defmethod dist ((self sym) x y)
+  (if (and (eq x #\?) (eq y #\?)) 
+    0 
+    (if (equal x y) 0 1)))
 
 ;.     ._        ._ _  
 ;.     | |  |_|  | | | 
@@ -227,6 +238,14 @@
 (defmethod div ((self num)) (sd  (holds self)))
 (defmethod mid ((self num)) (per (holds self)))
 
+(defmethod dist ((self num) x y)
+ (with-slots (lo hi) self
+ (cond ((and (eq x #\?) (eq y #\?)) 0)
+     ((eq x #\?) (setf y (norm lo  hi y)) (setf x (if (< y .5) 1 0)))
+     ((eq y #\?) (setf x (norm lo  hi x)) (setf y (if (< x .5) 1 0)))
+     (t  (setf (x (norm lo hi x)
+                  (y (norm lo hix))))))
+
 ;.      _   _   |   _ 
 ;.     (_  (_)  |  _> 
 ;; cols
@@ -237,7 +256,7 @@
     (let ((now (funcall (if (is s 'num)  #'make-num #'make-sym) (incf at) s)))
       (push now all)
       (when (not (is s 'ignore))
-        (if (is s 'goal)  (push  now x) (push now y))
+        (if (is s 'goal)  (push  now y) (push now x))
         (if (is s 'klass) (setf klass now))))))
 
 ;.      _    _    _ 
@@ -255,10 +274,15 @@
   (with-slots (rows cols) self
     (if cols
       (push (mapcar #'add (o cols all)  row) rows)
-      (setf cols (make-cols row)))))
+      (setf cols (make-cols row)))))
+;.    ___  ____ _  _ ____ ____ 
+;.    |  \ |___ |\/| |  | [__  
+;.    |__/ |___ |  | |__| ___] 
 
-;.    _  _ ____ _ _  _ 
-;.    |\/| |__| | |\ | 
-;.    |  | |  | | | \| 
-;; Main
+;;; Demos
 
+(deftest .egs() 
+  (let ((eg (make-egs (? file))))
+    (holds (second (o eg cols y)))
+    (print (o eg cols y))))
+(main)
