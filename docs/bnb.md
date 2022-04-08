@@ -1,27 +1,14 @@
-;- vim: ts=2 sw=2 et :
-;-     __                __                   __                    __     
-;-    /\ \              /\ \                 /\ \                  /\ \    
-;-    \ \ \____   _ __  \ \ \/'\      ___    \ \ \____     __      \_\ \   
-;-     \ \ '__`\ /\`'__\ \ \ , <    /' _ `\   \ \ '__`\  /'__`\    /'_` \  
-;-      \ \ \L\ \\ \ \/   \ \ \\`\  /\ \/\ \   \ \ \L\ \/\ \L\.\_ /\ \L\ \ 
-;-       \ \_,__/ \ \_\    \ \_\ \_\\ \_\ \_\   \ \_,__/\ \__/.\_\\ \___,_\
-;-        \/___/   \/_/     \/_/\/_/ \/_/\/_/    \/___/  \/__/\/_/ \/__,_ /
 
-;-      .-------.
-;-      | Ba    | Bad <----.  planning= (better - bad)
-;-      |    56 |          |  monitor = (bad - better)
-;-      .-------.------.   |  
-;-              | Be   |   v  
-;-              |    4 | Better  
-;-              .------.  
-;;;; Brknbad
-; Explore the world better. Explore the world for good.
+# Brknbad
+Explore the world better. Explore the world for good.
 
-;;; Settings
-; If the `main` function finds any of these flags on the command line, then 
-; these defaults will be updated. Note one shorthand: for the flags with defaults
-; of `t` or `nil` then calling those flags on the command line (without args) will
-; flip those settings.
+## Settings
+If the `main` function finds any of these flags on the command line, then 
+these defaults will be updated. Note one shorthand: for the flags with defaults
+of `t` or `nil` then calling those flags on the command line (without args) will
+flip those settings.
+
+```lisp
 (defvar *options* '(
   about     "brknbad: explore the world better, explore the world for good.
             (c) 2022, Tim Menzies
@@ -38,85 +25,79 @@
   seed      ("-s"  "random number seed        "  10019)
   todo      ("-t"  "start up action           "  "nothing")))
 
-;; # Copyright (c) 2021 Tim Menzies
-; This is free and unencumbered software released into the public domain.
+### # Copyright (c) 2021 Tim Menzies
+This is free and unencumbered software released into the public domain.
 ;
-; Anyone is free to copy, modify, publish, use, compile, sell, or
-; distribute this software, either in source code form or as a compiled
-; binary, for any purpose, commercial or non-commercial, and by any
-; means.
+Anyone is free to copy, modify, publish, use, compile, sell, or
+distribute this software, either in source code form or as a compiled
+binary, for any purpose, commercial or non-commercial, and by any
+means.
 ;
-; In jurisdictions that recognize copyright laws, the author or authors
-; of this software dedicate any and all copyright interest in the
-; software to the public domain. We make this dedication for the benefit
-; of the public at large and to the detriment of our heirs and
-; successors. We intend this dedication to be an overt act of
-; relinquishment in perpetuity of all present and future rights to this
-; software under copyright law.
+In jurisdictions that recognize copyright laws, the author or authors
+of this software dedicate any and all copyright interest in the
+software to the public domain. We make this dedication for the benefit
+of the public at large and to the detriment of our heirs and
+successors. We intend this dedication to be an overt act of
+relinquishment in perpetuity of all present and future rights to this
+software under copyright law.
 ;
-; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-; EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-; MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-; IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
-; OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-; ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-; OTHER DEALINGS IN THE SOFTWARE.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
 ;
-; For more information, please refer to <http://unlicense.org/>
+For more information, please refer to <http://unlicense.org/>
 
-;-    ____ _    ____ ___  ____ _    ____ 
-;-    | __ |    |  | |__] |__| |    [__  
-;-    |__] |___ |__| |__] |  | |___ ___] 
-;;; Glolabls
+## Glolabls
+
 (defvar *tests* nil)   ; list of test functions
+
 (defvar *fails* 0)     ; counter for test failires
+
 (defvar *seed* 10019)  ; initial value random nunber seed
 
-;-    _  _ ____ ____ ____ ____ ____ 
-;-    |\/| |__| |    |__/ |  | [__  
-;-    |  | |  | |___ |  \ |__| ___] 
-;- Macros
-; Short hand for access option fields.
+Short hand for access option fields.
+
+```lisp
 (defmacro ? (x) ;;
   `(third (getf *options* ',x)))
 
-; Shorthand for recurisve calls to slot-values.
+Shorthand for recurisve calls to slot-values.
+
+```lisp
 (defmacro o (s x &rest xs)
   (if xs `(o (slot-value ,s ',x) ,@xs) `(slot-value ,s ',x)))
 
-; Ensure `a` has a cells `(x . number)` (where number defaults to 0).
+Ensure `a` has a cells `(x . number)` (where number defaults to 0).
+
+```lisp
 (defmacro has (x a)
   `(cdr (or (assoc ,x ,a :test #'equal)
             (car (setf ,a (cons (cons ,x 0) ,a))))))
 
-; Define a test function (see examples at end of file).
+Define a test function (see examples at end of file).
+
+```lisp
 (defmacro deftest (name params &body body)
   `(progn (pushnew ',name *tests*) (defun ,name ,params  ,@body)))
 
-; A ile reading iterator.
+A ile reading iterator.
+
+```lisp
 (defmacro with-csv ((lst file &optional out) &body body)
   (let ((str (gensym)))
     `(let (,lst) (with-open-file (,str ,file)
                    (loop while (setf ,lst (read-line ,str nil)) do ,@body))
        ,out)))
 
-;-   /')       /(    )\.--.     /`-.
-;-  ( /       \  )  (   ._.'   / _  \
-;-   ))       ) (    `-.`.    ( '-' (
-;-   )'._.-.  \  )  ._ (  \   ) .._.'
-;-  (       )  ) \ (  '.)  ) (  '
-;-   )/.___/    )/  '._.__/   )/
-;-
-;-  (quote
-;-     (an (elegant (weapon
-;-         (for (a (more
-;-             (civilized age))))))))
-;-    ____ _  _ _  _ ____ ___ _ ____ _  _ ____ 
-;-    |___ |  | |\ | |     |  | |  | |\ | [__  
-;-    |    |__| | \| |___  |  | |__| | \| ___] 
-;;; Functtions
-;; Coerce
-; Coerce `x` from a string to a non-string.
+## Functtions
+### Coerce
+Coerce `x` from a string to a non-string.
+
+```lisp
 (defmethod str2thing (x) x)
 (defmethod str2thing ((x string))
   (let ((x (string-trim '(#\Space #\Tab) x)))
@@ -124,43 +105,60 @@
       #\?
       (let ((y (ignore-errors (read-from-string x))))
         (if (numberp y) y x))))))
+```
 
-; Divide `s` on `sep`.
+
+Divide `s` on `sep`.
+
+```lisp
 (defun str2list (s &optional (sep #\,) (x 0) (y (position sep s :start (1+ x))))
   (cons (subseq s x y) (and y (str2list s sep (1+ y)))))
 
-;; Random stuff
-; Unlike LISP, it is easy to set the seed of this random number genertor.
+### Random stuff
+Unlike LISP, it is easy to set the seed of this random number genertor.
+
+```lisp
 (labels ((park-miller (&aux (multiplier 16807.0d0) (modulus 2147483647.0d0))
                       (setf *seed* (mod (* multiplier *seed*) modulus))
                       (/ *seed* modulus)))
   (defun randf (&optional (n 1)) (* n (- 1.0d0 (park-miller))))
   (defun randi (&optional (n 1)) (floor (* n (park-miller)))))
 
-; Return sample from triangular distribution doi.org/10.1016/j.mcm.2008.06.013
+Return sample from triangular distribution doi.org/10.1016/j.mcm.2008.06.013
+
+```lisp
 (defun triangle (&optional (c .5) &aux (u (randf)) (v (randf)))
   (+ (* (- 1 c) (min u v)) (* c (max u v))))
 
-; Return sample from normal distribution.
+Return sample from normal distribution.
+
+```lisp
 (defun normal (&optional (mu 0) (sd 1))
   (+ mu (* sd (sqrt (* -2 (log (randf)))) (cos (* 2 pi (randf))))))
 
-;; Stats
-; Return `p`-th item from seq.
+### Stats
+Return `p`-th item from seq.
+
+```lisp
 (defun per (seq &optional (p .5) &aux (v (coerce seq 'vector))) 
   (elt v (floor (* p (length v)))))
 
-; Find sd from a sorted list.
+Find sd from a sorted list.
+
 (defun sd (seq &optional (key #'identity)) 
   (/ (- (funcall key (per seq .9)) (funcall key (per seq .1))) 2.56))
    
-; Return entropy of symbols in an assoc list.
+Return entropy of symbols in an assoc list.
+
+```lisp
 (defun ent (alist &aux (n 0) (e 0))
   (dolist (two alist) (incf n (cdr two)))
   (dolist (two alist e) (let ((p (/ (cdr two) n))) (decf e (* p (log p 2))))))
 
-;; Main command stuff
-; Test predicate (which only calls a stack dump in `(? dump)` is true.
+### Main command stuff
+Test predicate (which only calls a stack dump in `(? dump)` is true.
+
+```lisp
 (defun ok (test msg)
   "handle tests within a test function"
   (cond (test (format t "~aPASS ~a~%" #\Tab  msg))
@@ -169,8 +167,9 @@
                 (assert test nil msg) 
                 (format t "~aFAIL ~a~%" #\Tab msg)))))
 
-; Update *options* from command-line. Run the test suite. Before running each
-; item, reset the random number seed and the options to standard defaults.
+Update *options* from command-line. Run the test suite. Before running each
+item, reset the random number seed and the options to standard defaults.
+
 (defun main (&aux (defaults (copy-tree *options*)))
   (labels ((stop () #+clisp (exit *fails*)
                     #+sbcl  (sb-ext:exit :code *fails*))
@@ -201,11 +200,9 @@
         (test (find-symbol (string-upcase todo)))))
     (stop)))
 
-;-    ____ ___ ____ _  _ ____ ___ ____ 
-;-    [__   |  |__/ |  | |     |  [__  
-;-    ___]  |  |  \ |__| |___  |  ___] 
-
+```lisp
 (defmethod ako ((s symbol) kind) (ako (symbol-name s) kind))
+
 (defmethod ako ((s string) kind)
   "given a column header, comment on its the propertoes of that column"
   (let 
@@ -214,10 +211,12 @@
     (and (> (length s) 2)
          (or (member (char s (1- (length s))) (cdr (assoc kind l1)))
              (member (char s 0)               (cdr (assoc kind l2)))))))
-;;      ___  _  _   _ __  
-;;     (_-< | || | | '  \ 
-;;     /__/  \_, | |_|_|_|
-;;           |__/         
+###      ___  _  _   _ __  
+###     (_-< | || | | '  \ 
+###     /__/  \_, | |_|_|_|
+###           |__/         
+
+```lisp
 (defstruct (sym  (:constructor %make-sym )) (n 0) at name all mode (most 0))
 
 (defun make-sym (&optional (at 0) (name "")) 
@@ -232,13 +231,16 @@
           (setf most now
                 mode x)))))
   x)
-
 (defmethod div ((self sym)) (ent (sym-all self)))
-(defmethod mid ((self sym)) (sym-mode self))
-;;      _ _    _  _   _ __  
-;;     | ' \  | || | | '  \ 
-;;     |_||_|  \_,_| |_|_|_|
+```
 
+
+(defmethod mid ((self sym)) (sym-mode self))
+###      _ _    _  _   _ __  
+###     | ' \  | || | | '  \ 
+###     |_||_|  \_,_| |_|_|_|
+
+```lisp
 (defstruct (num  (:constructor %make-num )) (n 0) at name 
   (all (make-array 5 :fill-pointer 0))
   (size (? enough)) 
@@ -263,14 +265,17 @@
     (unless ok (setf all (sort all #'<)))
     (setf ok t)
     all))
-
 (defmethod div ((self num)) (sd  (holds self)))
-(defmethod mid ((self num)) (per (holds self)))
-;;                 _      
-;;      __   ___  | |  ___
-;;     / _| / _ \ | | (_-<
-;;     \__| \___/ |_| /__/
+```
 
+
+(defmethod mid ((self num)) (per (holds self)))
+###                 _      
+###      __   ___  | |  ___
+###     / _| / _ \ | | (_-<
+###     \__| \___/ |_| /__/
+
+```lisp
 (defstruct (cols (:constructor %make-cols)) all x y klass)
 
 (defun make-cols (names &aux (at -1) x y klass all)
@@ -281,13 +286,13 @@
       (when (not (ako name 'ignore))
         (if (ako name 'goal)  (push  now x) (push now y))
         (if (ako name 'klass) (setf klass now))))))
-;;      ___   __ _   ___
-;;     / -_) / _` | (_-<
-;;     \___| \__, | /__/
-;;           |___/      
+###      ___   __ _   ___
+###     / -_) / _` | (_-<
+###     \___| \__, | /__/
+###           |___/      
 
+```lisp
 (defstruct (egs  (:constructor %make-egs )) rows cols)
-
 (defun make-egs (&optional from)
   (let ((self (%make-egs)))
     (cond ((consp from)
@@ -299,6 +304,8 @@
              (return-from make-egs nil))))
              ;(add self (mapcar #'str2thing (str2list row))))))
     self))
+```
+
 
 (defmethod add ((self egs) row)
   (with-slots (cols rows) self 
@@ -306,10 +313,11 @@
       (push (mapcar #'add cols row) rows)
       (setf cols (make-cols row))))
   row)
-;;;    _  _ _  _ _ ___    ___ ____ ____ ___ ____ 
-;;;    |  | |\ | |  |      |  |___ [__   |  [__  
-;;;    |__| | \| |  |      |  |___ ___]  |  ___] 
+##    _  _ _  _ _ ___    ___ ____ ____ ___ ____ 
+##    |  | |\ | |  |      |  |___ [__   |  [__  
+##    |__| | \| |  |      |  |___ ___]  |  ___] 
 
+```lisp
 (deftest .cells () (print (mapcar #'str2thing (str2list "23,asda,34.1"))))
 
 (deftest .has () 
@@ -353,16 +361,6 @@
 (deftest .egs ()
  (print 1000000)
  (make-egs (? file)))
-
-;- ----------------------------------------------------------------------------
 (main)
+```
 
-;-             .---------.
-;-             |         |
-;-           -= _________ =-
-;-              ___   ___
-;-             |   )=(   |
-;-              ---   ---
-;-                 ###
-;-               #  =  #            "This ain't chemistry.
-;-               #######             This is art."
