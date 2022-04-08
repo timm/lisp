@@ -25,7 +25,7 @@ Define settings.
 List for test cases
 
 ```lisp
-(defvar *tests* nil)   
+(defvar *demos* nil)   
 ```
 
 Counter for test failures (this number will be the exit status of this code).
@@ -82,11 +82,11 @@ Ensure `a` has a cells `(x . number)` (where number defaults to 0).
             (car (setf ,dictionary (cons (cons ,key 0) ,dictionary))))))
 ```
 
-Define a test function (see examples at end of file).
+Define a demo function (see examples at end of file).
 
 ```lisp
-(defmacro deftest (name params &body body)
-  `(progn (pushnew ',name *tests*) (defun ,name ,params  ,@body)))
+(defmacro defdemo (name params &body body)
+  `(progn (pushnew ',name *demos*) (defun ,name ,params  ,@body)))
 ```
 
 ## Library functions.
@@ -194,24 +194,25 @@ Handle tests within a test function"
                 (format t "~aFAIL ~a~%" #\Tab msg)))))
 ```
 
-Update *options* from command-line. Run the test suite. Before running each
-item, reset the random number seed and the options to standard defaults.
+Update *options* from command-line. Show help or run demo suite. 
+Before demo, reset random number seed (and the settings).
+Return the number of fails to the operating system.
 
 ```lisp
 (defun main (&aux (defaults (copy-tree *settings*)))
   (labels ((stop () #+clisp (exit *fails*)
                     #+sbcl  (sb-ext:exit :code *fails*))
-           (test1 (todo) (when (fboundp todo)
-                           (format t "~a~%" (type-of todo))
-                           (setf *seed* (? seed))
-                           (funcall todo)
-                           (setf *settings* (copy-tree defaults)))))
+           (fun (x) (find-symbol (string-upcase x)))
+           (demo (todo) (when (fboundp todo)
+                          (format t "~a~%"  todo)
+                          (setf *settings* (copy-tree defaults)
+                                *seed*     (? seed))
+                          (funcall todo))))
     (update-settings-from-command-line *settings*)
-    (if (? help)
-      (help *settings*)
-      (dolist (todo (if (equalp "all" (? todo)) *tests* (list (? todo))))
-        (test1 (find-symbol (string-upcase todo)))))
-    (stop)))
+    (cond ((? help)                (help *settings*))
+          ((equalp "all" (? todo)) (dolist (one *demos*) (demo (fun one))))
+          (t                       (demo (fun (? todo)))))
+    (stop))
 ```
 
 ## Classes
@@ -348,7 +349,7 @@ item, reset the random number seed and the options to standard defaults.
 ## Demos
 
 ```lisp
-(deftest .egs()
+(defdemo .egs()
   (let ((eg (make-egs (? file))))
     (holds (second (o eg cols y)))
     (print (o eg cols y))))

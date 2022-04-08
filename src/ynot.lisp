@@ -26,7 +26,7 @@
     file   ("load data from file     "  "../data/auto93.csv")))
 
 ; List for test cases
-(defvar *tests* nil)   
+(defvar *demos* nil)   
 
 ; Counter for test failures (this number will be the exit status of this code).
 (defvar *fails* 0)
@@ -64,9 +64,9 @@
   `(cdr (or (assoc ,key ,dictionary :test #'equal)
             (car (setf ,dictionary (cons (cons ,key 0) ,dictionary))))))
 
-; Define a test function (see examples at end of file).
-(defmacro deftest (name params &body body)
-  `(progn (pushnew ',name *tests*) (defun ,name ,params  ,@body)))
+; Define a demo function (see examples at end of file).
+(defmacro defdemo (name params &body body)
+  `(progn (pushnew ',name *demos*) (defun ,name ,params  ,@body)))
 ;.    ___ ____ ____ _    ____
 ;.     |  |  | |  | |    [__
 ;.     |  |__| |__| |___ ___]
@@ -149,22 +149,23 @@
                 (assert test nil msg)
                 (format t "~aFAIL ~a~%" #\Tab msg)))))
 
-; Update *options* from command-line. Run the test suite. Before running each
-; item, reset the random number seed and the options to standard defaults.
+; Update *options* from command-line. Show help or run demo suite. 
+; Before demo, reset random number seed (and the settings).
+; Return the number of fails to the operating system.
 (defun main (&aux (defaults (copy-tree *settings*)))
   (labels ((stop () #+clisp (exit *fails*)
                     #+sbcl  (sb-ext:exit :code *fails*))
-           (test1 (todo) (when (fboundp todo)
-                           (format t "~a~%" (type-of todo))
-                           (setf *seed* (? seed))
-                           (funcall todo)
-                           (setf *settings* (copy-tree defaults)))))
+           (fun (x) (find-symbol (string-upcase x)))
+           (demo (todo) (when (fboundp todo)
+                          (format t "~a~%"  todo)
+                          (setf *settings* (copy-tree defaults)
+                                *seed*     (? seed))
+                          (funcall todo))))
     (update-settings-from-command-line *settings*)
-    (if (? help)
-      (help *settings*)
-      (dolist (todo (if (equalp "all" (? todo)) *tests* (list (? todo))))
-        (test1 (find-symbol (string-upcase todo)))))
-    (stop)))
+    (cond ((? help)                (help *settings*))
+          ((equalp "all" (? todo)) (dolist (one *demos*) (demo (fun one))))
+          (t                       (demo (fun (? todo)))))
+    (stop))
 ;.    ____ _    ____ ____ ____ ____ ____
 ;.    |    |    |__| [__  [__  |___ [__
 ;.    |___ |___ |  | ___] ___] |___ ___]
@@ -286,8 +287,9 @@
 
 ;;; Demos
 
-(deftest .egs()
+(defdemo .egs()
   (let ((eg (make-egs (? file))))
     (holds (second (o eg cols y)))
     (print (o eg cols y))))
+
 (main)
