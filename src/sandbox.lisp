@@ -1,4 +1,7 @@
 
+;.  
+
+
 (defmethod str2thing1 (x) x)
 (defmethod str2thing1 ((x string))
   "coerce `x` from a string to a non-string"
@@ -20,8 +23,8 @@
 
 
 (let ((a 0))
-(time (dotimes (i 10000000) (incf a))))
+(time (dotimes (i 100000) (incf a))))
 
-(time (dotimes (i 10000000) (str2thing1 23)))
-(time (dotimes (i 10000000) (str2thing2 41)))
+(time (dotimes (i 100000) (str2thing1 23)))
+(time (dotimes (i 100000) (str2thing2 41)))
 
