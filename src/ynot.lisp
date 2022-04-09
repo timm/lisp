@@ -9,9 +9,8 @@
 ;.         /\___/
 ;.         \/__/
 ;;;; Ynot
-;;; Settings
-
-; Show copyright
+(defpackage :ynot (:use :cl))
+(in-package :ynot)
 (defun help (lst)
   (terpri)
   (format t "ynot (v1.0) : not-so-supervised multi-objective optimization~%") 
@@ -266,9 +265,11 @@
 (defstruct (egs (:constructor %make-egs)) 
   cols (rows (make-array 5 :fill-pointer 0 :adjustable t)))
 
-(defun make-egs (from &aux (self (%make-egs)))
-   (if (stringp from) (with-csv (row from) (add self (asAtoms row) )))
-   (if (consp from)   (dolist   (row from) (add self row )))
+(defun make-egs (data &aux (self (%make-egs)))
+   (if data
+     (if (stringp data) 
+       (with-csv (row data) (add self (asAtoms row)))   ; for string = file name 
+       (map nil #'(lambda (row) (add self row)) data))) ; for array or list
    self)
 
 (defmethod add ((self egs) row)
@@ -277,7 +278,7 @@
       (progn (vector-push-extend (mapcar #'add (o cols all) row) rows))
       (setf cols (make-cols row)))))
 
-(defmethod size  ((self egs)) (length (o self rows)))
+(defmethod size ((self egs)) (length (o self rows)))
 ;.    ____ _    _  _ ____ ___ ____ ____ 
 ;.    |    |    |  | [__   |  |___ |__/ 
 ;.    |___ |___ |__| ___]  |  |___ |  \ 
