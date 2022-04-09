@@ -13,18 +13,21 @@
 
 ; Show copyright
 (defun help (lst)
-  (format t "ynot v1 : not-so-supervised multi-objective optimization~%") 
-  (format t "(c) 2021 Tim Menzies, MIT (2 clause) license~%")
+  (terpri)
+  (format t "ynot (v1.0) : not-so-supervised multi-objective optimization~%") 
+  (format t "(c) 2022 Tim Menzies, MIT (2 clause) license~%")
   (format t "~%OPTIONS:~%") 
-  (loop for (x(s y)) on lst by #'cddr do (format t "  -~(~a~)  ~a = ~a~%" x s y)))
+  (loop for (x(s y)) on lst by #'cddr do 
+    (format t "  -~(~10a~)  ~a  = ~a~%" x s y)))
 
 ; Define settings.
 (defvar *settings*
-  '(help   ("show help               "  nil)
+  '(enough ("how many numbers to keep"  512)
+    file   ("load data from file     "  "../data/auto93.csv")
+    help   ("show help               "  nil)
+    p      ("distance coeffecient    "  2)
     seed   ("random number seed      "  10019)
-    enough ("how many numbers to keep"  512)
-    todo   ("start up action         "  "nothing")
-    file   ("load data from file     "  "../data/auto93.csv")))
+    todo   ("start up action         "  "nothing")))
 
 ; List for test cases
 (defvar *demos* nil)   
@@ -108,8 +111,12 @@
 ;.      _  _|_   _.  _|_   _
 ;.     _>   |_  (_|   |_  _>
 ;; Stats
-(defun norm(lo,hi,x) 
-  (if (< (abs (- hi lo)) 1E-9) 0 (- x lo)/(- hi lo)))
+(defun norm (lo hi x) 
+  (if (< (abs (- hi lo)) 1E-9) 0 (/ (- x lo) (- hi lo))))
+
+; Any item
+(defun any (seq)    (elt seq (randi (length seq))))
+(defun many (seq n) (let (a) (dotimes (i n a) (push (any seq) a))))
 
 ; Return `p`-th item from seq.
 (defun per (seq &optional (p .5) &aux (v (coerce seq 'vector)))
@@ -153,19 +160,21 @@
 ; Update *options* from command-line. Show help or run demo suite. 
 ; Before demo, reset random number seed (and the settings).
 ; Return the number of fails to the operating system.
-(defun main (&aux (defaults (copy-tree *settings*)))
+(defun main (&aux defaults)
   (labels ((stop () #+clisp (exit *fails*)
                     #+sbcl  (sb-ext:exit :code *fails*))
            (fun (x) (find-symbol (string-upcase x)))
-           (demo (todo) (format t "~a~%"  todo)
-                        (setf *settings* (copy-tree defaults)
-                              *seed*     (? seed))
-                        (funcall todo))))
+           (demo (todo) (when (fboundp todo)
+                          (format t "~a~%"  todo)
+                          (setf *settings* (copy-tree defaults)
+                                *seed*     (? seed))
+                          (funcall todo))))
     (update-settings-from-command-line *settings*)
+    (setf defaults (copy-tree *settings*))
     (cond ((? help)                (help *settings*))
           ((equalp "all" (? todo)) (dolist (one *demos*) (demo (fun one))))
           (t                       (demo (fun (? todo)))))
-    (stop))
+    (stop)))
 ;.    ____ _    ____ ____ ____ ____ ____
 ;.    |    |    |__| [__  [__  |___ [__
 ;.    |___ |___ |  | ___] ___] |___ ___]
@@ -210,7 +219,7 @@
 ;; num
 (defstruct (num  (:constructor %make-num ))
   (n 0) at name
-  (all (make-array 5 :fill-pointer 0))
+  (all (make-array 5 :fill-pointer 0 :adjustable t ))
   (max (? enough))
   ok w (hi -1E32) (lo 1E32))
 
@@ -254,7 +263,8 @@
 ;.     (/_  (_|  _>
 ;.           _|
 ;; egs
-(defstruct (egs (:constructor %make-egs)) rows cols)
+(defstruct (egs (:constructor %make-egs)) 
+  cols (rows (make-array 5 :fill-pointer 0 :adjustable t)))
 
 (defun make-egs (from &aux (self (%make-egs)))
    (if (stringp from) (with-csv (row from) (add self (asAtoms row) )))
@@ -264,18 +274,23 @@
 (defmethod add ((self egs) row)
   (with-slots (rows cols) self
     (if cols
-      (push (mapcar #'add (o cols all)  row) rows)
+      (progn (vector-push-extend (mapcar #'add (o cols all) row) rows))
       (setf cols (make-cols row)))))
 
-(defmethod size  ((self egs)) (length (o egs rows)))
+(defmethod size  ((self egs)) (length (o self rows)))
 ;.    ____ _    _  _ ____ ___ ____ ____ 
 ;.    |    |    |  | [__   |  |___ |__/ 
 ;.    |___ |___ |__| ___]  |  |___ |  \ 
+
+;;; Cluster
+
 (defmethod dist ((self egs) row1 row2)
-  (let ((n 0) (d 0))
-    (dolist (col (o egs cols x) (/ (expt d (? p)) (expt n (? p))))
-      (incf d (dist col (elt row1 (? col at)) (elt row2 (? col at))))
-      (incf n))))
+  (let ((n 0) (d 0) (p (? p)))
+    (dolist (col (o self cols x) (expt (/ d n) (/ 1  p)))
+      (let ((inc (dist col (elt row1 (o col at)) 
+                           (elt row2 (o col at)))))
+        (incf d (expt inc p))
+        (incf n)))))
 
 (defmethod dist ((self num) x y)
   (with-slots (lo hi) self
@@ -289,45 +304,55 @@
     (abs (- x y))))
 
 (defmethod dist ((self sym) x y)
-  (if (and (eq x #\?) (eq y #\?))
+  (if (and (eq x #\?) (eq y #\?)) 
     0
     (if (equal x y) 0 1)))
 
-(defun half ((self egs) rows)
-  (labels ((far (row,t
-
-(defstruct (cluster (:constructor %make-cluster)) egs top (rank 0) lefts rights)
-
-(defmethod leaf ((self egs)) (not (o self lefts) (o self rights)))
-
-(defun make-cluster (top &optional (egs top))
-  (multiple-value-bind (half top (o egs rows))
-    (lefts rights left right border c)
-    (let ((self (%make-cluster :egs egs :top top :left left :right right 
-                               :c c :border border)))
-      (when (>= (size egs) (* 2 (expt (size top) (? minItems))))
-        (when (<  (size lefts) (size egs))
-          (setf (o self lefts)  (cluster top lefts)
-                (o self rights) (cluster top rights))))
-      self)))
-
-(defmethod show ((self cluster) &optional (pre ""))
-  (let ((front (format t "~a~a" pre (length (o egs rows)))))
-    (if  (leaf (o self egs)) 
-      (format t "~20a~a" front (mid (o self egs) (o self egs cols y)))
-      (progn
-        (print front)
-        (if (o self lefts)  (show (o lefts)  (format nil "|.. ~a" pre)))
-        (if (o self rights) (show (o rights) (format nil "|.. ~a" pre)))))))
+; (defun half ((self egs) rows)
+;   (labels ((far (row,t
+;
+; (defstruct (cluster (:constructor %make-cluster)) egs top (rank 0) lefts rights)
+;
+; (defmethod leaf ((self egs)) (not (o self lefts) (o self rights)))
+;
+; (defun make-cluster (top &optional (egs top))
+;   (multiple-value-bind (half top (o egs rows))
+;     (lefts rights left right border c)
+;     (let ((self (%make-cluster :egs egs :top top :left left :right right 
+;                                :c c :border border)))
+;       (when (>= (size egs) (* 2 (expt (size top) (? minItems))))
+;         (when (<  (size lefts) (size egs))
+;           (setf (o self lefts)  (cluster top lefts)
+;                 (o self rights) (cluster top rights))))
+;       self)))
+;
+; (defmethod show ((self cluster) &optional (pre ""))
+;   (let ((front (format t "~a~a" pre (length (o egs rows)))))
+;     (if  (leaf (o self egs)) 
+;       (format t "~20a~a" front (mid (o self egs) (o self egs cols y)))
+;       (progn
+;         (print front)
+;         (if (o self lefts)  (show (o lefts)  (format nil "|.. ~a" pre)))
+;         (if (o self rights) (show (o rights) (format nil "|.. ~a" pre)))))))
 ;.    ___  ____ _  _ ____ ____/
 ;.    |  \ |___ |\/| |  | [__
 ;.    |__/ |___ |  | |__| ___]
 
 ;;; Demos
 
+(defdemo .rand() (print (randf)))
+
 (defdemo .egs()
+  (print 1)
   (let ((eg (make-egs (? file))))
     (holds (second (o eg cols y)))
     (print (o eg cols y))))
+
+(defdemo .dist()
+  (let* ((eg (make-egs (? file))))
+    (dotimes (i 32)
+      (let ((row1 (any (o eg rows)))
+            (row2 (any (o eg rows))))
+        (format t "~a " (dist eg row1 row2))))))
 
 (main)
