@@ -13,6 +13,7 @@
 ;;;; Ynot
 (defpackage :ynot (:use :cl))
 (in-package :ynot)
+
 (defun help (lst)
   (terpri)
   (format t "ynot (v1.0) : not-so-supervised multi-objective optimization~%") 
@@ -23,12 +24,14 @@
 
 ; Define settings.
 (defvar *settings*
-  '(enough ("how many numbers to keep"  512)
-    file   ("load data from file     "  "../data/auto93.csv")
-    help   ("show help               "  nil)
-    p      ("distance coeffecient    "  2)
-    seed   ("random number seed      "  10019)
-    todo   ("start up action         "  "nothing")))
+  '(enough ("how many numbers to keep     "  512)
+    far    ("where to search for far items" .9)
+    file   ("load data from file          "  "../data/auto93.csv")
+    help   ("show help                    "  nil)
+    p      ("distance coeffecient         "  2)
+    seed   ("random number seed           "  10019)
+    some   ("how many items to sample     "  512)
+    todo   ("start up action              "  "nothing")))
 
 ; List for test cases
 (defvar *demos* nil)   
@@ -111,7 +114,21 @@
 
 ;.      _  _|_   _.  _|_   _
 ;.     _>   |_  (_|   |_  _>
+;; round
+(defun round2s (seq &optional (digits 2))
+  (map 'list (lambda (x) (round2 x digits)) seq))
+
+(defun round2 (number &optional (digits 2))
+  (let* ((div (expt 10 digits))
+         (tmp (/ (round (* number div)) div)))
+    (if (zerop digits) (floor tmp) (float tmp))))
+
 ;; Stats
+; Project 0..1 
+(defun abc2x (a b c) 
+  (/ (+ (* a a) (* c c) (- (* b b))) (* 2 + 1E-32)))
+
+; Normalize zero to one.
 (defun norm (lo hi x) 
   (if (< (abs (- hi lo)) 1E-9) 0 (/ (- x lo) (- hi lo))))
 
@@ -192,7 +209,6 @@
      (pre  '((num #\$))))
     (or (member (char s (1- (length s))) (cdr (assoc kind post)))
         (member (char s 0)               (cdr (assoc kind pre))))))
-
 ;.      _      ._ _
 ;.     _>  \/  | | |
 ;.         /
@@ -267,12 +283,15 @@
 (defstruct (egs (:constructor %make-egs)) 
   cols (rows (make-array 5 :fill-pointer 0 :adjustable t)))
 
-(defun make-egs (data &aux (self (%make-egs)))
+(defun make-egs (&optional data &aux (self (%make-egs)))
    (if data
      (if (stringp data) 
        (with-csv (row data) (add self (asAtoms row)))   ; for string = file name 
-       (map nil #'(lambda (row) (add self row)) data))) ; for array or list
+       (adds self data)))
    self)
+
+(defmethod adds ((self egs) &optional data)
+  (map nil #'(lambda (row) (add self row)) data)) 
 
 (defmethod add ((self egs) row)
   (with-slots (rows cols) self
@@ -281,6 +300,10 @@
       (setf cols (make-cols row)))))
 
 (defmethod size ((self egs)) (length (o self rows)))
+
+(defmethod clone ((self egs) &optional data)
+  (adds (make-egs (list (o self cols names))) data))
+
 ;.    ____ _    _  _ ____ ___ ____ ____ 
 ;.    |    |    |  | [__   |  |___ |__/ 
 ;.    |___ |___ |__| ___]  |  |___ |  \ 
@@ -311,9 +334,27 @@
     0
     (if (equal x y) 0 1)))
 
-; (defun half ((self egs) rows)
-;   (labels ((far (row,t
-;
+(defmethod dists ((self egs) row1 &optional (rows (o self rows)))
+  (labels ((f (row2) (cons (dist self row1 row2) row2))) 
+    (sort (map 'vector #'f rows) #'< :key #'car)))
+
+(defmethod far ((self egs) row rows)
+  (cdr (per (dists row rows) (? far))))
+
+(defmethod half ((self egs) &optional (rows (o self rows)))
+  (let* ((some   (many rows (? some)))
+         (left   (far self (any some) some))
+         (right  (far self left some))
+         (c      (dist self left right))
+         (lefts  (clone self))
+         (rights (clone self))
+         (nleft  (floor (* .5 (length rows)))))
+    (labels 
+      ((fun (r) (cons (abc2x (dist eg left r) (dist eg right r) c) r)))
+      (dolist (one (sort (map 'fun #'project rows) #'< :key #'car))
+        (add (if (>= (decf nleft) 0) lefts rights) (cdr row)))
+      (values lefts rights left right (first (o rights rows))))))
+
 ; (defstruct (cluster (:constructor %make-cluster)) egs top (rank 0) lefts rights)
 ;
 ; (defmethod leaf ((self egs)) (not (o self lefts) (o self rights)))
@@ -351,11 +392,8 @@
     (holds (second (o eg cols y)))
     (print (o eg cols y))))
 
-(defdemo .dist()
-  (let* ((eg (make-egs (? file))))
-    (dotimes (i 32)
-      (let ((row1 (any (o eg rows)))
-            (row2 (any (o eg rows))))
-        (format t "~a " (dist eg row1 row2))))))
+(defdemo .dist(&aux (eg (make-egs (? file))))
+  (print (sort (loop repeat 32 collect 
+                 (round2 (dist eg (any (o eg rows)) (any (o eg rows))) 2)) #'<)))
 
 (main)

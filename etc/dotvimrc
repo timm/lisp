@@ -52,6 +52,7 @@ set lispwords+=loop
 set lispwords+=bad
 set lispwords+=until
 set lispwords+=deftest
+set lispwords+=defdemo
 set lispwords+=defklass
 set lispwords+=doslots
 set lispwords+=defmemo
