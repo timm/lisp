@@ -8,6 +8,8 @@
 ;.      `/___/> \ \/_/\/_/ \/___/     \/__/
 ;.         /\___/
 ;.         \/__/
+;
+; __preable '(__settings __macros __globals)
 ;;;; Ynot
 (defpackage :ynot (:use :cl))
 (in-package :ynot)
@@ -74,11 +76,11 @@
 ;.     |  |  | |  | |    [__
 ;.     |  |__| |__| |___ ___]
 
-;;; Library functions.
+;;; Library
 
 ;.      _   _    _   ._   _   _
 ;.     (_  (_)  (/_  |   (_  (/_
-;; coerce from string
+;; coerce 
 ; Cull silly white space.
 (defun trim (s) (string-trim '(#\Space #\Tab) s))
 
@@ -183,7 +185,7 @@
 ;.     o   _
 ;.     |  _>
 
-;; The first/last char of a column name defines meta-knowledge for that column.
+; The first/last char of a column name defines meta-knowledge for that column.
 (defun is (s kind)
   (let
     ((post '((ignore #\X) (klass #\!) (less #\-) (more #\+) (goal #\+ #\- #\!)))
@@ -215,7 +217,7 @@
 
 ;.     ._        ._ _
 ;.     | |  |_|  | | |
-;; num
+;; Num
 (defstruct (num  (:constructor %make-num ))
   (n 0) at name
   (all (make-array 5 :fill-pointer 0 :adjustable t ))
