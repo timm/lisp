@@ -205,11 +205,6 @@
 (defmethod div ((self sym)) (ent (sym-all self)))
 (defmethod mid ((self sym)) (sym-mode self))
 
-(defmethod dist ((self sym) x y)
-  (if (and (eq x #\?) (eq y #\?))
-    0
-    (if (equal x y) 0 1)))
-
 ;.     ._        ._ _
 ;.     | |  |_|  | | |
 ;; num
@@ -242,16 +237,6 @@
 (defmethod div ((self num)) (sd  (holds self)))
 (defmethod mid ((self num)) (per (holds self)))
 
-(defmethod dist ((self num) x y)
-  (with-slots (lo hi) self
-    (cond ((and (eq x #\?) (eq y #\?)) (return-from dist 1))
-          ((eq x #\?) (setf y (norm lo  hi y)
-                            x (if (< y .5) 1  0)))
-          ((eq y #\?) (setf x (norm lo  hi x)
-                            y (if (< x .5) 1 0)))
-          (t          (setf x (norm lo hi x)
-                            y (norm lo hi y)))))))
-
 ;.      _   _   |   _
 ;.     (_  (_)  |  _>
 ;; cols
@@ -281,6 +266,59 @@
     (if cols
       (push (mapcar #'add (o cols all)  row) rows)
       (setf cols (make-cols row)))))
+
+(defmethod size  ((self egs)) (length (o egs rows)))
+;.    ____ _    _  _ ____ ___ ____ ____ 
+;.    |    |    |  | [__   |  |___ |__/ 
+;.    |___ |___ |__| ___]  |  |___ |  \ 
+(defmethod dist ((self egs) row1 row2)
+  (let ((n 0) (d 0))
+    (dolist (col (o egs cols x) (/ (expt d (? p)) (expt n (? p))))
+      (incf d (dist col (elt row1 (? col at)) (elt row2 (? col at))))
+      (incf n))))
+
+(defmethod dist ((self num) x y)
+  (with-slots (lo hi) self
+    (cond ((and (eq x #\?) (eq y #\?)) (return-from dist 1))
+          ((eq x #\?) (setf y (norm lo  hi y)
+                            x (if (< y .5) 1  0)))
+          ((eq y #\?) (setf x (norm lo  hi x)
+                            y (if (< x .5) 1 0)))
+          (t          (setf x (norm lo hi x)
+                            y (norm lo hi y))))
+    (abs (- x y))))
+
+(defmethod dist ((self sym) x y)
+  (if (and (eq x #\?) (eq y #\?))
+    0
+    (if (equal x y) 0 1)))
+
+(defun half ((self egs) rows)
+  (labels ((far (row,t
+
+(defstruct (cluster (:constructor %make-cluster)) egs top (rank 0) lefts rights)
+
+(defmethod leaf ((self egs)) (not (o self lefts) (o self rights)))
+
+(defun make-cluster (top &optional (egs top))
+  (multiple-value-bind (half top (o egs rows))
+    (lefts rights left right border c)
+    (let ((self (%make-cluster :egs egs :top top :left left :right right 
+                               :c c :border border)))
+      (when (>= (size egs) (* 2 (expt (size top) (? minItems))))
+        (when (<  (size lefts) (size egs))
+          (setf (o self lefts)  (cluster top lefts)
+                (o self rights) (cluster top rights))))
+      self)))
+
+(defmethod show ((self cluster) &optional (pre ""))
+  (let ((front (format t "~a~a" pre (length (o egs rows)))))
+    (if  (leaf (o self egs)) 
+      (format t "~20a~a" front (mid (o self egs) (o self egs cols y)))
+      (progn
+        (print front)
+        (if (o self lefts)  (show (o lefts)  (format nil "|.. ~a" pre)))
+        (if (o self rights) (show (o rights) (format nil "|.. ~a" pre)))))))
 ;.    ___  ____ _  _ ____ ____/
 ;.    |  \ |___ |\/| |  | [__
 ;.    |__/ |___ |  | |__| ___]
