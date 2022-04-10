@@ -19,8 +19,8 @@
   (format t "ynot (v1.0) : not-so-supervised multi-objective optimization~%") 
   (format t "(c) 2022 Tim Menzies, MIT (2 clause) license~%~%")
   (format t "OPTIONS:~%") 
-  (loop for (x(s y)) on lst by #'cddr do 
-    (format t "  -~(~10a~)  ~a  = ~a~%" x s y)))
+  (loop for (x(s y)) on lst by 'cddr do 
+    (format t "  --~(~10a~)  ~a  = ~a~%" x s y)))
 
 ; Define settings.
 (defvar *settings*
@@ -102,12 +102,20 @@
 
 ; Ensure `a` has a cells `(x . number)` (where number defaults to 0).
 (defmacro has (key dictionary)
-  `(cdr (or (assoc ,key ,dictionary :test #'equal)
+  `(cdr (or (assoc ,key ,dictionary :test 'equal)
             (car (setf ,dictionary (cons (cons ,key 0) ,dictionary))))))
 
 ; Define a demo function (see examples at end of file).
 (defmacro defdemo (name params &body body)
   `(progn (pushnew ',name *demos*) (defun ,name ,params  ,@body)))
+
+; Defined struct with a constructor and a pretty print from `thing`.
+(defmacro defthing (x &rest slots)
+  `(defstruct 
+     (,x (:constructor ,(intern (format nil "%MAKE-~a" (symbol-name x))))
+          (:include thing))
+         ,@slots))
+
 ;.    ___ ____ ____ _    ____
 ;.     |  |  | |  | |    [__
 ;.     |  |__| |__| |___ ___]
@@ -130,7 +138,25 @@
   (cons (subseq s x y) (and y (asList s sep (1+ y)))))
 
 ; String to list of atoms
-(defun asAtoms(s) (mapcar #'asAtom (asList s)))
+(defun asAtoms(s) (mapcar 'asAtom (asList s)))
+
+;.      _       _  _|_   _   ._ _  
+;.     _>  \/  _>   |_  (/_  | | | 
+;.         /                       
+(defun args ()
+  #+clisp ext:*args* #+sbcl sb-ext:*posix-argv*)
+
+(defun stop (&optional (status 0))
+  #+sbcl (sb-ext:exit :code status) #+:clisp (ext:exit status))
+
+(defun klass-slots (it)
+  #+clisp (clos:class-slots (class-of it)) #+sbcl (sb-mop:class-slots (class-of it)))
+
+(defun klass-slot-definition-name (x)
+  #+clisp (clos:slot-definition-name x) #+sbcl (sb-mop:slot-definition-name x))
+
+(defun slots (it)
+  (mapcar 'klass-slot-definition-name (klass-slots it)))
 
 ;.     ._   _.  ._    _|   _   ._ _
 ;.     |   (_|  | |  (_|  (_)  | | |
@@ -148,23 +174,18 @@
 ;.      _  _|_   _.  _|_   _
 ;.     _>   |_  (_|   |_  _>
 ;; round
-(defun round2s (seq &optional (digits 2))
-  (map 'list (lambda (x) (round2 x digits)) seq))
-
 (defun round2 (number &optional (digits 2))
   (let* ((div (expt 10 digits))
          (tmp (/ (round (* number div)) div)))
     (if (zerop digits) (floor tmp) (float tmp))))
 
+(defun round2s (seq &optional (digits 2))
+  (map 'list (lambda (x) (round2 x digits)) seq))
 ;; Stats
 ; Project 0..1 
 (defun abc2x (a b c) 
   (max 0 (min 1 (/ (+ (* a a) (* c c) (- (* b b))) 
                    (+ (* 2 c) 1E-32)))))
-
-; Normalize zero to one.
-(defun norm (lo hi x) 
-  (if (< (abs (- hi lo)) 1E-9) 0 (/ (- x lo) (- hi lo))))
 
 ; Any item
 (defun any (seq)    (elt seq (randi (length seq))))
@@ -175,7 +196,7 @@
   (elt v (floor (* p (length v)))))
 
 ; Find sd from a sorted list.
-(defun sd (seq &optional (key #'identity))
+(defun sd (seq &optional (key 'identity))
   (if (<= (length seq) 5) 0
     (/ (- (funcall key (per seq .9)) (funcall key (per seq .1))) 2.56)))
 
@@ -189,27 +210,52 @@
 ;; misc
 ; For each setting `x`, look for `-x` on the command line.
 (defun update-settings-from-command-line (lst)
-  (let ((args #+clisp ext:*args*
-              #+sbcl  sb-ext:*posix-argv*))
-    (loop for (slot (help b4)) on lst by #'cddr do
-      (setf (second (getf lst slot))
-            (aif (member (format nil "-~a" slot) args :test #'equalp)
-              (cond ((eq b4 t)   nil) ; boolean flags flip the default
-                    ((eq b4 nil) t)   ; boolean flags flip the default
-                    (t (asAtom (elt it 1))))
-              b4)))))
+  (loop for (slot (help b4)) on lst by 'cddr do
+    (setf (second (getf lst slot))
+          (aif (member (format nil "--~a" slot) (args) :test 'equalp)
+            (cond ((eq b4 t)   nil) ; boolean flags flip the default
+                  ((eq b4 nil) t)   ; boolean flags flip the default
+                  (t (asAtom (elt it 1))))
+            b4))))
 
 ;.     ._   ._   _   _|_  _|_        ._   ._  o  ._   _|_ 
 ;.     |_)  |   (/_   |_   |_  \/    |_)  |   |  | |   |_ 
 ;.     |                       /     |                    
-(defun pretty (lst &optional pre)
-  (labels ((item (lst pre) (when lst (pretty (first lst) pre)
-                                     (when (rest lst) 
-                                        (format t "~%~{~a~}" pre)
-                                        (item (rest lst) pre)))))
-    (cond ((null lst)  (princ "()"))
-          ((atom lst)  (princ lst))
-          ((listp lst) (princ "(") (item lst (cons "   " pre)) (princ ")")))))
+(defun pretty (x  &optional (str t) (pre nil))
+ (labels ((kid (x) (pretty x str (cons "  " pre))))
+  (format t "~%==> ~a ~a~%"  (type-of x) x)
+  (print (numberp x))
+  (print (thing-p x))
+  (print (atom x))
+  (print (consp x))
+  (print (arrayp x))
+  (cond 
+        ((numberp x) (print 1) (print x) (format str "~(~a~)~a~%" '("---") x))
+        ((thing-p x) (print 2) (kid (cons (type-of x) 
+                               (mapcar (lambda (s) (list s (slot-value x s))) 
+                                       (slots x)))))
+        ((atom   x) (format str "~(~a~)~a~%" pre x))
+        ((consp  x) (dolist (y x) (kid y)))
+        ((arrayp x) (map nil (lambda (y) (kid y))  x))
+)))
+
+;     w
+; (defun pretty (lst &optional (str t) pre)
+;   (labels ((item (lst pre) 
+;      (cond ( (consp lst)
+;          t (pretty (first lst) str pre)
+;                                      (when (rest lst) 
+;                                         (format str "~%~{~a~}" pre)
+;                                         (item (rest lst) pre)))))
+;     (cond ((null lst)  (princ "()" str))
+;           ((atom lst)  (princ lst str))
+;           ((listp lst) 
+;            (princ "(" str) (item lst (cons "   " pre)) (princ ")" str)))))
+;
+(defstruct thing)
+
+(defmethod xprint-object ((self thing) str) 
+  (pretty  self str))
 
 ;.     ._ _    _.  o  ._
 ;.     | | |  (_|  |  | |
@@ -221,9 +267,6 @@
               (if (? dump)
                 (assert test nil msg)
                 (format t "~aFAIL ~a~%" #\Tab msg)))))
-
-(defun stop (&optional (status 0)) 
-  #+clisp (ext:exit status) #+sbcl (sb-ext:exit :code status))
 
 ; Update *options* from command-line. Show help or run demo suite. 
 ; Before demo, reset random number seed (and the settings).
@@ -261,7 +304,7 @@
 ;.     _>  \/  | | |
 ;.         /
 ;; Sym
-(defstruct (sym  (:constructor %make-sym )) (n 0) at name all mode (most 0))
+(defstruct (sym (:constructor %make-sym)) (n 0) at name all mode (most 0))
 
 (defun make-sym (&optional (at 0) (name ""))
   (%make-sym :at at :name name))
@@ -304,13 +347,17 @@
 
 (defmethod holds ((self num))
   (with-slots (ok all) self
-    (unless ok (setf all (sort all #'<)))
+    (unless ok (setf all (sort all '<)))
     (setf ok t)
     all))
 
 (defmethod div ((self num)) (sd  (holds self)))
 (defmethod mid ((self num)) (per (holds self)))
-
+(defmethod norm ((self num) x)
+  (if (equal x #\?) 
+    x 
+    (with-slots (lo hi) self
+      (if (< (abs (- hi lo)) 1E-9) 0 (/ (- x lo) (- hi lo))))))
 ;.      _   _   |   _
 ;.     (_  (_)  |  _>
 ;; cols
@@ -318,8 +365,8 @@
 
 (defun make-cols (names &aux (at -1) x y klass all)
   (dolist (s names (%make-cols :names names :all (reverse all) 
-                                :x x :y y :klass klass))
-    (let ((now (funcall (if (is s 'num)  #'make-num #'make-sym) (incf at) s)))
+                                :x (reverse x) :y (reverse y) :klass klass))
+    (let ((now (funcall (if (is s 'num) 'make-num 'make-sym) (incf at) s)))
       (push now all)
       (when (not (is s 'ignore))
         (if (is s 'goal)  (push  now y) (push now x))
@@ -329,26 +376,26 @@
 ;.     (/_  (_|  _>
 ;.           _|
 ;; egs
+
+(defun adds (eg data)
+  (if (stringp data)
+    (with-csv (row data) (add eg (asAtoms row)))
+    (map nil (lambda (row) (add eg row)) data))
+  eg) 
+
 (defstruct (egs (:constructor %make-egs)) 
   cols (rows (make-array 5 :fill-pointer 0 :adjustable t)))
 
 (defun make-egs (&optional data &aux (self (%make-egs)))
    (if data (adds self data) self))
 
-(defmethod mid ((self egs) &aux (cols (o self cols y)))
-   (mapcar #'mid cols)) 
-
-(defmethod adds ((self egs) (file string))
-  (with-csv (row file self) (add self (asAtoms row))))
-
-(defmethod adds ((self egs) seq)
-  (map nil #'(lambda (row) (add self row)) seq)
-  self) 
+(defmethod mid ((self egs) &aux (cols (o self cols y))) (mapcar 'mid cols)) 
+(defmethod div ((self egs) &aux (cols (o self cols y))) (mapcar 'div cols)) 
 
 (defmethod add ((self egs) row)
   (with-slots (rows cols) self
     (if cols
-      (vector-push-extend (mapcar #'add (o cols all) row) rows)
+      (vector-push-extend (mapcar 'add (o cols all) row) rows)
       (setf cols (make-cols row)))))
 
 (defmethod size ((self egs)) (length (o self rows)))
@@ -357,19 +404,21 @@
   (adds (make-egs (list (o self cols names))) data))
 
 (defmethod better ((self egs) row1 row2 &aux (s1 0) (s2 0))
-  (let ((n (length (o egs cols y))))
-    (dolist (col (o egs cols y)  (< (/ s1 n) (/ s2 n)))
-      (let* ((a0 (elt row1 (o col at)))
-             (b0 (elt row2 (o col at)))
-             (a  (norm (o col lo) (o col hi) a0))
-             (b  (norm (o col lo) (o col hi) b0)))
+  (let ((n (length (o self cols y))))
+    (dolist (col (o self cols y)  (< (/ s1 n) (/ s2 n)))
+      (let* ((a (norm col (elt row1 (o col at))))
+             (b (norm col (elt row2 (o col at)))))
         (decf s1 (exp (/ (* (o col w) (- a b)) n)))
-        (decf s2 (exp (/ (* (o col w) (- b a)) n)))))))
+        (decf s2 (exp (/ (* (o col w) (- b a)) n)))))))
+
+(defmethod betters ((self egs) &optional (rows (o self rows)))
+  (sort rows (lambda (row1 row2) (better self row1 row2))))
 ;.    ____ _    _  _ ____ ___ ____ ____ 
 ;.    |    |    |  | [__   |  |___ |__/ 
 ;.    |___ |___ |__| ___]  |  |___ |  \ 
 
 ;;; Cluster
+
 
 (defmethod dist ((self egs) row1 row2)
   (let ((n 0) (d 0) (p (? p)))
@@ -380,15 +429,14 @@
         (incf n)))))
 
 (defmethod dist ((self num) x y)
-  (with-slots (lo hi) self
-    (cond ((and (eq x #\?) (eq y #\?)) (return-from dist 1))
-          ((eq x #\?) (setf y (norm lo  hi y)
-                            x (if (< y .5) 1  0)))
-          ((eq y #\?) (setf x (norm lo  hi x)
-                            y (if (< x .5) 1 0)))
-          (t          (setf x (norm lo hi x)
-                            y (norm lo hi y))))
-    (abs (- x y))))
+  (cond ((and (eq x #\?) (eq y #\?)) (return-from dist 1))
+        ((eq x #\?) (setf y (norm self y)
+                          x (if (< y .5) 1  0)))
+        ((eq y #\?) (setf x (norm self x)
+                          y (if (< x .5) 1 0)))
+        (t          (setf x (norm self x)
+                          y (norm self y))))
+  (abs (- x y)))
 
 (defmethod dist ((self sym) x y)
   (if (and (eq x #\?) (eq y #\?)) 
@@ -397,7 +445,7 @@
 
 (defmethod neighbors ((self egs) row1 &optional (rows (o self rows)))
   (labels ((f (row2) (cons (dist self row1 row2) row2))) 
-    (sort (map 'vector #'f rows) #'< :key #'car)))
+    (sort (map 'vector #'f rows) '< :key 'car)))
 
 (defmethod far ((self egs) row &optional (rows (o self rows)))
   (cdr (per (neighbors self row rows) (? far))))
@@ -415,26 +463,26 @@
          (lefts    (clone self))
          (rights   (clone self))
          (nleft    (floor (* .5 (length rows)))))
-    (dolist (one (sort (projections self left right c) #'< :key #'first))
+    (dolist (one (sort (projections self left right c) '< :key 'first))
       (add (if (>= (decf nleft) 0) lefts rights) (cdr one)))
-    (values lefts rights left right)
+    (values lefts rights left right)))
 
-(defstruct (cluster (:constructor %make-cluster)) egs top (rank 0) lefts rights)
-
-(defmethod leaf ((self egs)) (not (o self lefts) (o self rights)))
-
-(defun make-cluster (top &optional (egs top))
-  (multiple-value-bind (half top (o egs rows))
-    (lefts rights left right)
-    (let ((self (%make-cluster :egs egs :top top :left left :right right 
-                               :c c :border border)))
-      (when (>= (size egs) (* 2 (expt (size top) (? minItems))))
-        (when (<  (size lefts) (size egs))
-          (setf (o self lefts)  (cluster top lefts)
-                (o self rights) (cluster top rights))))
-      self)))
-
-; (defmethod show ((self cluster) &optional (pre ""))
+; (defstruct (cluster (:constructor %make-cluster)) egs top (rank 0) lefts rights)
+;
+; (defmethod leaf ((self egs)) (not (o self lefts) (o self rights)))
+;
+; (defun make-cluster (top &optional (egs top))
+;   (multiple-value-bind (half top (o egs rows))
+;     (lefts rights left right)
+;     (let ((self (%make-cluster :egs egs :top top :left left :right right 
+;                                :c c :border border)))
+;       (when (>= (size egs) (* 2 (expt (size top) (? minItems))))
+;         (when (<  (size lefts) (size egs))
+;           (setf (o self lefts)  (cluster top lefts)
+;                 (o self rights) (cluster top rights))))
+;       self)))
+;
+; ; (defmethod show ((self cluster) &optional (pre ""))
 ;   (let ((front (format t "~a~a" pre (length (o egs rows)))))
 ;     (if  (leaf (o self egs)) 
 ;       (format t "~20a~a" front (mid (o self egs) (o self egs cols y)))
@@ -453,11 +501,15 @@
 (defdemo .egs()
   (let ((eg (make-egs (? file))))
     (holds (second (o eg cols y)))
-    (print (o eg cols y))))
+    (print (last (o eg cols x)))))
+
+(defdemo .div()
+  (let ((eg (make-egs (? file))))
+    (print (div eg))))
 
 (defdemo .dist1(&aux (eg (make-egs (? file))))
   (print (sort (loop repeat 64 collect 
-                 (round2 (dist eg (any (o eg rows)) (any (o eg rows))) 2)) #'<)))
+                 (round2 (dist eg (any (o eg rows)) (any (o eg rows))) 2)) '<)))
 
 (defdemo .dist2(&aux (out t) (eg (make-egs (? file))))
   (loop repeat 64 do
@@ -483,7 +535,16 @@
       (format t "~%              ~a ~a~%"  y (dist eg x y)))))
 
 (defdemo .mid (&aux (eg (make-egs (? file))))
-  (format t "~a = ~a~%" (mapcar #'(lambda (c) (o c name)) (o eg cols y)) (mid eg)))
+  (format t "~a = ~a~%" (mapcar (lambda (c) (o c name)) (o eg cols y)) (mid eg)))
+
+(defdemo .betters (&aux (eg (make-egs (? file))))
+  (let* ((rows (betters eg))
+         (n    (length rows)))
+    (format t "~a~%" (mapcar (lambda (col) (o col name)) (o eg cols y)))
+    (format t "all   ~a~%" (mid eg))
+    (format t "best  ~a~%" (mid (clone eg (subseq rows 0 32))))
+    (format t "rest  ~a~%" (mid (clone eg (subseq rows 33))))
+    (format t "worst ~a~%" (mid (clone eg (subseq rows (- n 32)))))))
 
 (defdemo .half (&aux (eg (make-egs (? file))))
   (multiple-value-bind (lefts rights left right)
