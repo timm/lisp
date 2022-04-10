@@ -28,6 +28,7 @@
     far    ("where to search for far items" .9)
     file   ("load data from file          "  "../data/auto93.csv")
     help   ("show help                    "  nil)
+    min    ("min size of rows             "  .5)
     p      ("distance coeffecient         "  2)
     seed   ("random number seed           "  10019)
     some   ("how many items to sample     "  512)
@@ -171,22 +172,10 @@
 (defun normal (&optional (mu 0) (sd 1))
   (+ mu (* sd (sqrt (* -2 (log (randf)))) (cos (* 2 pi (randf))))))
 
-;.      _  _|_   _.  _|_   _
-;.     _>   |_  (_|   |_  _>
-;; round
-(defun round2 (number &optional (digits 2))
-  (let* ((div (expt 10 digits))
-         (tmp (/ (round (* number div)) div)))
-    (if (zerop digits) (floor tmp) (float tmp))))
-
-(defun round2s (seq &optional (digits 2))
-  (map 'list (lambda (x) (round2 x digits)) seq))
-;; Stats
-; Project 0..1 
-(defun abc2x (a b c) 
-  (max 0 (min 1 (/ (+ (* a a) (* c c) (- (* b b))) 
-                   (+ (* 2 c) 1E-32)))))
-
+;.      _   _.  ._ _   ._   |   _  
+;.     _>  (_|  | | |  |_)  |  (/_ 
+;.                     |           
+;; Sampe
 ; Any item
 (defun any (seq)    (elt seq (randi (length seq))))
 (defun many (seq n) (let (a) (dotimes (i n a) (push (any seq) a))))
@@ -221,6 +210,14 @@
 ;.     ._   ._   _   _|_  _|_        ._   ._  o  ._   _|_ 
 ;.     |_)  |   (/_   |_   |_  \/    |_)  |   |  | |   |_ 
 ;.     |                       /     |                    
+(defun round2 (number &optional (digits 2))
+  (let* ((div (expt 10 digits))
+         (tmp (/ (round (* number div)) div)))
+    (if (zerop digits) (floor tmp) (float tmp))))
+
+(defun round2s (seq &optional (digits 2))
+  (map 'list (lambda (x) (round2 x digits)) seq))
+
 (defun pretty (x  &optional (str t) (pre nil))
  (labels ((kid (x) (pretty x str (cons "  " pre))))
   (format t "~%==> ~a ~a~%"  (type-of x) x)
@@ -449,23 +446,56 @@
 
 (defmethod far ((self egs) row &optional (rows (o self rows)))
   (cdr (per (neighbors self row rows) (? far))))
+;.                    _ 
+;.     |_    _.  |  _|_ 
+;.     | |  (_|  |   |  
+;; half
+(defstruct (half (:constructor %make-half)) eg lefts rights left right c border)
 
-(defmethod projections ((self egs) left right c) 
-  (labels ((f (r)  (cons (abc2x (dist self left r) (dist self right r) c) r)))
-    (map 'list #'f (o self rows))))
+(defmethod dist2left ((self half) row)
+  (with-slots (eg left right c)  self
+    (let ((a (dist eg row left))
+          (b (dist eg row right)))
+      (max 0 (min 1 (/ (+ (* a a) (* c c) (- (* b b))) 
+                       (+ (* 2 c) 1E-32)))))))
 
-(defmethod divide-in-half ((self egs) &optional (rows (o self rows)))
-  (let* ((some     (many rows (? some)))
-         (anywhere (any some))
-         (left     (far self anywhere some))
-         (right    (far self left some))
-         (c        (dist self left right))
-         (lefts    (clone self))
-         (rights   (clone self))
-         (nleft    (floor (* .5 (length rows)))))
-    (dolist (one (sort (projections self left right c) '< :key 'first))
-      (add (if (>= (decf nleft) 0) lefts rights) (cdr one)))
-    (values lefts rights left right)))
+(defmethod dist2lefts ((self half) rows)
+  (sort (map 'list (lambda (r) (cons (dist2left self r) r))  rows) '< :key 'car))
+
+(defmethod selects ((self half) row)
+  (with-slots (lefts rights border) self
+    (if (<= (dist2left self row) border) lefts rights)))
+
+(defun  make-half (eg &optional (rows (o eg rows)) 
+                      &aux      (self (%make-half :eg eg)))
+  (let (some nleft)
+    (with-slots (lefts rights left right c border)  self
+      (setf some   (many rows (? some))
+            nleft  (floor (* .5 (length rows)))
+            left   (far eg (any some) some)
+            right  (far eg left       some)
+            c      (dist eg left right)
+            lefts  (clone eg)
+            rights (clone eg))
+      (dolist (tmp (dist2lefts self rows) self)
+        (add (if (>= (decf nleft) 0) lefts rights)  (cdr tmp))
+        (if (zerop nleft)
+          (setf border (car tmp)))))))
+
+(defun best-rest (top)
+  (let ((stop  (* 2  (expt (size top) (? min))))
+        (rests (clone top)))
+    (labels ((down (goods bads)
+                   (loop for bad across (o bads rows) do (add rests bad))
+                   (across goods))
+             (across (eg) (if (< (size eg) stop)
+                            eg 
+                            (with-slots (left right lefts rights) 
+                              (make-half top (o eg rows))
+                              (if (better top left right)
+                                (down lefts rights)
+                                (down rights lefts)))))))
+    (values (across top) rests))))
 
 ; (defstruct (cluster (:constructor %make-cluster)) egs top (rank 0) lefts rights)
 ;
@@ -546,11 +576,12 @@
     (format t "rest  ~a~%" (mid (clone eg (subseq rows 33))))
     (format t "worst ~a~%" (mid (clone eg (subseq rows (- n 32)))))))
 
-(defdemo .half (&aux (eg (make-egs (? file))))
-  (multiple-value-bind (lefts rights left right)
-    (divide-in-half eg)
-    (format t "~a ~a~%~a ~a~%~a ~a" (mid eg) (size eg) 
-                           (mid lefts) (size lefts) 
-                           (mid rights) (size rights))))
-    
+(defdemo .half (&aux (half (make-half (make-egs (? file)))))
+  (format t "          ~a~%" (mapcar (lambda (col) (o col name)) (o half eg cols y)))
+  (with-slots (eg lefts rights c) half
+    (format t "all   ~a ~a~%left  ~a ~a~%right ~a ~a~%c     ~a" 
+            (size eg)     (mid eg) 
+            (size lefts)  (mid lefts) 
+            (size rights) (mid rights) c)))
+
 (main)
