@@ -165,8 +165,21 @@
                     (t (asAtom (elt it 1))))
               b4)))))
 
+;.     ._   ._   _   _|_  _|_        ._   ._  o  ._   _|_ 
+;.     |_)  |   (/_   |_   |_  \/    |_)  |   |  | |   |_ 
+;.     |                       /     |                    
+(defun pretty (lst &optional pre)
+  (labels ((item (lst pre) (when lst (pretty (first lst) pre)
+                                     (when (rest lst) 
+                                        (format t "~%~{~a~}" pre)
+                                        (item (rest lst) pre)))))
+    (cond ((null lst)  (princ "()"))
+          ((atom lst)  (princ lst))
+          ((listp lst) (princ "(") (item lst (cons "   " pre)) (princ ")")))))
+
 ;.     ._ _    _.  o  ._
 ;.     | | |  (_|  |  | |
+
 ; Handle tests within a test function"
 (defun ok (test &optional (msg " "))
   (cond (test (format t "~aPASS ~a~%" #\Tab  msg))
@@ -308,6 +321,15 @@
 (defmethod clone ((self egs) &optional data)
   (adds (make-egs (list (o self cols names))) data))
 
+(defmethod better ((self egs) row1 row2 &aux (s1 0) (s2 0))
+  (let ((n (length (o egs cols y))))
+    (dolist (col (o egs cols y)  (< (/ s1 n) (/ s2 n)))
+      (let* ((a0 (elt row1 (o col at)))
+             (b0 (elt row2 (o col at)))
+             (a  (norm (o col lo) (o col hi) a0))
+             (b  (norm (o col lo) (o col hi) b0)))
+        (decf s1 (exp (/ (* (o col w) (- a b)) n)))
+        (decf s2 (exp (/ (* (o col w) (- b a)) n)))))))
 ;.    ____ _    _  _ ____ ___ ____ ____ 
 ;.    |    |    |  | [__   |  |___ |__/ 
 ;.    |___ |___ |__| ___]  |  |___ |  \ 
@@ -362,21 +384,21 @@
       (add (if (>= (decf nleft) 0) lefts rights) (cdr one)))
     (values lefts rights left right c (elt (o rights rows) 1))))
 
-; (defstruct (cluster (:constructor %make-cluster)) egs top (rank 0) lefts rights)
-;
-; (defmethod leaf ((self egs)) (not (o self lefts) (o self rights)))
-;
-; (defun make-cluster (top &optional (egs top))
-;   (multiple-value-bind (half top (o egs rows))
-;     (lefts rights left right border c)
-;     (let ((self (%make-cluster :egs egs :top top :left left :right right 
-;                                :c c :border border)))
-;       (when (>= (size egs) (* 2 (expt (size top) (? minItems))))
-;         (when (<  (size lefts) (size egs))
-;           (setf (o self lefts)  (cluster top lefts)
-;                 (o self rights) (cluster top rights))))
-;       self)))
-;
+(defstruct (cluster (:constructor %make-cluster)) egs top (rank 0) lefts rights)
+
+(defmethod leaf ((self egs)) (not (o self lefts) (o self rights)))
+
+(defun make-cluster (top &optional (egs top))
+  (multiple-value-bind (half top (o egs rows))
+    (lefts rights left right border c)
+    (let ((self (%make-cluster :egs egs :top top :left left :right right 
+                               :c c :border border)))
+      (when (>= (size egs) (* 2 (expt (size top) (? minItems))))
+        (when (<  (size lefts) (size egs))
+          (setf (o self lefts)  (cluster top lefts)
+                (o self rights) (cluster top rights))))
+      self)))
+
 ; (defmethod show ((self cluster) &optional (pre ""))
 ;   (let ((front (format t "~a~a" pre (length (o egs rows)))))
 ;     (if  (leaf (o self egs)) 
@@ -431,6 +453,8 @@
 (defdemo .half (&aux (eg (make-egs (? file))))
   (multiple-value-bind (lefts rights left right c border)
     (divide-in-half eg)
-    (format t "~a~%~a~%~a" (mid eg) (mid lefts) (mid rights))))
+    (format t "~a ~a~%~a ~a~%~a ~a" (mid eg) (size eg) 
+                           (mid lefts) (size lefts) 
+                           (mid rights) (size rights))))
     
 (main)
