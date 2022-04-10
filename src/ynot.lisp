@@ -8,7 +8,7 @@
 ;.      `/___/> \ \/_/\/_/ \/___/     \/__/
 ;.         /\___/
 ;.         \/__/
-;
+
 ; __preable '(__settings __macros __globals)
 ;;;; Ynot
 (defpackage :ynot (:use :cl))
@@ -17,8 +17,8 @@
 (defun help (lst)
   (terpri)
   (format t "ynot (v1.0) : not-so-supervised multi-objective optimization~%") 
-  (format t "(c) 2022 Tim Menzies, MIT (2 clause) license~%")
-  (format t "~%OPTIONS:~%") 
+  (format t "(c) 2022 Tim Menzies, MIT (2 clause) license~%~%")
+  (format t "OPTIONS:~%") 
   (loop for (x(s y)) on lst by #'cddr do 
     (format t "  -~(~10a~)  ~a  = ~a~%" x s y)))
 
@@ -32,6 +32,39 @@
     seed   ("random number seed           "  10019)
     some   ("how many items to sample     "  512)
     todo   ("start up action              "  "nothing")))
+
+; Copyright (c) 2021 Tim Menzies
+
+; This is free and unencumbered software released into the public domain.
+
+; Anyone is free to copy, modify, publish, use, compile, sell, or
+; distribute this software, either in source code form or as a compiled
+; binary, for any purpose, commercial or non-commercial, and by any
+; means.
+
+; In jurisdictions that recognize copyright laws, the author or authors
+; of this software dedicate any and all copyright interest in the
+; software to the public domain. We make this dedication for the benefit
+; of the public at large and to the detriment of our heirs and
+; successors. We intend this dedication to be an overt act of
+; relinquishment in perpetuity of all present and future rights to this
+; software under copyright law.
+
+; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+; EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+; MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+; IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+; OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+; ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+; OTHER DEALINGS IN THE SOFTWARE.
+
+; For more information, please refer to <http://unlicense.org/>
+
+;.    ____ _    ____ ___  ____ _    ____ 
+;.    | __ |    |  | |__] |__| |    [__  
+;.    |__] |___ |__| |__] |  | |___ ___] 
+
+;;; Globals
 
 ; List for test cases
 (defvar *demos* nil)   
