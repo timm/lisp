@@ -187,6 +187,7 @@
               (if (? dump)
                 (assert test nil msg)
                 (format t "~aFAIL ~a~%" #\Tab msg)))))
+
 (defun stop (&optional (status 0)) 
   #+clisp (ext:exit status) #+sbcl (sb-ext:exit :code status))
 
@@ -329,7 +330,7 @@
              (a  (norm (o col lo) (o col hi) a0))
              (b  (norm (o col lo) (o col hi) b0)))
         (decf s1 (exp (/ (* (o col w) (- a b)) n)))
-        (decf s2 (exp (/ (* (o col w) (- b a)) n)))))))
+        (decf s2 (exp (/ (* (o col w) (- b a)) n)))))))
 ;.    ____ _    _  _ ____ ___ ____ ____ 
 ;.    |    |    |  | [__   |  |___ |__/ 
 ;.    |___ |___ |__| ___]  |  |___ |  \ 
@@ -380,9 +381,9 @@
          (lefts    (clone self))
          (rights   (clone self))
          (nleft    (floor (* .5 (length rows)))))
-    (dolist (one  (sort (projections self left right c) #'< :key #'first))
+    (dolist (one (sort (projections self left right c) #'< :key #'first))
       (add (if (>= (decf nleft) 0) lefts rights) (cdr one)))
-    (values lefts rights left right c (elt (o rights rows) 1))))
+    (values lefts rights left right)
 
 (defstruct (cluster (:constructor %make-cluster)) egs top (rank 0) lefts rights)
 
@@ -390,14 +391,14 @@
 
 (defun make-cluster (top &optional (egs top))
   (multiple-value-bind (half top (o egs rows))
-    (lefts rights left right border c)
+    (lefts rights left right)
     (let ((self (%make-cluster :egs egs :top top :left left :right right 
                                :c c :border border)))
       (when (>= (size egs) (* 2 (expt (size top) (? minItems))))
         (when (<  (size lefts) (size egs))
           (setf (o self lefts)  (cluster top lefts)
                 (o self rights) (cluster top rights))))
-      self)))
+      self)))
 
 ; (defmethod show ((self cluster) &optional (pre ""))
 ;   (let ((front (format t "~a~a" pre (length (o egs rows)))))
@@ -451,7 +452,7 @@
   (format t "~a = ~a~%" (mapcar #'(lambda (c) (o c name)) (o eg cols y)) (mid eg)))
 
 (defdemo .half (&aux (eg (make-egs (? file))))
-  (multiple-value-bind (lefts rights left right c border)
+  (multiple-value-bind (lefts rights left right)
     (divide-in-half eg)
     (format t "~a ~a~%~a ~a~%~a ~a" (mid eg) (size eg) 
                            (mid lefts) (size lefts) 
