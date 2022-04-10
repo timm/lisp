@@ -126,7 +126,7 @@
 ;; Stats
 ; Project 0..1 
 (defun abc2x (a b c) 
-  (/ (+ (* a a) (* c c) (- (* b b))) (* 2 + 1E-32)))
+  (max 0 (min 1 (/ (+ (* a a) (* c c) (- (* b b))) (+ (* 2 c) 1E-32)))))
 
 ; Normalize zero to one.
 (defun norm (lo hi x) 
@@ -168,20 +168,20 @@
 ;.     ._ _    _.  o  ._
 ;.     | | |  (_|  |  | |
 ; Handle tests within a test function"
-(defun ok (test msg)
+(defun ok (test &optional (msg " "))
   (cond (test (format t "~aPASS ~a~%" #\Tab  msg))
         (t    (incf *fails* )
               (if (? dump)
                 (assert test nil msg)
                 (format t "~aFAIL ~a~%" #\Tab msg)))))
+(defun stop (&optional (status 0)) 
+  #+clisp (ext:exit status) #+sbcl (sb-ext:exit :code status))
 
 ; Update *options* from command-line. Show help or run demo suite. 
 ; Before demo, reset random number seed (and the settings).
 ; Return the number of fails to the operating system.
 (defun main (&aux defaults)
-  (labels ((stop () #+clisp (exit *fails*)
-                    #+sbcl  (sb-ext:exit :code *fails*))
-           (fun (x) (find-symbol (string-upcase x)))
+  (labels ((fun (x) (find-symbol (string-upcase x)))
            (demo (todo) (when (fboundp todo)
                           (format t "~a~%"  todo)
                           (setf *settings* (copy-tree defaults)
@@ -192,7 +192,7 @@
     (cond ((? help)                (help *settings*))
           ((equalp "all" (? todo)) (dolist (one *demos*) (demo (fun one))))
           (t                       (demo (fun (? todo)))))
-    (stop)))
+    (stop *fails*)))
 ;.    ____ _    ____ ____ ____ ____ ____
 ;.    |    |    |__| [__  [__  |___ [__
 ;.    |___ |___ |  | ___] ___] |___ ___]
@@ -266,10 +266,11 @@
 ;.      _   _   |   _
 ;.     (_  (_)  |  _>
 ;; cols
-(defstruct (cols (:constructor %make-cols)) all x y klass)
+(defstruct (cols (:constructor %make-cols)) all x y names klass)
 
 (defun make-cols (names &aux (at -1) x y klass all)
-  (dolist (s names (%make-cols :all (reverse all) :x x :y y :klass klass))
+  (dolist (s names (%make-cols :names names :all (reverse all) 
+                                :x x :y y :klass klass))
     (let ((now (funcall (if (is s 'num)  #'make-num #'make-sym) (incf at) s)))
       (push now all)
       (when (not (is s 'ignore))
@@ -284,20 +285,23 @@
   cols (rows (make-array 5 :fill-pointer 0 :adjustable t)))
 
 (defun make-egs (&optional data &aux (self (%make-egs)))
-   (if data
-     (if (stringp data) 
-       (with-csv (row data) (add self (asAtoms row)))   ; for string = file name 
-       (adds self data)))
-   self)
+   (if data (adds self data) self))
 
-(defmethod adds ((self egs) &optional data)
-  (map nil #'(lambda (row) (add self row)) data)) 
+(defmethod mid ((self egs) &aux (cols (o self cols y)))
+   (mapcar #'mid cols)) 
+
+(defmethod adds ((self egs) (file string))
+  (with-csv (row file self) (add self (asAtoms row))))
+
+(defmethod adds ((self egs) seq)
+  (map nil #'(lambda (row) (add self row)) seq)
+  self) 
 
 (defmethod add ((self egs) row)
   (with-slots (rows cols) self
     (if cols
-      (progn (vector-push-extend (mapcar #'add (o cols all) row) rows))
-      (setf cols (make-cols row)))))
+      (vector-push-extend (mapcar #'add (o cols all) row) rows)
+      (setf cols (make-cols row)))))
 
 (defmethod size ((self egs)) (length (o self rows)))
 
@@ -334,26 +338,29 @@
     0
     (if (equal x y) 0 1)))
 
-(defmethod dists ((self egs) row1 &optional (rows (o self rows)))
+(defmethod neighbors ((self egs) row1 &optional (rows (o self rows)))
   (labels ((f (row2) (cons (dist self row1 row2) row2))) 
     (sort (map 'vector #'f rows) #'< :key #'car)))
 
-(defmethod far ((self egs) row rows)
-  (cdr (per (dists row rows) (? far))))
+(defmethod far ((self egs) row &optional (rows (o self rows)))
+  (cdr (per (neighbors self row rows) (? far))))
 
-(defmethod half ((self egs) &optional (rows (o self rows)))
-  (let* ((some   (many rows (? some)))
-         (left   (far self (any some) some))
-         (right  (far self left some))
-         (c      (dist self left right))
-         (lefts  (clone self))
-         (rights (clone self))
-         (nleft  (floor (* .5 (length rows)))))
-    (labels 
-      ((fun (r) (cons (abc2x (dist eg left r) (dist eg right r) c) r)))
-      (dolist (one (sort (map 'fun #'project rows) #'< :key #'car))
-        (add (if (>= (decf nleft) 0) lefts rights) (cdr row)))
-      (values lefts rights left right (first (o rights rows))))))
+(defmethod projections ((self egs) left right c) 
+  (labels ((f (r)  (cons (abc2x (dist self left r) (dist self right r) c) r)))
+    (map 'list #'f (o self rows))))
+
+(defmethod divide-in-half ((self egs) &optional (rows (o self rows)))
+  (let* ((some     (many rows (? some)))
+         (anywhere (any some))
+         (left     (far self anywhere some))
+         (right    (far self left some))
+         (c        (dist self left right))
+         (lefts    (clone self))
+         (rights   (clone self))
+         (nleft    (floor (* .5 (length rows)))))
+    (dolist (one  (sort (projections self left right c) #'< :key #'first))
+      (add (if (>= (decf nleft) 0) lefts rights) (cdr one)))
+    (values lefts rights left right c (elt (o rights rows) 1))))
 
 ; (defstruct (cluster (:constructor %make-cluster)) egs top (rank 0) lefts rights)
 ;
@@ -387,13 +394,43 @@
 (defdemo .rand() (print (randf)))
 
 (defdemo .egs()
-  (print 1)
   (let ((eg (make-egs (? file))))
     (holds (second (o eg cols y)))
     (print (o eg cols y))))
 
-(defdemo .dist(&aux (eg (make-egs (? file))))
-  (print (sort (loop repeat 32 collect 
+(defdemo .dist1(&aux (eg (make-egs (? file))))
+  (print (sort (loop repeat 64 collect 
                  (round2 (dist eg (any (o eg rows)) (any (o eg rows))) 2)) #'<)))
 
+(defdemo .dist2(&aux (out t) (eg (make-egs (? file))))
+  (loop repeat 64 do
+    (let ((a (any (o eg rows)))
+          (b (any (o eg rows)))
+          (c (any (o eg rows))))
+      (setf out (and out (>= (+ (dist eg a b) (dist eg b c)) (dist eg a c))
+                         (=     (dist eg a b) (dist eg b a))
+                         (zerop (dist eg a a))))))
+  (ok out "ands"))
+
+(defdemo .clone(&aux (eg1 (make-egs (? file))))
+  (let ((eg2 (clone eg1 (o eg1 rows))))
+    (ok (equal (div (first (o eg1 cols y)))
+               (div (first (o eg2 cols y)))))))
+
+(defdemo .neighbors (&aux (eg (make-egs (? file))))
+  (loop repeat 2 do 
+    (let* ((x (any (o eg rows)))
+           (y (far eg x)))
+      (format t "~%             ~a~%" x)
+      (print (neighbors eg x (many (o eg rows) 10)))
+      (format t "~%              ~a ~a~%"  y (dist eg x y)))))
+
+(defdemo .mid (&aux (eg (make-egs (? file))))
+  (format t "~a = ~a~%" (mapcar #'(lambda (c) (o c name)) (o eg cols y)) (mid eg)))
+
+(defdemo .half (&aux (eg (make-egs (? file))))
+  (multiple-value-bind (lefts rights left right c border)
+    (divide-in-half eg)
+    (format t "~a~%~a~%~a" (mid eg) (mid lefts) (mid rights))))
+    
 (main)
