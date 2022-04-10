@@ -126,7 +126,8 @@
 ;; Stats
 ; Project 0..1 
 (defun abc2x (a b c) 
-  (max 0 (min 1 (/ (+ (* a a) (* c c) (- (* b b))) (+ (* 2 c) 1E-32)))))
+  (max 0 (min 1 (/ (+ (* a a) (* c c) (- (* b b))) 
+                   (+ (* 2 c) 1E-32)))))
 
 ; Normalize zero to one.
 (defun norm (lo hi x) 
