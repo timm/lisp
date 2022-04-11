@@ -508,6 +508,7 @@
 
 (defun best-rest (eg &optional (top eg) (rests (clone top))
                                (stop (floor (expt (size top) (? min)))))
+  (print (size eg))
   (if (< (size eg) stop)
     (values eg (clone top (many (o rests rows) (* 4 stop))))
     (with-slots (left right lefts rights eg) 
@@ -581,7 +582,8 @@
 
 (defdemo .best-rest (&aux (eg (make-egs (? file))))
   (multiple-value-bind  (bests rests) (best-rest eg) 
-    (format t "bests ~a ~a ~a~%rests ~a ~a ~a~%" 
+    (format t "all ~a ~%bests ~a ~a ~a~%rests ~a ~a ~a~%" 
+           (mid eg)
             (mid bests) (mapcar (lambda (x) (* x (? cohen))) (div eg)) (size bests)
             (mid rests) (mapcar (lambda (x) (* x (? cohen))) (div eg)) (size rests))))
 
