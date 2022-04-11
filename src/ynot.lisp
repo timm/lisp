@@ -26,7 +26,7 @@
 (defvar *settings*
   '(enough ("how many numbers to keep     "  512)
     cohen  ("cohen constant               "  .35)
-    far    ("where to search for far items" .9)
+    far    ("where to search for far items" .925)
     file   ("load data from file          "  "../data/auto93.csv")
     help   ("show help                    "  nil)
     min    ("min size of rows             "  .5)
@@ -362,13 +362,13 @@
 (defun make-bin (&key (at 0)  (name "") (lo 1E32) (hi lo))
  (%make-bin :at at :name name :lo lo :hi hi))
 
-(defmethod bins ((lefts num) (rights num))
- (let (now out xy m (n 
-  (loop for left  across (holds lefts ) do (push (cons left 0) tmp))
-  (loop for right across (holds rights) do (push (cons right 0) tmp))
-  (set tmp (sort tmp '< :key 'car))
-  (push (setf now (make-bin :lo (caar tmp))) out)
-  (loop while (setf xy (pop tmp)) do
+; (defmethod bins ((lefts num) (rights num))
+;  (let (now out xy m (n 
+;   (loop for left  across (holds lefts ) do (push (cons left 0) tmp))
+;   (loop for right across (holds rights) do (push (cons right 0) tmp))
+;   (set tmp (sort tmp '< :key 'car))
+;   (push (setf now (make-bin :lo (caar tmp))) out)
+;   (loop while (setf xy (pop tmp)) do
 
 
 ;.      _   _   |   _
@@ -509,7 +509,7 @@
 (defun best-rest (eg &optional (top eg) (rests (clone top))
                                (stop (floor (expt (size top) (? min)))))
   (if (< (size eg) stop)
-    (values eg (clone top (many (o rests rows) (* 3 stop))))
+    (values eg (clone top (many (o rests rows) (* 4 stop))))
     (with-slots (left right lefts rights eg) 
       (sorted (make-half top (o eg rows)))
       (loop for bad across (o rights rows) do (add rests bad))
