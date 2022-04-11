@@ -490,7 +490,7 @@
   (with-slots (lefts rights border) self
     (if (<= (dist2left self x) border) (selects lefts x) (selects rights x))))
 
-(defun  make-half (eg &optional (rows (o eg rows)) 
+(defun  make-half (eg &key rank (rows (o eg rows)) 
                       &aux      (self (%make-half :eg eg)))
   (let (some nleft)
     (with-slots (lefts rights left right c border)  self
@@ -501,18 +501,20 @@
             c      (dist eg left right)
             lefts  (clone eg)
             rights (clone eg))
-      (dolist (tmp (dist2lefts self rows) self)
+      (dolist (tmp (dist2lefts self rows))
         (add (if (>= (decf nleft) 0) lefts rights)  (cdr tmp))
         (if (zerop nleft)
-          (setf border (car tmp)))))))
+          (setf border (car tmp))))
+      (if rank (sorted self) self))))
 
 (defun best-rest (eg &optional (top eg) (rests (clone top))
                                (stop (floor (expt (size top) (? min)))))
   (print (size eg))
-  (if (< (size eg) stop)
-    (values eg (clone top (many (o rests rows) (* 4 stop))))
+  (if (< (size eg) (/ stop 2))
+    (values eg 
+            (clone top (many (o rests rows) (* 4 stop))))
     (with-slots (left right lefts rights eg) 
-      (sorted (make-half top (o eg rows)))
+      (make-half top :rank t :rows (o eg rows))
       (loop for bad across (o rights rows) do (add rests bad))
       (best-rest lefts top rests stop))))
 
@@ -568,7 +570,7 @@
          (n    (length rows)))
     (format t "~a~%" (mapcar (lambda (col) (o col name)) (o eg cols y)))
     (format t "all   ~a~%" (mid eg))
-    (format t "best  ~a~%" (mid (clone eg (subseq rows 0 32))))
+    (format t "best  ~a~%" (mid (clone eg (subseq rows 0 16))))
     (format t "rest  ~a~%" (mid (clone eg (subseq rows 33))))
     (format t "worst ~a~%" (mid (clone eg (subseq rows (- n 32)))))))
 
