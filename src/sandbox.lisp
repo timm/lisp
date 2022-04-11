@@ -1,12 +1,39 @@
 ; vim: ts=2 sw=2 et :
-;
-(defun pretty (lst &optional pre)
-  (labels ((item (lst pre) (when lst (pretty (first lst) pre)
-                                     (when (rest lst) 
-                                        (format t "~%~{~a~}" pre)
-                                        (item (rest lst) pre)))))
-    (cond ((null lst)  (princ "()"))
-          ((atom lst)  (princ lst))
-          ((listp lst) (princ "(") (item lst (cons "   " pre)) (princ ")")))))
 
-(pretty '(a (b "asdas " de) fg))
+(defun chunk (lst &optional (c (sqrt (length lst))))
+  (let ((out '(())))
+    (dolist (one lst (reverse (mapcar 'reverse out)))
+      (when (>= (length (car out)) c)
+        (push '() out))
+      (push one (car out)))))
+
+(defun pdf (lst)
+  (setf lst (sort lst '<))
+  (let ((b4 (car lst)))
+    (cons b4 (loop for x in (cdr lst) collect 
+      (let ((diff (- x b4)))
+        (setf b4 x)
+        diff)))))
+
+(defmacro ? (x a) `(cdr (assoc x ,a :test #'equal)))
+
+(defun like-sym (x klasses klass k m)
+ (let ((n (loop for (_ . n ) in klasses collect n))
+       (prior (/ (+ k (? klass has)) (+ n *( k 2))))
+       (out prior))
+    (
+
+(defun like-num (x mu sd)
+  (cond ((< x (- mu (* 4 sd))) 0)
+        ((> x (+ mu (* 4 sd))) 0)
+        (t  (let 
+              ((denom (sqrt (* 2 pi sd sd)))
+               (nom   (exp (/ (* -1 (expt (- x mu) 2)) (+ 1E-32 (* 2 sd sd))))))
+              (/ nom (+ denom 1E-32))))))
+
+
+(defun like (
+
+(defun mean (lst ) (print lst)  (float (/ (reduce '+ lst) (+ 1E-32 (length lst)))))
+
+ (print       (mapcar 'mean        (chunk '(1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2 3 3 3 3 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6 6 6 6))))
