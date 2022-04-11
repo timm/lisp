@@ -25,6 +25,7 @@
 ; Define settings.
 (defvar *settings*
   '(enough ("how many numbers to keep     "  512)
+    cohen  ("cohen constant               "  .35)
     far    ("where to search for far items" .9)
     file   ("load data from file          "  "../data/auto93.csv")
     help   ("show help                    "  nil)
@@ -355,6 +356,21 @@
     x 
     (with-slots (lo hi) self
       (if (< (abs (- hi lo)) 1E-9) 0 (/ (- x lo) (- hi lo))))))
+
+(defstruct (bin (:constructor %make-bin)) (at 0) (name "") (lo 1E32) (hi -1E23) all)
+
+(defun make-bin (&key (at 0)  (name "") (lo 1E32) (hi lo))
+ (%make-bin :at at :name name :lo lo :hi hi))
+
+(defmethod bins ((lefts num) (rights num))
+ (let (now out xy m (n 
+  (loop for left  across (holds lefts ) do (push (cons left 0) tmp))
+  (loop for right across (holds rights) do (push (cons right 0) tmp))
+  (set tmp (sort tmp '< :key 'car))
+  (push (setf now (make-bin :lo (caar tmp))) out)
+  (loop while (setf xy (pop tmp)) do
+
+
 ;.      _   _   |   _
 ;.     (_  (_)  |  _>
 ;; cols
@@ -459,12 +475,20 @@
       (max 0 (min 1 (/ (+ (* a a) (* c c) (- (* b b))) 
                        (+ (* 2 c) 1E-32)))))))
 
-(defmethod dist2lefts ((self half) rows)
+(defmethod dist2lefts ((self half) rows) 
   (sort (map 'list (lambda (r) (cons (dist2left self r) r))  rows) '< :key 'car))
 
-(defmethod selects ((self half) row)
+(defmethod sorted ((self half))
+  (with-slots (c eg lefts rights left right border) self
+    (if (better eg left right)
+      self
+      (%make-half :c c :eg eg :border (- c border) 
+                  :left right :right left :lefts rights :rights lefts))))
+
+(defmethod selects ((self egs) x) x)
+(defmethod selects ((self half) x)
   (with-slots (lefts rights border) self
-    (if (<= (dist2left self row) border) lefts rights)))
+    (if (<= (dist2left self x) border) (selects lefts x) (selects rights x))))
 
 (defun  make-half (eg &optional (rows (o eg rows)) 
                       &aux      (self (%make-half :eg eg)))
@@ -482,44 +506,15 @@
         (if (zerop nleft)
           (setf border (car tmp)))))))
 
-(defun best-rest (top)
-  (let ((stop  (* 2  (expt (size top) (? min))))
-        (rests (clone top)))
-    (labels ((down (goods bads)
-                   (loop for bad across (o bads rows) do (add rests bad))
-                   (across goods))
-             (across (eg) (if (< (size eg) stop)
-                            eg 
-                            (with-slots (left right lefts rights) 
-                              (make-half top (o eg rows))
-                              (if (better top left right)
-                                (down lefts rights)
-                                (down rights lefts)))))))
-    (values (across top) rests))))
+(defun best-rest (eg &optional (top eg) (rests (clone top))
+                               (stop (floor (expt (size top) (? min)))))
+  (if (< (size eg) stop)
+    (values eg (clone top (many (o rests rows) (* 3 stop))))
+    (with-slots (left right lefts rights eg) 
+      (sorted (make-half top (o eg rows)))
+      (loop for bad across (o rights rows) do (add rests bad))
+      (best-rest lefts top rests stop))))
 
-; (defstruct (cluster (:constructor %make-cluster)) egs top (rank 0) lefts rights)
-;
-; (defmethod leaf ((self egs)) (not (o self lefts) (o self rights)))
-;
-; (defun make-cluster (top &optional (egs top))
-;   (multiple-value-bind (half top (o egs rows))
-;     (lefts rights left right)
-;     (let ((self (%make-cluster :egs egs :top top :left left :right right 
-;                                :c c :border border)))
-;       (when (>= (size egs) (* 2 (expt (size top) (? minItems))))
-;         (when (<  (size lefts) (size egs))
-;           (setf (o self lefts)  (cluster top lefts)
-;                 (o self rights) (cluster top rights))))
-;       self)))
-;
-; ; (defmethod show ((self cluster) &optional (pre ""))
-;   (let ((front (format t "~a~a" pre (length (o egs rows)))))
-;     (if  (leaf (o self egs)) 
-;       (format t "~20a~a" front (mid (o self egs) (o self egs cols y)))
-;       (progn
-;         (print front)
-;         (if (o self lefts)  (show (o lefts)  (format nil "|.. ~a" pre)))
-;         (if (o self rights) (show (o rights) (format nil "|.. ~a" pre)))))))
 ;.    ___  ____ _  _ ____ ____/
 ;.    |  \ |___ |\/| |  | [__
 ;.    |__/ |___ |  | |__| ___]
@@ -583,5 +578,11 @@
             (size eg)     (mid eg) 
             (size lefts)  (mid lefts) 
             (size rights) (mid rights) c)))
+
+(defdemo .best-rest (&aux (eg (make-egs (? file))))
+  (multiple-value-bind  (bests rests) (best-rest eg) 
+    (format t "bests ~a ~a ~a~%rests ~a ~a ~a~%" 
+            (mid bests) (mapcar (lambda (x) (* x (? cohen))) (div eg)) (size bests)
+            (mid rests) (mapcar (lambda (x) (* x (? cohen))) (div eg)) (size rests))))
 
 (main)
