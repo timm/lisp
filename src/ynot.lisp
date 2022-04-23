@@ -206,7 +206,7 @@
             (cond ((eq b4 t)   nil) ; boolean flags flip the default
                   ((eq b4 nil) t)   ; boolean flags flip the default
                   (t (asAtom (elt it 1))))
-            b4))))
+            b4)
 
 ;.     ._   ._   _   _|_  _|_        ._   ._  o  ._   _|_ 
 ;.     |_)  |   (/_   |_   |_  \/    |_)  |   |  | |   |_ 

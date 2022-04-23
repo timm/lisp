@@ -1,41 +1,30 @@
-SHELL = /bin/bash
-PATH := /opt/homebrew/bin:$(PATH)
-LISP  = /opt/homebrew/bin/sbcl --script
-f    ?= sublime
-t    ?= all
-SOME  = 2> >( awk '{print} /^5:/ {exit}') 
+SHELL=/bin/bash
 
-bye:; git add *;git commit -am save;git push;git status
+f ?= wicked.lisp
+l ?= $f
 
-lisp:;     @$(LISP) $f.lisp               $(SOME) 
-test:;     @$(LISP) sublime.lisp    -t $f $(SOME)
-cautious:; @$(LISP) sublime.lisp -c -t $t $(SOME)
+F ?=""
+HERE=$(shell git rev-parse --show-toplevel)
+DATA=$(HERE)/etc/data
+SRC=$(HERE)/src
 
-COMMENT= gawk ' /^[ \t]*$$/ {next}  {print ";.    "$$0}  END {print""}'
+help: ## show help
+	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
+	| sort | gawk '\
+	BEGIN {FS = ":.*?## "};{printf "make \033[36m %-7s\033[0m : %s\n",$$1,$$2}'
 
-help:
-	@printf "\n\033[33mmake [OPTIONS]\033[0m\n\nOPTIONS:\n"
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
-	| sort \
-	| awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%10s :\033[0m %s\n", $$1, $$2}'
+h1:; @figlet -W -flarry3d     $(read) | sed 's/^/#  /' ## large heading
+h2:; @figlet -W -fcybermedium $(read) | sed 's/^/#  /' ## medium heading
+h3:; @figlet -W -fsmall       $(read) | sed 's/^/#  /' ## small heading
+h4:; @figlet -W -fmini        $(read) | sed 's/^/#  /' ## tiny heading
 
-h1:; @figlet -W -flarry3d     $t   | $(COMMENT)
-h2:; @figlet -W -fcybermedium $t   | $(COMMENT)
-h3:; @figlet -W -fsmall  $${t%%.*} | $(COMMENT)
-h4:; @figlet -W -fmini $${t%%.*}   | $(COMMENT)
-
-#----------------------------------------------------
-pdfs: ../docs/pdf/sublime.pdf
-ok:
-	@mkdir -p ../docs/pdf
-
-../docs/pdf/%.pdf : %.lisp ok
-	@a2ps -q -BjR --line-numbers=1               \
-           --borders=no --pro=color --columns 2 \
-           --right-footer="" --left-footer=""    \
-           --footer="page %p."                    \
-           -M letter -o $@.ps $<
-	@ps2pdf $@.ps $@; rm $@.ps ; git add $@
+ed:;    @vim  -u $(HERE)/etc/dotvimrc $f ## edit
+clisp:; @clisp -q $F $l                     ## run clisp
+repl:;  @rlwrap sbcl --noinform          ## repl
+tmux:;  @tmux -f $(HERE)/etc/dottmux     ## run tmux
+sbcl:;  sbcl --noinform --script $l $F 2> >( gawk ' {print} /^5:/ {exit}' )  ## run sbcl
+bye:;   @git add *; git commit -am save;git push;git status ## save to github
 
 
-
+eg1:
+	F="--seed 23" $(MAKE) sbcl

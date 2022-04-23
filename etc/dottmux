@@ -64,5 +64,3 @@ set status-right '"#22T" %H:%M %d-%b-%y'
 #bind S source-file $Tnix/.config/tmux-session1
 setw -g monitor-activity on
 set -g visual-activity on
-
-

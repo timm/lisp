@@ -56,6 +56,7 @@ set lispwords+=defdemo
 set lispwords+=defklass
 set lispwords+=doslots
 set lispwords+=defmemo
+set lispwords+=do-cells
 set lispwords+=do-pairs
 set lispwords+=do-items
 set lispwords+=while
