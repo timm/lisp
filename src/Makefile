@@ -19,10 +19,10 @@ h3:; @figlet -W -fsmall       $(read) | sed 's/^/#  /' ## small heading
 h4:; @figlet -W -fmini        $(read) | sed 's/^/#  /' ## tiny heading
 
 ed:;    @vim  -u $(HERE)/etc/dotvimrc $f ## edit
-clisp:; @clisp -q $F $l                     ## run clisp
+clisp:; @clisp -q $l                     ## run clisp
 repl:;  @rlwrap sbcl --noinform          ## repl
 tmux:;  @tmux -f $(HERE)/etc/dottmux     ## run tmux
-sbcl:;  sbcl --noinform --script $l $F 2> >( gawk ' {print} /^5:/ {exit}' )  ## run sbcl
+sbcl:;  sbcl --noinform --script $l $l 2> >( gawk ' {print} /^5:/ {exit}' )  ## run sbcl
 bye:;   @git add *; git commit -am save;git push;git status ## save to github
 
 

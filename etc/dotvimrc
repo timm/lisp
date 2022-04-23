@@ -89,7 +89,7 @@ call vundle#begin()
 Plugin 'VundleVim/Vundle.vim'
 "Plugin 'tpope/vim-fugitive'
 Plugin 'scrooloose/nerdtree'
-Plugin 'kien/rainbow_parentheses.vim'
+"Plugin 'kien/rainbow_parentheses.vim'
 Plugin 'nielsmadan/harlequin'
 Plugin 'tbastos/vim-lua'
 Plugin 'airblade/vim-gitgutter'
@@ -169,7 +169,7 @@ autocmd Filetype lisp setlocal ts=2 sw=2 expandtab
 autocmd Filetype markdown setlocal ts=2 sw=2 expandtab  
 
 
-au VimEnter * RainbowParenthesesToggle
-au Syntax * RainbowParenthesesLoadRound
-au Syntax * RainbowParenthesesLoadSquare
-au Syntax * RainbowParenthesesLoadBraces
+"au VimEnter * RainbowParenthesesToggle
+"au Syntax * RainbowParenthesesLoadRound
+"au Syntax * RainbowParenthesesLoadSquare
+"au Syntax * RainbowParenthesesLoadBraces
