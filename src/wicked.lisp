@@ -98,7 +98,22 @@
       (print two)
       (let ((p (/ (cdr two) n))) (decf div (* p (log p 2)))))))
 
+(defstruct (egs (:constructor %make-egs))  rows header cols)
 
+(defmethod make-eg ((file string) &aux (eg (%make-eg)))
+  (with-slots (rows header) eg (with-csv (row file eg)  (add eg row))))
+    (if header (push row row) (setf header row)))))
+
+(defmethod make-eg ((lst cons) &aux (eg (%make-eg)))
+  (with-slots (rows header) eg
+  (dolist (row lst eg)  (add eg row)
+    (with-csv (row file eg) (if header (push row row) (setf header row)))))
+
+
+  (rows at 0) (w 0) (txt "") (mid 0) (div 0) (m2 0) (lo 1E32) (hi -1E32))
+
+(defun make-num (at txt rows &aux (it (%make-num :at at :txt txt)))
+ 
 (labels ((args ()     #+clisp ext:*args* #+sbcl sb-ext:*posix-argv*)
          (has  (x)    (member x (args) :test 'equalp))
          (new  (x b4) (if (has x) (cond ((eq b4 t)   nil) 
@@ -109,7 +124,8 @@
     (setf (slot-value *about* slot) 
           (new (format nil "--~(~a~)" slot) (slot-value *about* slot)))))
 
-(with-csv (row (? file)) (print (mapcar #'thing (words row))))
+(defun loads (file &aux all (with-csv (row (? file)) 
+  (print (mapcar #'thing (words row))))
 ;(print *about*)
 ;(print (? help))
 ;
