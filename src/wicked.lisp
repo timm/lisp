@@ -59,7 +59,7 @@
   (let ((row (gensym)))
     `(let (,cell) (dolist (,row ,rows ,out)
                     (setf ,cell (elt (cells ,row) ,at))
-                    (when (not (equal ,cell "?")) ,@body)))))
+                    (when (not (equal ,cell #\?)) ,@body)))))
 
 (labels ((pre=   (s x) (eql x (char s 0)))
          (end=   (s x) (eql x (char s (1- (length s))))))
