@@ -28,3 +28,17 @@ bye:;   @git add *; git commit -am save;git push;git status ## save to github
 
 eg1:
 	F="--seed 23" $(MAKE) sbcl
+
+
+../docs/pdf/%.pdf : %.lisp 
+	@a2ps -q -BjR --line-numbers=1               \
+           --borders=no --pro=color --columns 2 \
+           --right-footer="" --left-footer=""    \
+           --footer="page %p."                    \
+           -M letter -o $@.ps $<
+	@ps2pdf $@.ps $@; rm $@.ps ; git add $@
+
+wicked:
+	$(MAKE) ../docs/pdf/wicked.pdf
+	open    ../docs/pdf/wicked.pdf
+

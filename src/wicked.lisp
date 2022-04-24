@@ -2,7 +2,7 @@
 (defstruct  about
   (what      "wicked.lisp do cool words")
   (copyright "(c) 2022 Tim Menzies")
-  (file      "../data/auto94.csv            ")
+  (file      "where to get data             ")
   (cohen     "small effect size             ")
   (far       "how far to seek distant items ")
   (help      "show help                     ")
@@ -27,17 +27,13 @@
 (defmacro o (s x &rest xs)
   (if xs `(o (slot-value ,s ',x) ,@xs) `(slot-value ,s ',x)))
 
+(defun sum (lst &optional (f #'identity))
+ (reduce '+ (mapcar f lst)))
+
 (defmacro has (key dictionary)
   `(cdr (or (assoc ,key ,dictionary :test 'equal)
             (car (setf ,dictionary (cons (cons ,key 0) ,dictionary))))))
 
-(defmacro with-csv ((cells file &optional out) &body body)
-  (let ((s (gensym)))
-    `(let (,cells)
-       (with-open-file (,s ,file)
-         (loop while (setf ,cells (read-line ,s nil)) do ,@body) ,out))))
-
-;;;;----------------------------------------------------------------------------
 (defun words (s &optional (sep #\,) (x 0) (y (position sep s :start (1+ x))))
   (cons (subseq s x y) (and y (words s sep (1+ y)))))
 
@@ -46,43 +42,60 @@
     (if (equal s "?") #\?  
       (let ((x (ignore-errors (read-from-string s)))) (if (numberp x) x s)))))
 
-;;;;----------------------------------------------------------------------------
-(defstruct row cells klass)
-
-(defmethod add ((r row) (str string)) (add r (mapcar 'thing (words str))))
-(defmethod add ((r row) (lst cons))   (setf (o r cells) lst)) 
-
-(defmethod cells ((x cons)) x)
-(defmethod cells ((x row))  (o x cells))
+(defmacro with-csv ((cells file &optional out) &body body)
+  (let ((s (gensym)))
+    `(let (,cells)
+       (with-open-file (,s ,file)
+         (loop while (setf ,cells (mapcar 'thing (words (read-line ,s nil)))) 
+           do ,@body) ,out))))
 
 (defmacro do-cells ((at cell rows &optional out) &body body)
   (let ((row (gensym)))
     `(let (,cell) (dolist (,row ,rows ,out)
-                    (setf ,cell (elt (cells ,row) ,at))
+                    (setf ,cell (elt (slot-value ,row 'cells) ,at))
                     (when (not (equal ,cell #\?)) ,@body)))))
 
-(labels ((pre=   (s x) (eql x (char s 0)))
-         (end=   (s x) (eql x (char s (1- (length s))))))
-  (defun ignorep (s)   (end= s #\X))
-  (defun klassp  (s)   (end= s #\!))
-  (defun lessp   (s)   (end= s #\-))
-  (defun morep   (s)   (end= s #\+))
-  (defun goalp   (s)   (or (end= s #\+) (end= s #\-) (end= s #\!)))
-  (defun nump    (s)   (pre= s #\$)))
+(defun cli ()
+  (labels ((args ()     #+clisp ext:*args* #+sbcl sb-ext:*posix-argv*)
+           (has  (x)    (member x (args) :test 'equalp))
+           (new  (x b4) (if (has x) (cond ((eq b4 t)   nil) 
+                                          ((eq b4 nil) t)   
+                                          (t (thing (elt (has x) 1))))
+                          b4)))
+    (dolist (slot (? cli) *about*)
+      (setf (slot-value *about* slot) 
+            (new (format nil "--~(~a~)" slot) (slot-value *about* slot))))))
 
+;;;;----------------------------------------------------------------------------
+(defstruct (row (:constructor %row-make)) cells klass)
+
+(defmethod make-row ((lst cons)) (setf (o row cells) lst))
+(defmethod make-row ((row1 row)) (make-row (o row cells)))
+
+(defmethod at ((self row)) (elt (at self cells) at))
+
+;;;;----------------------------------------------------------------------------
 (defstruct (num (:constructor %make-num)) 
   (n 0) (at 0) (w 0) (txt "") (mid 0) (div 0) (m2 0) (lo 1E32) (hi -1E32))
 
 (defun make-num (at txt rows &aux (it (%make-num :at at :txt txt)))
-  (with-slots (n most mid div) it
+  (with-slots (w n most mid div m2) it
     (setf w (if (lessp txt) -1 1))
     (do-cells (at x rows it)
-      (let ((d (- x mu)))
+      (let ((d (- x mid)))
         (incf n)
         (incf mid (/ d n))
-        (incf m2  (* d (- x mu)))
-        (setf sd  (if (< n 2) 0 (sqrt (/ m2 ( - n 1)))))))))
+        (incf m2  (* d (- x mid)))
+        (setf div  (if (< n 2) 0 (sqrt (/ m2 ( - n 1)))))))))
 
+(defmethod dist ((self num) x y)
+  (cond ((and (eq x #\?) (eq y #\?)) (return-from dist 1))
+        ((eq x #\?) (setf y (norm self y) x (if (< y .5) 1 0)))
+        ((eq y #\?) (setf x (norm self x) y (if (< x .5) 1 0)))
+        (t          (setf x (norm self x) y (norm self y))))
+  (abs (- x y)))
+
+;;;;----------------------------------------------------------------------------
 (defstruct (sym (:constructor %make-sym)) 
   (n 0) (at 0) (txt "") all (most 0) mid (div 0))
 
@@ -98,98 +111,37 @@
       (print two)
       (let ((p (/ (cdr two) n))) (decf div (* p (log p 2)))))))
 
-(defstruct (egs (:constructor %make-egs))  rows header cols)
+(defmethod dist ((self sym) x y)
+  (if (and (eq x #\?) (eq y #\?)) 0 (if (equal x y) 0 1)))
 
-(defmethod make-eg ((file string) &aux (eg (%make-eg)))
-  (with-slots (rows header) eg (with-csv (row file eg)  (add eg row))))
-    (if header (push row row) (setf header row)))))
+;;;;----------------------------------------------------------------------------
+(labels ((pre=   (s x) (eql x (char s 0)))
+         (end=   (s x) (eql x (char s (1- (length s))))))
+  (defun ignorep (s)   (end= s #\X))
+  (defun klassp  (s)   (end= s #\!))
+  (defun lessp   (s)   (end= s #\-))
+  (defun morep   (s)   (end= s #\+))
+  (defun goalp   (s)   (or (end= s #\+) (end= s #\-) (end= s #\!)))
+  (defun nump    (s)   (if (pre= s #\$) 'make-num 'make-sym)))
 
-(defmethod make-eg ((lst cons) &aux (eg (%make-eg)))
-  (with-slots (rows header) eg
-  (dolist (row lst eg)  (add eg row)
-    (with-csv (row file eg) (if header (push row row) (setf header row)))))
+(defstruct (egs (:constructor %make-egs)) rows cols x y names)
+
+(defun make-egs (rows)
+  (let* ((it (%make-egs :names (pop rows) :rows  (mapcar #'make-row rows))))
+    (loop for txt in names for at from 0 do 
+      (let ((col (funcall (if (nump) 'make-num 'make-sym) at txt rows)))
+        (push col (o it cols))
+        (if (not (ignorep txt))
+          (if (goalp txt) (push col (o it y)) (push col (o it x))))))
+    it))
+
+(defmethod dist ((self egs) row1 row2)
+  (labels ((d1   (col) (dist col (at row1 (o col at)) (at row2 (o col at))))
+           (col1 (col) (expt (d1 col) (? lnorm))))
+    (expt (/ (sum 'col1 (o self x)) (length (o self x)))
+          (/ 1 (? lnorm)))))
+;;;;----------------------------------------------------------------------------
 
 
-  (rows at 0) (w 0) (txt "") (mid 0) (div 0) (m2 0) (lo 1E32) (hi -1E32))
-
-(defun make-num (at txt rows &aux (it (%make-num :at at :txt txt)))
- 
-(labels ((args ()     #+clisp ext:*args* #+sbcl sb-ext:*posix-argv*)
-         (has  (x)    (member x (args) :test 'equalp))
-         (new  (x b4) (if (has x) (cond ((eq b4 t)   nil) 
-                                        ((eq b4 nil) t)   
-                                        (t (thing (elt (has x) 1))))
-                        b4)))
-  (dolist (slot (? cli) *about*)
-    (setf (slot-value *about* slot) 
-          (new (format nil "--~(~a~)" slot) (slot-value *about* slot)))))
-
-(defun loads (file &aux all (with-csv (row (? file)) 
-  (print (mapcar #'thing (words row))))
-;(print *about*)
-;(print (? help))
-;
-
-; (defstruct (cols (:constructor %make-cols)) all x y txts klass)
-;
-; (defun make-cols (txts &aux (at -1) x y klass all)
-;   (dolist (s txts (%make-cols :txts txts :all (reverse all) 
-;                                 :x (reverse x) :y (reverse y) :klass klass))
-;     (let ((now (funcall (if (is s 'num) 'make-num 'make-sym) (incf at) s)))
-;       (push now all)
-;       (when (not (is s 'ignore))
-;         (if (is s 'goal)  (push  now y) (push now x))
-;         (if (is s 'klass) (setf klass now))))))
-;
-;
-; (defmacro with-csv ((lst file &optional out) &body body)
-;   (let ((str (gensym))) 
-;     `(let (,lst)
-;        (with-open-file (,str ,file)
-;          (loop while (setf ,lst (read-line ,str nil)) do ,@body)
-;          ,out))))
-;
-; ;;;;
-; (defun args ()  #+clisp ext:*args* #+sbcl sb-ext:*posix-argv*)
-; (defun stop (n) #+sbcl (sb-ext:exit :code n) #+:clisp (ext:exit n))
-;
-; (defun any (seq)    (elt seq (randi (length seq))))
-; (defun many (seq n) (let (a) (dotimes (i n a) (push (any seq) a))))
-;
-; (defun per (seq &optional (p .5) &aux (v (coerce seq 'vector)))
-;   (elt v (floor (* p (length v)))))
-;
-; (defun trim (s) (string-trim '(#\Space #\Tab) s))
-;
-; (defun thing (s &aux (s1 (trim s)))
-;   (if (equal s1 "?") #\? (let ((x (ignore-errors (read-from-string s1))))
-;                           (if (numberp x) x s1))))
-;
-; (defun words (s &optional (sep #\,) (x 0) (y (position sep s :start (1+ x))))
-;   (cons (subseq s x y) (and y (words s sep (1+ y)))))
-;
-; (defun sd (seq &optional (key 'identity))
-;   (if (<= (length seq) 5) 0
-;     (/ (- (funcall key (per seq .9)) (funcall key (per seq .1))) 2.56)))
-;
-; (defun ent (alist &aux (n 0) (e 0))
-;   (dolist (two alist) (incf n (cdr two)))
-;   (dolist (two alist e) (let ((p (/ (cdr two) n))) (decf e (* p (log p 2))))))
-;
-; (defun round2 (number &optional (digits 2))
-;   (let* ((div (expt 10 digits))
-;          (tmp (/ (round (* number div)) div)))
-;     (if (zerop digits) (floor tmp) (float tmp))))
-;
-; (defun round2s (seq &optional (digits 2))
-;   (map 'list (lambda (x) (round2 x digits)) seq))
-;
-; (labels ((park-miller () (setf *seed* (mod (* 16807.0d0 *seed*) 2147483647.0d00))
-;                          (/ *seed* 2147483647.0d0)))
-;   (defun randf (&optional (n 1)) (*   n (- 1.0d0 (park-miller)))) ;XX check this
-;   (defun randi (&optional (n 1)) (floor (* n (park-miller)))))
-;
-; ;;;-----------------------------------------------------------------------------
-; ;;;-----------------------------------------------------------------------------
-; ;;;-----------------------------------------------------------------------------
-;
+(cli)
+(with-csv (row (? file)) (print row))
