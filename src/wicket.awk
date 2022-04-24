@@ -1,24 +1,29 @@
 BEGIN {FS=","}
       { gsub(/[ \t]*/,"") }
-NR==1 { for(i=1;i<=NF;i++) head( i,$i) }
-NR>1  { for(i=1;i<=NF;i++) datum(i,$i,NR-1) }
-END   { n = asort(Data,Data,"betters")
-        for(i=1;  i<=n;i++) Data[i]["rank"] = i
-        for(i=1;  i<=5;i++) {for(j in Y)printf("%5s ",Data[i]["raw"][j]);print i}
-        for(i=n-5;i<=n;i++) {for(j in Y)printf("%5s ",Data[i]["raw"][j]);print i}}
+NR==1 { heads() }
+NR>1  { datums() }
+END   { report(); rogues() }
 
+function report(   n,i,j) {
+  n = asort(Data,Data,"betters")
+  for(i=1;  i<=n;i++) Data[i]["rank"] = i
+  for(i=1;  i<=5;i++) {for(j in Y)printf("%5s ",Data[i]["raw"][j]);print i}
+  for(i=n-5;i<=n;i++) {for(j in Y)printf("%5s ",Data[i]["raw"][j]);print i}}
+
+function lessp(s) { return s~/-$/          }
 function nump(s)  { return s~/^\$/         }
 function goalp(s) { return s~/[!+-]$/      }
-function lessp(s) { return s~/-$/          }
 function min(x,y) { return x<y  ? x : y    }
 function max(x,y) { return x>y  ? x : y    }
 function abs(x)   { return x>=0 ? x : -1*x }
 
-function head(c,x)  {
+function heads(  i) { for(i=1;i<=NF;i++) head(i,$i) }
+function head(c,x) {
   Name[c] = x
-  if (goalp(x)) { Y[c]; W[c]=lessp(x) ? -1 : 1 } else { X[c] }
+  if (goalp(x)) { Y[c]; W[c] = lessp(x) ? -1 : 1 } else { X[c] }
   if (nump(x))  { Lo[c] = 1E31; Hi[c] = -1E31 }}
 
+function datums(     i) { for(i=1;i<=NF;i++) datum(i,$i,NR-1) }
 function datum(c,x,row) {
   Data[row]["raw"][c]=x
  if (x != "?" && c in Lo) { Lo[c] = min(x, Lo[c])
@@ -26,7 +31,7 @@ function datum(c,x,row) {
 
 function betters(i1,x,i2,y) { return better(x["raw"], y["raw"]) ? -1 : 1 }
 
-function better(r1,r2,    n,s1,s2,a,b) {
+function better(r1,r2,    n,s1,s2,a,b,c) {
   n=length(W); s1=s2=0
   for(c in W) {
     a   = norm(c, r1[c])
@@ -54,5 +59,3 @@ function sortOrder(x) { PROCINFO["sorted_in"] = \
 function rogues(    s) {
   for(s in SYMTAB) if (s ~ /^[A-Z][a-z]/) print "#W> Global " s>"/dev/stderr"
   for(s in SYMTAB) if (s ~ /^[_a-z]/    ) print "#W> Rogue: " s>"/dev/stderr"}
-
-
