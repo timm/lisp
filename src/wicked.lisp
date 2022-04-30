@@ -22,13 +22,16 @@
       (format s "  --~(~8a~) ~4a  ~a~%" y (slot-value ab y) (slot-value x y)))))
 
 ;;;;----------------------------------------------------------------------------
+;  ____ _  _ _  _ ____ ___ _ ____ _  _ ____ 
+;  |___ |  | |\ | |     |  | |  | |\ | [__  
+;  |    |__| | \| |___  |  | |__| | \| ___] 
+
 (defmacro ? (x) `(slot-value *about* ',x))
 
-(defmacro o (s x &rest xs)
+(defmacro o (s x &rest xs) 
   (if xs `(o (slot-value ,s ',x) ,@xs) `(slot-value ,s ',x)))
 
-(defun sum (lst &optional (f #'identity))
- (reduce '+ (mapcar f lst)))
+(defun sum (lst &optional (f #'identity)) (reduce '+ (mapcar f lst)))
 
 (defmacro has (key dictionary)
   `(cdr (or (assoc ,key ,dictionary :test 'equal)
@@ -46,8 +49,9 @@
   (let ((s (gensym)))
     `(let (,cells)
        (with-open-file (,s ,file)
-         (loop while (setf ,cells (mapcar 'thing (words (read-line ,s nil)))) 
-           do ,@body) ,out))))
+         (loop while (setf ,cells (read-line ,s nil)) do
+           (setf ,cells (mapcar 'thing (words ,cells)))
+           ,@body) ,out))))
 
 (defmacro do-cells ((at cell rows &optional out) &body body)
   (let ((row (gensym)))
@@ -67,14 +71,24 @@
             (new (format nil "--~(~a~)" slot) (slot-value *about* slot))))))
 
 ;;;;----------------------------------------------------------------------------
-(defstruct (row (:constructor %row-make)) cells klass)
+;  ____ ___ ____ _  _ ____ ___ ____ 
+;  [__   |  |__/ |  | |     |  [__  
+;  ___]  |  |  \ |__| |___  |  ___] 
 
-(defmethod make-row ((lst cons)) (setf (o row cells) lst))
-(defmethod make-row ((row1 row)) (make-row (o row cells)))
+;;----------------------------------------------------------------------------
+(defstruct row (at 0) (txt "") egs cells about)
 
-(defmethod at ((self row)) (elt (at self cells) at))
+(defmethod at ((self row) n) (elt (at self cells) n))
 
-;;;;----------------------------------------------------------------------------
+(defmethod dist ((x row) (y row))
+  (labels ((inc (col) (dist col (at x (o col at)) (at y (o col at)))))
+    (let* ((cols  (o self egs cols x))
+           (n     (length cols))i
+           (p     (? lnorm)))
+      (dolist (col cols (expt (/ d n) (/ 1 p))) 
+        (incf d (expt (inc col) p))))))
+
+;;------------------------------------------------------------------------------
 (defstruct (num (:constructor %make-num)) 
   (n 0) (at 0) (w 0) (txt "") (mid 0) (div 0) (m2 0) (lo 1E32) (hi -1E32))
 
@@ -94,8 +108,7 @@
         ((eq y #\?) (setf x (norm self x) y (if (< x .5) 1 0)))
         (t          (setf x (norm self x) y (norm self y))))
   (abs (- x y)))
-
-;;;;----------------------------------------------------------------------------
+;;------------------------------------------------------------------------------
 (defstruct (sym (:constructor %make-sym)) 
   (n 0) (at 0) (txt "") all (most 0) mid (div 0))
 
@@ -114,7 +127,9 @@
 (defmethod dist ((self sym) x y)
   (if (and (eq x #\?) (eq y #\?)) 0 (if (equal x y) 0 1)))
 
-;;;;----------------------------------------------------------------------------
+;;------------------------------------------------------------------------------
+(defstruct (cols (:constructor %make-cols)) klass all x y names)
+
 (labels ((pre=   (s x) (eql x (char s 0)))
          (end=   (s x) (eql x (char s (1- (length s))))))
   (defun ignorep (s)   (end= s #\X))
@@ -124,22 +139,22 @@
   (defun goalp   (s)   (or (end= s #\+) (end= s #\-) (end= s #\!)))
   (defun nump    (s)   (if (pre= s #\$) 'make-num 'make-sym)))
 
-(defstruct (egs (:constructor %make-egs)) rows cols x y names)
-
-(defun make-egs (rows)
-  (let* ((it (%make-egs :names (pop rows) :rows  (mapcar #'make-row rows))))
+(defun make-cols (egs names &aux (it (%make-cols :names names)))
+  (with-slots (all x y names klass) it
     (loop for txt in names for at from 0 do 
-      (let ((col (funcall (if (nump) 'make-num 'make-sym) at txt rows)))
-        (push col (o it cols))
-        (if (not (ignorep txt))
-          (if (goalp txt) (push col (o it y)) (push col (o it x))))))
-    it))
+      (let ((col (funcall (if (nump) 'make-num 'make-sym) at txt egs)))
+        (push col all)
+        (when (not (ignorep txt))
+          (if (klassp txt) (setf klass col))
+          (if (goalp txt)  (push col y) (push col x))))))
+    it)
+;;------------------------------------------------------------------------------
+(defstruct (egs (:constructor %make-egs)) rows cols)
 
-(defmethod dist ((self egs) row1 row2)
-  (labels ((d1   (col) (dist col (at row1 (o col at)) (at row2 (o col at))))
-           (col1 (col) (expt (d1 col) (? lnorm))))
-    (expt (/ (sum 'col1 (o self x)) (length (o self x)))
-          (/ 1 (? lnorm)))))
+(defun make-egs (rows &aux (it (%make-egs))) 
+ (setf (egs-cols it) (make-cols it (pop rows)))
+ (dolist (row rows it) (add it row)))
+
 ;;;;----------------------------------------------------------------------------
 
 
