@@ -82,11 +82,11 @@
 
 (defmethod dist ((x row) (y row))
   (labels ((inc (col) (dist col (at x (o col at)) (at y (o col at)))))
-    (let* ((cols  (o self egs cols x))
-           (n     (length cols))i
-           (p     (? lnorm)))
-      (dolist (col cols (expt (/ d n) (/ 1 p))) 
-        (incf d (expt (inc col) p))))))
+    (let* ((xs (o self egs cols x))
+           (n  (length xs))
+           (p  (? lnorm))
+           (d  (sum xs (lambda (x) (expt (inc x) p)))))
+      (expt (/ d n) (/ 1 p)))))
 
 ;;------------------------------------------------------------------------------
 (defstruct (num (:constructor %make-num)) 
