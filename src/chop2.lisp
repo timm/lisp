@@ -47,7 +47,7 @@
              ,@body))
          ,out)))
 ;-------------------------------------------------------------------------------
-(defun omit (x) (equalp "?" x))
+(defun avoid (x) (equalp "?" x))
 
 (defun charn (s &rest lst) 
   (unless (zerop (length s))
@@ -67,7 +67,7 @@
 
 (defun randi (&optional (n 1)) (floor (* n (/ (randf 100000000.0) 100000000))))
 ;-------------------------------------------------------------------------------
-(defstruct row has within evaluated rank tmp)
+(defstruct row has within evaluated (rank 0) tmp)
 (defstruct (cols (:constructor %make-cols)) names has xs ys)
 (defstruct (egs (:constructor %make-egs)) has cols)
 (defstruct sym (at 0) (txt "") (n 0) mode (most 0) has)
@@ -78,7 +78,7 @@
   (%make-num :at at :txt txt :w (if (charn txt -1 #\-) -1 1)))
 
 (defmethod add ((self num) (x string))
-  (if (omit x)
+  (if (avoid x)
     x
     (add self (read-from-string x))))
 
@@ -97,19 +97,20 @@
     (if (< (- hi lo) (/ 1 big)) 0 (/ (- x lo) (- hi lo)))))
 
 (defmethod dist ((self num) x y)
-  (cond ((and (omit x) (omit y)) 0)
-        ((omit x) (setf y (norm self y) x (if (< y .5) 1 0)))
-        ((omit y) (setf x (norm self x) y (if (< x .5) 1 0)))
+  (cond ((and (avoid x) (avoid y)) 0)
+        ((avoid x) (setf y (norm self y) x (if (< y .5) 1 0)))
+        ((avoid y) (setf x (norm self x) y (if (< x .5) 1 0)))
         (t        (setf x (norm self x) y (norm self y))))
   (abs (- x y)))
 ;-------------------------------------------------------------------------------
 (defmethod add ((self sym) x)
-  (with-slots (n has most mode) self 
-    (unless (omit "?")
-      (incf n)
-      (incf (has x has))
-      (if (> n most) (setf most n
-                           mode x))))
+  (unless (avoid x)
+    (with-slots (n has most mode) self 
+      (unless (avoid "?")
+        (incf n)
+        (incf (has x has))
+        (if (> n most) (setf most n
+                             mode x)))))
   x)
 
 (defmethod mid ((self sym)) (? self mode))
@@ -146,8 +147,8 @@
 (defun make-egs (&optional src &aux (self (%make-egs)))
   (typecase src
      (null   self)
-     (cons   (dolist (row src self) (add self row)))
-     (string (with-csv    (row src self) (add self row)))))
+     (cons   (dolist (row src self)   (add self row)))
+     (string (with-csv (row src self) (add self row)))))
 
 (defmethod add ((self egs) (r cons)) (add self (make-row :has r :within self)))
 (defmethod add ((self egs) (r row))
@@ -176,23 +177,23 @@
 
 (defun any (lst) (elt lst (randi (length lst))))
 
-(defmethod guess ((self egs) &key (budget 20))
-  (let ((n -3)
-        (lst (sort (? self has) 'lt)))
-    (dolist (row lst)
-      (setf (? row rank) (incf n)))
-    (setf lst (shuffle lst))
-
-(defun guessing1 ((self egs) next b4)
-  (dolist (row (setf b4 (sort b4 'lt)))
-    (setf (? row tmp) nil))
-  (dolist (n nest)
-     (let ((row (second 
-                  (car 
-                    (sort b4 'first :key (lambda (b) (list (dist egs n b) b)))))))
-       (push (? row tmp) n))))
-        
-
+; (defmethod guess ((self egs) &key (budget 20))
+;   (let ((n -3)
+;         (lst (sort (? self has) 'lt)))
+;     (dolist (row lst)
+;       (setf (? row rank) (incf n)))
+;     (setf lst (shuffle lst))
+;
+; (defun guessing1 ((self egs) next b4)
+;   (dolist (row (setf b4 (sort b4 'lt)))
+;     (setf (? row tmp) nil))
+;   (dolist (n nest)
+;      (let ((row (second 
+;                   (car 
+;                     (sort b4 'first :key (lambda (b) (list (dist egs n b) b)))))))
+;        (push (? row tmp) n))))
+;         
+;
   
 ;-------------------------------------------------------------------------------
 (defun _guess ()
@@ -260,6 +261,6 @@
         (incf fails)
         (format t "E> ~a : ~a" (symbol-name fun) status)))))
 
-(_guess)
+;(_guess)
 ;(_dist)
-;(run '(_num _load _sort _around))
+(run '(_num _load _sort _around))

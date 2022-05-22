@@ -31,11 +31,11 @@ eg1:
 
 
 ../docs/pdf/%.pdf : %.lisp 
-	@a2ps -q -BjR --line-numbers=1               \
+	@a2ps -BjR --lines-per-page 120 -K  \
            --borders=no --pro=color --columns 2 \
            --right-footer="" --left-footer=""    \
            --footer="page %p."                    \
-           -M letter -o $@.ps $<
+           -f 5 -M letter -o $@.ps $<
 	@ps2pdf $@.ps $@; rm $@.ps ; git add $@
 
 wicked:
