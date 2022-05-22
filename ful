@@ -43,6 +43,7 @@ else
   alias keys="lisp keys.lisp "
   alias hello="git pull"
   alias ls="ls -G"
+  alias sbcl="sbcl --noinform --script "
   alias repl="rlwrap sbcl --noinform " 
   alias tmux="/opt/homebrew/bin/tmux -f $timmLispFul/etc/dottmux "
   alias vi="vim -u $timmLispFul/etc/dotvimrc "
