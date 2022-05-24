@@ -7,7 +7,7 @@
   (p      2)
   ;(seed   10019)
   (seed   513)
-  (file   "../data/auto93.csv"))
+  (file   "../../data/auto93.csv"))
 
 (defvar my (make-settings))
 ;-------------------------------------------------------------------------------
@@ -26,7 +26,6 @@
       (rotatef
         (elt lst i)
         (elt lst (randi (length lst)))))))
-
 ;-------------------------------------------------------------------------------
 (defun 2thing (x &aux (y (ignore-errors (read-from-string x))))
   (if (numberp y) y (string-trim '(#\Newline #\Tab #\Space) x)))
@@ -128,7 +127,6 @@
 
 (defmethod print-object ((r row) str)
   (format str "ROW{~a:~a}" (? r rank) (? r has)))
-
 ;-------------------------------------------------------------------------------
 (defun make-cols (lst)
   (labels ((nump  (s) (eql (char s 0) #\$))
