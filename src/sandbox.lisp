@@ -15,13 +15,7 @@
         (setf b4 x)
         diff)))))
 
-(defmacro ? (x a) `(cdr (assoc x ,a :test #'equal)))
 
-(defun like-sym (x klasses klass k m)
- (let ((n (loop for (_ . n ) in klasses collect n))
-       (prior (/ (+ k (? klass has)) (+ n *( k 2))))
-       (out prior))
-    (
 
 (defun like-num (x mu sd)
   (cond ((< x (- mu (* 4 sd))) 0)
@@ -32,8 +26,28 @@
               (/ nom (+ denom 1E-32))))))
 
 
-(defun like (
 
 (defun mean (lst ) (print lst)  (float (/ (reduce '+ lst) (+ 1E-32 (length lst)))))
 
- (print       (mapcar 'mean        (chunk '(1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2 3 3 3 3 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6 6 6 6))))
+ (print       (mapcar 'mean i
+   (chunk '(1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2 3 3 3 3 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6 6 6 6))))
+
+(defmacro fn (arg &rest body) `(lambda ,arg ,@body))
+
+(def aa (x y) (+ x y))
+
+(defun %let+ (body xs)
+  (labels ((fun (x) (and (listp x) (> (length x) 2)))
+           (mvb (x) (and (listp x) (listp (car x)))))
+    (if (null xs)
+      body
+      (let ((x (pop xs)))
+        (cond
+          ((fun x) `(labels ((,(pop x) ,(pop x) ,@x))       ,(%let+ body xs)))
+          ((mvb x) `(multiple-value-bind ,(pop x) ,(pop x) ,@(%let+ body xs)))
+          (t       `(let (,x)                          ,(%let+ body xs))))))))
+
+(defmacro let+ (spec &rest body) (%let+ body spec))
+
+
+

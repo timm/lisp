@@ -4,21 +4,48 @@ title: "sandbox: "
 
 
 ```lisp
-(defun help-text (x) (print 111) (print (second x)) (print (fourth x)) x)
-(reader #\! help-text)
+(defun chunk (lst &optional (c (sqrt (length lst))))
+  (let ((out '(())))
+    (dolist (one lst (reverse (mapcar 'reverse out)))
+      (when (>= (length (car out)) c)
+        (push '() out))
+      (push one (car out)))))
 
-!(defmacro aif (test yes &optional no) "asdas" `(let ((it ,test)) (if it ,yes ,no)))
+(defun pdf (lst)
+  (setf lst (sort lst '<))
+  (let ((b4 (car lst)))
+    (cons b4 (loop for x in (cdr lst) collect 
+      (let ((diff (- x b4)))
+        (setf b4 x)
+        diff)))))
 
-(aif nil (print it) (print 'nl))
+(defun like-num (x mu sd)
+  (cond ((< x (- mu (* 4 sd))) 0)
+        ((> x (+ mu (* 4 sd))) 0)
+        (t  (let 
+              ((denom (sqrt (* 2 pi sd sd)))
+               (nom   (exp (/ (* -1 (expt (- x mu) 2)) (+ 1E-32 (* 2 sd sd))))))
+              (/ nom (+ denom 1E-32))))))
 
-(format t "as ~s ~s ~%" 1 2)
+(defun mean (lst ) (print lst)  (float (/ (reduce '+ lst) (+ 1E-32 (length lst)))))
 
-(defstruct (foo (:constructor %make-foo)) 
-  y x)
+ (print       (mapcar 'mean i
+   (chunk '(1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2 3 3 3 3 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6 6 6 6))))
 
-(defun make-foo (&key x y) 
-  ;; non-trivial initial values 
-  (%make-foo :x (+ x y) :y 9 ))
+(defmacro fn (arg &rest body) `(lambda ,arg ,@body))
 
-(print (macroexpand-1 '(defstruct x a b)))
+(def aa (x y) (+ x y))
+
+(defun %let+ (body xs)
+  (labels ((fun (x) (and (listp x) (> (length x) 2)))
+           (mvb (x) (and (listp x) (listp (car x)))))
+    (if (null xs)
+      body
+      (let ((x (pop xs)))
+        (cond
+          ((fun x) `(labels ((,(pop x) ,(pop x) ,@x))       ,(%let+ body xs)))
+          ((mvb x) `(multiple-value-bind ,(pop x) ,(pop x) ,@(%let+ body xs)))
+          (t       `(let (,x)                          ,(%let+ body xs))))))))
+
+(defmacro let+ (spec &rest body) (%let+ body spec))
 
