@@ -38,7 +38,7 @@
 	"Add a symbol, updating mode and the symbol counts."
   (let ((new (inca y (o s seen) n)))
     (when (> new (o s most)) (setf most new
-                                   mode y)))
+                                   mode y))):
   y)
 
 (defmethod mid ((s sym)) "mid of symbols is mode"    (o s mode))
