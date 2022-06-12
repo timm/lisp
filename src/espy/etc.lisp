@@ -46,21 +46,40 @@
   #+sbcl (sb-ext:quit :code n)
   #+clisp (ext:exit n))
 
-(defun cli (&key (plist  (deepcopy +config+)) 
-                 (help   "")
-                 (args   (cdr (deepcopy (args))))
-                 (now    (getf plist :all)))
-  "Given a plist with keywords, if  the command line has any
-  of the same keywords, then update the plist with the new value."
-  (whale (pop args)
-    (when (consp a)
-      (setf a (read-from-string a))
-      (cond ((equalp a :H)  (format t "~a~%" help))
-            ((getf plist a) (setf now (getf plist a)))
-            ((getf now a)   (setf (getf now a) 
-                                  (read-from-string (car args))))
-            ((keywordp a)   (format t (red ";?? ignoring [~a]") a))))
-    plist))
+; (defun cli (&key (alist  (deepcopy +config+)) 
+;                  (help   "")
+;                  (args   (cdr (deepcopy (args))))
+;                  (now    (cdr (assooc plist :all)))
+;   "Given a plist with keywords, if  the command line has any
+;   of the same keywords, then update the plist with the new value."
+;   (whale (pop args)
+;       (setf a (read-from-string a))
+;       (cond ((equalp a :H)  (format t "~a~%" help))
+;             ((cdr (assoc  plist a) (setf now (getf plist a)))
+;             ((getf now a)   (setf (getf now a) 
+;                                   (read-from-string (car args))))
+;             ((keywordp a)   (format t (red ";?? ignoring [~a]") a))))
+;     plist))
+;
+; (let ((lst (args)))
+;   (setf +config+
+;         (cli2 (format nil "-%s" (char (symbol-name (car one)) 0))
+;               (format nil "--%s" one)
+;               (car one) (cdr val) (car args) (cdr args))))
+;
+; (defun cli2 (k1 k2 key val arg &rest args)
+;   (if (member arg (list k1 k2))
+;     (cons key (cond ((equal old t)   nil)
+;                     ((equal old nil) t)
+;                     (t   (str->thing (car args)))))
+;     (and args (cli2 k1 k2 key val (car args) (cdr args))))))
+;
+(defun str->thing (x &aux (y (string-trim '(#\Space #\Tab #\Newline) x)))
+  (cond ((string= y "?")     "?")
+        ((string= y "true")  t)
+        ((string= y "false") nil)
+        (t (let ((z (ignore-errors (read-from-string y))))
+             (if (numberp z) z y)))))
 
 (defun cell? (x &optional looping)
   "Return a number (if we can)."
@@ -108,8 +127,23 @@
     (let ((s1 (remove-if  #'whitep s0)))
       (unless (zerop (length s1)) (worker  s1)))))
 
+(defun tokens (str test start)
+  (let ((p1 (position-if test str :start start)))
+    (if p1
+      (let ((p2 (position-if #'(lambda (c) (not (funcall test c))) str :start p1)))
+        (cons (subseq str p1 p2)
+              (if p2
+                (tokens str test p2)))))))
+
 (defun file->words (f fn)
   "For each line  in file `f`, call a function `fn` on a list of words in each line."
   (with-open-file (s f) 
     (whale (read-line s nil)
       (aif (str->words a) (funcall fn  it)))))
+
+(dotimes (i (len
+(print (str->words "asdas,,asdasasd,asdas" #\comma))
+
+      ; (print (mapcar (lambda (s) (str->words s #\Space))   (str->words "asdads
+      ; as asdas  as  sasads das 
+      ; asdas" (list #\Newline))))
