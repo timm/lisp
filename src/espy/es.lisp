@@ -3,12 +3,12 @@
 (load "etc.lisp")
 
 (defvar +config+
-  `(("random number seed")               (seed    . 10013)                
-    ("data file to load")                (data    . "../data/auto93.csv") 
-    ("verbose mode")                     (loud    . nil)                  
-    ("meek mode: about  on any error")   (meek    . nil)                  
-    ("distance function coefficient")    (p       . 2)                    
-    ("samples for exploring domination") (samples . 100)))                 
+  (list 
+    (opt! 'data     "data file to load           "       "../data/auto93.csv") 
+    (opt! 'p        "distance function coefficient"      2)
+    (opt! 'samples  "samples for exploring domination" = 100)
+    (opt! 'seed     "random number seed          "       10013)
+    (opt! 'verbose  "verbose mode                ")))
 
 (defstruct col (n 0) (txt "") (w -1) (pos 0))
 (defmethod add ((x col) (y cons)) 

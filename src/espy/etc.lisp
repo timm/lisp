@@ -46,6 +46,29 @@
   #+sbcl (sb-ext:quit :code n)
   #+clisp (ext:exit n))
 
+(defstruct (opt (:constructor %make-opt)) (help "") short long key value)
+(defun opt! (key help &optional value)
+  (cons key
+        (%make-opt :help help :key key :value value
+                   :short (format nil "-~(%s~)" (char (symbol-name key) 0))
+                   :long  (format nil "--~(%s~)" key))))
+
+(defmacro ! (x)
+  `(opt-value (cdr (assoc ',x +config+))))
+
+(defmethod cli ((o opt))
+  (with-slots (short long value) o
+    (labels ((cli1 (now) (cond ((equal value  t)   nil)
+                               ((equal value  nil)  t)
+                               (t   (str->thing now)))))
+      (aif (member short (args)) (cli1  (second it)))
+      (aif (member long  (args)) (cli1  (second it)))
+      o)))
+
+(defmethod print-object ((o opt) str)
+  (with-slots (short long help value) o
+    (format str "  ~s   ~s  ~s  = ~s~%"  short long  help value)))
+
 ; (defun cli (&key (alist  (deepcopy +config+)) 
 ;                  (help   "")
 ;                  (args   (cdr (deepcopy (args))))
