@@ -127,7 +127,7 @@
     (let ((s1 (remove-if  #'whitep s0)))
       (unless (zerop (length s1)) (worker  s1)))))
 
-(defun tokens (str test start)
+(defun tokens (str &optional (lambda (x) (member x (list #\Space #\Tab) :equal #'equal)) (start 0))
   (let ((p1 (position-if test str :start start)))
     (if p1
       (let ((p2 (position-if #'(lambda (c) (not (funcall test c))) str :start p1)))
