@@ -4,15 +4,13 @@
 (defmacro is (spec &rest body) 
   "replace defun, let*, label, multiple-value-bind with one keyword 'is'"
   (labels 
-    ((ins (x) (and (listp x) (eq :in (car x))))
-     (fun (x) (and (listp x) (> (length x) 2)))
+    ((fun (x) (and (listp x) (> (length x) 2)))
      (mvb (x) (and (listp x) (listp (car x))))
      (%is (body xs)
           (if (null xs)
             `(progn  ,@body)
             (let ((x (pop xs)))
               (cond
-                ((ins x) `(with-slots ,(cdr x) ,(car x)         ,(%is body xs)))
                 ((fun x) `(labels ((,(pop x) ,(pop x) ,@x))      ,(%is body xs)))
                 ((mvb x) `(multiple-value-bind ,(pop x) ,(pop x) ,(%is body xs)))
                 (t       `(let (,x)                         ,(%is body xs))))))))
@@ -39,27 +37,27 @@
      (format ,s "~&; FAIL: ~a ~%" ,msg)
      (incf *fails*))))
 
-(is rnd ((n number) &optional (places 0))
+(IS rnd ((n number) &optional (places 0))
   "Return n with `places` decimals."
   (is ((div (expt 10 places))) (float (/ (round (* n div)) div))))
 
 (defvar *seed* 10013)
 
-(is randi (&optional (n 1)) 
+(IS randi (&optional (n 1)) 
     "randint 0.. n-1." 
     (floor (* n (/ (randf 1000.0) 1000))))
 
-(is randf (&optional (n 1.0)) 
+(IS randf (&optional (n 1.0)) 
   "Return a random flaot 0..n-1."
   (setf *seed* (mod (* 16807.0d0 *seed*) 2147483647.0d0))
   (* n (- 1.0d0 (/ *seed* 2147483647.0d0))))
 
-(is args () 
+(IS args () 
   "different ways to access command line access"
   #+clisp *args* 
   #+sbcl *posix-argv*)  
 
-(is stop (&optional (n 1))
+(IS stop (&optional (n 1))
   "different ways to quit"
   #+sbcl (sb-ext:quit :code n)
   #+clisp (ext:exit n))
@@ -71,14 +69,14 @@
                    :short (format nil "-~(%s~)" (char (symbol-name key) 0))
                    :long  (format nil "--~(%s~)" key))))
 
-(defmethod cli ((o opt))
-  (is ((:in o short long value)
-       (cli1 (now) (cond ((equal value  t)   nil)
+(IS cli ((o opt))
+ (with-slots (short long value) o
+  (is ((cli1 (now) (cond ((equal value  t)   nil)
                                ((equal value  nil)  t)
                                (t   (str->thing now)))))
       (aif (member short (args)) (cli1  (second it)))
       (aif (member long  (args)) (cli1  (second it)))
-      o))
+      o)))
 
 (defmethod print-object ((o opt) str)
   (with-slots (short long help value) o
@@ -112,13 +110,12 @@
 ;                     (t   (str->thing (car args)))))
 ;     (and args (cli2 k1 k2 key val (car args) (cdr args))))))
 ;
-(defun str->thing (x)
-	(let((y (string-trim '(#\Space #\Tab #\Newline))))
-			 (cond ((string= y "?")     "?")
-						 ((string= y "true")  t)
-						 ((string= y "false") nil)
-						 (t (let ((z (ignore-errors (read-from-string y))))
-									(if (numberp z) z y))))))
+(defun str->thing (x &aux (y (string-trim '(#\Space #\Tab #\Newline))))
+    (cond ((string= y "?")     "?")
+          ((string= y "true")  t)
+          ((string= y "false") nil)
+          (t (let ((z (ignore-errors (read-from-string y))))
+               (if (numberp z) z y))))))
 
 (defun cell? (x &optional looping)
   "Return a number (if we can)."
