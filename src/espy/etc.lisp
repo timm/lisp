@@ -1,4 +1,24 @@
 ; vim:  ts=2 sw=2 et:
+; vim: ts=2 et : 
+(defmacro _  (x y) `(lambda ,x ,y))
+(defmacro __ (x y) `(mapcar (lambda ,@x) ,y))
+
+(defun %let+ (body xs)
+  (labels ((fun (x) (and (listp x) (> (length x) 2)))
+           (mvb (x) (and (listp x) (listp (car x)))))
+    (if (null xs)
+      `(progn  ,@body)
+      (let ((x (pop xs)))
+        (cond
+          ((fun x) `(labels ((,(pop x) ,(pop x) ,@x))       ,(%let+ body xs)))
+          ((mvb x) `(multiple-value-bind ,(pop x) ,(pop x) ,(%let+ body xs)))
+          (t       `(let (,x)                          ,(%let+ body xs))))))))
+
+(defmacro is (spec &rest body) 
+  (if (listp spec)
+      (%let+ body spec)
+      `(defun ,spec ,@body)))
+
 
 (defmacro aif (test yes &optional no)
   "Anaphoric if (the result of the condition ;is cached in `it`)."
@@ -8,13 +28,9 @@
   "Anaphoric while (the current of the loop controller is cached in `a`)."
   `(do ((a ,expr ,expr)) ((not a)) ,@body))
 
-(defmacro ? (p x &rest xs)
-  "Recursive  plist accessor; e.g. `(? p :outer :inner)`."
-  (if (null xs) `(getf ,p ,x) `(? (getf ,p ,x) ,@xs)))
-
-(defmacro o (s x &rest xs)
+(defmacro ? (s x &rest xs)
   "Recurse struct accessor; e.g. `(o s address street number)`."
-  (if (null xs) `(slot-value ,s ',x) `(o (slot-value ,s ',x) ,@xs)))
+  (if (null xs) `(slot-value ,s ',x) `(? (slot-value ,s ',x) ,@xs)))
 
 (defmacro want (x &rest y)
   "Simpler assert statement."
@@ -53,8 +69,6 @@
                    :short (format nil "-~(%s~)" (char (symbol-name key) 0))
                    :long  (format nil "--~(%s~)" key))))
 
-(defmacro ! (x)
-  `(opt-value (cdr (assoc ',x +config+))))
 
 (defmethod cli ((o opt))
   (with-slots (short long value) o
@@ -97,12 +111,13 @@
 ;                     (t   (str->thing (car args)))))
 ;     (and args (cli2 k1 k2 key val (car args) (cdr args))))))
 ;
-(defun str->thing (x &aux (y (string-trim '(#\Space #\Tab #\Newline) x)))
-  (cond ((string= y "?")     "?")
-        ((string= y "true")  t)
-        ((string= y "false") nil)
-        (t (let ((z (ignore-errors (read-from-string y))))
-             (if (numberp z) z y)))))
+(defun str->thing (x)
+	(let((y (string-trim '(#\Space #\Tab #\Newline))))
+			 (cond ((string= y "?")     "?")
+						 ((string= y "true")  t)
+						 ((string= y "false") nil)
+						 (t (let ((z (ignore-errors (read-from-string y))))
+									(if (numberp z) z y))))))
 
 (defun cell? (x &optional looping)
   "Return a number (if we can)."
@@ -150,7 +165,7 @@
     (let ((s1 (remove-if  #'whitep s0)))
       (unless (zerop (length s1)) (worker  s1)))))
 
-(defun tokens (str &optional (lambda (x) (member x (list #\Space #\Tab) :equal #'equal)) (start 0)) ;;; XXXXX here
+(defun tokens (str &optional (test (lambda (x) (member x (list #\Space #\Tab) :equal #'equal))) (start 0)) ;;; XXXXX here
   (let ((p1 (position-if test str :start start)))
     (if p1
       (let ((p2 (position-if #'(lambda (c) (not (funcall test c))) str :start p1)))
@@ -164,7 +179,6 @@
     (whale (read-line s nil)
       (aif (str->words a) (funcall fn  it)))))
 
-(dotimes (i (len
 (print (str->words "asdas,,asdasasd,asdas" #\comma))
 
       ; (print (mapcar (lambda (s) (str->words s #\Space))   (str->words "asdads
