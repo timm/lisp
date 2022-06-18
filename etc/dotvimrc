@@ -46,6 +46,7 @@ set statusline+=:
 set statusline+=%l
 set statusline+=\ 
 set lispwords+=do-pairs
+set lispwords+=is
 set lispwords+=whale
 set lispwords+=aif
 set lispwords+=loop

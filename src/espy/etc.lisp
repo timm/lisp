@@ -1,27 +1,25 @@
 ; vim:  ts=2 sw=2 et:
-; vim: ts=2 et : 
-(defmacro _  (x y) `(lambda ,x ,y))
-(defmacro __ (x y) `(mapcar (lambda ,@x) ,y))
-
-(defun %let+ (body xs)
-  (labels ((fun (x) (and (listp x) (> (length x) 2)))
-           (mvb (x) (and (listp x) (listp (car x)))))
-    (if (null xs)
-      `(progn  ,@body)
-      (let ((x (pop xs)))
-        (cond
-          ((fun x) `(labels ((,(pop x) ,(pop x) ,@x))       ,(%let+ body xs)))
-          ((mvb x) `(multiple-value-bind ,(pop x) ,(pop x) ,(%let+ body xs)))
-          (t       `(let (,x)                          ,(%let+ body xs))))))))
-
+(defmacro ~  (x y) `(lambda ,x ,y))
+(defmacro ~~ (x y) `(mapcar (lambda ,@x) ,y))
 (defmacro is (spec &rest body) 
-  (if (listp spec)
-      (%let+ body spec)
-      `(defun ,spec ,@body)))
+  "replace defun, let*, label, multiple-value-bind with one keyword 'is'"
+  (labels 
+    ((ins (x) (and (listp x) (eq :in (car x))))
+     (fun (x) (and (listp x) (> (length x) 2)))
+     (mvb (x) (and (listp x) (listp (car x))))
+     (%is (body xs)
+          (if (null xs)
+            `(progn  ,@body)
+            (let ((x (pop xs)))
+              (cond
+                ((ins x) `(with-slots ,(cdr x) ,(car x)         ,(%is body xs)))
+                ((fun x) `(labels ((,(pop x) ,(pop x) ,@x))      ,(%is body xs)))
+                ((mvb x) `(multiple-value-bind ,(pop x) ,(pop x) ,(%is body xs)))
+                (t       `(let (,x)                         ,(%is body xs))))))))
+    (if (listp spec) (%is body spec) `(defmethod ,spec ,@body))))
 
-
-(defmacro aif (test yes &optional no)
-  "Anaphoric if (the result of the condition ;is cached in `it`)."
+(defmacro aif (test yes &optional no) 
+  "anaphoric 'if' (writes to 'it')"
   `(let ((it ,test)) (if it ,yes ,no)))
 
 (defmacro whale (expr &body body) 
@@ -29,35 +27,39 @@
   `(do ((a ,expr ,expr)) ((not a)) ,@body))
 
 (defmacro ? (s x &rest xs)
-  "Recurse struct accessor; e.g. `(o s address street number)`."
+  "Recursive struct accessors; e.g. `(? s address street number)`."
   (if (null xs) `(slot-value ,s ',x) `(? (slot-value ,s ',x) ,@xs)))
 
-(defmacro want (x &rest y)
-  "Simpler assert statement."
-  `(assert ,x () ,@y))
+(defmacro want (x &rest y) "easy assert" `(assert ,x () ,@y))
 
-(defun rnd (number &optional (places 0))
-  "Return  number with `places` number of decimals."
-  (let ((div (expt 10 places)))
-    (float (/ (round (* number div)) div))))
+(defvar *fails* 0)
+(defmacro demo (msg &rest code)
+  (let ((s '*error-output*))
+  `(unless (progn (format ,s "~&") (princ ,msg ,s) ,@code)
+     (format ,s "~&; FAIL: ~a ~%" ,msg)
+     (incf *fails*))))
+
+(is rnd ((n number) &optional (places 0))
+  "Return n with `places` decimals."
+  (is ((div (expt 10 places))) (float (/ (round (* n div)) div))))
 
 (defvar *seed* 10013)
 
-(defun randi (&optional (n 1)) 
-  "Return a random integer 0.. n-1."
-  (floor (* n (/ (randf 1000.0) 1000))))
+(is randi (&optional (n 1)) 
+    "randint 0.. n-1." 
+    (floor (* n (/ (randf 1000.0) 1000))))
 
-(defun randf (&optional (n 1.0)) 
+(is randf (&optional (n 1.0)) 
   "Return a random flaot 0..n-1."
   (setf *seed* (mod (* 16807.0d0 *seed*) 2147483647.0d0))
   (* n (- 1.0d0 (/ *seed* 2147483647.0d0))))
 
-(defun args () 
+(is args () 
   "different ways to access command line access"
   #+clisp *args* 
   #+sbcl *posix-argv*)  
 
-(defun stop (&optional (n 1))
+(is stop (&optional (n 1))
   "different ways to quit"
   #+sbcl (sb-ext:quit :code n)
   #+clisp (ext:exit n))
@@ -69,15 +71,14 @@
                    :short (format nil "-~(%s~)" (char (symbol-name key) 0))
                    :long  (format nil "--~(%s~)" key))))
 
-
 (defmethod cli ((o opt))
-  (with-slots (short long value) o
-    (labels ((cli1 (now) (cond ((equal value  t)   nil)
+  (is ((:in o short long value)
+       (cli1 (now) (cond ((equal value  t)   nil)
                                ((equal value  nil)  t)
                                (t   (str->thing now)))))
       (aif (member short (args)) (cli1  (second it)))
       (aif (member long  (args)) (cli1  (second it)))
-      o)))
+      o))
 
 (defmethod print-object ((o opt) str)
   (with-slots (short long help value) o
