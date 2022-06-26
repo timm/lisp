@@ -3,15 +3,24 @@ TINY (c) 2022, Tim Menzies
 Multi-objective semi-supervised XAI, in a few 100 lines.")
 
 (defvar  *options* 
-  '((keep  256    "-K"  "items to keep            ")
+  '((keep  256    "-K"  "items to keep")
     (k     1      "-k"  "nb low attributes classes")
-    (m     2      "-n"  "nb low frequency classes ")
-    (seed  10019  "-s"  "random number seed       ")))
+    (m     2      "-n"  "nb low frequency classes")
+    (seed  10019  "-s"  "random number seed")))
 
 (defun help() 
   (format t "~&~a~%~%OPTIONS:~%" *help*)
-  (dolist (a *options*) 
-    (format t "  ~a  ~5a      ~a~%" (elt a 2) (elt a 1) (elt a 3))))
+  (dolist (a *options*) (format t "  ~a  ~7a ~a~%" (elt a 2) (elt a 1) (elt a 3))))
+
+(help)
+(defun cli (lst)
+  (let* ((args #+clisp *args* #+sbcl *posix-argv*)
+         (it (member (third lst) args :test 'equal)))
+    (if it
+      (setf (second lst)
+            (cond ((equal (second lst) t)   nil)
+                  ((equal (second lst) nil) t)
+                  (t (thing (second it))))))))
 
 #|._ _    _.   _  ._   _    _ 
   | | |  (_|  (_  |   (_)  _>  
@@ -50,15 +59,6 @@ Then we need some macros to handle some common short-cuts. |#
         ((string= y "false") nil)
         (t (let ((z (ignore-errors (read-from-string y))))
              (if (numberp z) z y)))))
-
-(defun args () #+clisp *args* #+sbcl *posix-argv*)
-
-(defun cli (lst)
-  (aif (member (third lst) (args) :test 'equal) 
-    (setf (second lst)
-          (cond ((equal (second lst) t)   nil)
-                ((equal (second lst) nil) t)
-                (t (thing (second it)))))))
 
 (defvar *seed* (?? seed))
 (defun randi (&optional (n 1)) (floor (* n (/ (randf 1000.0) 1000))))
