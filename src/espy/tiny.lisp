@@ -1,21 +1,17 @@
-#| _               
-  | |_  (_)  _ _    _  _ 
-  |  _| | | | ' \  | || |
-   \__| |_| |_||_|  \_, |
-                     |__/  
+(defvar *help*  "
+TINY (c) 2022, Tim Menzies 
+Multi-objective semi-supervised XAI, in a few 100 lines.")
 
-(c) 2022, Tim Menzies, opensource.org/licenses/BSD-2-Clause.
-
-   _   ._   _|_  o   _   ._    _ 
-  (_)  |_)   |_  |  (_)  | |  _> 
-       |                         
-
-First we need some options. |#
-(defvar *options 
+(defvar  *options* 
   '((keep  256    "-K"  "items to keep            ")
     (k     1      "-k"  "nb low attributes classes")
     (m     2      "-n"  "nb low frequency classes ")
     (seed  10019  "-s"  "random number seed       ")))
+
+(defun help() 
+  (format t "~&~a~%~%OPTIONS:~%" *help*)
+  (dolist (a *options*) 
+    (format t "  ~a  ~5a      ~a~%" (elt a 2) (elt a 1) (elt a 3))))
 
 #|._ _    _.   _  ._   _    _ 
   | | |  (_|  (_  |   (_)  _>  
@@ -23,7 +19,7 @@ First we need some options. |#
 Then we need some macros to handle some common short-cuts. |#
 
 ;; (?? x:atom):atom ; return an option
-(defmacro ?? (x) `(second (assoc ',x *options)))
+(defmacro ?? (x) `(second (assoc ',x *options*)))
 
 ;; (? x:struct &rest slots:[atom]):atom ; nested slot access
 (defmacro ? (s x &rest xs)
@@ -70,9 +66,9 @@ Then we need some macros to handle some common short-cuts. |#
   (setf *seed* (mod (* 16807.0d0 *seed*) 2147483647.0d0))
   (* n (- 1.0d0 (/ *seed* 2147483647.0d0))))
 
-(mapc 'cli *options)
+(mapc 'cli *options*)
 
-(print *options)
+(print *options*)
 ; Recursive struct accessors; e.g. `(? s address street number)`."
 
 
