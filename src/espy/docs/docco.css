@@ -1,142 +1,47 @@
-
-@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css');
-
-/*--------------------- Typography ----------------------------*/
-
-@font-face {
-    font-family: 'aller-light';
-    src: url('public/fonts/aller-light.eot');
-    src: url('public/fonts/aller-light.eot?#iefix') format('embedded-opentype'),
-         url('public/fonts/aller-light.woff') format('woff'),
-         url('public/fonts/aller-light.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-}
-
-@font-face {
-    font-family: 'aller-bold';
-    src: url('public/fonts/aller-bold.eot');
-    src: url('public/fonts/aller-bold.eot?#iefix') format('embedded-opentype'),
-         url('public/fonts/aller-bold.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-}
-
-@font-face {
-    font-family: 'roboto-black';
-    src: url('public/fonts/roboto-black.eot');
-    src: url('public/fonts/roboto-black.eot?#iefix') format('embedded-opentype'),
-         url('public/fonts/roboto-black.woff') format('woff'),
-         url('public/fonts/roboto-black.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-}
-
-/*--------------------- Layout ----------------------------*/
+/*--------------------- Layout and Typography ----------------------------*/
 html { height: 100%; }
 body {
-  font-family: "aller-light";
-  font-size: 12px;
-  line-height: 15px;
-  color: #30404f;
+  font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, FreeSerif, serif;
+  font-size: 14px;
+  line-height: 16px;
+  color: #252519;
   margin: 0; padding: 0;
   height:100%;
 }
 #container { min-height: 100%; }
 
 a {
-  color: #000;
+  color: #261a3b;
 }
 
-b, strong {
-  font-weight: normal;
-  font-family: "aller-bold";
+a:visited {
+  color: #261a3b;
 }
 
-p {
-  text-align: right;
-  margin: 15px 0 0px;
+p, ul, ol {
+  margin: 0 0 15px;
 }
-  .annotation ul, .annotation ol {
-    xmargin: 45px 0;
-  }
-    .annotation ul li, .annotation ol li {
-      font-size: 12px;
-      line-height: 13px;
-      xmargin: 11px 0;
-    }
 
 h1, h2, h3, h4, h5, h6 {
-  color: #112233;
-  line-height: 1em;
-  font-weight: normal;
-  font-family: "roboto-black";
-  xtext-transform: uppercase;
-  margin: 0px 0 15px 0;
+  margin: 30px 0 15px 0;
 }
 
 h1 {
-  font-size: 2.8em;
-  margin-top: 11px;
+  margin-top: 40px;
 }
-h2 {
-  font-size: 2.1em;
-  margin: 10px 0 15px 0;
-  border-top: 2px solid #ccc;
-}
-h3 {
-   color: #954121;
-   font-size: 1.7em; }
-
-h4 {
-  text-decoration: italic;
-}
-h3,h4,h5,h6 {text-align:right;}
 
 hr {
-  order: 0;
-    height: 1px;
-    xborder-top: 1px solid rgba(0, 0, 0, 0.1);
-    xborder-bottom: 1px solid rgba(255, 255, 255, 0.3);
-    border-top: 2px solid #ccc;
-    border-bottom: 1px solid white;
+  border: 0 none;
+  border-top: 1px solid #e5e5ee;
+  height: 1px;
+  margin: 20px 0;
 }
 
 pre, tt, code {
-  font-size: 12px; line-height: 15px;
-  xfont-family: Menlo, Monaco, Consolas, "Lucida Console", monospace;
-  font-family: Menlo,  Consolas, "Lucida Console", monospace;
+  font-size: 12px; line-height: 16px;
+  font-family: Menlo, Monaco, Consolas, "Lucida Console", monospace;
   margin: 0; padding: 0;
 }
-  .annotation pre {
-    display: block;
-    margin: 0;
-    padding: 7px 11px;
-    background: #fcfcfc;
-    -moz-box-shadow:    inset 0 0 11px rgba(0,0,0,0.1);
-    -webkit-box-shadow: inset 0 0 11px rgba(0,0,0,0.1);
-    box-shadow:         inset 0 0 11px rgba(0,0,0,0.1);
-    overflow-x: auto;
-  }
-    .annotation pre code {
-      border: 0;
-      padding: 0;
-      background: transparent;
-    }
-
-
-blockquote {
-  border-left: 5px solid #ccc;
-  margin: 0;
-  padding: 1px 0 1px 1em;
-}
-  .sections blockquote p {
-    font-family: Menlo, Consolas, Monaco, monospace;
-    font-size: 12px; line-height: 15px;
-    color: #999;
-    margin: 11px 0 0;
-    white-space: pre-wrap;
-  }
 
 ul.sections {
   list-style: none;
@@ -187,7 +92,7 @@ ul.sections > li > div {
 #jump_to, #jump_wrapper {
   position: fixed;
   right: 0; top: 0;
-  padding: 11px 15px;
+  padding: 10px 15px;
   margin:0;
 }
 
@@ -200,18 +105,9 @@ ul.sections > li > div {
   display: block;
 }
 
-#jump_page_wrapper{
-  position: fixed;
-  right: 0;
-  top: 0;
-  bottom: 0;
-}
-
 #jump_page {
   padding: 5px 0 3px;
   margin: 0 0 25px 25px;
-  max-height: 100%;
-  overflow: auto;
 }
 
 #jump_page .source {
@@ -234,7 +130,11 @@ ul.sections > li > div {
 
   ul.sections > li > div {
     display: block;
-    padding:5px 11px 0 11px;
+    padding:5px 10px 0 10px;
+  }
+
+  ul.sections > li > div.annotation {
+    background: #fff;
   }
 
   ul.sections > li > div.annotation ul, ul.sections > li > div.annotation ol {
@@ -242,11 +142,12 @@ ul.sections > li > div {
   }
 
   ul.sections > li > div.content {
+    background: #f5f5ff;
     overflow-x:auto;
     -webkit-box-shadow: inset 0 0 5px #e5e5ee;
     box-shadow: inset 0 0 5px #e5e5ee;
     border: 1px solid #dedede;
-    margin:5px 11px 5px 11px;
+    margin:5px 10px 5px 10px;
     padding-bottom: 5px;
   }
 
@@ -271,28 +172,24 @@ ul.sections > li > div {
   body {
     background-color: #F5F5FF;
     font-size: 15px;
-    line-height: 21px;
+    line-height: 22px;
   }
   pre, tt, code {
     line-height: 18px;
   }
-  p, ul, ol {
-    margin: 0 0 15px;
-  }
-
 
   #jump_to {
-    padding: 5px 11px;
+    padding: 5px 10px;
   }
   #jump_wrapper {
     padding: 0;
   }
   #jump_to, #jump_page {
-    font: 11px Arial;
+    font: 10px Arial;
     text-transform: uppercase;
   }
   #jump_page .source {
-    padding: 5px 11px;
+    padding: 5px 10px;
   }
   #jump_to a.large {
     display: inline-block;
@@ -307,7 +204,7 @@ ul.sections > li > div {
     position: absolute;
     top: 0; bottom: 0;
     width: 350px;
-    background: #fff;
+    background: #ffffff;
     border-right: 1px solid #e5e5ee;
     z-index: -1;
   }
@@ -342,6 +239,7 @@ ul.sections > li > div {
   ul.sections > li > div.content {
     padding: 13px;
     vertical-align: top;
+    background: #f5f5ff;
     border: none;
     -webkit-box-shadow: none;
     box-shadow: none;
@@ -377,18 +275,13 @@ ul.sections > li > div {
 /*---------------------- (> 1025px) ---------------------*/
 @media only screen and (min-width: 1025px) {
 
-  body {
-    font-size: 13px;
-    line-height: 20px;
-  }
-
   #background {
     width: 525px;
   }
   ul.sections > li > div.annotation {
     max-width: 525px;
     min-width: 525px;
-    padding: 11px 25px 1px 50px;
+    padding: 10px 25px 1px 50px;
   }
   ul.sections > li > div.content {
     padding: 9px 15px 16px 25px;
@@ -397,7 +290,7 @@ ul.sections > li > div {
 
 /*---------------------- Syntax Highlighting -----------------------------*/
 
-td.linenos { background-color: #f0f0f0; padding-right: 11px; }
+td.linenos { background-color: #f0f0f0; padding-right: 10px; }
 span.lineno { background-color: #f0f0f0; padding: 0 5px 0 5px; }
 /*
 
@@ -533,27 +426,3 @@ pre .hljs-chunk {
 pre .hljs-tex .hljs-formula {
   opacity: 0.5;
 }
-tr,p { line-height: 14px; }
-
-#forkongithub a { background:rgb(15,25,68);
-                  color:#fff;text-decoration:none;font-family:arial,sans-serif;
-                  text-align:center;font-weight:bold;padding:5px 40px;font-size:1rem;
-                  line-height:2rem;position:relative;transition:0.5s;}
-#forkongithub a:hover { background:#954121;color:#fff;}
-#forkongithub a::before,#forkongithub a::after { content:"";width:100%;display:block;position:absolute;
-                                                 top:1px;left:0;height:1px;background:#fff;}
-#forkongithub a::after { bottom:1px;top:auto;}
-
-@media screen and (min-width:800px){
-  #forkongithub   { position:fixed;display:block;top:0;right:0;
-                    width:200px;overflow:hidden;height:200px;z-index:9999;}
-  #forkongithub a { width:200px;position:absolute;top:60px;
-                    right:-60px;transform:rotate(45deg);
-                     -webkit-transform:rotate(45deg);-ms-transform:rotate(45deg);-moz-transform:rotate(45deg);
-                     -o-transform:rotate(45deg);box-shadow:4px 4px 10px rgba(0,0,0,0.8); }
-}
-
-h1,h2 { color: rgb(15,25,68); }
-b, strong {
-  color: #954121;
-   }

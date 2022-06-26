@@ -27,12 +27,26 @@
               <div class="sswrap ">
                 <a class="ss" href="#section-1">&#x00a7;</a>
               </div>
-              
+              <p> ._    <em>.  .</em> _    _    _ 
+ | |  (<em>|  | | |  (/</em>  _&gt; </p>
+
             </div>
             
-            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defstruct</span> row cells used)
-(<span class="hljs-name">defstruct</span> cols all x y name)
-(<span class="hljs-name">defstruct</span> rows kept cols)</pre></div></div>
+            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defvar</span> *config* &#x27;(keep <span class="hljs-number">256</span>))
+(<span class="hljs-name">defmacro</span> ?? (<span class="hljs-name">x</span>) `(getf *config* &#x27;,x))
+
+(<span class="hljs-name">defstruct</span> row cells used)
+(<span class="hljs-name">defstruct</span> cols all x y names)
+(<span class="hljs-name">defstruct</span> rows rows cols)
+
+(<span class="hljs-name">defstruct</span> col (<span class="hljs-name">n</span> <span class="hljs-number">0</span>) (<span class="hljs-name">at</span> <span class="hljs-number">0</span>) (<span class="hljs-name">txt</span> <span class="hljs-string">&quot;&quot;</span>) (<span class="hljs-name">w</span> <span class="hljs-number">1</span>) )
+(<span class="hljs-name">defstruct</span> (<span class="hljs-name">few</span> (<span class="hljs-symbol">:include</span> col)) kept ok (<span class="hljs-name">max</span> (?? keep)))
+(<span class="hljs-name">defstruct</span> (<span class="hljs-name">num</span> (<span class="hljs-symbol">:include</span> col)) (<span class="hljs-name">kept</span> (<span class="hljs-name">make-few</span>)))
+(<span class="hljs-name">defstruct</span> (<span class="hljs-name">sym</span> (<span class="hljs-symbol">:include</span> col)) kept)
+                  
+#| shorthand macro for lambda.
+|#
+(<span class="hljs-name">defmacro</span> λ (<span class="hljs-name">args</span> <span class="hljs-symbol">&amp;rest</span> rest) `(lambda ,args ,@rest))</pre></div></div>
             
         </li>
         
@@ -43,12 +57,12 @@
               <div class="sswrap ">
                 <a class="ss" href="#section-2">&#x00a7;</a>
               </div>
-              <p>~horthand macro for lambda.</p>
+              <p>Recursive struct accessors; e.g. <code>(? s address street number)</code>.”</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defmacro</span> λ (<span class="hljs-name">args</span> <span class="hljs-symbol">&amp;rest</span> rest) 
-  `(lambda ,args ,@rest))</pre></div></div>
+            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defmacro</span> ? (<span class="hljs-name">s</span> x <span class="hljs-symbol">&amp;rest</span> xs)
+  (<span class="hljs-name">if</span> (<span class="hljs-name">null</span> xs) `(slot-value ,s &#x27;,x) `(? (slot-value ,s &#x27;,x) ,@xs)))</pre></div></div>
             
         </li>
         
@@ -59,18 +73,11 @@
               <div class="sswrap ">
                 <a class="ss" href="#section-3">&#x00a7;</a>
               </div>
-              <p>Recursive struct accessors; e.g. <code>(? s address street number)</code>.”</p>
+              <p>anaphoric ‘if’ (writes to ‘it’)”</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defmacro</span> ? (<span class="hljs-name">s</span> x <span class="hljs-symbol">&amp;rest</span> xs)
-  (<span class="hljs-name">if</span> (<span class="hljs-name">null</span> xs) `(slot-value ,s &#x27;,x) `(? (slot-value ,s &#x27;,x) ,@xs)))
-
-(<span class="hljs-name">defmethod</span> char0 ((<span class="hljs-name">x</span> string)) (<span class="hljs-name">char</span> x <span class="hljs-number">0</span>))
-(<span class="hljs-name">defmethod</span> char0 ((<span class="hljs-name">x</span> symbol)) (<span class="hljs-name">char0</span> (<span class="hljs-name">symbol-name</span> x)))
-
-(<span class="hljs-name">defmethod</span> charn ((<span class="hljs-name">x</span> string)) (<span class="hljs-name">char</span> x (<span class="hljs-number">1</span>- (<span class="hljs-name">length</span> x))))
-(<span class="hljs-name">defmethod</span> charn ((<span class="hljs-name">x</span> symbol)) (<span class="hljs-name">charn</span> (<span class="hljs-name">symbol-name</span> x)))</pre></div></div>
+            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defmacro</span> aif (<span class="hljs-name">test</span> yes <span class="hljs-symbol">&amp;optional</span> no) `(let ((it ,test)) (if it ,yes ,no)))</pre></div></div>
             
         </li>
         
@@ -86,16 +93,66 @@
             </div>
             
             <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defun</span> reads (<span class="hljs-name">file</span> f)
-  (<span class="hljs-name">with-open-file</span> (<span class="hljs-name">s</span> file) 
-    (<span class="hljs-name">labels</span> ((<span class="hljs-name">reads1</span> (<span class="hljs-name">x</span>) (<span class="hljs-name">when</span> x (<span class="hljs-name">funcall</span> f x) (<span class="hljs-name">reads1</span> (<span class="hljs-name">read</span> s <span class="hljs-literal">nil</span>)))))
-      (<span class="hljs-name">reads1</span> (<span class="hljs-name">read</span> s <span class="hljs-literal">nil</span>)))))
+  (<span class="hljs-name">with-open-file</span> (<span class="hljs-name">s</span> file) (<span class="hljs-name">labels</span> ((<span class="hljs-name">hop</span>  ()  (<span class="hljs-name">jump</span> (<span class="hljs-name">read</span> s <span class="hljs-literal">nil</span>)))
+                                    (<span class="hljs-name">jump</span> (<span class="hljs-name">x</span>) (<span class="hljs-name">when</span> x (<span class="hljs-name">funcall</span> f x) (<span class="hljs-name">hop</span>))))
+                             (<span class="hljs-name">hop</span>))))</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-5">
+            <div class="annotation">
+              
+              <div class="sswrap ">
+                <a class="ss" href="#section-5">&#x00a7;</a>
+              </div>
+              <h2 id="cols">Cols</h2>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defmethod</span> complete ((<span class="hljs-name">c</span> cols))
+  (<span class="hljs-name">let</span> ((<span class="hljs-name">at</span> <span class="hljs-number">-1</span>))
+    (<span class="hljs-name">labels</span> ((<span class="hljs-name">chars</span>  (<span class="hljs-name">x</span>) (<span class="hljs-name">if</span> (<span class="hljs-name">stringp</span> x) x (<span class="hljs-name">symbol-name</span> x)))
+             (<span class="hljs-name">charn</span>  (<span class="hljs-name">x</span>) (<span class="hljs-name">char</span> x (<span class="hljs-number">1</span>- (<span class="hljs-name">length</span> x)))) 
+             (<span class="hljs-name">char0</span>  (<span class="hljs-name">x</span>) (<span class="hljs-name">char</span> x <span class="hljs-number">0</span>))
+             (<span class="hljs-name">goalp</span>  (<span class="hljs-name">x</span>) (<span class="hljs-name">member</span> (<span class="hljs-name">charn</span> x) &#x27;(#\! #\- #\+)))
+             (<span class="hljs-name">skipp</span>  (<span class="hljs-name">x</span>) (<span class="hljs-name">eql</span>    (<span class="hljs-name">charn</span> x) #\:))
+             (<span class="hljs-name">klassp</span> (<span class="hljs-name">x</span>) (<span class="hljs-name">eql</span>    (<span class="hljs-name">charn</span> x) #\!))
+             (<span class="hljs-name">what</span>   (<span class="hljs-name">x</span>) (<span class="hljs-name">if</span> (<span class="hljs-name">uppercase-p</span> (<span class="hljs-name">char0</span> x)) &#x27;make-num &#x27;make-sym))
+             (<span class="hljs-name">make1</span>  (<span class="hljs-name">txt</span> <span class="hljs-symbol">&amp;aux</span> (<span class="hljs-name">col</span> (<span class="hljs-name">funcall</span> (<span class="hljs-name">whatp</span> txt)) <span class="hljs-symbol">:at</span> (<span class="hljs-name">incf</span> at) <span class="hljs-symbol">:txt</span> txt))
+                       (<span class="hljs-name">if</span> (<span class="hljs-name">eql</span> #\- (<span class="hljs-name">charn</span> txt)) (<span class="hljs-name">setf</span> (? col w) <span class="hljs-number">-1</span>))
+                       (<span class="hljs-name">unless</span> (<span class="hljs-name">skipp</span> txt)
+                         (<span class="hljs-name">if</span> (<span class="hljs-name">klassp</span> txt) (<span class="hljs-name">setf</span> (? c klass) col))
+                         (<span class="hljs-name">if</span> (<span class="hljs-name">goalp</span> txt)
+                           (<span class="hljs-name">push</span> col (? c y))
+                           (<span class="hljs-name">push</span> col (? c x))))
+                       x))
+      (<span class="hljs-name">setf</span> (? c all) (<span class="hljs-name">mapcar</span> &#x27;make1 (<span class="hljs-name">mapcar</span> &#x27;chars (? c names))))
+      c)))
 
 (<span class="hljs-name">defmethod</span> add ((<span class="hljs-name">c</span> cols) (<span class="hljs-name">r</span> row))
   (<span class="hljs-name">dolist</span> (<span class="hljs-name">slot</span> &#x27;(x y) r)
-    (<span class="hljs-name">dolist</span> (<span class="hljs-name">col</span> (<span class="hljs-name">slot-vaue</span> c slot)) (<span class="hljs-name">add</span> col (<span class="hljs-name">elt</span> row (? col at))))))
+    (<span class="hljs-name">dolist</span> (<span class="hljs-name">col</span> (<span class="hljs-name">slot-value</span> c slot)) (<span class="hljs-name">add</span> col (<span class="hljs-name">elt</span> (? row cells) (? col at))))))</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-6">
+            <div class="annotation">
+              
+              <div class="sswrap ">
+                <a class="ss" href="#section-6">&#x00a7;</a>
+              </div>
+              <h2 id="rows">rows</h2>
 
-(<span class="hljs-name">defmethod</span> add ((<span class="hljs-name">i</span> rows) (<span class="hljs-name">r</span> cons))
-  (<span class="hljs-name">add</span> i (<span class="hljs-name">make</span> row <span class="hljs-symbol">:cells</span> r)))
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>(<span class="hljs-name">defmethod</span> add ((<span class="hljs-name">i</span> rows) r)
+  (<span class="hljs-name">if</span>  (? i cols) 
+    (<span class="hljs-name">if</span> (<span class="hljs-name">consp</span> r)
+      (<span class="hljs-name">add</span> i (<span class="hljs-name">make-row</span> <span class="hljs-symbol">:cells</span> r))
+      (<span class="hljs-name">push</span> (<span class="hljs-name">add</span> (? i cols) r) (? i rows)))
+   (<span class="hljs-name">seff</span> (? i cols) (<span class="hljs-name">complete</span> (<span class="hljs-name">make-cols</span> <span class="hljs-symbol">:names</span> r)))))
 
 (<span class="hljs-name">defmethod</span> add ((<span class="hljs-name">i</span> rows) (<span class="hljs-name">r</span> row))
   (<span class="hljs-name">if</span> (? i cols)
