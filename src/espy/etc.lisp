@@ -11,7 +11,7 @@
             `(progn  ,@body)
             (let ((x (pop xs)))
               (cond
-                ((fun x) `(labels ((,(pop x) ,(pop x) ,@x))      ,(%is body xs)))
+                (:e ro(fun x) `(labels ((,(pop x) ,(pop x) ,@x))      ,(%is body xs)))
                 ((mvb x) `(multiple-value-bind ,(pop x) ,(pop x) ,(%is body xs)))
                 (t       `(let (,x)                         ,(%is body xs))))))))
     (if (listp spec) (%is body spec) `(defmethod ,spec ,@body))))
