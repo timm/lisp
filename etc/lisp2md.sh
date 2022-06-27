@@ -1,4 +1,4 @@
-#!/usr/bin/env gawk -f
+#!/usr/bin/env bash
 
 cat $1 | gawk '
 /; vim:/      {next}
