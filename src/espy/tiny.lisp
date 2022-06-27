@@ -10,14 +10,22 @@
      (m     2      "-n"  "nb low frequency classes")
      (seed  10019  "-s"  "random number seed")))
 
+;;;;;;;;; ;;;;;;;;; ;;;;;;;;; ;;;;;;;;; ;;;;;;;;; ;;;;;;;;; ;;;;;;;;; ;;;;;;;;; 
+(defmacro aif (test yes &optional no) `(let ((it ,test)) (if it ,yes ,no)))
+(defun thing (x &aux (y (string-trim '(#\Space #\Tab #\Newline) x)))
+  (cond ((string= y "?")     "?")
+        ((string= y "true")  t)
+        ((string= y "false") nil)
+        (t (let ((z (ignore-errors (read-from-string y))))
+             (if (numberp z) z y)))))
+
 (defun cli (about lst)  
   (dolist (four lst)
-    (let* ((args #+clisp *args* #+sbcl *posix-argv*)
-           (it (member (third four) args :test 'equal)))
-      (if it (setf (second four) 
-                   (cond ((equal (second four) t)   nil)
-                         ((equal (second four) nil) t)
-                         (t (thing (second it))))))))
+    (let* ((args #+clisp *args* #+sbcl *posix-argv*))
+      (aif (member (third four) args :test 'equal)
+        (setf (second four) (cond ((equal (second four) t)   nil)
+                                  ((equal (second four) nil) t)
+                                  (t (thing (second it))))))))
   (when (second (assoc 'help lst))
     (format t "~&~%~{~a~%~}~%OPTIONS:~%" about)
     (dolist (a lst) 
@@ -35,8 +43,6 @@
   (if (null xs) `(slot-value ,s ',x) `(? (slot-value ,s ',x) ,@xs)))
 
 ; (aif test yes no) :; anaphoric `if` (remembering test results in `it`)
-(defmacro aif (test yes &optional no) 
-  `(let ((it ,test)) (if it ,yes ,no)))
 
 ; A counter, implemented as an association list.
 (defmacro inca (x a &optional (n  1))
@@ -74,29 +80,21 @@
 (defstruct (num (:include col)) (kept (make-few)))
 (defstruct (sym (:include col)) kept)
                   
-(defun thing (x &aux (y (string-trim '(#\Space #\Tab #\Newline) x)))
-  (cond ((string= y "?")     "?")
-        ((string= y "true")  t)
-        ((string= y "false") nil)
-        (t (let ((z (ignore-errors (read-from-string y))))
-             (if (numberp z) z y)))))
-
 (defmethod add ((n num) x &optional (inc 1))
   (unless (eql '? x)
     (loop repeat inc
       do (incf (? c inc))
          (add (? n kept) x))))
 
-(defmethod add ((s some) x)
+(defmethod add ((s some) (x number))
   (incf (? s n))
   (let ((size (length (? s kept))))
-    (cond ((< (length (? s kept)) (? s max))
+    (cond ((< size  (? s max))
            (push-vector-extend x (? s kept))
-           (? s ok))
+           (setf (? s ok) nil))
           ((< (randf) (/ (? s n) (? s max)))
-           (let ((pos (randi size)))
-             (setf (elt (? s kept) pos) x
-                   (? s ok) t))))))
+           (setf (elt (? s kept) (randi size) ) x)
+           (setf (? s ok) nil)))))
 
 (defmethod kept (s) (? s kept))
 (defmethod kept ((s some))
