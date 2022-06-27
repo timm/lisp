@@ -38,6 +38,12 @@
 (defmacro aif (test yes &optional no) 
   `(let ((it ,test)) (if it ,yes ,no)))
 
+; A counter, implemented as an association list.
+(defmacro inca (x a &optional (n  1))
+  `(incf (cdr (or (assoc ,x ,a :test #'equal)
+                  (car (setf ,a (cons (cons ,x 0) ,a)))))
+         ,n))
+
 (defvar *seed* (?? seed))
 (defun randi (&optional (n 1)) (floor (* n (/ (randf 1000.0) 1000))))
 (defun randf (&optional (n 1.0)) 
