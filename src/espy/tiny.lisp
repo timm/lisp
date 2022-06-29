@@ -76,19 +76,24 @@ Some tricks"
              (here  (x) (when x (funcall f x) (there))))
       (there))))
 
-(defun pretty-fun() (write d :case :downcase :pretty t :right-margin 90))
-
 (defun doc(file &optional (str t))
-  (labels (comment (now after rest)
-             (format str "~%~%~a" now)
-             (cond ((string after) (comment after (car rest) (cdr rest)))
-                   ((cons after) 
-
-
-
-  (let (all)
-    (reads file (lambda (x) (push x all)))
-    (comment (car all) (cadr all) (cddr all))))))
+  (labels 
+    ((writes (now after more)
+             (typecase now
+               (string 
+                 (format t "~$~$~a~%" now)
+                 (typecase  after
+                   (string (terpri str))
+                   (cons  (format  str "~%~%<details closed><summary>~%~%```lisp~%~%"))))
+               (cons
+                 (write now :case :downcase :pretty t :right-margin 90)
+                 (if (consp after)
+                   (terpri str)
+                   (format str "~%````~%~%"))))
+             (writes after (car more) (cdr more))))
+    (let (all)
+      (reads file (lambda (x) (push x all)))
+      (writes (cadr all) (caddr all) (cdddr all)))))
 
 ;-------------------------------------------------------------------------------
 ; ## Structs
