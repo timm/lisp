@@ -6,20 +6,24 @@ clssify() {
 }
 
 function code0(m) { print "```lisp"; print R[m]["="] }
-function code1(m) { print "``` }
-function shpw(m) { print "" }
+function code1(m) { print "```" }
+function noop(m)  { return 1}
+function show(m)  { print R[M]["="] }
+function quote(m) { sub(/^[ \t]+[;]*/,"",R[m]["="]); print R[m]["="] }
 
-BEGIN { todo["S","S"] = "jump" 
+BEGIN { todo["S","S"] = "noop" 
+        todo["C","C"] = "show"
+        todo["Q","Q"] = "quote"
       }
 
 render() {
  gawk '{ R[++N]["?"]=$1; $1=""; R[N]["="]=$0 }
-       END {for(m=1;m<=N;m++) }
+       END {for(m=1;m<N;m++) }
               a=R[m]["?"]; b=R[m+1]]["?"]
               if (todo[a,b])
                 @todo(todo[a,b])
               else
-                print("?", a,b,m) }
+                print
 
 
 if (R[m]["?"]=="S" && R[m+1]["?"]=="S") { continue }
