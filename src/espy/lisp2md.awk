@@ -8,9 +8,10 @@ clssify() {
 render() {
  gawk '{ R[++N]["?"]=$1; $1=""; R[N]["="]=$0 }
        END {for(m=1;m<=N;m++) }
-              if (R[m]["?"]=="S" && R[m+1]["?"] == "S") { continue }
-              if (R[m]["?"]=="S") i               {print; continue } 
-              if (R[m]["?"]=="C" && R[m+1]["?"] == "S") { continue }
+              if (R[m]["?"]=="S" && R[m+1]["?"]=="S") { continue }
+              if (R[m]["?"]=="S") && R[m+1]["?"]==      { print; continue } 
+              if (R[m]["?"]=="S")                     { print; continue } 
+              if (R[m]["?"]=="C" && R[m+1]["?"]=="S") { print "```lisp"; print R[m]["="]; continue }
               
        }}
 
