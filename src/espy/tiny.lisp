@@ -1,7 +1,9 @@
 ; vim: ts=3 sw=3 et :
-;<img src="http://www.lisperati.com/lisplogo_fancy_256.png" width=200 align=right>
-;;;; # Tiny
-; Some tricks
+
+"<img src="http://www.lisperati.com/lisplogo_fancy_256.png" width=200 align=right>
+ # Tiny
+Some tricks"
+
 (defpackage :tiny (:use :cl))
 (in-package :tiny)
 
@@ -20,8 +22,6 @@
 
 ;;;; ## Library
 ;;; ### Macros
-; asdas
-
 ;; (aif if then else) :; anaphoric `if` (remembers results of `if` in `it`)
 (defmacro aif (test yes &optional no) `(let ((it ,test)) (if it ,yes ,no)))
 
@@ -75,6 +75,20 @@
     (labels ((there ()  (here (read s nil)))
              (here  (x) (when x (funcall f x) (there))))
       (there))))
+
+(defun pretty-fun() (write d :case :downcase :pretty t :right-margin 90))
+
+(defun doc(file &optional (str t))
+  (labels (comment (now after rest)
+             (format str "~%~%~a" now)
+             (cond ((string after) (comment after (car rest) (cdr rest)))
+                   ((cons after) 
+
+
+
+  (let (all)
+    (reads file (lambda (x) (push x all)))
+    (comment (car all) (cadr all) (cddr all))))))
 
 ;-------------------------------------------------------------------------------
 ; ## Structs
