@@ -20,7 +20,7 @@ set mouse=a
 set title
 "set number
 "set relativenumber
-autocmd BufEnter * cd %:p:h
+"autocmd BufEnter * cd %:p:h
 set showmatch
 set matchtime=15
 set background=light
