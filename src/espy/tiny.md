@@ -1,3 +1,6 @@
+<img src="http://www.lisperati.com/lisplogo_fancy_256.png" width=200 align=right>
+# Tiny
+Some tricks
 
 <ul><details><summary>CODE</summary>
 
@@ -5,7 +8,15 @@
 (defpackage :tiny (:use :cl))
 
 (in-package :tiny)
+```
 
+</details></ul>
+
+Config
+
+<ul><details><summary>CODE</summary>
+
+```lisp
 (defvar *about* 
   '("TINY (c) 2022, Tim Menzies" 
     "Multi-objective semi-supervised XAI, in a few 100 lines."))
@@ -23,6 +34,7 @@
 
 ## Library
 ### Macros
+asdas
 
 <ul><details><summary>CODE</summary>
 
