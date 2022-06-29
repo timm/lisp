@@ -11,12 +11,12 @@
     "Multi-objective semi-supervised XAI, in a few 100 lines."))
 
 (defvar *options* 
-  `((file   "-f"   "help file                "  "../../data/auto93.lisp")
-    (help   "-h"   "show help                "  nil)
-    (keep   "-K"   "items to keep            "  256)
-    (k      "-k"   "nb low attributes classes"  1)
-    (m      "-n"   "nb low frequency classes "  2)
-    (seed   "-s"   "random number seed       "  10019)))
+  `((file  "-f"  "help file                "  "../../data/auto93.lisp")
+    (help  "-h"  "show help                "  nil)
+    (keep  "-K"  "items to keep            "  256)
+    (k     "-k"  "nb low attributes classes"  1)
+    (m     "-n"  "nb low frequency classes "  2)
+    (seed  "-s"  "random number seed       "  10019)))
 
 ;;;; ## Library
 ;;; ### Macros
@@ -89,7 +89,7 @@
 (defstruct (num (:include col)) (kept (make-few)))
 (defstruct (sym (:include col)) kept)
 (defstruct (few (:include col)) 
-  (kept (make-array 2 :fill-pointer 0 :adjustable t)) 
+  (kept (make-array 2 :fill-pointer 0 :adjustable t)) G
   (max (?? keep))
   ok)
 
@@ -124,6 +124,7 @@
 ;-------------------------------------------------------------------------------
 ; ## Cols                 
 (defun make-cols (names &aux (cols (%make-cols :names (mapcar 'chars names))))
+  (print 3)
   (let ((at -1))
     (dolist (txt (? cols names) cols)
       (let ((col (if (equal #\$ (char0 txt))
@@ -140,18 +141,21 @@
 (defmethod add ((self cols) (r row))
   (dolist (slot '(x y) r)
     (dolist (col (slot-value self slot)) 
+      (print (? col txt))
       (add col (elt (? r cells) (? col at))))))
 
 ;-------------------------------------------------------------------------------
 ; ## rows
 (defun make-rows (&optional src &aux (rows (%make-rows)))
   (if (stringp src) 
-    (reads src (lambda (x) (add rows x)))
-    (dolist (x src)        (add rows x)))
+    (reads src (lambda (x) (print `(1 ,x)) (add rows x)))
+    (dolist (x src)        (print `(2 ,x)) (add rows x)))
   rows)
 
-(defmethod add ((self rows) (r cons)) (add self (make-row :cells r)))
+(defmethod add ((self rows) (r cons)) (print 2) (add self (make-row :cells r)))
 (defmethod add ((self rows) (r row)) 
+  (print 3)
+  (print (? self cols))
   (if (? self cols) 
     (push (add (? self cols) r) (? self rows))
     (setf (? self cols) (make-cols r))))
@@ -159,6 +163,7 @@
 ;-------------------------------------------------------------------------------
 (cli *about* *options*)
 
-(print (let ((n (make-num))) (dotimes (i 100 (kept (? n kept))) (add n i))))
-(print (let ((s (make-sym))) (dotimes (i 100 (? s kept)) (dolist (x '(a a b)) (add s x)))))
-(print (make-cols '($Cylndrs $Dsplcemnt $Hp $Lbs- $Acc+ $Model origin  $Mpg+)))
+; (print (let ((n (make-num))) (dotimes (i 100 (kept (? n kept))) (add n i))))
+; (print (let ((s (make-sym))) (dotimes (i 100 (? s kept)) (dolist (x '(a a b)) (add s x)))))
+; (print (make-cols '($Cylndrs $Dsplcemnt $Hp $Lbs- $Acc+ $Model origin  $Mpg+)))
+(print (make-rows (?? file)))
