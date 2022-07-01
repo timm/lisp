@@ -91,7 +91,7 @@ Some tricks."
                  (write now :case :downcase :pretty t :right-margin 90)
                  (if (consp after)
                    (terpri str)
-                   (format str "~%````~%~%"))))
+                   (format str "~%````~%~%</summary</details>~%~%"))))
              (if after (writes after (car more) (cdr more)))))
     (let (all)
       (reads file (lambda (x) (push x all)))
