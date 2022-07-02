@@ -1,6 +1,4 @@
-"<img src='http://www.lisperati.com/lisplogo_fancy_256.png' width=200 align=right>"
-
-"# Tiny
+"## Tiny
 Some tricks."
 
 (defpackage :tiny (:use :cl))
@@ -13,26 +11,26 @@ Some tricks."
     "Multi-objective semi-supervised XAI, in not too many lines."))
 
 (defvar *options* 
-  `((file  "-f"  "help file                "  "../../data/auto93.lisp")
-    (help  "-h"  "show help                "  nil)
-    (keep  "-K"  "items to keep            "  256)
-    (k     "-k"  "nb low attributes classes"  1)
-    (m     "-n"  "nb low frequency classes "  2)
-    (seed  "-s"  "random number seed       "  10019)
-    (go    "-g"  "start up action          "  ls)
+  `((file  "-f"  "help file"  "../../data/auto93.lisp")
+    (help  "-h"  "show help"                 nil)
+    (keep  "-K"  "items to keep"             256)
+    (k     "-k"  "nb low attributes classes" 1)
+    (m     "-n"  "nb low frequency classes"  2)
+    (seed  "-s"  "random number seed"        10019)
+    (go    "-g"  "start up action"           ls)
     ))
 
-"## Library
-### Macros"
-"(aif if then else) :; anaphoric `if` (remembers results of `if` in `it`)"
+"### Library
+##### Macros"
+"(aif if then else) -> any -> anaphoric `if` (remembers results of `if` in `it`)"
 (defmacro aif (test yes &optional no) 
   `(let ((it ,test)) (if it ,yes ,no)))
 
-"(?? x:atom):atom :; return an option"
+"(?? atom):atom -> return an option"
 (defmacro ?? (x) 
  `(fourth (assoc ',x *options*)))
 
-"(? x:struct &rest slots:[atom]):atom :; nested slot access"
+"(? thing &rest symbolp (list symbol)) -> atom -> nested slot access"
 (defmacro ? (s x &rest xs)
   (if (null xs) `(slot-value ,s ',x) `(? (slot-value ,s ',x) ,@xs)))
 
@@ -41,8 +39,8 @@ Some tricks."
   `(cdr (or (assoc ,x ,a :test #'equal)
             (car (setf ,a (cons (cons ,x 0) ,a))))))
 
-"### Misc
-(str->thing x:str):atom :; "
+"##### Misc
+(str2thing str) -> atom -> sadas "
 (defun str->thing (x &aux (y (string-trim '(#\Space #\Tab #\Newline) x)))
   (if (string= y "?")     
     "?"
@@ -60,9 +58,9 @@ Some tricks."
   (when (fourth (assoc 'help lst))
     (format t "~&~%~{~a~%~}~%OPTIONS:~%" about)
     (dolist (a lst) 
-      (format t "  ~a  ~a  ~a ~%" (elt a 1) (elt a 2) (elt a 3)))))
+      (format t "  ~a  ~55a  ~a ~%" (elt a 1) (elt a 2) (elt a 3)))))
 
-"### Random number generation."
+"##### Random number generation."
 (defvar *seed* (?? seed))
 (defun randi (&optional (n 1)) (floor (* n (/ (randf 1000.0) 1000))))
 (defun randf (&optional (n 1.0)) 
@@ -91,7 +89,7 @@ Some tricks."
                    (cons  
                      (format str "~%~%```lisp~%~%"))))
                (cons
-                 (write now :case :downcase :pretty t :MISER-WIDTH t); :right-margin 80)
+                 (write now :case :downcase :pretty t  :right-margin 60)
                  (terpri str)
                  (if (consp after)
                    (terpri str)
@@ -100,7 +98,7 @@ Some tricks."
     (let (all) (reads file (lambda (x) (push x all))) (nreverse all)
       (writes (car all) (cadr all) (cddr all)))))
 
-"## Structs
+"### Structs
 ROWs keeps 1 record in `cell` and  sets `used` if we access the `y` vals."
 (defstruct row cells used)
 
@@ -118,7 +116,7 @@ ROWs keeps 1 record in `cell` and  sets `used` if we access the `y` vals."
   ok)
 
 "-------------------------------------------------------------------------------
-## Columns"
+### Columns"
 (defmethod add ((self num) x)
   (unless (eql '? x)
     (incf (? self n))
@@ -145,7 +143,7 @@ ROWs keeps 1 record in `cell` and  sets `used` if we access the `y` vals."
   (setf (? self ok) t)
   (? self kept))
 
-"## Cols  "               
+"### Cols  "               
 (defun make-cols (names &aux (cols (%make-cols :names (mapcar 'chars names))))
   (let ((at -1))
     (dolist (txt (? cols names) cols)
@@ -166,7 +164,7 @@ ROWs keeps 1 record in `cell` and  sets `used` if we access the `y` vals."
       (print (? col txt))
       (add col (elt (? r cells) (? col at))))))
 
-"## rows"
+"### rows"
 (defun make-rows (&optional src &aux (rows (%make-rows)))
   (if (stringp src) 
     (reads src (lambda (x) (print `(1 ,x)) (add rows x)))
