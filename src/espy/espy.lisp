@@ -2,10 +2,16 @@
 (defpackage :espy (:use :cl))
 (in-package :espy)
 
+; asdas
 (defun loaded (file)
   (format *error-output* "; loading ~(~a~) ...~%" file)
   (handler-bind ((style-warning #'muffle-warning)) (load file)))
 
+; asdas
+; asdas
+; asdas
+; asdas
+; asdas
 (defvar +config+
   '(:all (:seed 10013
           :data "../data/aaa.csv")
@@ -18,3 +24,4 @@
 
 (demos (cli))
 (halt *fails*)
+

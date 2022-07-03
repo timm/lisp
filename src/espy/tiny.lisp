@@ -1,5 +1,5 @@
-"## Tiny
-Some tricks."
+; ## Tiny
+; Some tricks.
 
 (defpackage :tiny (:use :cl))
 (in-package :tiny)
@@ -20,27 +20,35 @@ Some tricks."
     (go    "-g"  "start up action"           ls)
     ))
 
-"### Library
-##### Macros"
-"(aif if then else) -> any -> anaphoric `if` (remembers results of `if` in `it`)"
+;###  Library
+;#### Macros
+
+;(aif if then else) -> any -> anaphoric `if` (remembers results of `if` in `it`)
 (defmacro aif (test yes &optional no) 
   `(let ((it ,test)) (if it ,yes ,no)))
 
-"(?? atom):atom -> return an option"
+(defmacro while (condition &body body)
+  `(do () ((not ,condition)) ,@body))
+
+(defmacro whale (expr &body body) 
+  "Anaphoric while (traps result of conditional in `a`)."
+    `(do ((at ,expr ,expr)) ((not at)) ,@body))
+
+;(?? atom):atom -> return an option
 (defmacro ?? (x) 
  `(fourth (assoc ',x *options*)))
 
-"(? thing &rest symbolp (list symbol)) -> atom -> nested slot access"
+;(? thing &rest symbolp (list symbol)) -> atom -> nested slot access
 (defmacro ? (s x &rest xs)
   (if (null xs) `(slot-value ,s ',x) `(? (slot-value ,s ',x) ,@xs)))
 
-"A counter, implemented as an association list."
+;A counter, implemented as an association list.
 (defmacro counts (x a)
   `(cdr (or (assoc ,x ,a :test #'equal)
             (car (setf ,a (cons (cons ,x 0) ,a))))))
 
-"##### Misc
-(str2thing str) -> atom -> sadas "
+; ##### Misc
+; (str2thing str) -> atom -> sadas
 (defun str->thing (x &aux (y (string-trim '(#\Space #\Tab #\Newline) x)))
   (if (string= y "?")     
     "?"
@@ -60,43 +68,71 @@ Some tricks."
     (dolist (a lst) 
       (format t "  ~a  ~55a  ~a ~%" (elt a 1) (elt a 2) (elt a 3)))))
 
-"##### Random number generation."
+; ##### Random number generation.
 (defvar *seed* (?? seed))
 (defun randi (&optional (n 1)) (floor (* n (/ (randf 1000.0) 1000))))
 (defun randf (&optional (n 1.0)) 
   (setf *seed* (mod (* 16807.0d0 *seed*) 2147483647.0d0))
   (* n (- 1.0d0 (/ *seed* 2147483647.0d0))))
 
-"first and  last characters of string"
+; first and  last characters of string
 (defun chars (x) (if (stringp x) x (symbol-name x)))
 (defun charn (x &aux (y (chars x))) (char y (1- (length y))))
 (defun char0 (x &aux (y (chars x))) (char y 0))
 
-"iterate `f` over all items in `file`"
+; iterate `f` over all items in `file`
 (defun reads (file f)
   (with-open-file (s file) 
     (labels ((there ()  (here (read s nil)))
              (here  (x) (when x (funcall f x) (there))))
       (there))))
 
-(defun doc(file &optional (str t))
-  (labels ((writes (now after more)
-             (typecase now
-               (string 
-                 (format t "~%~%~a~%" now)
-                 (typecase  after
-                   (string (terpri str))
-                   (cons  
-                     (format str "~%~%```lisp~%~%"))))
-               (cons
-                 (write now :case :downcase :pretty t  :right-margin 60)
-                 (terpri str)
-                 (if (consp after)
-                   (terpri str)
-                   (format str "~%````~%~%"))))
-             (if after (writes after (car more) (cdr more)))))
-    (let (all) (reads file (lambda (x) (push x all))) (nreverse all)
-      (writes (car all) (cadr all) (cddr all)))))
+
+;defun %doc-write (str now after more)
+;   (if now
+;     (typecase now
+;       (string (format t "~%~%~a~%" now))
+;       (typecase after
+;         (string (terpri str))
+;         (cons   (format str "~%~%```lisp~%~%"))))
+;       (cons
+;         (write now :case :downcase :pretty t  :right-margin 60)
+;         (terpri str)
+;         (if (consp after)
+;           (terpri str)
+;           (format str "~%````~%~%")))))
+;   (%doc-write str after (car more) (cdr more)))
+;
+(defun lines (f &aux out)
+  (with-open-file (str f) 
+    (whale (read-line str nil) (unless (zerop (length at)) (push at out))))
+  (nreverse out))
+  
+(defun chunks (lines &optional one all (b4 #\;) new)
+  (if (null lines) 
+    (reverse (push (reverse one) all))
+    (let ((line (pop lines)))
+      (if (zerop (length line)) 
+        (return-from chunks (chunks lines one all b4)))
+      (cond ((equal (elt line 0) #\() (setf new #\())
+            ((equal (elt line 0) #\;) (setf new #\;) 
+                                      (setf line (subseq line 2)))
+            (t (setf new b4)))
+      (cond ((eql new b4) (push line one)
+                          (chunks lines one all b4))
+            (t            (if one (push (reverse one) all))
+                          (chunks lines (list line) all new))))))
+
+(defun doc (file &optional (str t))
+  (dolist (chunk (chunks (lines "espy.lisp")))
+    (if (eql #\( (elt (car chunk) 0))
+      (format str  "~%```lisp~%~{~a~%~}```~%~%" chunk)
+      (format str  "~{~a~%~}" chunk))))
+
+
+; (defun doc(file &optional (str t))
+;   (let (all) (reads file (lambda (x) (push x all))) (nreverse all)
+;     (%doc-write str (car all) (cadr all) (cddr all)))))
 
 "### Structs
 ROWs keeps 1 record in `cell` and  sets `used` if we access the `y` vals."
@@ -115,8 +151,7 @@ ROWs keeps 1 record in `cell` and  sets `used` if we access the `y` vals."
   (max (?? keep))
   ok)
 
-"-------------------------------------------------------------------------------
-### Columns"
+; ### Columns
 (defmethod add ((self num) x)
   (unless (eql '? x)
     (incf (? self n))
@@ -143,7 +178,7 @@ ROWs keeps 1 record in `cell` and  sets `used` if we access the `y` vals."
   (setf (? self ok) t)
   (? self kept))
 
-"### Cols  "               
+;### Cols                 
 (defun make-cols (names &aux (cols (%make-cols :names (mapcar 'chars names))))
   (let ((at -1))
     (dolist (txt (? cols names) cols)
@@ -191,8 +226,8 @@ ROWs keeps 1 record in `cell` and  sets `used` if we access the `y` vals."
 
 (defdemo doc()
   "generate md from argum(emen to -f"
-  (doc (?? file)
-  t))
+  (doc (?? file))
+  t)
 
 (defdemo all()
   "list all demos"
@@ -201,7 +236,7 @@ ROWs keeps 1 record in `cell` and  sets `used` if we access the `y` vals."
         (when (or (alike (?? go) 'all)
                   (alike (?? go) (first three)))
           (setf *seed* (?? seed))
-          (unless (eq t (funcall (third three)))
+          (unless (eql t (funcall (third three)))
              (format t "~%; W? DO ~a  FAIL" (first three)))))))
 
  (defdemo num ()
