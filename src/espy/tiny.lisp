@@ -27,12 +27,13 @@
 (defmacro aif (test yes &optional no) 
   `(let ((it ,test)) (if it ,yes ,no)))
 
+; While loop
 (defmacro while (condition &body body)
   `(do () ((not ,condition)) ,@body))
 
+; Anaphoric while (traps result of conditional in `a`)."
 (defmacro whale (expr &body body) 
-  "Anaphoric while (traps result of conditional in `a`)."
-    `(do ((at ,expr ,expr)) ((not at)) ,@body))
+  `(do ((at ,expr ,expr)) ((not at)) ,@body))
 
 ;(?? atom):atom -> return an option
 (defmacro ?? (x) 
@@ -87,22 +88,6 @@
              (here  (x) (when x (funcall f x) (there))))
       (there))))
 
-
-;defun %doc-write (str now after more)
-;   (if now
-;     (typecase now
-;       (string (format t "~%~%~a~%" now))
-;       (typecase after
-;         (string (terpri str))
-;         (cons   (format str "~%~%```lisp~%~%"))))
-;       (cons
-;         (write now :case :downcase :pretty t  :right-margin 60)
-;         (terpri str)
-;         (if (consp after)
-;           (terpri str)
-;           (format str "~%````~%~%")))))
-;   (%doc-write str after (car more) (cdr more)))
-;
 (defun lines (f &aux out)
   (with-open-file (str f) 
     (whale (read-line str nil) (unless (zerop (length at)) (push at out))))
