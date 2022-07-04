@@ -4,7 +4,8 @@ BEGIN {FS=","}
 function names(   i) {for(i=1;i<+NF;i++) name(i,$i) }
 function name(col,s) {
  Name[col]=s
- if (s~/^[A-Z]/) Nump[col] }
+ if (s~/^[A-Z]/) {Nump[col]; Hi[col]=-1E32; Lo[col]=1E32 }
+ if (s~/^[A-Z]/) {Nump[col]; Hi[col]=-1E32; Lo[col]=1E32 }
 
 function Some(i) { i["n"]=0; i["max"]=256; i["ok"]=0; has(i,"kept") }
 function some(i,x,   len,pos) {
@@ -12,7 +13,7 @@ function some(i,x,   len,pos) {
     i["n"]++
     len = length(i["kept"])
     if       (len<256)                   pos = len+1 
-    else if  (rand() < i["max"]/i["n"])  pos=1+int(rand()*len);
+    else if  (rand() < i["max"]/i["n"])  pos =1+int(rand()*len);
       if (pos) {
         i["ok"]=0; i["kept"][pos] = x }}}
 
