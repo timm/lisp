@@ -33,9 +33,16 @@
 (defun char0 (x) (char (chars x) 0))
 (defun charn (x) (let ((y (chars x))) (char y (1- (length y)))))
 
+(defun reads (file fun)
+  (print 1)
+  (with-open-file (s file)
+    (loop (funcall fun (or (read s nil) (return-from reads))))))
+  
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defstruct (sym  (:constructor %make-sym))  (txt "") (at 0) kept)
 (defstruct (num  (:constructor %make-num))  (txt "") (at 0) kept ok (w 1))
 (defstruct (cols (:constructor %make-cols)) names all x y klass)
+(defstruct (data (:constructor %make-data)) rows about)
 
 (defun make-sym (s n) (%make-sym :txt s :at n))
 (defun make-num (s n) (%make-num :txt s :at n :w (if (equal #\- (charn s)) -1 1)))
@@ -46,9 +53,12 @@
       (let* ((what (if (equal #\$ (char0 s)) 'make-num 'make-sym))
              (col  (funcall what s (incf pos))))
         (push col all)
-        (unless (equal #\x (charn s))
-          (print 1)
-          (if (member (charn s) '(#\! #\- #\+)) (push y col) (push x col))
+        (unless (equal #\~ (charn s))
+          (if (member (charn s) '(#\! #\- #\+)) (push  col y) (push  col x))
           (if (equal #\! (charn s)) (setf kl col)))))))
 
-(print (make-cols '($aa bb! cc+)))
+(defun make-data (names) (%make-data :about (make-cols names)))
+
+(print (make-cols '($aa bb!~ cc+)))
+
+(reads "../../data/auto93.lisp" 'print)
