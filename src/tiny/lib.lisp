@@ -4,6 +4,9 @@
 (defmacro ? (s x &rest xs)
  (if (null xs) `(slot-value ,s ',x) `(? (slot-value ,s ',x) ,@xs)))
 
+;;; accessors
+(defun ! (l x) (cdr (assoc x l)))
+
 ;;; string
 ; Last thing from a string
 (defun charn (x) (char x (1- (length x))))
@@ -27,7 +30,7 @@
     until      (null finish)))
 
 ; String to lines or cells of things
-(defun lines (string) (splits string :sep #\Newline))
+(defun lines (string) (splits string :char   #\Newline))
 (defun cells (string) (splits string :filter #'thing))
 
 ; Call `fun` for each line in `file`.
@@ -36,31 +39,30 @@
     (loop (funcall fun (or (read-line s nil) (return))))))
 
 ;;; maths
-; Random number control (since LISP randoms have problems reseeding).
+; Random number control (since reseeding in LISP is... strange).
 (defvar *seed* 10013)
-(defun randi (&optional (n 1)) (floor (* n (/ (randf 1e9) 1e9))))
+(defun randi (&optional (n 1)) (floor (* n (/ (randf 1000000000.0) 1000000000))))
 (defun randf (&optional (n 1.0)) 
   (setf *seed* (mod (* 16807.0d0 *seed*) 2147483647.0d0))
   (* n (- 1.0d0 (/ *seed* 2147483647.0d0))))
 
-
 ;;; settings
-; Update `default` from command line (if it contains `flag` or `key`)
-(defun cli (lst)
-  (destructuring-bind (key flag help default) lst
+; Update `default` from command line (if it contains `flag` or `key`).
+; CLI flags for booleans flip the setting (so they need no following arg).
+(defun cli (key.flag.help.default)
+  (destructuring-bind (key flag help default) key.flag.help.default
     (let* ((args #+clisp ext:*args* 
                  #+sbcl sb-ext:*posix-argv*)
-           (it (or (member flag args :test 'equal)
-                   (member key  args  :test 'equal))))
+           (it (member flag args :test 'equalp)))
       (cons key (cond ((not it)            default)
                       ((equal default t)   nil)
                       ((equal default nil) t)
                       (t                   (thing (second it))))))))
 
-; Update settings. If   `help` is set, print help.
+; Update settings. If  `help` is set, print help.
 (defun settings (header options)
   (let ((tmp (mapcar #'cli options)))
-    (when (cdr (assoc 'help tmp))
+    (when (! tmp 'help)
      (format t "~&~%~{~a~%~}~%OPTIONS:~%" (lines header))
      (dolist (one options)
        (format t "  ~a   ~a = ~a~%" (second one) (third one) (fourth one))))
@@ -93,8 +95,8 @@
       (let ((what (first trio)) (doc (second trio)) (fun (third trio)))
         (when (member what (list 'all one))
           (loop for (key . value) in resets do 
-            (setf (cdr (assoc key settings)) value))
-          (setf *seed* (or (cdr (assoc 'seed settings)) 10019))
+            (setf (! settings key) value))
+          (setf *seed* (or (! settings 'seed) 10019))
           (unless (eq t (funcall fun ))
             (incf fails)
             (format t "~&FAIL [~a] ~a ~%" what doc)))))
