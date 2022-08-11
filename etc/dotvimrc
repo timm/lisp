@@ -65,6 +65,7 @@ set lispwords+=while
 set lispwords+=with-csv
 set lispwords+=until
 set path+=../**
+syn match lispFunc "def"
 if has("mouse_sgr")
     set ttymouse=sgr
 else
