@@ -1,25 +1,27 @@
 ; TIYIN (c) 2022, Tim Menzies 
 ; Multi-objective semi-supervised XAI.
-
 (defpackage :tiyin (:use :cl))
 (in-package :tiyin)
 (load "lib")
-(defvar *opt*  
-  (mapcar 'cli
-          `((file  "-f"  "help file"  "../../data/auto93.lisp")
-            (help  "-h"  "show help"                 nil)
-            (keep  "-K"  "items to keep"             256)
-            (k     "-k"  "nb low attributes classes" 1)
-            (m     "-n"  "nb low frequency classes"  2)
-            (seed  "-s"  "random number seed"        10019)
-            (go    "-g"  "start up action"           ls))))
+
+(defvar *opt* 
+  (mapcar 'cli '(
+    (file  "-f"  "help file"  "../../data/auto93.lisp")
+    (help  "-h"  "show help"                 nil)
+    (keep  "-K"  "items to keep"             256)
+    (k     "-k"  "nb low attributes classes" 1)
+    (m     "-n"  "nb low frequency classes"  2)
+    (seed  "-s"  "random number seed"        10019)
+    (go    "-g"  "start up action"           ls))))
+
+(defmacro ! (key) `(cdr (assoc ',key *opt*)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defthing sym  (txt "") (at 0) kept)
-(defthing num  (txt "") (at 0) kept ok (w 1))
-(defthing cols names all x y klass)
-(defthing data rows about)
-(defthing row  cells _about)
+(def sym  (txt "") (at 0) kept)
+(def  num  (txt "") (at 0) kept ok (w 1))
+(def  cols names all x y klass)
+(def  data rows about)
+(def  row  cells _about)
 
 (defun make-sym (s n) (%make-sym :txt s :at n))
 (defun make-num (s n) (%make-num :txt s :at n :w (if (equal #\- (charn s)) -1 1)))
@@ -43,6 +45,6 @@
 
 (print (make-row 12 '(1 2 3 4)))
 (print (make-data '($aa bb!~ cc+)))
-;
-; (defmethod clone ((d data) &optional src) (make-data (? d about names) src))
-;(reads "../../data/auto93.lisp" 'print)
+(print *opt*)
+; ; (defmethod clone ((d data) &optional src) (make-data (? d about names) src))
+; ;(reads "../../data/auto93.lisp" 'print)
