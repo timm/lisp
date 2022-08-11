@@ -1,9 +1,8 @@
 R=$(shell git rev-parse --show-toplevel)
-
-all: *.lisp
+all: tiny.lisp about.lisp data.lisp eg.lisp num.lisp row.lisp sym.lisp lib.lisp
 	@rm -f  _all.lisp
 	#@$(foreach f,$^,(figlet -W -f cybermedium $f>>_all.lisp;cat $f>>_all.lisp; echo "">>_all.lisp);)
-	@$(foreach f,$^,(figlet -W -f ogre $f>>_all.lisp;cat $f>>_all.lisp;);)
+	@$(foreach f,$^,(figlet -W -f contessa `basename $f .lisp`>>_all.lisp;cat $f>>_all.lisp;);)
 	$(MAKE) ../../docs/_all.pdf
 	@rm _all.lisp
 
