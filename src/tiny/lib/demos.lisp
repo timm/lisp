@@ -18,5 +18,5 @@
           (unless (eq t (funcall fun ))
             (incf fails)
             (format t "~&FAIL [~a] ~a ~%" what doc)))))
-    #+clisp (exit fails)
+    #+clisp (ext:exit fails)
     #+sbcl  (sb-ext:exit :code fails)))

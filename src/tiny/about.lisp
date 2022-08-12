@@ -14,4 +14,10 @@
         (push col all)
         (unless (eq #\~ (charn str))
           (if (member (charn str) '(#\! #\- #\+)) (push col y) (push col x))
-          (if (eq #\! (charn str)) (setf kl col)))))))
+          (if (eq #\! (charn str)) (setf kl col)))))))
+
+(defmethod add ((i about) (lst cons)) (add i (make-row i lst)))
+(defmethod add ((i about) (r row))
+  (dolist (cols `(,(? i x) ,(? i y)) r)
+    (dolist (col cols)
+      (add col (elt (? r cells) (? col at))))))

@@ -12,6 +12,7 @@
 (defdemo my () "show options" (pprint my) t)
 
 (defdemo div () "num divs" 
-  (format t "~&~a~%" (div (add (make-sym) '(a a a a b b c)))) t)
+  (let ((s (add (make-sym) '(a a a a b b c))))
+    (and (= 1.379 (rnd (div s))) (eq 'c (mid s)))))
 
 (demos my *demos* (! my go))

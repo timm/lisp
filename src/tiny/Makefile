@@ -1,6 +1,6 @@
 R=$(shell git rev-parse --show-toplevel)
 
-want = sample sym num about row data  \
+want = sample row sym num about data  \
      lib/macros lib/maths lib/strings \
      lib/settings lib/structs lib/demos eg
 
@@ -10,21 +10,23 @@ all:
 	@$(MAKE) ../../docs/_all.pdf
 	@rm _all.lisp
 	@open   ../../docs/_all.pdf
+		
+#--highlight-level=normal \
 
 ../../docs/%.pdf : %.lisp  ## make pdf
 	@mkdir -p $R/docs
 	@echo "pdf-ing $@ ... "
-	@a2ps -Bjr             \
-		-q                  \
-		-L 125                 \
+	@a2ps -B             \
+		-q                 \
+	--chars-per-line=82 \
+	--file-align=fill \
 		--line-numbers=1        \
-		--highlight-level=normal \
 		--borders=no              \
 		--pro=color                \
 		--columns 3                 \
-		--right-footer=""            \
-		--left-footer=""              \
-		--footer="page %p."             \
+		--right-footer="%Q"     \
+		--left-footer="%W"              \
+		--footer=""             \
 		-M letter                        \
 		-o $@.ps $<
 	@ps2pdf $@.ps $@; rm $@.ps; git add $@

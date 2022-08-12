@@ -14,4 +14,4 @@
     (seed  "-s"  "random number seed       " 10019)
     (go    "-g"  "start up action          " ls))))
 
-(mapc #'load '("sample" "sym" "num" "about" "row" "data"))
+(mapc #'load '("sample" "row" "sym" "num" "about" "data"))

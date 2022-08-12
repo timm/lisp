@@ -77,7 +77,7 @@ else
   lisp()  {
     f=$1
     shift
-    sbcl --noinform --script $f  $* 2> >( gawk ' {print} /^5:/ {exit}' ) 
+    $(which sbcl) --noinform --script $f  $* 2> >( gawk '/^Backtrace / {exit} 1' ) 
   }
   
   here() { cd $1; basename `pwd`; }
