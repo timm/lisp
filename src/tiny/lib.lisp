@@ -1,13 +1,17 @@
-;; hell
-;;; macros
+;;; Macros
 ; ? obj x y z) == (slot-value (slot-value (slot-value obj 'x) 'y) 'z)
 (defmacro ? (s x &rest xs)
  (if (null xs) `(slot-value ,s ',x) `(? (slot-value ,s ',x) ,@xs)))
 
-;;; accessors
-(defun ! (l x) (cdr (assoc x l)))
+; Endure lst has a slot for `x`. If missing, initialize it with `init`.
+(defmacro geta (x lst &optional (init 0))
+  `(cdr (or (assoc ,x ,lst :test #'equal)
+            (car (setf ,lst (cons (cons ,x ,init) ,lst))))))
 
-;;; string
+;;; Accessors
+(defmacro ! (l x) `(cdr (assoc ',x ,l)))
+
+;;; String
 ; Last thing from a string
 (defun charn (x) (char x (1- (length x))))
 
@@ -18,7 +22,7 @@
 (defmethod thing (x) x)
 (defmethod thing ((x string))
   (let ((y (trim x)))
-    (if (string= y "?") y
+    (if (string= y "?") #\?
       (let ((z (ignore-errors (read-from-string y))))
         (if (numberp z) z y)))))
 
@@ -38,7 +42,7 @@
   (with-open-file (s file)
     (loop (funcall fun (or (read-line s nil) (return))))))
 
-;;; maths
+;;; Maths
 ; Random number control (since reseeding in LISP is... strange).
 (defvar *seed* 10013)
 (defun randf (&optional (n 1.0)) 
@@ -46,7 +50,7 @@
   (* n (- 1.0d0 (/ *seed* 2147483647.0d0))))
 (defun randi (&optional (n 1)) (floor (* n (/ (randf 1000000000.0) 1000000000))))
 
-;;; settings
+;;; Settings
 ; Update `default` from command line (if it contains `flag` or `key`).
 ; CLI flags for booleans flip the setting (so they need no following arg).
 (defun cli (key.flag.help.default)
@@ -68,7 +72,7 @@
        (format t "  ~a   ~a = ~a~%" (second one) (third one) (fourth one))))
     tmp))
 
-;;;  defstruct+ 
+;;; Defstruct+ 
 ; Creates %x for base constructor, enables pretty print, hides private slots
 ; (those starting with "_").
 (defmacro defstruct+ (x &body body) 
@@ -80,7 +84,7 @@
          (labels ((fun (y) (format nil ":~(~a~) ~a" y (slot-value self y))))
            (format str "~a" (cons ',x (mapcar #'fun ',public))))))))
 
-;;; demos
+;;; Demos
 ; Define one demos.
 (defvar *demos* nil)
 (defmacro defdemo (what arg doc &rest src) 
@@ -92,11 +96,12 @@
   (let ((fails 0)
         (resets (copy-list settings)))
     (dolist (trio all)
-      (let ((what (first trio)) (doc (second trio)) (fun (third trio)))
-        (when (member what (list 'all one))
+      (destructuring-bind (what doc fun) trio
+        (setf what (format nil "~(~a~)" what))
+        (when (member what (list 'all one) :test 'equalp)
           (loop for (key . value) in resets do 
-            (setf (! settings key) value))
-          (setf *seed* (or (! settings 'seed) 10019))
+            (setf (cdr (assoc key settings)) value))
+          (setf *seed* (or (cdr (assoc 'seed settings)) 10019))
           (unless (eq t (funcall fun ))
             (incf fails)
             (format t "~&FAIL [~a] ~a ~%" what doc)))))
