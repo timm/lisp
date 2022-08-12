@@ -1,3 +1,4 @@
+; Hold one record.
 (defstruct+ row cells     ; cells 
                 _about)   ; pointer to someone who can say what are (e.g.) lo,hi
 

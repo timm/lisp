@@ -1,3 +1,4 @@
+; Place to hold rows, and their sumamries.
 (defstruct+ data rows    ; all the rows
                  about)  ; summaries of all the columns
 
@@ -5,6 +6,6 @@
   (if (stringp src)
     (with-lines src (lambda (line) (add i (cells line))))
     (dolist (row src) (add i row)))
- i)
+  i)
 
-(defmethod clone ((d data) &optional src) (make-data (? d about names) src))
+(defmethod clone ((d data) &optional src) (make-data (? d about names) src))

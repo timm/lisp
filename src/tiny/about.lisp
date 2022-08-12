@@ -1,3 +1,4 @@
+; Factory for making nums or syms.
 (defstruct+ about names  ; list of column names
                   all    ; all the generated columns
                   x      ; just the independet columns

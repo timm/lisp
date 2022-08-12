@@ -1,3 +1,4 @@
+; test suite
 (load "tiny")
 (in-package :tiny)
 

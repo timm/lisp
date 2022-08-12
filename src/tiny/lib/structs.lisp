@@ -1,4 +1,3 @@
-;;; Defstruct+ 
 ; Creates %x for constructor, enables pretty print, hides slots with "_" prefix.
 (defmacro defstruct+ (x &body body) 
   (let* ((slots  (mapcar    (lambda (x) (if (consp x) (car x) x))          body))

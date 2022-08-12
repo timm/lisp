@@ -1,6 +1,8 @@
+; Semi-supervised multi-objective explanation facility.
 (defpackage :tiny (:use :cl) (:nicknames "tn"))
 (in-package :tiny)
-(load "tricks")
+(mapc #'load  '("lib/macros"    "lib/maths"  "lib/strings" 
+                "lib/settings" "lib/structs" "lib/demos" ))
 (defvar my 
   (settings "TOYIN: do stuff
              (c) 2022 Tim Menzies, BSD-2 clause license "
@@ -12,4 +14,4 @@
     (seed  "-s"  "random number seed       " 10019)
     (go    "-g"  "start up action          " ls))))
 
-(mapcar #'load '("sample" "sym" "num" "about" "row" "data"))
+(mapc #'load '("sample" "sym" "num" "about" "row" "data"))

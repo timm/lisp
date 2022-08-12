@@ -1,10 +1,12 @@
 R=$(shell git rev-parse --show-toplevel)
 
-all: tiny.lisp sample.lisp sym.lisp num.lisp about.lisp row.lisp data.lisp  \
-     lib/macros.lisp lib/maths.lisp lib/strings.lisp \
-     lib/settings.lisp lib/structs.lisp lib/demos.lisp eg.lisp
-	@rm -f  _all.lisp
-	@$(foreach f,$^,(figlet -W -f contessa `dirname $f`/`basename $f .lisp`>>_all.lisp;cat $f>>_all.lisp;);)
+want = sample sym num about row data  \
+     lib/macros lib/maths lib/strings \
+     lib/settings lib/structs lib/demos eg
+
+all: 
+	@figlet -W -f larry3d tiny.lisp>_all.lisp; cat tiny.lisp>>_all.lisp
+	@$(foreach f,$(want),(figlet -W -f contessa $f>>_all.lisp;cat $f.lisp>>_all.lisp;);)
 	@$(MAKE) ../../docs/_all.pdf
 	@rm _all.lisp
 	@open   ../../docs/_all.pdf
@@ -13,7 +15,7 @@ all: tiny.lisp sample.lisp sym.lisp num.lisp about.lisp row.lisp data.lisp  \
 	@mkdir -p $R/docs
 	@echo "pdf-ing $@ ... "
 	@a2ps -Bjr             \
-		-q                    \
+		-q                  \
 		-L 125                 \
 		--line-numbers=1        \
 		--highlight-level=normal \

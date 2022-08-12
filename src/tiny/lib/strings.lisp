@@ -5,12 +5,10 @@
 (defun trim (x) (string-trim '(#\Space #\Tab #\Newline) x))
 
 ; Turn `x` into a number or string or "?"
-(defmethod thing (x) x)
-(defmethod thing ((x string))
-  (let ((y (trim x)))
-    (if (string= y "?") #\?
-      (let ((z (ignore-errors (read-from-string y))))
-        (if (numberp z) z y)))))
+(defun thing (x &aux (y (trim x)))
+  (if (string= y "?") #\?
+    (let ((z (ignore-errors (read-from-string y))))
+      (if (numberp z) z y))))
 
 ; Divide `str` on `char`, filtering all items through `filter`.
 (defun splits (str &key (char #\,) (filter #'identity))
