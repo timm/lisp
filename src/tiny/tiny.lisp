@@ -1,6 +1,6 @@
 (defpackage :tiny (:use :cl) (:nicknames "tn"))
 (in-package :tiny)
-(load "lib")
+(load "tricks")
 (defvar my 
   (settings "TOYIN: do stuff
              (c) 2022 Tim Menzies, BSD-2 clause license "

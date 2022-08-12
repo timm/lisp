@@ -1,0 +1,6 @@
+(load "lib/macros")
+(load "lib/strings")
+(load "lib/maths")
+(load "lib/settings")
+(load "lib/structs")
+(load "lib/demos")
