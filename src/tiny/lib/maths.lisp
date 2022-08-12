@@ -4,7 +4,7 @@
          (tmp (/ (round (* number div)) div)))
     (if (zerop digits) (floor tmp) (float tmp))))
 
-           ; Random number control (since reseeding in LISP is... strange).
+; Random number control (since reseeding in LISP is... strange).
 (defvar *seed* 10013)
 
 (defun randf (&optional (n 1.0)) 
