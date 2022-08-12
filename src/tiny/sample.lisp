@@ -1,7 +1,7 @@
 (defstruct+ sample 
-  (kept (make-array 2 :fill-pointer 0 :adjustable t)) 
-  (max (? my keep))
-  ok)
+  (kept (make-array 2 :fill-pointer 0 :adjustable t)) ; where to keep
+  (max (? my keep)) ; how many to keep
+  ok)               ; nil if items added and list not resorted yet
 
 (defmethod add ((i sample) (x number))
   (incf (? i n))

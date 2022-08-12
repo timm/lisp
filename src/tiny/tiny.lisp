@@ -12,4 +12,4 @@
     (seed  "-s"  "random number seed       " 10019)
     (go    "-g"  "start up action          " ls))))
 
-(mapcar #'load '("sym" "num" "row" "about" "data"))
+(mapcar #'load '("sample" "sym" "num" "about" "row" "data"))

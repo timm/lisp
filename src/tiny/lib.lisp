@@ -51,8 +51,7 @@
 (defun randi (&optional (n 1)) (floor (* n (/ (randf 1000000000.0) 1000000000))))
 
 ;;; Settings
-; Update `default` from command line (if it contains `flag` or `key`).
-; CLI flags for booleans flip the setting (so they need no following arg).
+; Update `default` from command line.  Boolean flags just flip defaults.
 (defun cli (key.flag.help.default)
   (destructuring-bind (key flag help default) key.flag.help.default
     (let* ((args #+clisp ext:*args* 
@@ -73,8 +72,7 @@
     tmp))
 
 ;;; Defstruct+ 
-; Creates %x for base constructor, enables pretty print, hides private slots
-; (those starting with "_").
+; Creates %x for constructor, enables pretty print, hides slots with "_" prefix.
 (defmacro defstruct+ (x &body body) 
   (let* ((slots  (mapcar    (lambda (x) (if (consp x) (car x) x))          body))
          (public (remove-if (lambda (x) (eq #\_ (char (symbol-name x) 0))) slots)))
@@ -106,4 +104,4 @@
             (incf fails)
             (format t "~&FAIL [~a] ~a ~%" what doc)))))
     #+clisp (exit fails)
-    #+sbcl  (sb-ext:exit :code fails)))
+    #+sbcl  (sb-ext:exit :code fails)))

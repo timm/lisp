@@ -1,4 +1,8 @@
-(defstruct+ about names all x y klass)
+(defstruct+ about names  ; list of column names
+                  all    ; all the generated columns
+                  x      ; just the independet columns
+                  y      ; just the dependent columns
+                  klass) ; just the klass col (if it exists)
 
 (defun make-about (lst)
   (let (all x y kl (at -1))
@@ -9,4 +13,4 @@
         (push col all)
         (unless (eq #\~ (charn str))
           (if (member (charn str) '(#\! #\- #\+)) (push col y) (push col x))
-          (if (eq #\! (charn str)) (setf kl col)))))))
+          (if (eq #\! (charn str)) (setf kl col)))))))

@@ -1,4 +1,7 @@
-(defstruct+ sym  (txt "") (at 0) (n 0) kept)
+(defstruct+ sym  (txt "")  ; column name
+                 (at 0)    ; column position
+                 (n 0)     ; #items seen
+                 kept)     ; symbol counts of the items
 
 (defun make-sym (&optional s n) (%make-sym :txt s :at n))
 

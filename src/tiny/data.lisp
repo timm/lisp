@@ -1,4 +1,5 @@
-(defstruct+ data rows about)
+(defstruct+ data rows    ; all the rows
+                 about)  ; summaries of all the columns
 
 (defun make-data (names &optional src (i (%make-data :about (make-about names))))
   (if (stringp src)
@@ -6,6 +7,4 @@
     (dolist (row src) (add i row)))
  i)
 
-(defmethod clone ((d data) &optional src) (make-data (? d about names) src))
-
-
+(defmethod clone ((d data) &optional src) (make-data (? d about names) src))
