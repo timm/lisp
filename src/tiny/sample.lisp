@@ -17,7 +17,7 @@
            (setf (? i ok) nil)
            (setf (elt (? i _kept) (randi size)) x)))))
 
-(defmethod has ((i sample))
+(defmethod sorted ((i sample))
   (unless (? i ok) 
     (sort (? i _kept) #'<)
     (setf (? i ok) t))
