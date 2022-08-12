@@ -1,4 +1,4 @@
-; Factory for making nums or syms.
+; Factory for making nums or syms. Also controls updating those nums+syms.
 (defstruct+ about names  ; list of column names
                   all    ; all the generated columns
                   x      ; just the independet columns
@@ -17,7 +17,7 @@
           (if (eq #\! (charn str)) (setf kl col)))))))
 
 (defmethod add ((i about) (lst cons)) (add i (make-row i lst)))
-(defmethod add ((i about) (r row))
-  (dolist (cols `(,(? i x) ,(? i y)) r)
+(defmethod add ((i about) (row1 row))
+  (dolist (cols `(,(? i x) ,(? i y)) row1)
     (dolist (col cols)
-      (add col (elt (? r cells) (? col at))))))
+      (add col (elt (? row1 cells) (? col at))))))
