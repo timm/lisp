@@ -1,0 +1,56 @@
+!	lib/macros.lisp	/^(defmacro ! (l x) `(cdr (assoc ',x ,l)))$/;"	f
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+*demos*	lib/demos.lisp	/^(defvar *demos* nil)$/;"	f
+*seed*	lib/maths.lisp	/^(defvar *seed* 10013)$/;"	f
+:tiny	tiny.lisp	/^(defpackage :tiny (:use :cl) (:nicknames "tn"))$/;"	f
+?	lib/macros.lisp	/^(defmacro ? (s x &rest xs)$/;"	f
+R	Makefile	/^R=$(shell git rev-parse --show-toplevel)$/;"	m
+about	about.lisp	/^(defstruct+ about names  ; list of column names$/;"	f
+add	about.lisp	/^(defmethod add ((i about) (lst cons)) (add i (make-row i lst)))$/;"	f
+add	about.lisp	/^(defmethod add ((i about) (r row))$/;"	f
+add	num.lisp	/^(defmethod add ((i num) (lst cons)) (dolist (x lst i) (add i x)))$/;"	f
+add	num.lisp	/^(defmethod add ((i num) x)$/;"	f
+add	sample.lisp	/^(defmethod add ((i sample) (x number))$/;"	f
+add	sym.lisp	/^(defmethod add ((i sym) (lst cons)) (dolist (x lst i) (add i x)))$/;"	f
+add	sym.lisp	/^(defmethod add ((i sym) x)$/;"	f
+adds	sym.lisp	/^(defmethod adds ((i sym) x inc)$/;"	f
+cells	lib/strings.lisp	/^(defun cells (string) (splits string :filter #'thing))$/;"	f
+charn	lib/strings.lisp	/^(defun charn (x) (char x (1- (length x))))$/;"	f
+clone	data.lisp	/^(defmethod clone ((d data) &optional src) (make-data (? d about names) src))$/;"	f
+data	data.lisp	/^(defstruct+ data rows    ; all the rows$/;"	f
+defdemo	lib/demos.lisp	/^(defmacro defdemo (what arg doc &rest src) $/;"	f
+defstruct+	lib/structs.lisp	/^(defmacro defstruct+ (x &body body) $/;"	f
+demos	lib/demos.lisp	/^(defun demos (settings all &optional one)$/;"	f
+div	eg.lisp	/^(defdemo div () "num divs" $/;"	f
+div	sym.lisp	/^(defmethod div ((i sym))$/;"	f
+geta	lib/macros.lisp	/^(defmacro geta (x lst &optional (init 0))$/;"	f
+lines	lib/strings.lisp	/^(defun lines (string) (splits string :char   #\\Newline))$/;"	f
+make-about	about.lisp	/^(defun make-about (lst)$/;"	f
+make-data	data.lisp	/^(defun make-data (names &optional src (i (%make-data :about (make-about names))))$/;"	f
+make-num	num.lisp	/^(defun make-num (s n) (%make-num :txt s :at n :w (if (eq #\\- (charn s)) -1 1)))$/;"	f
+make-row	row.lisp	/^(defun make-row (about l) (%make-row :cells l :_about about))$/;"	f
+make-sample	sample.lisp	/^(defun make-sample (&optional (max (? my keep_))) (%make-sample :max max))$/;"	f
+make-sym	sym.lisp	/^(defun make-sym (&optional s n) (%make-sym :txt s :at n))$/;"	f
+mid	sym.lisp	/^(defmethod mid ((i sym))$/;"	f
+my	eg.lisp	/^(defdemo my () "show options" (pprint my) t)$/;"	f
+my	tiny.lisp	/^(defvar my $/;"	f
+num	num.lisp	/^(defstruct+ num (txt "")  ; column name$/;"	f
+randf	lib/maths.lisp	/^(defun randf (&optional (n 1.0)) $/;"	f
+randi	lib/maths.lisp	/^(defun randi (&optional (n 1)) (floor (* n (\/ (randf 1000000000.0) 1000000000))))$/;"	f
+rnd	lib/maths.lisp	/^(defun rnd (number &optional (digits 3))$/;"	f
+row	row.lisp	/^(defstruct+ row cells     ; cells $/;"	f
+sample	sample.lisp	/^(defstruct+ sample $/;"	f
+setting	lib/settings.lisp	/^(defun setting (key.flag.help.default)$/;"	f
+settings	lib/settings.lisp	/^(defun settings (header options)$/;"	f
+sorted	sample.lisp	/^(defmethod sorted ((i sample))$/;"	f
+splits	lib/strings.lisp	/^(defun splits (str &key (char #\\,) (filter #'identity))$/;"	f
+sym	sym.lisp	/^(defstruct+ sym  (txt "")  ; column name$/;"	f
+thing	lib/strings.lisp	/^(defun thing (x &aux (y (trim x)))$/;"	f
+trim	lib/strings.lisp	/^(defun trim (x) (string-trim '(#\\Space #\\Tab #\\Newline) x))$/;"	f
+want	Makefile	/^want = sample row sym num about data  \\$/;"	m
+with-lines	lib/strings.lisp	/^(defun with-lines (file fun)$/;"	f
