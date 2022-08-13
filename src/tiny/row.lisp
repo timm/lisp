@@ -5,7 +5,7 @@
 
 (defun make-row (about l) (%make-row :cells l :_about about))
 
-(defmethod lt ((row1 row) (row2 row))
+(defmethod better ((row1 row) (row2 row))
   (let* ((s1 0) (s2 0) (d 0) (n 0) 
                 (cols (? row1 _about y)) 
                 (n (length cols)))
@@ -19,10 +19,10 @@
           (decf s2 (exp (* w (/ (- y x) n)))))))))
 
 (defmethod around ((row1 row) rows)
-  (labels ((two (row2) (cons row2 (dist row1 row2))))
+  (labels ((two (row2) (cons row2 (gap row1 row2))))
     (sort (mapcar 'two rows) 'car<)))
 
-(defmethod dist ((row1 row) (row2 row))
+(defmethod gap ((row1 row) (row2 row))
   (let ((d 0) (n 0))
     (dolist (col (? row1 _about x) (expt (/ d n) (? my p)))
       (incf n)
