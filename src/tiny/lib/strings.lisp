@@ -1,5 +1,8 @@
 ; Last thing from a string
-(defun charn (x) (char x (1- (length x))))
+(defun charn (x) 
+  (and (stringp x)
+       (> (length x) 0)
+       (char x (1- (length x)))))
 
 ; Kill leading tailing whitespace.
 (defun trim (x) (string-trim '(#\Space #\Tab #\Newline) x))

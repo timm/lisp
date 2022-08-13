@@ -5,7 +5,7 @@
                 (w 1)     ; (1,-1) = (maximize, minimize)
                 (lo most-positive-fixnum) ; least seen
                 (hi most-negative-fixnum) ; most seen
-                (kept (make-some))) ; items seen
+                (kept (make-sample)))     ; items seen
 
 
 (defun make-num (&optional (s "") (n 0)) 
