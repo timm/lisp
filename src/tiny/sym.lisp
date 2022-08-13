@@ -17,8 +17,13 @@
   (incf (geta x (? i kept)) inc))
 
 (defmethod div ((i sym))
-	(labels ((fun (p) (* -1 (* p (log p 2)))))
-		(loop for (_ . n) in (? i kept) sum (fun (/ n (? i n))))))
+  (labels ((fun (p) (* -1 (* p (log p 2)))))
+    (loop for (_ . n) in (? i kept) sum (fun (/ n (? i n))))))
 
 (defmethod mid ((i sym))
   (loop for (key . n) in (? i kept) maximizing n return key))
+
+(defmethod dist ((i sym) x y)
+  (cond ((and (eq #\? x) (eq #\? y)) 1)
+        ((equal x y)                 0)
+        (t                           1)))

@@ -9,3 +9,5 @@
   i)
 
 (defmethod clone ((d data) &optional src) (make-data (? d about names) src))
+
+(defmethod add ((i data) x) (push (add (? i about) x) (? i rows)))

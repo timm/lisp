@@ -24,3 +24,18 @@
            ((< (- ho lo) 1E-12) 0)
            (t                   (/ (- x lo) (- hi lo))))))
 
+(defmethod dist ((i num) x y)
+  (cond ((and (eq #\? x) 
+              (eq #\? y)) (return-from dist 1))
+        ((eq #\? x)       (setf y (norm i y)
+                                x (if (< y .5) 1 0)))
+        ((eq #\? y)       (setf x (norm i x)
+                                y (if (< x .5) 1 0)))
+        (t                (setf x (norm i x)
+                                y (norm i y))))
+  (abs (- x y)))
+
+(defmethod discretize ((i num) x)
+  (with-slots (lo hi) i
+    (let ((b (/ (- hi lo) (? my bins))))
+      (if (- hi lo) 1 (* b (floor (+ .5 (/ x b))))))))

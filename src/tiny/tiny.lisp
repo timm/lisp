@@ -13,6 +13,7 @@
      (keep  "-K"  "items to keep            " 256)
      (k     "-k"  "nb low attributes classes" 1)
      (m     "-m"  "nb low frequency classes " 2)
+     (p     "-p"  "distance coeffecient     " 2)
      (seed  "-s"  "random number seed       " 10019)
      (go    "-g"  "start up action          " "ls"))))
 

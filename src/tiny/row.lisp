@@ -6,12 +6,25 @@
 (defun make-row (about l) (%make-row :cells l :_about about))
 
 (defmethod lt ((row1 row) (row2 row))
-  (setf (? row1 evaled) t
-        (? row2 evaled) t)
-  (let* ((s1 0) (s2 0) (d 0) (n 0) (cols (? row1 _about y)) (n (length cols)))
-    (dolist (col cols)
-       (let ((x (norm col (elt (? row1 cells) (? col at))))
-             (y (norm col (elt (? row2 cells) (? col at)))))
-        (decf s1 (exp (* (? col w) (/ (- x y) n))))
-        (decf s1 (exp (* (? col w) (/ (- y x) n))))))
-    (< (/ s1 n) (/ s2 n))))
+  (let* ((s1 0) (s2 0) (d 0) (n 0) 
+                (cols (? row1 _about y)) 
+                (n (length cols)))
+    (setf (? row1 evaled) t
+          (? row2 evaled) t)
+    (dolist (col cols (< (/ s1 n) (/ s2 n)))
+      (with-slots (at w) col
+        (let ((x (norm col (elt (? row1 cells) at)))
+              (y (norm col (elt (? row2 cells) at))))
+          (decf s1 (exp (* w (/ (- x y) n))))
+          (decf s2 (exp (* w (/ (- y x) n)))))))))
+
+(defmethod around ((row1 row) rows)
+  (labels ((two (row2) (cons row2 (dist row1 row2))))
+    (sort (mapcar 'two rows) 'car<)))
+
+(defmethod dist ((row1 row) (row2 row))
+  (let ((d 0) (n 0))
+    (dolist (col (? row1 _about x) (expt (/ d n) (? my p)))
+      (incf n)
+      (incf d (dist col (elt (? row1 cells) (? col at)) 
+                        (elt (? row2 cells) (? col at)))))))
