@@ -1,7 +1,7 @@
 R=$(shell git rev-parse --show-toplevel)
 
 want = sample row sym num about data  \
-     lib/macros lib/maths lib/strings \
+     lib/macros lib/maths lib/strings lib/lists \
      lib/settings lib/structs lib/demos eg
 
 all: 
