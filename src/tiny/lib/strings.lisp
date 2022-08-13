@@ -9,9 +9,11 @@
 
 ; Turn `x` into a number or string or "?"
 (defun thing (x &aux (y (trim x)))
-  (if (string= y "?") #\?
-    (let ((z (ignore-errors (read-from-string y))))
-      (if (numberp z) z y))))
+  (cond ((string= y "?") #\?)
+        ((string= y "t") t)
+        ((string= y "nil") nil)
+        (t (let ((z (read-from-string y nil nil)))
+             (if (numberp z) z y)))))
 
 ; Divide `str` on `char`, filtering all items through `filter`.
 (defun splits (str &key (char #\,) (filter #'identity))
@@ -22,7 +24,7 @@
 
 ; String to lines or cells of things
 (defun lines (string) (splits string :char   #\Newline))
-(defun cells (string) (splits string :filter #'thing))
+(defun cells (string &key (char #\,)) (splits string :char char :filter #'thing))
 
 ; Call `fun` for each line in `file`.
 (defun with-lines (file fun)
