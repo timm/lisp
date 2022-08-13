@@ -178,3 +178,8 @@ autocmd Filetype markdown setlocal ts=2 sw=2 expandtab
 "au Syntax * RainbowParenthesesLoadRound
 "au Syntax * RainbowParenthesesLoadSquare
 "au Syntax * RainbowParenthesesLoadBraces
+
+" Allow crosshair cursor highlighting.
+hi CursorLine   cterm=NONE ctermbg=0
+hi CursorColumn cterm=NONE ctermbg=0
+nnoremap <Leader>c :set cursorline! cursorcolumn!<CR>
