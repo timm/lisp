@@ -39,6 +39,6 @@
     (dotimes (i 20 t)
       (let ((one (nth (randi (length (? r rows))) (? r rows)))
             (two (nth (randi (length (? r rows))) (? r rows))))
-        (print (dist (? r cols) one two))))))
+        (print (dist  r  one two))))))
    
 (demos my *egs* (! my example))

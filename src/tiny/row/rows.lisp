@@ -4,15 +4,15 @@
 
 (defun make-rows (&optional src (i (%make-rows)))
   (labels ((ensure-cols-exists (x) (if (? i cols) 
-                                     (push (add i x) rows) 
+                                     (push (add i x) (? i rows)) 
                                      (setf (? i cols) (make-cols x)))))
     (if (stringp src)
-      (with-lines src #'ensure-cols-exists)
+      (with-lines src (lambda (line) (ensure-cols-exists (cells line))))
       (mapcar #'ensure-cols-exists src))
     i))
 
 (defmethod clone ((i rows) &optional src) 
-  (make-rows (cons (? i cols names)) src))
+  (make-rows (cons (? i cols names) src)))
 
 (defmethod add ((i rows) (lst cons)) (add i (make-row i lst)))
 (defmethod add ((i rows) (row1 row))
@@ -25,4 +25,4 @@
     (dolist (col (? self cols x) (float (expt (/ d n) (! my p))))
       (incf n):vsp
       (incf d (dist col (elt (? row1 cells) (? col at)) 
-                        (elt (? row2 cells) (? col at)))))))
+                        (elt (? row2 cells) (? col at)))))))
