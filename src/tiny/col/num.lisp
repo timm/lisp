@@ -5,7 +5,7 @@
                 (w 1)     ; (1,-1) = (maximize, minimize)
                 (lo most-positive-fixnum) ; least seen
                 (hi most-negative-fixnum) ; most seen
-                (kept (make-sample)))     ; items seen
+                (_kept (make-sample)))     ; items seen
 
 
 (defun make-num (&optional (s "") (n 0)) 
@@ -13,18 +13,18 @@
 
 (defmethod add ((i num) (lst cons)) (dolist (x lst i) (add i x)))
 (defmethod add ((i num) x)
-  (with-slots (lo hi) i
-    (unless (eq x #\?)
+  (unless (eq x #\?)
+    (with-slots (lo hi) i
       (incf (? i n))
-      (add (? i kept) x))
+      (add (? i _kept) x)
       (setf lo (min x (? i lo))
-            hi (max x (? i hi)))))
+            hi (max x (? i hi))))))
 
 (defmethod norm ((i num) x)
   (with-slots (lo hi) i
-    (cond ((eq x #\?)          x)
-          ((< (- hi lo) 1E-12) 0)
-          (t                   (/ (- x lo) (- hi lo))))))
+    (cond ((eq x #\?)         x)
+          ((< (- hi lo) 1E-9) 0)
+          (t                  (/ (- x lo) (- hi lo))))))
 
 (defmethod dist ((i num) x y)
   (cond ((and (eq #\? x) (eq #\? y)) 
@@ -34,8 +34,8 @@
         (t           (setf x (norm i x) y (norm i y))))
   (abs (- x y)))
 
-(defmethod div ((i num)) (div (? i kept)))
-(defmethod mid ((i num)) (mid (? i kept)))
+(defmethod div ((i num)) (div (? i _kept)))
+(defmethod mid ((i num)) (mid (? i _kept)))
 
 (defmethod discretize ((i num) x &optional (bins (? my bins)))
   (with-slots (lo hi) i

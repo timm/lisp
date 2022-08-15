@@ -31,7 +31,14 @@
 
 (defdemo rows () "rows"
    (let ((rows (make-rows "../../data/auto93.csv")))
-     (print (? (? rows cols) all)))
+     (print (? (? rows cols) y)))
    t)
 
+(defdemo dist () "dist"
+  (let ((r (make-rows "../../data/auto93.csv")))
+    (dotimes (i 20 t)
+      (let ((one (nth (randi (length (? r rows))) (? r rows)))
+            (two (nth (randi (length (? r rows))) (? r rows))))
+        (print (dist (? r cols) one two))))))
+   
 (demos my *demos* (! my go))

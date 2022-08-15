@@ -1,5 +1,5 @@
 ; Place to hold rows, and their sumamries.
-(defstruct+ rows rows    ; all the rows
+(defstruct+ rows rows   ; all the rows
                  cols)  ; summaries of all the columns
 
 (defun make-rows (&optional src (i (%make-rows)))
