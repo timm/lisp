@@ -19,4 +19,4 @@
             (incf fails)
             (format t "~&FAIL [~a] ~a ~%" what doc)))))
     #+clisp (ext:exit fails)
-    #+sbcl  (sb-ext:exit :code fails)))
+    #+sbcl  (sb-ext:exit :code fails)))

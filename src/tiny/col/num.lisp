@@ -37,7 +37,7 @@
                                 y (norm i y))))
   (abs (- x y)))
 
-(defmethod discretize ((i num) x)
+(defmethod discretize ((i num) x &optional (bins (? my bins)))
   (with-slots (lo hi) i
-    (let ((b (/ (- hi lo) (? my bins))))
-      (if (- hi lo) 1 (* b (floor (+ .5 (/ x b))))))))
+    (let ((b (/ (- hi lo) bins)))
+      (if (= hi lo) 1 (* b (floor (+ .5 (/ x b))))))))

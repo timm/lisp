@@ -26,4 +26,4 @@
 (defmethod dist ((i sym) x y)
   (cond ((and (eq #\? x) (eq #\? y)) 1)
         ((equal x y)                 0)
-        (t                           1)))
+        (t                           1)))
