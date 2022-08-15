@@ -2,7 +2,7 @@ R=$(shell git rev-parse --show-toplevel)
 
 want = row/row row/rows col/cols col/num col/sample col/sym    \
      lib/macros lib/maths lib/strings lib/lists \
-     lib/settings lib/structs lib/demos eg
+     lib/settings lib/structs lib/egs eg
 
 all: 
 	@figlet -W -f larry3d tiny.lisp>_all.lisp; cat tiny.lisp>>_all.lisp

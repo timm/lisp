@@ -15,5 +15,6 @@
     (when (! tmp help)
       (format t "~&~{~a~%~}~%OPTIONS:~%" (lines header))
       (dolist (one options)
-        (format t "  ~a   ~a = ~a~%" (second one) (third one) (fourth one))))
+        (destructuring-bind (_ flag help default) one 
+           (format t "  ~a   ~a = ~a~%" flag help default))))
     tmp))

@@ -11,6 +11,7 @@
 (defun make-num (&optional (s "") (n 0)) 
   (%make-num :txt s :at n :w (if (eq #\- (charn s)) -1 1)))
 
+
 (defmethod add ((i num) (lst cons)) (dolist (x lst i) (add i x)))
 (defmethod add ((i num) x)
   (unless (eq x #\?)

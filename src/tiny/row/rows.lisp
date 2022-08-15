@@ -21,8 +21,10 @@
       (add col (elt (? row1 cells) (? col at))))))
 
 (defmethod dist ((self rows) (row1 row) (row2 row))
-  (let ((d 0) (n 0))
-    (dolist (col (? self cols x) (float (expt (/ d n) (! my p))))
-      (incf n):vsp
-      (incf d (dist col (elt (? row1 cells) (? col at)) 
-                        (elt (? row2 cells) (? col at)))))))
+  (let ((d 0) (n 0) (p (! my p)))
+    (dolist (col (? self cols x))
+      (incf n)
+      (incf d (expt (dist col (elt (? row1 cells) (? col at)) 
+                              (elt (? row2 cells) (? col at))) 
+                    p)))
+    (expt (/ d n) (/ 1 p))))

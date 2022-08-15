@@ -4,4 +4,3 @@
 
 (defun car< (x) (lambda (a b) (< (car a) (car b))))
 (defun car> (x) (lambda (a b) (> (car a) (car b))))
-

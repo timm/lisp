@@ -9,7 +9,6 @@
 (defun make-sample (&optional (max (! my keep))) 
   (%make-sample :max max))
 
-(defmethod add ((i sample) (lst cons)) (dolist (x lst i) (add i x)))
 (defmethod add ((i sample) (x number))
   (incf (? i n))
   (let ((size (length (? i _kept))))
