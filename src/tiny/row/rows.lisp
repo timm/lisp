@@ -3,12 +3,12 @@
                  cols)  ; summaries of all the columns
 
 (defun make-rows (&optional src (i (%make-rows)))
-  (labels ((ensure-cols-exists (x) (if (? i cols) 
+  (labels ((top.row.is.special  (x) (if (? i cols) 
                                      (push (add i x) (? i rows)) 
                                      (setf (? i cols) (make-cols x)))))
     (if (stringp src)
-      (with-lines src (lambda (line) (ensure-cols-exists (cells line))))
-      (mapcar #'ensure-cols-exists src))
+      (with-lines src (lambda (line) (top.row.is.special (cells line))))
+      (mapcar #'top.row.is.special src))
     i))
 
 (defmethod clone ((i rows) &optional src) 
