@@ -1,7 +1,7 @@
 (defpackage :tiny (:use :cl))
 (in-package :tiny)
 (mapc #'load  '("lib/macros"    "lib/maths"  "lib/strings" "lib/lists" 
-                "lib/settings" "lib/structs" "lib/demos" ))
+                "lib/settings" "lib/structs" "lib/egs" ))
 
 (defvar my (settings "
    TINY: semi-supervised multi-objective explanation facility.
@@ -15,6 +15,6 @@
      (m     "-m"  "nb low frequency classes " 2)
      (p     "-p"  "distance coeffecient     " 2)
      (seed  "-s"  "random number seed       " 10019)
-     (go    "-g"  "start up action          " "ls"))))
+     (example "-e"  "example to run           " "ls"))))
 
 (mapc #'load '("col/sample" "row/row" "col/sym" "col/num" "col/cols" "row/rows"))

@@ -1,7 +1,7 @@
 ; Define one demos.
-(defvar *demos* nil)
-(defmacro defdemo (what arg doc &rest src) 
-  `(push (list ',what ',doc (lambda ,arg ,@src)) *demos*))
+(defvar *egs* nil)
+(defmacro eg (what arg doc &rest src) 
+  `(push (list ',what ',doc (lambda ,arg ,@src)) *egs*))
 
 ; Run `one` (or `all`) the demos. Reset globals between each run.
 ; Return to the operating systems the failure count (so fails=0 means "success").
