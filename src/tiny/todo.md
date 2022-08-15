@@ -1,3 +1,6 @@
+row hasve to point to their rows
+
+
 data ==> rows
 
 about ==> cols
