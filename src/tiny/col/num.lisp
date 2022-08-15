@@ -16,9 +16,9 @@
   (with-slots (lo hi) i
     (unless (eq x #\?)
       (incf (? i n))
-      (setf lo (min lo (? i lo))
-            hi (max hi (? i hi)))
-      (add (? i kept) x))))
+      (add (? i kept) x))
+      (setf lo (min x (? i lo))
+            hi (max x (? i hi)))))
 
 (defmethod norm ((i num) x)
   (with-slots (lo hi) i
@@ -27,15 +27,15 @@
           (t                   (/ (- x lo) (- hi lo))))))
 
 (defmethod dist ((i num) x y)
-  (cond ((and (eq #\? x) 
-              (eq #\? y)) (return-from dist 1))
-        ((eq #\? x)       (setf y (norm i y)
-                                x (if (< y .5) 1 0)))
-        ((eq #\? y)       (setf x (norm i x)
-                                y (if (< x .5) 1 0)))
-        (t                (setf x (norm i x)
-                                y (norm i y))))
+  (cond ((and (eq #\? x) (eq #\? y)) 
+                     (return-from dist 1))
+        ((eq #\? x)  (setf y (norm i y) x (if (< y .5) 1 0)))
+        ((eq #\? y)  (setf x (norm i x) y (if (< x .5) 1 0)))
+        (t           (setf x (norm i x) y (norm i y))))
   (abs (- x y)))
+
+(defmethod div ((i num)) (div (? i kept)))
+(defmethod mid ((i num)) (mid (? i kept)))
 
 (defmethod discretize ((i num) x &optional (bins (? my bins)))
   (with-slots (lo hi) i

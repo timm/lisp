@@ -6,11 +6,13 @@
                   klass) ; just the klass col (if it exists)
 
 (defun make-cols (lst)
+  (print `(cols ,lst))
   (let (all x y kl (at -1))
     (dolist (str lst (%make-cols :names lst :x x :y y :klass kl
                                   :all (reverse all)))
       (incf at)
-      (let ((col (if (eq #\$ (char str 0)) (make-num str at) (make-sym str at))))
+      (let* ((what (if (upper-case-p (char str 0)) #'make-num #'make-sym))
+             (col  (funcall what str at)))
         (push col all)
         (unless (eq #\~ (charn str))
           (if (member (charn str) '(#\! #\- #\+)) (push col y) (push col x))
@@ -24,7 +26,7 @@
 
 (defmethod dist ((self cols) (row1 row) (row2 row))
   (let ((d 0) (n 0))
-    (dolist (col (? self x) (expt (/ d n) (? my p)))
+    (dolist (col (? self x) (expt (/ d n) (! my p)))
       (incf n)
       (incf d (dist col (elt (? row1 cells) (? col at)) 
                         (elt (? row2 cells) (? col at)))))))
