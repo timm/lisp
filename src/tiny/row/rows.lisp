@@ -14,24 +14,31 @@
     i))
 
 (defmethod clone ((i rows) &optional src) 
+  "Create a new table with same structure as `i`."
   (make-rows (cons (? i cols names) src)))
 
-(defmethod add ((i rows) (lst cons)) (add i (make-row i lst)))
+(defmethod add ((i rows) (lst cons)) 
+  "Row creation. Called in we try to add a simple list."
+  (add i (make-row i lst)))
+
 (defmethod add ((i rows) (row1 row))
+  "For all the unskipped columns, update from `row1`."
   (dolist (cols `(,(? i cols x) ,(? i cols y)) row1)
     (dolist (col cols)
       (add col (elt (? row1 cells) (? col at))))))
 
 (defmethod dist ((i rows) (row1 row) (row2 row))
+  "Gap between `row1`, `row2`. At `p`=2, this is Euclidean distance."
   (let ((d 0) (n 0) (p (! my p)))
     (dolist (col (? i cols x))
       (incf n)
       (incf d (expt (dist col (elt (? row1 cells) (? col at)) 
                               (elt (? row2 cells) (? col at))) 
                     p)))
-    (expt (/ d n) (/ 1 p))))
+    (expt (/ d n) (/ 1 p))))
 
 (defmethod half ((i rows) &optional all above)
+  "Split rows in two by their distance to two remove points."
   (or all (? i rows))
   (print 1)
   (let (all some left right c tmp) 
@@ -53,4 +60,4 @@
         (if (< (incf n) (/ (length tmp) 2))
           (push (cdr one) lefts)
           (push (cdr one) rights)))
-      (values left right lefts rights c))))
+      (values left right lefts rights c))))

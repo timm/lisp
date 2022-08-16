@@ -1,4 +1,5 @@
 syntax on
+set autochdir 
 set mouse=a
 set noerrorbells "no sound effects
 set visualbell

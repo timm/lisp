@@ -40,4 +40,4 @@
   (unless (? i ok) 
     (sort (? i _kept) #'<)
     (setf (? i ok) t))
-  (? i _kept))
+  (? i _kept))

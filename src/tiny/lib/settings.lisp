@@ -1,5 +1,6 @@
 ; Update `default` from command line.  Boolean flags just flip defaults.
 (defun cli (key.flag.help.default)
+  "If `flag` exists on command line, update `key`."
   (destructuring-bind (key flag help default) key.flag.help.default
     (declare (ignore help))
     (let* ((args #+clisp ext:*args* 
@@ -10,8 +11,8 @@
                       ((equal default nil) t)
                       (t                   (thing (second it))))))))
 
-; Update settings. If  `help` is set, print help.
 (defun settings (header options)
+  "Update settings. If  `help` is set, print help."
   (let ((tmp (mapcar (lambda (x) (cli x)) options)))
     (when (! tmp help)
       (format t "~&~{~a~%~}~%OPTIONS:~%" (lines header))
