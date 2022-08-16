@@ -1,7 +1,8 @@
-; Hold one record.
-(defstruct+ row cells    ; cells 
-                _parent  ; pointer to someone who can say what are (e.g.) lo,hi
-                evaled)  ; have we used the y values
+(defstruct+ row 
+   "Hold one record"
+   cells    ; cells 
+   _parent  ; pointer to someone who can say what are (e.g.) lo,hi
+   evaled)  ; have we used the y values
 
 (defun make-row (rows lst) (%make-row :_parent rows :cells lst))
 

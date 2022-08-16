@@ -1,0 +1,93 @@
+syntax on
+set mouse=a
+set noerrorbells "no sound effects
+set visualbell
+set tabstop=2 softtabstop=2 "how many spaces a tab should use
+set shiftwidth=2 
+set expandtab
+set wildmenu
+set wildmode=list:longest,full
+set smartindent
+set rnu relativenumber " relative line number
+set nowrap
+set smartcase 
+set noswapfile "no swap file (vim creates them by default) 
+set nobackup "no backup file
+set undodir=~/.nvim/undodir
+set undofile
+set cursorline
+set incsearch
+set formatoptions-=cro
+"set background=dark
+set title
+set ignorecase
+set nocompatible   
+filetype off                  " required
+" set the runtime path to include Vundle and initialize
+set rtp+=~/.vim/bundle/Vundle.vim
+call vundle#begin()
+" alternatively, pass a path where Vundle should install plugins
+"call vundle#begin('~/some/path/here')
+Plugin 'itchyny/lightline.vim'
+Plugin 'ciaranm/inkpot'
+Plugin 'sainnhe/sonokai'
+Plugin 'arcticicestudio/nord-vim'
+Plugin 'tbastos/vim-lua'
+Plugin 'vim-syntastic/syntastic'
+Plugin 'AutumnLeaf'
+Plugin 'nanotech/jellybeans.vim'
+"CSS properties and color selector
+Plugin 'ps173/dadara'
+Plugin 'gruvbox-community/gruvbox'
+Plugin 'liuchengxu/space-vim-dark'
+Plugin 'dracula/vim', { 'as': 'dracula' }
+"CSS properties and color selector
+Plugin 'KabbAmine/vCoolor.vim'
+Plugin 'lilydjwg/colorizer'
+" File explorer
+Plugin 'scrooloose/nerdtree'
+Plugin 'ryanoasis/vim-devicons'
+" Intellisense and code completion with syntax highlighting
+Plugin 'sheerun/vim-polyglot'
+Plugin 'preservim/nerdcommenter'
+" Airline
+"Plugin 'vim-airline/vim-airline'
+"Plugin 'vim-airline/vim-airline-themes'
+" All of your Plugins must be added before the following line
+call vundle#end()            " required
+filetype plugin indent on    " required
+" To ignore plugin indent changes, instead use:
+filetype plugin on
+set encoding=UTF-8
+" NERD TREE AND ICONS
+let g:NERDTreeShowHidden = 1
+let g:NERDTreeMinimalUI = 0
+let g:NERDTreeIgnore = ['node_modules']
+let NERDTreeStatusline='NERDTree'
+" Automaticaly close nvim if NERDTree is only thing left open
+autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
+" File explorer plugin
+map <C-b> :NERDTreeToggle<CR>
+" nerd commenter
+noremap <leader>c :NERDCommenterComment<CR>
+set guifont=DroidSansMono_Nerd_Font:h11
+
+"-------------------------------------
+"colorscheme space-vim-dark
+colorscheme jellybeans
+set lispwords+=!
+set lispwords+=geta
+set lispwords+=?
+
+set spellsuggest=fast,20 "Don't show too much suggestion for spell check
+nn <F7> :setlocal spell! spell?<CR>
+
+"autocmd StdinReadPre * let s:std_in=1
+"autocmd VimEnter * if argc() == 0 && !exists(“s:std_in”) | NERDTree | endif
+"autocmd bufenter * if (winnr(“$”) == 1 && exists(“b:NERDTreeType”) && b:NERDTreeType == “primary”) | q | endif
+"let NERDTreeAutoDeleteBuffer = 1
+"let NERDTreeQuitOnOpen = 1
+let NERDTreeMinimalUI = 1
+let NERDTreeDirArrows = 1
+
+au VimEnter *  NERDTree

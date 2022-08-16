@@ -1,8 +1,10 @@
-; Place to hold rows, and their sumamries.
-(defstruct+ rows rows   ; all the rows
-                 cols)  ; summaries of all the columns
+(defstruct+ rows 
+            "Stores multiple rows, and their summaries."
+            rows   ; all the rows
+            cols)  ; summaries of all the columns
 
 (defun make-rows (&optional src (i (%make-rows)))
+  "Eat first row for the column header,  add the rest"
   (labels ((top.row.is.special  (x) (if (? i cols) 
                                      (push (add i x) (? i rows)) 
                                      (setf (? i cols) (make-cols x)))))

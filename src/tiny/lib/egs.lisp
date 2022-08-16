@@ -1,11 +1,13 @@
 ; Define one demos.
 (defvar *egs* nil)
 (defmacro eg (what arg doc &rest src) 
+  "Create one example."
   `(push (list ',what ',doc (lambda ,arg ,@src)) *egs*))
 
-; Run `one` (or `all`) the demos. Reset globals between each run.
-; Return to the operating systems the failure count (so fails=0 means "success").
 (defun demos (settings all &optional one)
+  "Run `one` (or `all`) the demos. Reset globals between each
+  run.  Return to the operating systems the failure count (so
+  fails=0 means `successs`)."
   (let ((fails 0)
         (resets (copy-list settings)))
     (dolist (trio all)
