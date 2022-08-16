@@ -6,7 +6,7 @@
 (defun make-row (rows lst) (%make-row :_parent rows :cells lst))
 
 (defmethod better ((row1 row) (row2 row))
-  (let* ((s1 0) (s2 0) (d 0) (n 0) 
+  (let* ((s1 0) (s2 0) 
                 (cols (? row1 _parent cols y)) 
                 (n (length cols)))
     (setf (? row1 evaled) t
