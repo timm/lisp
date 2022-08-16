@@ -8,7 +8,8 @@
    (c) 2022 Tim Menzies, BSD-2 clause license
 
    USAGE:  lisp eg.lisp [OPTIONS] [ARG]" 
-   '((file  "-f"  "help file                " "../../data/auto93.lisp")
+   '((far   "-F"  "how far is distant       " .95)
+     (file  "-f"  "help file                " "../../data/auto93.lisp")
      (help  "-h"  "show help                " nil)
      (keep  "-K"  "items to keep            " 256)
      (k     "-k"  "nb low attributes classes" 1)

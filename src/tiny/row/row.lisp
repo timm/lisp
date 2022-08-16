@@ -18,7 +18,10 @@
           (decf s1 (exp (* w (/ (- x y) n))))
           (decf s2 (exp (* w (/ (- y x) n))))))))) 
 
-(defmethod around ((row1 row) rows)
+(defmethod around ((row1 row) allrows)
   (labels ((two (row2) (cons (dist (? row1 _parent cols)  row1 row2) row2)))
-    (sort (mapcar 'two rows) 'car<)))
+    (sort (mapcar 'two allrows) 'car<)))
 
+(defmethod far ((i row) allrows)
+  (cdr (elt (around i allrows) 
+            (floor (* (length allrows) (? my far))))))

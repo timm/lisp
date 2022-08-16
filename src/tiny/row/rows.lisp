@@ -29,20 +29,25 @@
                     p)))
     (expt (/ d n) (/ 1 p))))
 
-
-#|
-function half._split(rows,  rowAbove)
-  local As,Bs,A,B,c,far,project = {},{}
-  local some= many(rows,the.Some)
-  function far(row) return per(row:around(some), the.Far).row end
-  function project(row) 
-    return {row=row, x=((row- A)^2 + c^2 - (row- B)^2)/(2*c)} end
-  A= rowAbove or far(any(some))
-  B= far(A)
-  c= A-B
-  for n,rowx in pairs(sort(map(rows, project),lt"x")) do
-    push(n < #rows/2 and As or Bs, rowx.row) end
-  return A,B,As,Bs,c end
-|#
-
-   
+(defmethod half ((i rows) &optional all above)
+  (or all (? i rows))
+  (print 1)
+  (let* 
+    ((all   (or   all (? i rows)))
+     (some  (many all (? my far)))
+     (left  (or   above (far (any some) some)))
+     (right (far  left some))
+     (c     (dist (? i _parent) left right))
+     (tmp   (mapcar (lambda (row) 
+                      (print 2)
+                      (let ((a (dist (? row _parent) row left))
+                            (b (dist (? row _parent) row right)))
+                        (cons (/ (+ (* a a) (* c c) (- (* b b))) (* 2 c)) row)))
+                    all)))
+    (print 1)
+    (let ((n 0) lefts rights)
+      (dolist (one (sort tmp #'car<))
+        (if (< (incf n) (/ (length tmp) 2))
+          (push (cdr one) lefts)
+          (push (cdr one) rights)))
+      (values left right lefts rights c))))

@@ -4,10 +4,10 @@
 
 (eg my () "show options" (pprint my) t)
 
-(eg many "any, many"
-    (dotimes (i 20) (print (any #(10 20 30))))
-    (print (sort (many #(10 20 30 40 50 60 70 80 90 100
-                         110 120 130 140 150) 5) #'<))
+(eg any () "any, many"
+    (print (sort (loop repeat 20 collect (any #(10 20 30 40))) #'<))
+    (print (sort (many #(10 20 30 40 50 60 70 80 90 
+                         100 110 120 130 140 150) 5) #'<))
     t)
 
 (eg sym () "sym" 
@@ -48,4 +48,8 @@
       (format t "~{ ~,3f~}" (sort all #'<))
       t))
 
+(eg half () "half"
+    (let ((r (make-rows "../../data/auto93.csv")))
+      (half r)
+      t))
 (demos my *egs* (! my example)) 
