@@ -24,8 +24,8 @@
 
 (defmethod around ((row1 row) allrows)
   "Sort `allrows` by distance to `row1`."
-  (labels ((two (row2) (cons (dist (? row1 _parent cols)  row1 row2) row2)))
-    (sort (mapcar 'two allrows) 'car<)))
+  (labels ((two (row2) (cons (dist (? row1 _parent)  row1 row2) row2)))
+    (sort (mapcar #'two allrows) 'car<)))
 
 (defmethod far ((i row) allrows)
   "Return something far away from `i`. Avoid outliers by only going so `far`."

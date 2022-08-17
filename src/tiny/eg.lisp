@@ -36,21 +36,24 @@
     t)
 
 (eg data () "data"
-    (let ((rows (make-data "../../data/auto93.csv")))
-      (print (? (? rows cols) y)))
+    (let ((d (make-data "../../data/auto93.csv")))
+      (print (? (? d cols) y)))
     t)
 
 (eg dist () "dist"
     (let (all
-           (r (make-data "../../data/auto93.csv")))
-      (dolist (two (cdr (? r rows)))
-        (push (dist r (car (? r rows)) two) all))
+           (d (make-data "../../data/auto93.csv")))
+      (dolist (two (cdr (? d rows)))
+        (push (dist d (car (? d rows)) two) all))
       (format t "~{ ~,3f~}" (sort all #'<))
       t))
 
 (eg half () "half"
-    (let ((r (make-data "../../data/auto93.csv")))
-      (half r)
-      t))
+    (let ((d (make-data "../../data/auto93.csv")))
+      (multiple-value-bind 
+        (left right lefts rights c)
+        (half d)
+        (format t "~&~a~%~a~%~a~%" (? left cells) (? right cells) c)))
+    t)
 
 (demos my *egs* (! my example)) 
