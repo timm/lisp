@@ -1,5 +1,5 @@
-<img align=right 
-     width=300
+<img xalign=right 
+     xwidth=300
      src="https://imgs.xkcd.com/comics/lisp_cycles.png"><p>
 '(home (©2019 ("Tim Menzies"))) <br>
 '(:col (src (contrib (discuss)))<br>
