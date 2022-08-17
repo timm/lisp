@@ -10,7 +10,7 @@
 
 
 <details>
-<summary>(code)<summary>
+<summary>(code)</summary>
 
 ```lisp
 (defmacro eg (what arg doc &rest src)
@@ -30,7 +30,7 @@ Run `one` (or `all`) the demos. Reset globals between each
 
 
 <details>
-<summary>(code)<summary>
+<summary>(code)</summary>
 
 ```lisp
 (defun demos (settings all &optional one)
@@ -64,7 +64,7 @@ Run `one` (or `all`) the demos. Reset globals between each
 
 
 <details>
-<summary>(code)<summary>
+<summary>(code)</summary>
 
 ```lisp
 (defmacro ! (l x) `(cdr (assoc ',x ,l)))
@@ -80,7 +80,7 @@ Run `one` (or `all`) the demos. Reset globals between each
 
 
 <details>
-<summary>(code)<summary>
+<summary>(code)</summary>
 
 ```lisp
 (defmacro ? (s x &rest xs)
@@ -97,7 +97,7 @@ Run `one` (or `all`) the demos. Reset globals between each
 
 
 <details>
-<summary>(code)<summary>
+<summary>(code)</summary>
 
 ```lisp
 (defmacro geta (x lst &optional (init 0))
@@ -120,7 +120,7 @@ Run `one` (or `all`) the demos. Reset globals between each
 
 
 <details>
-<summary>(code)<summary>
+<summary>(code)</summary>
 
 ```lisp
 (defun rnd (number &optional (digits 3))
@@ -138,7 +138,7 @@ Run `one` (or `all`) the demos. Reset globals between each
 
 
 <details>
-<summary>(code)<summary>
+<summary>(code)</summary>
 
 ```lisp
 (defun randf (&optional (n 1.0))
@@ -156,7 +156,7 @@ Run `one` (or `all`) the demos. Reset globals between each
 
 
 <details>
-<summary>(code)<summary>
+<summary>(code)</summary>
 
 ```lisp
 (defun randi (&optional (n 1)) (floor (* n (/ (randf 1.0e9) 1000000000))))
@@ -178,7 +178,7 @@ Generate README.md from all doco strings
 
 
 <details>
-<summary>(code)<summary>
+<summary>(code)</summary>
 
 ```lisp
 (defun readme (&optional (s t))
@@ -193,7 +193,8 @@ Generate README.md from all doco strings
      (labels
       ((lisps (x) (format nil ~%~%```lisp~%~(~a~)~%```~%~% x))
        (details (x)
-        (format nil ~%~%<details>~%<summary>(code)<summary>~a</details>~%~% x))
+        (format nil ~%~%<details>~%<summary>(code)</summary>~a</details>~%~%
+         x))
        (defp nil (member (first x) '(defun defmacro defmethod)))
        (secret nil (char= _ (elt (symbol-name (second x)) 0)))
        (docp nil
@@ -220,7 +221,7 @@ Generate README.md from all doco strings
 
 
 <details>
-<summary>(code)<summary>
+<summary>(code)</summary>
 
 ```lisp
 (defun cli (key.flag.help.default)
@@ -242,7 +243,7 @@ Generate README.md from all doco strings
 
 
 <details>
-<summary>(code)<summary>
+<summary>(code)</summary>
 
 ```lisp
 (defun settings (header options)
@@ -268,7 +269,7 @@ Generate README.md from all doco strings
 
 
 <details>
-<summary>(code)<summary>
+<summary>(code)</summary>
 
 ```lisp
 (defun charn (x) (and (stringp x) (> (length x) 0) (char x (1- (length x)))))
@@ -284,7 +285,7 @@ Generate README.md from all doco strings
 
 
 <details>
-<summary>(code)<summary>
+<summary>(code)</summary>
 
 ```lisp
 (defun trim (x)
@@ -304,7 +305,7 @@ Generate README.md from all doco strings
 
 
 <details>
-<summary>(code)<summary>
+<summary>(code)</summary>
 
 ```lisp
 (defun thing (x &aux (y (trim x)))
@@ -322,7 +323,7 @@ Generate README.md from all doco strings
 
 
 <details>
-<summary>(code)<summary>
+<summary>(code)</summary>
 
 ```lisp
 (defun splits (str &key (char ,) (filter #'identity))
@@ -341,7 +342,7 @@ Generate README.md from all doco strings
 
 
 <details>
-<summary>(code)<summary>
+<summary>(code)</summary>
 
 ```lisp
 (defun with-lines (file fun)
@@ -363,7 +364,7 @@ Generate README.md from all doco strings
 
 
 <details>
-<summary>(code)<summary>
+<summary>(code)</summary>
 
 ```lisp
 (defmacro defstruct+ (x doco &body body)
