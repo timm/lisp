@@ -4,15 +4,15 @@
 '(home (©2019 ("Tim Menzies")) <br>
 &nbsp;&nbsp; '(([tiny](/src/tiny/tiny.lisp)
                ([eg](/src/tiny/eg.lisp))) <br>
-&nbsp;&nbsp; <b>:col</b> ([cols](/src/tiny/col/etc.lisp)
-                         ([num](/src/tiny/col/etc.lisp)
-                         ([sample](/src/tiny/col/etc.lisp)
-                         ([sym](/src/tiny/col/etc.lisp)
+&nbsp;&nbsp; <b>:col</b> ([cols](/src/tiny/col/cols.lisp)
+                         ([num](/src/tiny/col/num.lisp)
+                         ([sample](/src/tiny/col/sample.lisp)
+                         ([sym](/src/tiny/col/sym.lisp)
                          ))))<br>
 &nbsp;&nbsp; <b>:row</b> ([row](/src/tiny/row/row.lisp) 
                          ([data](/src/tiny/row/data.lisp) 
                          ))<br>
-&nbsp;&nbsp; <b>:lib</b> ([egs](/src/tiny/lib/etc.lisp) 
+&nbsp;&nbsp; <b>:lib</b> ([egs](/src/tiny/lib/egs.lisp) 
                          ([list](/src/tiny/lib/list.lisp)
                          ([macros](/src/tiny/lib/macros.lisp)
                          ([maths](/src/tiny/lib/maths.lisp)
