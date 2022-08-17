@@ -29,5 +29,6 @@
 
 (defmethod far ((i row) allrows)
   "Return something far away from `i`. Avoid outliers by only going so `far`."
+  (print 33333)
   (cdr (elt (around i allrows) 
-            (floor (* (length allrows) (? my far))))))
+            (floor (* (length allrows) (! my far))))))

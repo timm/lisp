@@ -35,21 +35,21 @@
                 (lambda (x) (print (cells x))))
     t)
 
-(eg rows () "rows"
-    (let ((rows (make-rows "../../data/auto93.csv")))
+(eg data () "data"
+    (let ((rows (make-data "../../data/auto93.csv")))
       (print (? (? rows cols) y)))
     t)
 
 (eg dist () "dist"
     (let (all
-           (r (make-rows "../../data/auto93.csv")))
+           (r (make-data "../../data/auto93.csv")))
       (dolist (two (cdr (? r rows)))
         (push (dist r (car (? r rows)) two) all))
       (format t "~{ ~,3f~}" (sort all #'<))
       t))
 
 (eg half () "half"
-    (let ((r (make-rows "../../data/auto93.csv")))
+    (let ((r (make-data "../../data/auto93.csv")))
       (half r)
       t))
 

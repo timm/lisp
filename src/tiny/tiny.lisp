@@ -19,4 +19,4 @@
      (some  "-S"  "how many                 " 512)
      (example "-e"  "example to run           " "ls"))))
 
-(mapc #'load '("col/sample" "col/sym" "col/num" "col/cols" "row/row" "row/rows"))
+(mapc #'load '("col/sample" "col/sym" "col/num" "col/cols" "row/row" "row/data"))

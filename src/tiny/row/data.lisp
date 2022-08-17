@@ -1,9 +1,9 @@
-(defstruct+ rows 
+(defstruct+ data 
             "Stores multiple rows, and their summaries."
             rows   ; all the rows
             cols)  ; summaries of all the columns
 
-(defun make-rows (&optional src (i (%make-rows)))
+(defun make-data (&optional src (i (%make-data)))
   "Eat first row for the column header,  add the rest"
   (labels ((top.row.is.special  (x) (if (? i cols) 
                                      (push (add i x) (? i rows)) 
@@ -13,39 +13,39 @@
       (mapcar #'top.row.is.special src))
     i))
 
-(defmethod clone ((i rows) &optional src) 
+(defmethod clone ((i data) &optional src) 
   "Create a new table with same structure as `i`."
   (make-rows (cons (? i cols names) src)))
 
-(defmethod add ((i rows) (lst cons)) 
+(defmethod add ((i data) (lst cons)) 
   "Row creation. Called in we try to add a simple list."
   (add i (make-row i lst)))
 
-(defmethod add ((i rows) (row1 row))
+(defmethod add ((i data) (row1 row))
   "For all the unskipped columns, update from `row1`."
   (dolist (cols `(,(? i cols x) ,(? i cols y)) row1)
     (dolist (col cols)
       (add col (elt (? row1 cells) (? col at))))))
 
-(defmethod dist ((i rows) (row1 row) (row2 row))
+(defmethod dist ((i data) (row1 row) (row2 row))
   "Gap between `row1`, `row2`. At `p`=2, this is Euclidean distance."
   (let ((d 0) (n 0) (p (! my p)))
     (dolist (col (? i cols x))
       (incf n)
       (incf d (expt (dist col (elt (? row1 cells) (? col at)) 
-                              (elt (? row2 cells) (? col at))) 
-                    p)))
+                              (elt (? row2 cells) (? col at))) p)))
     (expt (/ d n) (/ 1 p))))
 
-(defmethod half ((i rows) &optional all above)
+(defmethod half ((i data) &optional all above)
   "Split rows in two by their distance to two remove points."
   (or all (? i rows))
   (print 1)
   (let (all some left right c tmp) 
     (setf all  (or   all (? i rows)))
     (setf some  (many all (! my some)))
-    (return-from half  (print (length some)))
+    (print  (any some))
      (setf left  (or   above (far (any some) some)))
+    (return-from half  (print (length some)))
      (setf right (far  left some))
      (setf c     (dist (? i _parent) left right))
      (setf tmp   (mapcar (lambda (row) 
