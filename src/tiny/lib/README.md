@@ -6,7 +6,6 @@
 `(eg (what arg doc &rest src))`
 
 <ul>   define a example
-</ul>
 
 
 <details>
@@ -19,6 +18,7 @@
 
 </details>
 
+</ul>
 
 `(demos (settings all &optional one))`
 
@@ -26,7 +26,6 @@
 Run `one` (or `all`) the demos. Reset globals between each
   run.  Return to the operating systems the failure count (so
   fails=0 means `successs`).
-</ul>
 
 
 <details>
@@ -48,6 +47,7 @@ Run `one` (or `all`) the demos. Reset globals between each
 
 </details>
 
+</ul>
 
 
 ## [lists.lisp](lists.lisp)
@@ -60,7 +60,6 @@ Run `one` (or `all`) the demos. Reset globals between each
 `(! (l x))`
 
 <ul>   Get into association lists.
-</ul>
 
 
 <details>
@@ -72,11 +71,11 @@ Run `one` (or `all`) the demos. Reset globals between each
 
 </details>
 
+</ul>
 
 `(? (s x &rest xs))`
 
 <ul>   (? obj x y z) == (slot-value (slot-value (slot-value obj 'x) 'y) 'z)
-</ul>
 
 
 <details>
@@ -89,11 +88,11 @@ Run `one` (or `all`) the demos. Reset globals between each
 
 </details>
 
+</ul>
 
 `(geta (x lst &optional (init 0)))`
 
 <ul>   Endure lst has a slot for `x`. If missing, initialize it with `init`.
-</ul>
 
 
 <details>
@@ -108,6 +107,7 @@ Run `one` (or `all`) the demos. Reset globals between each
 
 </details>
 
+</ul>
 
 
 ## [maths.lisp](maths.lisp)
@@ -116,7 +116,6 @@ Run `one` (or `all`) the demos. Reset globals between each
 `(rnd (number &optional (digits 3)))`
 
 <ul>   Round to `digits` decimal places.
-</ul>
 
 
 <details>
@@ -130,11 +129,11 @@ Run `one` (or `all`) the demos. Reset globals between each
 
 </details>
 
+</ul>
 
 `(randf (&optional (n 1.0)))`
 
 <ul>   Random float 0.. n
-</ul>
 
 
 <details>
@@ -148,11 +147,11 @@ Run `one` (or `all`) the demos. Reset globals between each
 
 </details>
 
+</ul>
 
 `(randi (&optional (n 1)))`
 
 <ul>   Random int 0..n
-</ul>
 
 
 <details>
@@ -164,6 +163,7 @@ Run `one` (or `all`) the demos. Reset globals between each
 
 </details>
 
+</ul>
 
 
 ## [readme.lisp](readme.lisp)
@@ -174,7 +174,6 @@ Run `one` (or `all`) the demos. Reset globals between each
 <ul>   
 Generate README.md from all doco strings
   form all LISP code in a directory.
-</ul>
 
 
 <details>
@@ -202,13 +201,14 @@ Generate README.md from all doco strings
        (dump (str &optional (pad )) (format s ~a~a~% pad str)))
       (when (and (defp) (docp) (not (secret)))
        (format s ~%`(~(~a~) ~(~a~))`~%~%<ul> (second x) (or (third x) ))
-       (dump (fourth x)    ) (format s </ul>~%)
-       (format s ~a
-        (details (lisps (append (subseq x 0 3) (cddddr x))))))))))))
+       (dump (fourth x)    )
+       (format s ~a (details (lisps (append (subseq x 0 3) (cddddr x)))))
+       (format s </ul>~%))))))))
 ```
 
 </details>
 
+</ul>
 
 
 ## [settings.lisp](settings.lisp)
@@ -217,7 +217,6 @@ Generate README.md from all doco strings
 `(cli (key.flag.help.default))`
 
 <ul>   If `flag` exists on command line, update `key`.
-</ul>
 
 
 <details>
@@ -235,11 +234,11 @@ Generate README.md from all doco strings
 
 </details>
 
+</ul>
 
 `(settings (header options))`
 
 <ul>   Update settings. If  `help` is set, print help.
-</ul>
 
 
 <details>
@@ -257,6 +256,7 @@ Generate README.md from all doco strings
 
 </details>
 
+</ul>
 
 
 ## [strings.lisp](strings.lisp)
@@ -265,7 +265,6 @@ Generate README.md from all doco strings
 `(charn (x))`
 
 <ul>   Last thing from a string.
-</ul>
 
 
 <details>
@@ -277,11 +276,11 @@ Generate README.md from all doco strings
 
 </details>
 
+</ul>
 
 `(trim (x))`
 
 <ul>   Kill leading tailing whitespace.
-</ul>
 
 
 <details>
@@ -297,11 +296,11 @@ Generate README.md from all doco strings
 
 </details>
 
+</ul>
 
 `(thing (x &aux (y (trim x))))`
 
 <ul>   Turn `x` into a number or string or `?`.
-</ul>
 
 
 <details>
@@ -315,11 +314,11 @@ Generate README.md from all doco strings
 
 </details>
 
+</ul>
 
 `(splits (str &key (char ,) (filter #'identity)))`
 
 <ul>   Divide `str` on `char`, filtering all items through `filter`.
-</ul>
 
 
 <details>
@@ -334,11 +333,11 @@ Generate README.md from all doco strings
 
 </details>
 
+</ul>
 
 `(with-lines (file fun))`
 
 <ul>   Call `fun` for each line in `file`.
-</ul>
 
 
 <details>
@@ -352,6 +351,7 @@ Generate README.md from all doco strings
 
 </details>
 
+</ul>
 
 
 ## [structs.lisp](structs.lisp)
@@ -360,7 +360,6 @@ Generate README.md from all doco strings
 `(defstruct+ (x doco &body body))`
 
 <ul>   Creates %x for constructor, enables pretty print, hides slots with '_' prefix.
-</ul>
 
 
 <details>
@@ -380,6 +379,7 @@ Generate README.md from all doco strings
 
 </details>
 
+</ul>
 
 
 ## [symbols.lisp](symbols.lisp)

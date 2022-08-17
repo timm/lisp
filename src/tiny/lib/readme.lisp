@@ -26,8 +26,8 @@
             (format s "~%`(~(~a~) ~(~a~))`~%~%<ul>"
                     (second x) (or (third x) ""))
             (dump (fourth x) "   ")
-            (format s "</ul>~%")
             (format s "~a" (details (lisps (append (subseq x 0 3) (cddddr x)))))
+            (format s "</ul>~%")
             )))))))
 
 (readme)
