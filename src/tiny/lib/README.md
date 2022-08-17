@@ -8,10 +8,10 @@
                          ([num](/src/tiny/lib/etc.lisp)
                          ([sample](/src/tiny/lib/etc.lisp)
                          ([sym](/src/tiny/lib/etc.lisp)
-                         ))))
+                         ))))<br>
 &nbsp;&nbsp; <b>:row</b> ([row](/src/tiny/lib/row.lisp) 
                          ([data](/src/tiny/lib/data.lisp) 
-                         ))
+                         ))<br>
 &nbsp;&nbsp; <b>:lib</b> ([egs](/src/tiny/lib/etc.lisp) 
                          ([list](/src/tiny/lib/list.lisp)
                          ([macros](/src/tiny/lib/macros.lisp)
