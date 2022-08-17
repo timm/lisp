@@ -14,7 +14,7 @@
       (reads f (lambda (x)
         (labels
           ((lisps(x) (format nil "~%~%```lisp~%~(~a~)~%```~%~%" x))
-           (details (x) (format nil "~%~%<details><summary>(code)<summary>~a</details>" x))
+           (details (x) (format nil "~%~%<details><summary>(code)<summary>~%~%~a~%~%</details>" x))
            (defp   () (member (first x) '(defun defmacro defmethod)))
            (secret () (char= #\_ (elt (symbol-name (second x)) 0)))
            (docp   () (and    (> (length x) 3)
