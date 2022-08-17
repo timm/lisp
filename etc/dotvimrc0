@@ -30,7 +30,6 @@ call vundle#begin()
 " alternatively, pass a path where Vundle should install plugins
 "call vundle#begin('~/some/path/here')
 Plugin 'tomtom/tcomment_vim'
-Plugin 'itchyny/lightline.vim'
 Plugin 'ciaranm/inkpot'
 Plugin 'sainnhe/sonokai'
 Plugin 'arcticicestudio/nord-vim'
@@ -93,3 +92,21 @@ let NERDTreeMinimalUI = 1
 let NERDTreeDirArrows = 1
 
 au VimEnter *  NERDTree
+
+set laststatus=2
+set statusline=
+set statusline+=\ 
+set statusline+=%F
+set statusline+=\ 
+set statusline+=%m
+set statusline+=%=
+set statusline+=%y
+set statusline+=\ 
+set statusline+=%c
+set statusline+=:
+set statusline+=%l
+set statusline+=\ 
+set statusline+=%#warningmsg#
+"set statusline+=%{SyntasticStatuslineFlag()}
+set statusline+=%*
+
