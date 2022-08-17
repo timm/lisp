@@ -11,11 +11,10 @@
                                             (pathname-name y)))))
     (let ((name (pathname-name f)))
       (format t "~%~%## [~a.lisp](~a.lisp)~%~%" name name)
+      (format t "| | Notes|~%|--|------|~%")
       (reads f (lambda (x)
         (labels
-          ((lisps(x) (format nil "~%~%```lisp~%~(~a~)~%```~%~%" x))
-           (details (x) (format nil "~%~%<details>~%<summary>(code)</summary>~a</details>~%~%" x))
-           (defp   () (member (first x) '(defun defmacro defmethod)))
+           ((defp   () (member (first x) '(defun defmacro defmethod)))
            (secret () (char= #\_ (elt (symbol-name (second x)) 0)))
            (docp   () (and    (> (length x) 3)
                               (stringp (fourth x))
@@ -23,11 +22,8 @@
            (dump   (str  &optional (pad ""))
                    (format s "~a~a~%" pad str)))
           (when (and (defp) (docp) (not (secret)))
-            (format s "~%`(~(~a~) ~(~a~))`~%~%<ul>"
-                    (second x) (or (third x) ""))
-            (dump (fourth x) "   ")
-            (format s "~a" (details (lisps (append (subseq x 0 3) (cddddr x)))))
-            (format s "</ul>~%")
+            (format s "|`(~(~a~) ~(~a~))` |~a|~%"
+                    (second x) (or (third x) "") (fourth x))
             )))))))
 
 (readme)
