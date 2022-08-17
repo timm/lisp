@@ -30,7 +30,10 @@
       (reads f 
         (lambda (x)
           (when (and (defp x) (docp x) (not (secret x)))
-            (format s "|`~(~a~)` | `~(~a~)` |~a <details><summary>xx</summary>adsaas</details> |~%"
+            (format s "|`~(~a~)` | `~(~a~)` |~a <details><summary>xx</summary>adsaas
+asdads
+                    asd
+                    asda</details> |~%"
                     (second x) (or (third x) "") 
                     (substitute #\SPACE #\NEWLINE (string (fourth x))))))))))
 
