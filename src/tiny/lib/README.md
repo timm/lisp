@@ -1,6 +1,6 @@
-<img align=left 
+<img align=right 
      width=300
-     src="https://e7.pngegg.com/pngimages/531/43/png-clipart-common-lisp-emacs-lisp-successful-lisp-computer-programming-label-logo-thumbnail.png">
+     src="http://bilfp.wdfiles.com/local--files/common-lisp/common-lisp-logo.png">
 '(home (©2019 ("Tim Menzies"))) <br>
 '(:col (src (contrib (discuss)))<br>
 &nbsp;&nbsp; :row (lib (oo (sample)))
