@@ -52,4 +52,5 @@
     (let ((r (make-rows "../../data/auto93.csv")))
       (half r)
       t))
+
 (demos my *egs* (! my example)) 

@@ -1,5 +1,5 @@
 (defmacro defstruct+ (x doco &body body) 
-  "Creates %x for constructor, enables pretty print, hides slots with "_" prefix."
+  "Creates %x for constructor, enables pretty print, hides slots with '_' prefix."
   (let* ((slots (mapcar    (lambda (x) (if (consp x) (car x) x))          body))
          (show  (remove-if (lambda (x) (eq #\_ (char (symbol-name x) 0))) slots)))
     `(progn

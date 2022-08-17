@@ -1,7 +1,7 @@
-; Define one demos.
 (defvar *egs* nil)
+
 (defmacro eg (what arg doc &rest src) 
-  "Create one example."
+  "define a example"
   `(push (list ',what ',doc (lambda ,arg ,@src)) *egs*))
 
 (defun demos (settings all &optional one)
