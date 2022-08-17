@@ -23,8 +23,9 @@
                    (format s "~a~a~%" pad str)))
           (when (and (defp) (docp) (not (secret)))
             (format s "|`(~(~a~) ~(~a~))` |~a|~%"
-                    (second x) (or (third x) "") (fourth x))
-            )))))))
+                    (second x) (or (third x) "") 
+                    (substitute #\NEWLINE #\SPACE (string (fourth x)))))
+            ))))))
 
 (readme)
 
