@@ -24,7 +24,7 @@
           (when (and (defp) (docp) (not (secret)))
             (format s "|`(~(~a~) ~(~a~))` |~a|~%"
                     (second x) (or (third x) "") 
-                    (substitute #\NEWLINE #\SPACE (string (fourth x)))))
+                    (substitute #\SPACE #\NEWLINE (string (fourth x)))))
             ))))))
 
 (readme)
