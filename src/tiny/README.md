@@ -1,4 +1,4 @@
-<img align=right 
+<img align=left 
      width=300
      src="http://bilfp.wdfiles.com/local--files/common-lisp/common-lisp-logo.png">
 '(home (©2019 ("Tim Menzies"))) <br>
