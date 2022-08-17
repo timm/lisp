@@ -4,7 +4,7 @@
     (loop (funcall fun (or (read s nil nil) (return))))))
 
 (defun defp  (x) 
-   "is this  a struct we wwant?"
+   "is this  a thing we wwant?"
    (member (first x) '(defun defmacro defmethod)))
 
 (defun secret (x) 
