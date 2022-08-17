@@ -30,7 +30,7 @@
       (reads f 
         (lambda (x)
           (when (and (defp x) (docp x) (not (secret x)))
-            (format s "|`~(~a~) | ~(~a~)` |~a|~%"
+            (format s "|`~(~a~)` | `~(~a~)` |~a|~%"
                     (second x) (or (third x) "") 
                     (substitute #\SPACE #\NEWLINE (string (fourth x))))))))))
 
