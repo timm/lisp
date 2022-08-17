@@ -26,11 +26,11 @@
                                             (pathname-name y)))))
     (let ((name (pathname-name f)))
       (format t "~%~%## [~a.lisp](~a.lisp)~%~%" name name)
-      (format t "|Name |Args | Notes|~%|--:|--|---|~%")
+      (format t "|Name |Args | Doc|~%|--:|--|---|~%")
       (reads f 
         (lambda (x)
           (when (and (defp x) (docp x) (not (secret x)))
-            (format s "|`~(~a~)` | `~(~a~)` |~a|~%"
+            (format s "|`~(~a~)` | `~(~a~)` |~a <details><summary>xx</summary>adsaas</details> |~%"
                     (second x) (or (third x) "") 
                     (substitute #\SPACE #\NEWLINE (string (fourth x))))))))))
 
