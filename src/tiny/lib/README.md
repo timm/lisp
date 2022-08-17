@@ -1,6 +1,5 @@
-<img align=left 
-     width=300
-     src="http://bilfp.wdfiles.com/local--files/common-lisp/common-lisp-logo.png">
+<img 
+     src="/etc/img/gotlisp.png"><br>
 '(home (©2019 ("Tim Menzies")) <br>
 &nbsp;&nbsp; '(([tiny](/src/tiny/tiny.lisp)
                ([eg](/src/tiny/eg.lisp))) <br>
