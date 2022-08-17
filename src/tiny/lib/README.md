@@ -1,3 +1,13 @@
+<img align=left 
+     width=300
+     src="https://e7.pngegg.com/pngimages/531/43/png-clipart-common-lisp-emacs-lisp-successful-lisp-computer-programming-label-logo-thumbnail.png">
+'(home (©2019 ("Tim Menzies"))) <br>
+'(:col (src (contrib (discuss)))<br>
+&nbsp;&nbsp; :row (lib (oo (sample)))
+&nbsp;&nbsp;  :lib (egs (list (macros (maths (readme <br>
+&nbsp;&nbsp;&nbsp;&nbsp;  ([settings](/lib/settings) (strings (structs))))))))
+
+
 
 
 ## [egs.lisp](egs.lisp)
@@ -37,6 +47,7 @@
 |Name |Args | Doc|
 |--:|--|---|
 |`reads` | `(file fun)` |For every s-expression in `file`, call `fun`. |
+|`read-lines` | `(file fun)` |For every line in `file`, call `fun`. |
 |`defp` | `(x)` |is this  a thing we wwant? |
 |`secret` | `(x)` |is this a thing to hide? |
 |`docp` | `(x)` |got doc? |

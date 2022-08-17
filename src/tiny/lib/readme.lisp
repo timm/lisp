@@ -3,6 +3,15 @@
   (with-open-file (s file)
     (loop (funcall fun (or (read s nil nil) (return))))))
 
+(defun read-lines (file fun)
+  "For every line in `file`, call `fun`."
+  (with-open-file (s file)
+    (loop (funcall fun (or (read-line s nil nil) (return))))))
+
+(defun para1(file fun)
+  (read-lines file (lambda(line) 
+     (if (zerop (length line)) (return-from para1)) (funcall fun line))))
+
 (defun defp  (x) 
    "is this  a thing we wwant?"
    (member (first x) '(defun defmacro defmethod)))
@@ -20,7 +29,9 @@
 (defun readme(&optional (s t))
   "Generate README.md from all doco strings
   form all LISP code in a directory."
-  ;(format t "~a~%# ~a~%~%~%" (para1 "../../README.md") (string-upcase dir))
+  (para1 "../README.md" (lambda (x) (format t "~a~%" x)))
+  (terpri)
+  (terpri)
   (dolist (f (sort (directory "*.lisp")
                    #'(lambda (x y) (string< (pathname-name x)
                                             (pathname-name y)))))
