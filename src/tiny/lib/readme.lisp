@@ -26,7 +26,7 @@
                                             (pathname-name y)))))
     (let ((name (pathname-name f)))
       (format t "~%~%## [~a.lisp](~a.lisp)~%~%" name name)
-      (format t "|Name |Args | Notes|~%|--|--|---|~%")
+      (format t "|Name |Args | Notes|~%|--:|--|---|~%")
       (reads f 
         (lambda (x)
           (when (and (defp x) (docp x) (not (secret x)))
