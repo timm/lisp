@@ -1,6 +1,21 @@
-(defun reads (f fun)
-  (with-open-file (s f)
+(defun reads (file fun)
+  "For every s-expression in `file`, call `fun`."
+  (with-open-file (s file)
     (loop (funcall fun (or (read s nil nil) (return))))))
+
+(defun defp  (x) 
+   "is this  a struct we wwant?"
+   (member (first x) '(defun defmacro defmethod)))
+
+(defun secret (x) 
+  "is this a thing to hide?"
+  (char= #\_ (elt (symbol-name (second x)) 0)))
+
+(defun docp (x)  
+  "got doc?"
+  (and    (> (length x) 3)
+          (stringp (fourth x))
+          (not (equal "" (fourth x)))))
 
 (defun readme(&optional (s t))
   "Generate README.md from all doco strings
@@ -12,21 +27,11 @@
     (let ((name (pathname-name f)))
       (format t "~%~%## [~a.lisp](~a.lisp)~%~%" name name)
       (format t "| | Notes|~%|--|------|~%")
-      (reads f (lambda (x)
-        (labels
-           ((defp   () (member (first x) '(defun defmacro defmethod)))
-           (secret () (char= #\_ (elt (symbol-name (second x)) 0)))
-           (docp   () (and    (> (length x) 3)
-                              (stringp (fourth x))
-                              (not (equal "" (fourth x)))))
-           (dump   (str  &optional (pad ""))
-                   (format s "~a~a~%" pad str)))
-          (when (and (defp) (docp) (not (secret)))
+      (reads f 
+        (lambda (x)
+          (when (and (defp x) (docp x) (not (secret x)))
             (format s "|`(~(~a~) ~(~a~))` |~a|~%"
                     (second x) (or (third x) "") 
-                    (substitute #\SPACE #\NEWLINE (string (fourth x)))))
-            ))))))
+                    (substitute #\SPACE #\NEWLINE (string (fourth x))))))))))
 
 (readme)
-
-

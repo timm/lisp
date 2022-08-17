@@ -36,6 +36,10 @@
 
 | | Notes|
 |--|------|
+|`(reads (file fun))` |For every s-expression in `file`, call `fun`.|
+|`(defp (x))` |is this  a struct we wwant?|
+|`(secret (x))` |is this a thing to hide?|
+|`(docp (x))` |got doc?|
 |`(readme (&optional (s t)))` |Generate README.md from all doco strings   form all LISP code in a directory.|
 
 
