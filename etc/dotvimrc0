@@ -29,6 +29,7 @@ set rtp+=~/.vim/bundle/Vundle.vim
 call vundle#begin()
 " alternatively, pass a path where Vundle should install plugins
 "call vundle#begin('~/some/path/here')
+Plugin 'mgutz/minline'
 Plugin 'tomtom/tcomment_vim'
 Plugin 'ciaranm/inkpot'
 Plugin 'sainnhe/sonokai'
@@ -93,20 +94,15 @@ let NERDTreeDirArrows = 1
 
 au VimEnter *  NERDTree
 
-set laststatus=2
-set statusline=
-set statusline+=\ 
-set statusline+=%F
-set statusline+=\ 
-set statusline+=%m
-set statusline+=%=
-set statusline+=%y
-set statusline+=\ 
-set statusline+=%c
-set statusline+=:
-set statusline+=%l
-set statusline+=\ 
-set statusline+=%#warningmsg#
-"set statusline+=%{SyntasticStatuslineFlag()}
-set statusline+=%*
+
+let g:minlineWithGitBranchCharacter = 1
+
+let g:minlineHonorUserDefinedColors = 1
+
+highlight! link User1 StatusLine
+highlight! link User2 DiffAdd
+highlight! link User3 DiffChange
+highlight! link User4 DiffDelete
+highlight! link User5 StatusLine
+highlight! link User6 StatusLine
 
