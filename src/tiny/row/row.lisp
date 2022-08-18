@@ -2,6 +2,7 @@
    "Hold one record"
    cells    ; cells 
    _parent  ; pointer to someone who can say what are (e.g.) lo,hi
+   cooked   ; place to store discretized cells values
    evaled)  ; have we used the y values
 
 (defun make-row (rows lst) 

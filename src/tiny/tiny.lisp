@@ -17,6 +17,6 @@
      (p     "-p"  "distance coeffecient     " 2)
      (seed  "-s"  "random number seed       " 10019)
      (some  "-S"  "how many                 " 512)
-     (example "-e"  "example to run           " "ls"))))
+     (example "-e"  "example to run         " "ls"))))
 
 (mapc #'load '("col/sample" "col/sym" "col/num" "col/cols" "row/row" "row/rows"))
