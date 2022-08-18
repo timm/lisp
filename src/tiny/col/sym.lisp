@@ -3,7 +3,7 @@
   (txt "")  ; column name
   (at 0)    ; column position
   (n 0)     ; #items seen
-  kept)     ; symbol counts of the items
+  has)     ; symbol counts of the items
 
 (defun make-sym (&optional s n) 
   "Create."
@@ -17,21 +17,21 @@
   "Add one items, skipping 'dont know', update frequency counts."
   (unless (eq x #\?)
     (incf (? i n))
-    (incf (geta x (? i kept)))))
+    (incf (geta x (? i has)))))
 
 (defmethod adds ((i sym) x inc)
   "Bulk add of a symbol 'x', 'inc' times."
   (incf (? i n) inc)
-  (incf (geta x (? i kept)) inc))
+  (incf (geta x (? i has)) inc))
 
 (defmethod mid ((i sym))
   "Middle"
-  (loop for (key . n) in (? i kept) maximizing n return key))
+  (loop for (key . n) in (? i has) maximizing n return key))
 
 (defmethod div ((i sym))
   "Diversity (entropy)."
   (labels ((fun (p) (* -1 (* p (log p 2)))))
-    (loop for (_ . n) in (? i kept) sum (fun (/ n (? i n))))))
+    (loop for (_ . n) in (? i has) sum (fun (/ n (? i n))))))
 
 (defmethod dist ((i sym) x y)
   "Gap between 2 items; if unknown, assume max. distance."

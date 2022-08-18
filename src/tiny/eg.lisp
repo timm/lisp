@@ -35,25 +35,27 @@
                 (lambda (x) (print (cells x))))
     t)
 
-(eg data () "data"
-    (let ((d (make-data "../../data/auto93.csv")))
-      (print (? (? d cols) y)))
+(eg rows () "rows"
+    (let ((r (make-rows "../../data/auto93.csv")))
+      (print (? (? r cols) y)))
     t)
 
 (eg dist () "dist"
     (let (all
-           (d (make-data "../../data/auto93.csv")))
-      (dolist (two (cdr (? d rows)))
-        (push (dist d (car (? d rows)) two) all))
+           (r (make-rows "../../data/auto93.csv")))
+      (dolist (two (cdr (? r _has )))
+        (push (dists (car (? r _has)) two) all))
       (format t "~{ ~,3f~}" (sort all #'<))
       t))
 
 (eg half () "half"
-    (let ((d (make-data "../../data/auto93.csv")))
+    (let ((r (make-rows "../../data/auto93.csv")))
       (multiple-value-bind 
         (left right lefts rights c)
-        (half d)
-        (format t "~&~a~%~a~%~a~%" (? left cells) (? right cells) c)))
+        (half r)
+        (format t "~&~a~%~a~%~a~%~a ~a~%" 
+                (? left cells) (? right cells) c 
+                (length lefts) (length rights))))
     t)
 
 (demos my *egs* (! my example)) 

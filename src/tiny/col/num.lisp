@@ -6,7 +6,7 @@
    (w 1)     ; (1,-1) = (maximize, minimize)
    (lo most-positive-fixnum) ; least seen
    (hi most-negative-fixnum) ; most seen
-   (_kept (make-sample)))     ; items seen
+   (_has (make-sample)))     ; items seen
 
 (defun make-num (&optional (s "") (n 0)) 
   "Create."
@@ -21,7 +21,7 @@
   (unless (eq x #\?)
     (with-slots (lo hi) i
       (incf (? i n))
-      (add (? i _kept) x)
+      (add (? i _has) x)
       (setf lo (min x (? i lo))
             hi (max x (? i hi))))))
 
@@ -43,14 +43,14 @@
 
 (defmethod mid ((i num)) 
   "Middle."
-  (mid (? i _kept)))
+  (mid (? i _has)))
 
 (defmethod div ((i num)) 
   "Diversity"
-  (div (? i _kept)))
+  (div (? i _has)))
 
 (defmethod discretize ((i num) x &optional (bins (? my bins)))
   "Max 'x' to one of 'bins' integers."
   (with-slots (lo hi) i
     (let ((b (/ (- hi lo) bins)))
-      (if (= hi lo) 1 (* b (floor (+ .5 (/ x b))))))))
+      (if (= hi lo) 1 (* b (floor (+ .5 (/ x b))))))))

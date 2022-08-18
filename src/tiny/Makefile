@@ -1,7 +1,7 @@
 R=$(shell git rev-parse --show-toplevel)
 
 want = col/cols col/num col/sample col/sym    \
-			 row/row row/data \
+			 row/row row/rows \
 			 lib/macros lib/maths lib/strings lib/lists \
 			 lib/settings lib/structs lib/egs eg
 

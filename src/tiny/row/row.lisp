@@ -24,11 +24,18 @@
 
 (defmethod around ((row1 row) allrows)
   "Sort `allrows` by distance to `row1`."
-  (labels ((two (row2) (cons (dist (? row1 _parent)  row1 row2) row2)))
+  (labels ((two (row2) (cons (dists row1 row2) row2)))
     (sort (mapcar #'two allrows) 'car<)))
 
 (defmethod far ((i row) allrows)
   "Return something far away from `i`. Avoid outliers by only going so `far`."
-  (print 33333)
-  (cdr (elt (around i allrows) 
-            (floor (* (length allrows) (! my far))))))
+  (cdr (elt (around i allrows) (floor (* (length allrows) (! my far))))))
+
+(defmethod dists ((row1 row) (row2 row))
+  "Gap between `row1`, `row2`. At `p`=2, this is Euclidean distance."
+  (let ((d 0) (n 0) (p (! my p)))
+    (dolist (col (? row1 _parent cols x))
+      (incf n)
+      (incf d (expt (dist col (elt (? row1 cells) (? col at)) 
+                              (elt (? row2 cells) (? col at))) p)))
+    (max 0 (expt (/ d n) (/ 1 p)))))
