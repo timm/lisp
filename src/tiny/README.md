@@ -13,7 +13,7 @@
                          ([list](/src/tiny/lib/list.lisp)
                          ([macros](/src/tiny/lib/macros.lisp)
                          ([maths](/src/tiny/lib/maths.lisp)<br>
-&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;        
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
                          ([readme](/src/tiny/lib/readme.lisp)
                          ([settings](/src/tiny/lib/settings.lisp)
                          ([strings](/src/tiny/lib/strings.lisp)
