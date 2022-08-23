@@ -27,6 +27,13 @@
     (dolist (col cols)
       (add col (elt (? row1 cells) (? col at))))))
 
+(defmethod unsupervised-discretization ((i rows))
+  (dolist (col (? i cols x))
+    (dolist (row rows)
+      (setf (elt (? row cooked) (? col at))
+            (discretize col (elt (? row cooked) (? col at)) (? my bins))))))
+
+   (dolist (row (? i _has))
 (defmethod half ((i rows) &optional all above)
   "Split rows in two by their distance to two remove points."
   (let* ((all   (or    all (? i _has)))

@@ -49,7 +49,7 @@
   "Diversity"
   (div (? i _has)))
 
-(defmethod discretize ((i num) x &optional (bins (? my bins)))
+(defmethod discretize ((i num) x bins)
   "Max 'x' to one of 'bins' integers."
   (with-slots (lo hi) i
     (let ((b (/ (- hi lo) bins)))

@@ -7,7 +7,7 @@
 
 (defun make-row (rows lst) 
   "Create."
-  (%make-row :_parent rows :cells lst))
+  (%make-row :_parent rows :cells lst :cooked (copy-list lst)))
 
 (defmethod better ((row1 row) (row2 row))
   "Row1 better than row2 if jumping away is better jumping to."

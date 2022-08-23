@@ -92,8 +92,11 @@ nn <F7> :setlocal spell! spell?<CR>
 let NERDTreeMinimalUI = 1
 let NERDTreeDirArrows = 1
 
-au VimEnter *  NERDTree
 
+" Start NERDTree
+autocmd VimEnter * NERDTree
+" Go to previous (last accessed) window.
+autocmd VimEnter * wincmd p
 
 let g:minlineWithGitBranchCharacter = 1
 

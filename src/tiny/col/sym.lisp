@@ -33,6 +33,10 @@
   (labels ((fun (p) (* -1 (* p (log p 2)))))
     (loop for (_ . n) in (? i has) sum (fun (/ n (? i n))))))
 
+(defmethod discretize ((i sym) x bins)
+  (declare (ignore bins))
+  x)
+
 (defmethod dist ((i sym) x y)
   "Gap between 2 items; if unknown, assume max. distance."
   (cond ((and (eq #\? x) (eq #\? y)) 1)
