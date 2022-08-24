@@ -1,4 +1,5 @@
 syntax on
+set ruler
 set autochdir 
 set mouse=a
 set noerrorbells "no sound effects
@@ -29,7 +30,7 @@ set rtp+=~/.vim/bundle/Vundle.vim
 call vundle#begin()
 " alternatively, pass a path where Vundle should install plugins
 "call vundle#begin('~/some/path/here')
-Plugin 'mgutz/minline'
+"Plugin 'mgutz/minline'
 Plugin 'tomtom/tcomment_vim'
 Plugin 'ciaranm/inkpot'
 Plugin 'sainnhe/sonokai'
@@ -98,14 +99,14 @@ autocmd VimEnter * NERDTree
 " Go to previous (last accessed) window.
 autocmd VimEnter * wincmd p
 
-let g:minlineWithGitBranchCharacter = 1
-
-let g:minlineHonorUserDefinedColors = 1
-
-highlight! link User1 StatusLine
-highlight! link User2 DiffAdd
-highlight! link User3 DiffChange
-highlight! link User4 DiffDelete
-highlight! link User5 StatusLine
-highlight! link User6 StatusLine
-
+" let g:minlineWithGitBranchCharacter = 1
+"
+" let g:minlineHonorUserDefinedColors = 1
+"
+" highlight! link User1 StatusLine
+" highlight! link User2 DiffAdd
+" highlight! link User3 DiffChange
+" highlight! link User4 DiffDelete
+" highlight! link User5 StatusLine
+" highlight! link User6 StatusLine
+"
