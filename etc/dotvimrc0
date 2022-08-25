@@ -31,7 +31,10 @@ call vundle#begin()
 " alternatively, pass a path where Vundle should install plugins
 "call vundle#begin('~/some/path/here')
 "Plugin 'mgutz/minline'
-Plugin 'vim-airline/vim-airline'
+"Plugin 'vim-airline/vim-airline'
+Plugin 'kyoz/purify'
+Plugin 'chriskempson/base16-vim'
+Plugin 'jnurmine/Zenburn'
 Plugin 'vim-airline/vim-airline-themes'
 Plugin 'tomtom/tcomment_vim'
 Plugin 'ciaranm/inkpot'
@@ -112,17 +115,38 @@ autocmd VimEnter * wincmd p
 " highlight! link User5 StatusLine
 " highlight! link User6 StatusLine
 
-let g:airline_mode_map = {
-    \ '__' : '-',
-    \ 'n'  : 'N',
-    \ 'i'  : 'I',
-    \ 'R'  : 'R',
-    \ 'c'  : 'C',
-    \ 'v'  : 'V',
-    \ 'V'  : 'V',
-    \ }
-    "\ '' : 'V',
-    "\ 's'  : 'S',
-"let g:airline_section_z = '%3p%% %3l/%L:%3v'
-let g:airline_section_z = '%3p%% %3l/%L'
-
+" let g:airline_mode_map = {
+"     \ '__' : '-',
+"     \ 'n'  : 'N',
+"     \ 'i'  : 'I',
+"     \ 'R'  : 'R',
+"     \ 'c'  : 'C',
+"     \ 'v'  : 'V',
+"     \ 'V'  : 'V',
+"     \ }
+" "let g:airline_section_z = '%3p%% %3l/%L:%3v' 
+" let g:airline_section_z = '%3p%% %3l/%L'
+" let g:airline#parts#ffenc#skip_expected_string='utf-8[unix]'
+"
+set statusline=
+set statusline+=%#DiffAdd#%{(mode()=='n')?'\ \ NORMAL\ ':''}
+set statusline+=%#DiffChange#%{(mode()=='i')?'\ \ INSERT\ ':''}
+set statusline+=%#DiffDelete#%{(mode()=='r')?'\ \ RPLACE\ ':''}
+set statusline+=%#Cursor#%{(mode()=='v')?'\ \ VISUAL\ ':''}
+set statusline+=\ %n\           " buffer number
+set statusline+=%#Visual#       " colour
+set statusline+=%{&paste?'\ PASTE\ ':''}
+set statusline+=%{&spell?'\ SPELL\ ':''}
+set statusline+=%#CursorIM#     " colour
+set statusline+=%R                        " readonly flag
+set statusline+=%M                        " modified [+] flag
+set statusline+=%#Cursor#               " colour
+set statusline+=%#CursorLine#     " colour
+set statusline+=\ %t\                   " short file name
+set statusline+=%=                          " right align
+set statusline+=%#CursorLine#   " colour
+set statusline+=\ %Y\                   " file type
+set statusline+=%#CursorIM#     " colour
+set statusline+=\ %3l:%-2c\         " line + column
+set statusline+=%#Cursor#       " colour
+set statusline+=\ %3p%%\                " percentage
