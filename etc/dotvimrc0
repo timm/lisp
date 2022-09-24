@@ -5,9 +5,11 @@ set autochdir
 set mouse=a
 set noerrorbells "no sound effects
 set visualbell
-set tabstop=2 softtabstop=2 "how many spaces a tab should use
-set shiftwidth=2 
+filetype indent on
 set expandtab
+set tabstop=2
+set softtabstop=2
+set shiftwidth=2
 set wildmenu
 set wildmode=list:longest,full
 set smartindent
@@ -33,6 +35,7 @@ call vundle#begin()
 "call vundle#begin('~/some/path/here')
 "Plugin 'mgutz/minline'
 "Plugin 'vim-airline/vim-airline'
+Plugin 'julialang/julia-vim'
 Plugin 'kyoz/purify'
 Plugin 'chriskempson/base16-vim'
 Plugin 'jnurmine/Zenburn'
@@ -91,44 +94,11 @@ set lispwords+=?
 set spellsuggest=fast,1 "Don't show too much suggestion for spell check
 nn <F7> :setlocal spell! spell?<CR>
 
-"autocmd StdinReadPre * let s:std_in=1
-"autocmd VimEnter * if argc() == 0 && !exists(“s:std_in”) | NERDTree | endif
-"autocmd bufenter * if (winnr(“$”) == 1 && exists(“b:NERDTreeType”) && b:NERDTreeType == “primary”) | q | endif
-"let NERDTreeAutoDeleteBuffer = 1
-"let NERDTreeQuitOnOpen = 1
+let NERDTreeQuitOnOpen = 1
 let NERDTreeMinimalUI = 1
 let NERDTreeDirArrows = 1
 
 
-" Start NERDTree
-autocmd VimEnter * NERDTree
-" Go to previous (last accessed) window.
-autocmd VimEnter * wincmd p
-
-" let g:minlineWithGitBranchCharacter = 1
-"
-" let g:minlineHonorUserDefinedColors = 1
-"
-" highlight! link User1 StatusLine
-" highlight! link User2 DiffAdd
-" highlight! link User3 DiffChange
-" highlight! link User4 DiffDelete
-" highlight! link User5 StatusLine
-" highlight! link User6 StatusLine
-
-" let g:airline_mode_map = {
-"     \ '__' : '-',
-"     \ 'n'  : 'N',
-"     \ 'i'  : 'I',
-"     \ 'R'  : 'R',
-"     \ 'c'  : 'C',
-"     \ 'v'  : 'V',
-"     \ 'V'  : 'V',
-"     \ }
-" "let g:airline_section_z = '%3p%% %3l/%L:%3v' 
-" let g:airline_section_z = '%3p%% %3l/%L'
-" let g:airline#parts#ffenc#skip_expected_string='utf-8[unix]'
-"
 set statusline=
 set statusline+=%#DiffAdd#%{(mode()=='n')?'\ \ NORMAL\ ':''}
 set statusline+=%#DiffChange#%{(mode()=='i')?'\ \ INSERT\ ':''}
