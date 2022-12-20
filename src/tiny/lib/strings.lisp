@@ -10,7 +10,7 @@
 
 (defun thing (x &aux (y (trim x)))
   "Turn `x` into a number or string or `?`."
-  (cond ((string= y "?") #\?)
+  (cond ((string= y "?") #\
         ((string= y "t") t)
         ((string= y "nil") nil)
         (t (let ((z (read-from-string y nil nil)))
