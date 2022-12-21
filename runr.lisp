@@ -1,19 +1,17 @@
 (defpackage :runr (:use :cl))
 (in-package :runr)
 
-(defvar *options* '("
+(defvar *help* "
 runr: simple lisp
 (c)2032 TIm Menzies <timm@ieee.org> BSD-2
 
-USAGE: lisp runr.lisp [OPTIONS])"
+USAGE: lisp runr.lisp [OPTIONS]
 
-  help ("-h" "show help          " t)
-  seed ("-s" "random number seed " 10019)))
+  -h help  show help          = nil
+  -s seed  random number seed = 10019")
 
 (defun args () #+clisp ext:*args*
                #+sbcl  sb-ext:*posix-argv*)
-
-(loop :for (key val) :on *settings* :by #'cddr :do (print `(,key ,val)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;  _   _   _    
@@ -26,21 +24,29 @@ USAGE: lisp runr.lisp [OPTIONS])"
   "recursive slot-value access"
   (if (null xs) `(slot-value ,s ',x) `(? (slot-value ,s ',x) ,@xs)))
 
-(defun trim (x) 
+(defun charn (s c &optional (n 0))
+  "is `s` a string holding `c` at position `n`?"
+  (and (stringp s) (< n (length s)) (eql c (char s n))))
+
+(defun trim (s) 
  "kill leading,trailing whitespace"
-  (string-trim '(#\Space #\Tab #\Newline) x))
+  (string-trim '(#\Space #\Tab #\Newline) s))
 
-(defun thing (x &aux (y (trim x)))
- "coerce `x` into a number or string or t or nil or #\?"
-  (or (cdr (assoc y '(("?" . #\?) ("t" .t) ("nil" . nil)) :test #'equal))
-      (let ((z (read-from-string y nil nil))) 
-        (if (numberp z) z y))))
+(defun thing (s &aux (s1 (trim s)))
+  "coerce `s` into a number or string or t or nil or #\?"
+  (cond ((equal s1 "?") #\?)
+	((equal s1 "t") t)
+	((equal s1 "nil") nil)
+	(t (let ((n (read-from-string s1 nil nil))) 
+	     (if (numberp n) n s1)))))
 
-(defun words (str &optional (char #\,) (filter #'thing) (here 0))
-  "generate words, filtered, from str"
-  (let ((there (position char str :start here)))
-    (cons (funcall filter (subseq str here there))
-          (if there (words str char filter (1+ there))))))
+(defun words (s &optional (char #\,) (filter #'thing) (here 0))
+  "generate words, filtered, from`s`"
+  (let* ((there (position char s :start here))
+	 (word  (funcall filter (subseq s here there))))
+    (labels ((tail () (if there (words s char filter (1+ there)))))
+      (if (equal word "") (tail) (cons word (tail))))))
+
 
 (defun with-lines (file fun)
   "Call `fun` for each line in `file`"
@@ -74,6 +80,20 @@ USAGE: lisp runr.lisp [OPTIONS])"
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defvar *egs* nil)
+
+(defun settings (s)
+  "for lines like '  -Key Flag ..... Default', return (KEY flag (coerce Defaults)"
+  (loop :for (flag key . rest) 
+	:in  (words s #\NewLine (lambda (s1) (words s1 #\Space #'trim)))
+        :if  (charn flag #\-) 
+	:collect (list (intern (string-upcase key)) (thing (car (last rest))) flag)))
+
+
+(print 1)
+(print *help*)
+(print (words "asdas,,,asdasda,,,"))
+(print (settings *help*))
+(print 10)
 
 (defmacro eg (what arg doc &rest src) 
   "define a example"
