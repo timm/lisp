@@ -126,10 +126,9 @@ OPTIONS:
 	(setf *settings* b4
 	      *seed* (! seed))
 	(format t "TESTING ~a" name)  
-	(unless (funcall (getf eg :fun))
-	  (incf fails)
-	  (format t "FAIL ❌~%"))
-	(terpri))))
+	(cond ((funcall (getf eg :fun)) (format t "PASS ✅~%"))
+	      (t                        (format t "FAIL ❌~%")
+					(incf fails))))))
     #+clisp (ext:exit fails)
     #+sbcl  (sb-ext:exit :code fails)))
 
@@ -168,8 +167,9 @@ OPTIONS:
             hi (max x (? i hi))))))
 
 (defmethod norm ((i num) x) ;;; Map 'x' 0..1 (unless unknown, unless too small)
-  (cond ((eq x #\?) x) 
-        (t          (/ (- x lo) (- hi lo 1e-32)))))
+  (with-slots (lo hi) i
+    (cond ((eq x #\?) x) 
+	  (t          (/ (- x lo) (- hi lo 1e-32))))))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;      _                          
 ;   __| |  ___   _ __    ___   ___
