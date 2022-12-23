@@ -36,6 +36,11 @@ OPTIONS:
   "recursive slot-value access"
   (if (null xs) `(slot-value ,s ',x) `(? (slot-value ,s ',x) ,@xs)))
 
+(defmacro geta (x lst &optional (init 0))
+  "ensure that `lst` includes a cell (x num) and return that cell"
+  `(cdr (or (assoc ,x ,lst :test #'equal)
+	    (car (setf ,lst (cons (cons ,x ,init) ,lst))))))
+
 (defmacro defstruct+ (x doco &body body)
   "Creates %x for constructor, enables pretty print, hides slots with '_' prefix."
   (let* ((slots (mapcar    (lambda (x) (if (consp x) (car x) x))          body))
@@ -152,24 +157,51 @@ OPTIONS:
 (defun isLess   (s) (charn s #\- -1))
 (defun isMore   (s) (charn s #\+ -1))
 
-(defstruct+ num (at 0) (txt "") (n 0) (mu 0) (m2 0) (w 1) (lo 1E31) (hi -1E21))
+(defstruct+ sym (at 0) (txt "") (n 0) (has 0) mode (most 0))
+(defun make-sym (&optional (at 0) (txt ""))
+  "summarizes streams of numbers"
+  (%make-sym :at at :txt txt :w (if (isLess txt) -1 1)))
 
+(defmethod add ((i sym) x)
+  (with-slots (n has mode most) i
+    (unless (eq x #\?)
+      (incf n)
+      (incf (geta x has))
+      (when (> (geta x has) most)
+	(setf most (geta x has)
+	      mode x)))))
+
+(defstruct+ num (at 0) (txt "") (n 0) (mu 0) (m2 0) (w 1) (lo 1E31) (hi -1E21))
 (defun make-num (&optional (at 0) (txt ""))
   "summarizes streams of numbers"
   (%make-num :at at :txt txt :w (if (isLess txt) -1 1)))
 
 (defmethod add ((i num) x) ;;; Add one thing, updating 'lo,hi'
-  (unless (eq x #\?)
-    (with-slots (lo hi n) i
+  (with-slots (n lo hi n _has) i
+    (unless (eq x #\?)
       (incf n)
-      (add (? i _has) x)
       (setf lo (min x (? i lo))
-            hi (max x (? i hi))))))
+	    hi (max x (? i hi))))))
 
 (defmethod norm ((i num) x) ;;; Map 'x' 0..1 (unless unknown, unless too small)
   (with-slots (lo hi) i
     (cond ((eq x #\?) x) 
 	  (t          (/ (- x lo) (- hi lo 1e-32))))))
+
+(defstruct+ cols all x y klass)
+(defun make-cols (lst &aux (i (%make-cols)) (at -1))
+  (with-slots (all x y klass) i
+    (dolist (txt lst)
+      (let ((col (funcall (if (isNum txt) #'make-num #'make-sym) (incf at) txt))) 
+	(push col all)
+	(when (not (isIgnore txt))
+	  (if (isGoal txt) (push col y) (push col x))
+	  (if (isKlass txt) (setf klass col)))))))
+
+(defmethod add ((i cols) lst)
+  (dolist (col (? i x) lst)
+    (add col (elt (? lst cells) (? col at)))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;      _                          
 ;   __| |  ___   _ __    ___   ___
