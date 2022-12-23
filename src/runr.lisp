@@ -5,7 +5,7 @@
 (defvar *settings* nil)
 (defvar *help* "
 runr: simple lisp
-(c)2032 Tim Menzies <timm@ieee.org> BSD-2
+(c) 2023 Tim Menzies <timm@ieee.org> BSD-2
 
 USAGE: lisp runr.lisp [OPTIONS]
 
@@ -116,34 +116,35 @@ OPTIONS:
 	   (setf (getf setting :value) now))))) 
 
 ;;; examples
-(defmacro eg (what doc &rest src)
+(defmacro eg (what fun)
   "define an example"
-  `(push (list :name ',what :doc ',doc :fun (lambda nil ,@src)) *egs*))
+  `(push (list :name ',what :fun ,fun) *egs*))
 
 (defun egs ()
   "run 'all' actions or just the (! action) action 
-   (resetting random seed and other setting before each action)"
+  (resetting random seed and other setting before each action)"
   (let ((fails 0)
 	(b4 (copy-list *settings*)))
-    (dolist (eg *egs*)
+    (dolist (eg (reverse *egs*))
       (let ((name (getf eg :name)))
-      (when (or (equal name (! action)) (equal "all" (! action)))
-	(setf *settings* b4
-	      *seed* (! seed))
-	(format t "TESTING ~a" name)  
-	(cond ((funcall (getf eg :fun)) (format t "PASS ✅~%"))
-	      (t                        (format t "FAIL ❌~%")
-					(incf fails))))))
+	(when (or (equal (! action) name) 
+		  (equal (! action) "all"))
+	  (setf *settings* b4
+		*seed* (! seed))
+	  (format t "TESTING ~a " name)  
+	  (cond ((ignore-errors (funcall (getf eg :fun))) 
+		   (format t "PASS ✅~%"))
+		(t (format t "FAIL ❌~%")
+ 		   (incf fails))))))
     #+clisp (ext:exit fails)
     #+sbcl  (sb-ext:exit :code fails)))
 
 ;;; settings and examples
-
 (defun about ()
   "show the help string (built from *help* and the doc strings from *egs*"
   (format t "~a~%~%ACTIONS:~%" *help*)
   (dolist (eg (reverse *egs*))
-    (format t "  ~10a : ~a~%" (getf eg :name) (getf eg :doc))))
+    (format t "  ~10a : ~a~%" (getf eg :name) (documentation (getf eg :fun) 'function))))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;      _          _               
 ;   __| |  __ _  | |_   __ _ 
@@ -157,7 +158,7 @@ OPTIONS:
 (defun isLess   (s) (charn s #\- -1))
 (defun isMore   (s) (charn s #\+ -1))
 
-(defstruct+ sym (at 0) (txt "") (n 0) (has 0) mode (most 0))
+(defstruct+ sym (at 0) (txt "") (n 0) (has 0) (w 1) mode (most 0))
 (defun make-sym (&optional (at 0) (txt ""))
   "summarizes streams of numbers"
   (%make-sym :at at :txt txt :w (if (isLess txt) -1 1)))
@@ -177,11 +178,15 @@ OPTIONS:
   (%make-num :at at :txt txt :w (if (isLess txt) -1 1)))
 
 (defmethod add ((i num) x) ;;; Add one thing, updating 'lo,hi'
-  (with-slots (n lo hi n _has) i
+  (with-slots (n lo hi) i
     (unless (eq x #\?)
       (incf n)
-      (setf lo (min x (? i lo))
-	    hi (max x (? i hi))))))
+      (let ((d (- x mu)))
+	(incf mu (/ d n))
+	(incf m2 (* d (- x mu)))
+	(setf sd (if (<= n 1) 0 (sqrt (/ m2 (- n 1))))
+	      lo (min x (? i lo)
+	      hi (max x (? i hi))))))))
 
 (defmethod norm ((i num) x) ;;; Map 'x' 0..1 (unless unknown, unless too small)
   (with-slots (lo hi) i
@@ -202,15 +207,28 @@ OPTIONS:
   (dolist (col (? i x) lst)
     (add col (elt (? lst cells) (? col at)))))
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;      _                          
 ;   __| |  ___   _ __    ___   ___
 ;  / _` | / -_) | '  \  / _ \ (_-<
 ;  \__,_| \___| |_|_|_| \___/ /__/
 
-(eg "my" "show options" (print 2) t)
-(eg "ls" "show options" (print *settings*) t)
-(eg "num" "test number" (print (make-num 10 "Aaas-")) t)
+(eg "err" (lambda () 
+	    "crash"
+	    (/ 2 0)))
+
+(eg "my"  (lambda () 
+	    "show options" 
+	    (print 2) t))
+
+(eg "ls"  (lambda () 
+	    "show options" 
+	    (print *settings*) t))
+
+(eg "num" (lambda (&aux (n (make-num 10 "Asss-"))) 
+	    "test number"  
+	    (dotimes (i 10) (add n i))))
 
 (setf *settings* (cli (settings *help*)))
 (if (! help) (about) (egs))
