@@ -1,8 +1,5 @@
 (defpackage :runr (:use :cl))
 (in-package :runr)
-
-(defvar *egs* nil)
-(defvar *settings* nil)
 (defvar *help* "
 runr: simple lisp
 (c) 2023 Tim Menzies <timm@ieee.org> BSD-2
@@ -15,6 +12,8 @@ OPTIONS:
   -p   p        distance coeffecient   = 2
   -s   seed     random number seed     = 10019")
 
+(defvar *egs* nil)
+(defvar *settings* nil)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;  _   _   _    
 ; | | (_) | |__ 
@@ -156,7 +155,7 @@ OPTIONS:
   "show the help string (built from *help* and the doc strings from *egs*"
   (format t "~a~%~%ACTIONS:~%" *help*)
   (dolist (eg (reverse *egs*))
-    (format t "  ~10a : ~a~%" (getf eg :name) (documentation (getf eg :fun) 'function))))
+    (format t "  -g ~10a ; ~a~%" (getf eg :name) (documentation (getf eg :fun) 'function))))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;      _          _               
 ;   __| |  __ _  | |_   __ _ 
@@ -245,9 +244,9 @@ OPTIONS:
 
 (defmethod add ((i cols) row)
   (with-slots (x y) i
-  (dolist (cols (list  x y)  row)
-    (dolist (col cols)
-      (add col (elt (? row cells) (? col at))))))
+    (dolist (cols (list  x y)  row)
+      (dolist (col cols)
+	(add col (elt (? row cells) (? col at)))))))
 
 ;    _/  _  _/_  _ 
 ;  /_/  /_| /   /_|
@@ -300,6 +299,7 @@ OPTIONS:
 	    (and (equalp 'a (mid s)) (equalp 1.3787835 (div s)))))
 
 (eg "cols" (lambda ()
+	     "create some columns"
 	     (print (make-cols '("Aas" "state" "Weight-")) t)))
 
 ;function eg.sym(    sym)
