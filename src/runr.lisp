@@ -10,7 +10,7 @@ OPTIONS:
   -h   help     show help              = nil
   -g   action   start up action        = none
   -p   p        distance coeffecient   = 2
-  -s   seed     random number seed     = 10019")
+  -s   seed     random number seed     = 10013")
 
 (defvar *egs* nil)
 (defvar *settings* nil)
@@ -20,8 +20,6 @@ OPTIONS:
 ; | | | | | '_ \
 ; |_| |_| |_.__/
 
-(defun l() (load "runr"))
-                        
 ;   _ _   _   _   _  _    _
 ;  / / / /_| /_  /  /_/ _\ 
 (defmacro ! (s) 
@@ -41,16 +39,6 @@ OPTIONS:
   "ensure that `lst` includes a cell (x num) and return that cell"
   `(cdr (or (assoc ,x ,lst :test #'equal)
 	    (car (setf ,lst (cons (cons ,x ,init) ,lst))))))
-
-(defmacro defstruct+ (x doco &body body)
-  "Creates %x for constructor, enables pretty print, hides slots with '_' prefix."
-  (let* ((slots (mapcar    (lambda (x) (if (consp x) (car x) x))          body))
-	 (show  (remove-if (lambda (x) (eq #\_ (char (symbol-name x) 0))) slots)))
-    `(progn 
-       (defstruct (,x (:constructor ,(intern (format nil "%MAKE-~a" x)))) ,doco ,@body)
-       (defmethod print-object ((self ,x) str)
-	 (labels ((fun (y) (format nil ":~(~a~) ~a" y (slot-value self y))))
-	   (format str "~a" (cons ',x (mapcar #'fun ',show))))))))
 
 ;   _ _/_  _  .  _   _    _
 ; _\  /   /  /  / / /_/ _\ 
@@ -77,11 +65,11 @@ OPTIONS:
         (t (let ((n (read-from-string s1 nil nil))) 
              (if (numberp n) n s1)))))
 
-(defun words (s &optional (char #\,) (filter #'thing) (here 0))
-  "generate words, filtered, from`s`"
-  (let* ((there (position char s :start here))
+(defun subseqs (s &optional (sep #\,) (filter #'thing) (here 0))
+  "find subsequences from `s`, divided by `sep`, filtered through `filter`"
+  (let* ((there (position sep s :start here))
          (word  (funcall filter (subseq s here there))))
-    (labels ((tail () (if there (words s char filter (1+ there)))))
+    (labels ((tail () (if there (subseqs s sep filter (1+ there)))))
       (if (equal word "") (tail) (cons word (tail))))))
 
 (defun with-lines (file fun)
@@ -105,9 +93,10 @@ OPTIONS:
 (defun settings (s)
   "for lines like '  -Key Flag ..... Default', return (KEY flag (thing Default))"
   (loop :for (flag key . lst) 
-        :in  (words s #\NewLine (lambda (s1) (words s1 #\Space #'trim)))
+        :in  (subseqs s #\NewLine (lambda (s1) (subseqs s1 #\Space #'trim)))
         :if  (charn flag #\-) 
-        :collect (list :key (intern(string-upcase key)) :value (thing(car (last lst))) :flag flag)))
+        :collect (list :key (intern(string-upcase key)) 
+		       :value (thing(car (last lst))) :flag flag)))
 
 ;   _  _  _/_ _/_  .  _   _    _
 ; _\  /_' /   /   /  / / /_/ _\ 
@@ -143,8 +132,8 @@ OPTIONS:
 		*seed* (! seed))
 	  (format t "TESTING ~a " name)  
 	  (cond ((funcall (getf eg :fun)) (format t "PASS ✅~%"))
-		(t                         (format t "FAIL ❌~%")
- 		                           (incf fails))))))
+		(t                        (format t "FAIL ❌~%")
+ 		                          (incf fails))))))
     #+clisp (ext:exit fails)
     #+sbcl  (sb-ext:exit :code fails)))
 ;  
@@ -156,7 +145,7 @@ OPTIONS:
   (format t "~a~%~%ACTIONS:~%" *help*)
   (dolist (eg (reverse *egs*))
     (format t "  -g ~10a ; ~a~%" (getf eg :name) (documentation (getf eg :fun) 'function))))
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;      _          _               
 ;   __| |  __ _  | |_   __ _ 
 ;  / _` | / _` | |  _| / _` |
@@ -172,10 +161,10 @@ OPTIONS:
 ;    _      _ _ 
 ;  _\  /_/ / / /
 ;      _/           
-(defstruct+ sym (at 0) (txt "") (n 0) has (w 1) mode (most 0))
-(defun make-sym (&optional (at 0) (txt ""))
+(defstruct sym (at 0) (txt "") (n 0) has (w 1) mode (most 0))
+(defun sym! (&optional (at 0) (txt ""))
   "summarizes streams of numbers"
-  (%make-sym :at at :txt txt :w (if (isLess txt) -1 1)))
+  (make-sym :at at :txt txt :w (if (isLess txt) -1 1)))
 
 (defmethod add ((i sym) x)
   (with-slots (n has mode most) i
@@ -198,10 +187,10 @@ OPTIONS:
 
 ;   _       _ _ 
 ;  / / /_/ / / /
-(defstruct+ num (at 0) (txt "") (n 0) (mu 0) (m2 0) (w 1) (lo 1E31) (hi -1E21))
-(defun make-num (&optional  (at 0) (txt ""))
+(defstruct num (at 0) (txt "") (n 0) (mu 0) (m2 0) (w 1) (lo 1E31) (hi -1321))
+(defun num! (&optional (at 0) (txt ""))
   "summarizes streams of numbers"
-  (%make-num :at at :txt txt :w (if (isLess txt) -1 1)))
+  (make-num :at at :txt txt :w (if (isLess txt) -1 1)))
 
 (defmethod add ((i num) x) ;;; Add one thing, updating 'lo,hi'
   (with-slots (n lo hi mu m2) i
@@ -210,8 +199,8 @@ OPTIONS:
       (let ((d (- x mu)))
 	(incf mu (/ d n))
 	(incf m2 (* d (- x mu)))
-	(setf lo (min x (? i lo)
-	      hi (max x (? i hi))))))))
+	(setf lo (min x lo)
+	      hi (max x hi))))))
 
 (defmethod mid ((i num)) (? i mu))
 (defmethod div ((i num))
@@ -230,13 +219,22 @@ OPTIONS:
       (if (eq y #\?) (setf y (if (< x .5) 1 0)))
       (abs (- x y)))))
 
+(defstruct row cells y-used)
+(defun row! (cells)
+  "create something that holds `cells`"
+  (make-row :cells cells))
+
+(defmethod th ((r row) (c num))    (elt (? r cells) (? c at)))
+(defmethod th ((r row) (c sym))    (elt (? r cells) (? c at)))
+(defmethod th ((r row) (n number)) (elt (? r cells) n))
+
 ;   _   _   /   _
 ;  /_  /_/ /  _\ 
-(defstruct+ cols all x y klass)
-(defun make-cols (lst &aux (i (%make-cols)) (at -1))
+(defstruct cols all x y klass)
+(defun cols! (lst &aux (i (make-cols)) (at -1))
   (with-slots (all x y klass) i
     (dolist (txt lst i)
-      (let ((col (funcall (if (isNum txt) #'make-num #'make-sym) (incf at) txt))) 
+      (let ((col (funcall (if (isNum txt) #'num! #'sym!) (incf at) txt))) 
 	(push col all)
 	(when (not (isIgnore txt))
 	  (if (isGoal txt) (push col y) (push col x))
@@ -244,24 +242,34 @@ OPTIONS:
 
 (defmethod add ((i cols) row)
   (with-slots (x y) i
-    (dolist (cols (list  x y)  row)
-      (dolist (col cols)
-	(add col (elt (? row cells) (? col at)))))))
+    (dolist (lst (list  x y)  row)
+      (dolist (col lst)
+	(add col (th row col))))))
 
 ;    _/  _  _/_  _ 
 ;  /_/  /_| /   /_|
-(defstruct+ data rows cols)
-(defun make-data (&optional src  (i (%make-data)))
+(defstruct data rows cols)
+(defun data! (src  &aux (i (make-data)))
   "create data from either a file called 'src' or a list `src'"
-  (labels ((update (x) (add i x)))
-    (if (stringp str) (csv #'update) (mapc #'update src))))
+  (if (stringp src) 
+    (with-lines src (lambda (s) (add i (subseqs s))))
+    (mapc (lambda (x) (add i x)) src))
+  i)
 
 (defmethod add ((i data) x)
   "make `cols` (if currently missing) or update the cols and rows"
   (with-slots (cols rows) i
     (if cols 
-      (push (add cols (if (row-p x) row (make-row x))) rows)
-      (setf cols (cols x)))))
+      (push (add cols (if (row-p x) x (row! x))) rows)
+      (setf cols (cols! x)))))
+
+(defmethod dist ((i data) (row1 row) (row2 row))
+  (let ((d 0) (n 1E-32))
+    (dolist (col (? i cols x) 
+		 (expt (/ d n) (/ 1 (! p))))
+      (print 1)
+      (incf d (expt (dist col row1 row2) (! p)))
+      (incf n))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;      _                          
@@ -288,24 +296,28 @@ OPTIONS:
 	     (incf (geta 'a lst))
 	     (equal 3 (cdr (assoc 'a lst)))))
 
-(eg "num" (lambda (&aux (n (make-num 10  "num"))) 
+(eg "lines" (lambda ()
+	      "testing file reading"
+	      (with-lines "../data/auto93.lisp" 
+			  (lambda (s) (format t "~a~%" s)))))
+
+(eg "num" (lambda (&aux (n (num! 10 "num"))) 
 	    "test number"  
 	    (dolist (i '(1 1 1 1 2 2 3)) (add n i))
 	    (and (equalp 11/7 (mid n)) (equalp 0.7867958 (div n)))))
 
-(eg "sym" (lambda (&aux (s (make-sym 10 "age"))) 
+(eg "sym" (lambda (&aux (s (sym! 10 "num"))) 
 	    "test symbols"  
 	    (dolist (i '(a a a a b b c)) (add s i))
 	    (and (equalp 'a (mid s)) (equalp 1.3787835 (div s)))))
 
 (eg "cols" (lambda ()
 	     "create some columns"
-	     (print (make-cols '("Aas" "state" "Weight-")) t)))
+	     (print (cols! '("Aas" "state" "Weight-")) t)))
 
-;function eg.sym(    sym)
- ; sym=SYM()
- ; for _,x in pairs{"a","a","a","a","b","b","c"} do sym:add(x) end
-  ;return "a"==sym:mid() and 1.379 == rnd(sym:div())end
+(eg "data" (lambda ()
+	      "testing file reading"
+	      (print (? (data! "../data/auto93.csv") cols x))))
 
 (setf *settings* (cli (settings *help*)))
 (if (! help) (about) (egs))

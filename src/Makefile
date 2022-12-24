@@ -31,9 +31,9 @@ eg1:
 
 
 ../docs/pdf/%.pdf : %.lisp 
-	@a2ps -BjR --chars-per-line=100 \
+	@a2ps -Bjr --chars-per-line=100 \
 	    -K  \
-           --borders=no --pro=color --columns 2 \
+           --borders=no --pro=color --columns 3 \
            --right-footer="" --left-footer=""    \
 	   --line-numbers=1 \
            --footer="page %p."                    \
