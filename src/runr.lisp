@@ -267,7 +267,6 @@ OPTIONS:
   (let ((d 0) (n 1E-32))
     (dolist (col (? i cols x) 
 		 (expt (/ d n) (/ 1 (! p))))
-      (print 1)
       (incf d (expt (dist col row1 row2) (! p)))
       (incf n))))
 
