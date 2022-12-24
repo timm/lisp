@@ -1,5 +1,7 @@
 (defpackage :runr (:use :cl))
 (in-package :runr)
+
+;;; ## Vars
 (defvar *help* "
 runr: simple lisp
 (c) 2023 Tim Menzies <timm@ieee.org> BSD-2
@@ -14,35 +16,20 @@ OPTIONS:
 
 (defvar *egs* nil)
 (defvar *settings* nil)
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;  _   _   _    
-; | | (_) | |__ 
-; | | | | | '_ \
-; |_| |_| |_.__/
 
-;   _ _   _   _   _  _    _
-;  / / / /_| /_  /  /_/ _\ 
+;;; ## Lib
+;; ### macros  / / / /_| /_  /  /_/ _\ 
 (defmacro ! (s) 
   "convenience function to access access settings"
   `(getf (car (member ',s *settings* :key (lambda (x) (getf x :key)) :test #'equal))
 	 :value))
-
-(defmacro aif (test then &optional else)
-  `(let ((it ,test))
-     (if it ,then ,else)))
-
-(defmacro ? (s x &rest xs) 
-  "recursive slot-value access"
-  (if (null xs) `(slot-value ,s ',x) `(? (slot-value ,s ',x) ,@xs)))
 
 (defmacro geta (x lst &optional (init 0))
   "ensure that `lst` includes a cell (x num) and return that cell"
   `(cdr (or (assoc ,x ,lst :test #'equal)
 	    (car (setf ,lst (cons (cons ,x ,init) ,lst))))))
 
-;   _ _/_  _  .  _   _    _
-; _\  /   /  /  / / /_/ _\ 
-;                   _/     
+;; ### strings
 (defun charn (s c &optional (n 0))
   "is `s` a string holding `c` at position `n`?"
   (if (stringp s)
@@ -54,9 +41,7 @@ OPTIONS:
  "kill leading,trailing whitespace"
   (string-trim '(#\Space #\Tab #\Newline) s))
                       
-;  _/_  /_  .  _   _    _
-;  /   / / /  / / /_/ _\ 
-;                 _/     
+;; ### things
 (defun thing (s &aux (s1 (trim s)))
   "coerce `s` into a number or string or t or nil or #\?"
   (cond ((equal s1 "?") #\?)
@@ -72,14 +57,13 @@ OPTIONS:
     (labels ((tail () (if there (subseqs s sep filter (1+ there)))))
       (if (equal word "") (tail) (cons word (tail))))))
 
-(defun with-lines (file fun)
+(defun with-lines (file fun &optional (filter #'subseqs))
   "Call `fun` for each line in `file`"
   (with-open-file (s file) 
-    (loop (funcall fun (or (read-line s nil) (return))))))
-                         
-;   _  _   _    _/  _   _ _ 
-;  /  /_| / / /_/  /_/ / / /
-; These randoms let reset the seed.
+    (loop (funcall fun (funcall filter (or (read-line s nil) (return)))))))
+            
+;; ### random
+; Unlike Common Lisp, these  randoms let reset the seed.
 (defvar *seed* 10013)
 (defun rand (&optional (n 2))
   "Random float 0.. < n"
@@ -98,23 +82,20 @@ OPTIONS:
         :collect (list :key (intern(string-upcase key)) 
 		       :value (thing(car (last lst))) :flag flag)))
 
-;   _  _  _/_ _/_  .  _   _    _
-; _\  /_' /   /   /  / / /_/ _\ 
-;                        _/     
+;; ### settings
 (defun cli (settings &optional (args #+clisp ext:*args* 
 				     #+sbcl sb-ext:*posix-argv*))
-  "update settings from command-line;  non-boolean settings expect a value after the flag
-  while boolean settings just expect a flag (and, if used on command line, this flips the default)"
+  "update settings from command-line (non-boolean settings need a value after the flag;
+  boolean settings just expect a flag (and, if used on command line, this flips the default)"
   (dolist (setting settings settings)
-    (aif (member (getf setting :flag) args :test 'equal)
-	 (let* ((b4  (getf setting :value))
-		(now (cond ((eq b4 t) nil)
-			   ((eq b4 nil) t)
-			   (t (second it)))))
-	   (setf (getf setting :value) now))))) 
-;   _   _    _
-;  /_' /_/ _\ 
-;      _/     
+    (let ((b4  (getf setting :value))
+	  (now (second (member (getf setting :flag) args :test 'equal))))
+      (if now
+	(setf (getf setting :value) (cond ((eq b4 t)   nil)
+					  ((eq b4 nil) t)
+					  (t           (thing now))))))))
+
+;; ### egs
 (defmacro eg (what fun)
   "define an example"
   `(push (list :name ',what :fun ,fun) *egs*))
@@ -136,21 +117,15 @@ OPTIONS:
  		                          (incf fails))))))
     #+clisp (ext:exit fails)
     #+sbcl  (sb-ext:exit :code fails)))
-;  
-;   _  _   _    _  _   _/     __ _/__/_._  _   _
-;  /_'/_/_\    /_|/ //_/    _\/_'/  / // //_/_\ 
-;     _/                                  _/    
+
+;; ### egs and help
 (defun about ()
   "show the help string (built from *help* and the doc strings from *egs*"
   (format t "~a~%~%ACTIONS:~%" *help*)
   (dolist (eg (reverse *egs*))
     (format t "  -g ~10a ; ~a~%" (getf eg :name) (documentation (getf eg :fun) 'function))))
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;      _          _               
-;   __| |  __ _  | |_   __ _ 
-;  / _` | / _` | |  _| / _` |
-;  \__,_| \__,_|  \__| \__,_|
-                                
+
+;;; ## Data
 (defun isNum    (s) (and (> (length s) 1) (upper-case-p (char s 0))))
 (defun isGoal   (s) (or (isKlass s) (isLess s) (isMore s)))
 (defun isIgnore (s) (charn s #\X -1))
@@ -158,9 +133,7 @@ OPTIONS:
 (defun isLess   (s) (charn s #\- -1))
 (defun isMore   (s) (charn s #\+ -1))
                  
-;    _      _ _ 
-;  _\  /_/ / / /
-;      _/           
+;; ### sym
 (defstruct sym (at 0) (txt "") (n 0) has (w 1) mode (most 0))
 (defun sym! (&optional (at 0) (txt ""))
   "summarizes streams of numbers"
@@ -175,7 +148,7 @@ OPTIONS:
 	(setf most (geta x has)
 	      mode x)))))
 
-(defmethod mid ((i sym)) (? i mode))
+(defmethod mid ((i sym)) (sym-mode i))
 (defmethod div ((i sym))
   "Diversity (entropy)."
   (with-slots (has n) i (labels ((fun (p) (* -1 (* p (log p 2)))))
@@ -185,8 +158,7 @@ OPTIONS:
   (cond ((and (equal x #\?) (equal x #\?)) 1)
 	(t                  (if (equal x y) 0 1))))
 
-;   _       _ _ 
-;  / / /_/ / / /
+;; ### num
 (defstruct num (at 0) (txt "") (n 0) (mu 0) (m2 0) (w 1) (lo 1E31) (hi -1321))
 (defun num! (&optional (at 0) (txt ""))
   "summarizes streams of numbers"
@@ -202,7 +174,7 @@ OPTIONS:
 	(setf lo (min x lo)
 	      hi (max x hi))))))
 
-(defmethod mid ((i num)) (? i mu))
+(defmethod mid ((i num)) (num-mu i))
 (defmethod div ((i num))
   (with-slots (n m2) i (if (<= n 1) 0 (sqrt (/ m2 (- n 1))))))
 
@@ -224,14 +196,14 @@ OPTIONS:
   "create something that holds `cells`"
   (make-row :cells cells))
 
-(defmethod th ((r row) (c num))    (elt (? r cells) (? c at)))
-(defmethod th ((r row) (c sym))    (elt (? r cells) (? c at)))
-(defmethod th ((r row) (n number)) (elt (? r cells) n))
+(defmethod th ((r row) (c num))    (elt (row-cells r) (num-at c)))
+(defmethod th ((r row) (c sym))    (elt (row-cells r) (sym-at c)))
+(defmethod th ((r row) (n number)) (elt (row-cells r) n))
 
-;   _   _   /   _
-;  /_  /_/ /  _\ 
+;; ### Cols
 (defstruct cols all x y klass)
 (defun cols! (lst &aux (i (make-cols)) (at -1))
+  "factory for generating column headers from list of column names"
   (with-slots (all x y klass) i
     (dolist (txt lst i)
       (let ((col (funcall (if (isNum txt) #'num! #'sym!) (incf at) txt))) 
@@ -241,45 +213,35 @@ OPTIONS:
 	  (if (isKlass txt) (setf klass col)))))))
 
 (defmethod add ((i cols) row)
-  (with-slots (x y) i
-    (dolist (lst (list  x y)  row)
-      (dolist (col lst)
-	(add col (th row col))))))
+  "update x and y column headers from data in row. returns row"
+  (dolist (col (cols-x i)    ) (add col (th row col)))
+  (dolist (col (cols-y i) row) (add col (th row col))))
 
-;    _/  _  _/_  _ 
-;  /_/  /_| /   /_|
+;; ### Data
 (defstruct data rows cols)
 (defun data! (src  &aux (i (make-data)))
   "create data from either a file called 'src' or a list `src'"
-  (if (stringp src) 
-    (with-lines src (lambda (s) (add i (subseqs s))))
-    (mapc (lambda (x) (add i x)) src))
-  i)
+  (labels ((update (x) (add i x)))
+    (if (stringp src) (with-lines src #'update) (mapc #'update  src))
+    i))
 
 (defmethod add ((i data) x)
   "make `cols` (if currently missing) or update the cols and rows"
   (with-slots (cols rows) i
     (if cols 
-      (push (add cols (if (row-p x) x (row! x))) rows)
+      (push (add cols (if (row-p x) x (row! x))) 
+	    rows)
       (setf cols (cols! x)))))
 
 (defmethod dist ((i data) (row1 row) (row2 row))
+  "Returns 0..1"
   (let ((d 0) (n 1E-32))
-    (dolist (col (? i cols x) 
+    (dolist (col (cols-x (data-cols i))
 		 (expt (/ d n) (/ 1 (! p))))
       (incf d (expt (dist col row1 row2) (! p)))
       (incf n))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;      _                          
-;   __| |  ___   _ __    ___   ___
-;  / _` | / -_) | '  \  / _ \ (_-<
-;  \__,_| \___| |_|_|_| \___/ /__/
-
-(eg "err" (lambda () 
-	    "crash"
-	    (/ 2 0)))
-
+;;; ## Demos
 (eg "my"  (lambda () 
 	    "show options" 
 	    (print 2) t))
@@ -297,7 +259,7 @@ OPTIONS:
 
 (eg "lines" (lambda ()
 	      "testing file reading"
-	      (with-lines "../data/auto93.lisp" 
+	      (with-lines "../data/auto93.csv" 
 			  (lambda (s) (format t "~a~%" s)))))
 
 (eg "num" (lambda (&aux (n (num! 10 "num"))) 
@@ -316,7 +278,7 @@ OPTIONS:
 
 (eg "data" (lambda ()
 	      "testing file reading"
-	      (print (? (data! "../data/auto93.csv") cols x))))
+	      (print (cols-x (data-cols  (data! "../data/auto93.csv"))))))
 
 (setf *settings* (cli (settings *help*)))
 (if (! help) (about) (egs))
