@@ -18,18 +18,25 @@ OPTIONS:
 (defvar *settings* nil)
 
 ;;; ## Lib
-;; ### macros  / / / /_| /_  /  /_/ _\ 
+;; ### macros
 (defmacro ! (s) 
   "convenience function to access access settings"
   `(getf (car (member ',s *settings* :key (lambda (x) (getf x :key)) :test #'equal))
 	 :value))
 
 (defmacro geta (x lst &optional (init 0))
-  "ensure that `lst` includes a cell (x num) and return that cell"
+  "ensure that `lst` includes a cell (x num) and return the value of that cell"
   `(cdr (or (assoc ,x ,lst :test #'equal)
 	    (car (setf ,lst (cons (cons ,x ,init) ,lst))))))
 
 ;; ### strings
+(defun charn (s c &optional (n 0))
+  "is `s` a string holding `c` at position `n`?"
+  (if (stringp s)
+    (if (< n 0) 
+      (charn s c (+ (length s) n))
+      (and (>= n 0) (< n (length s)) (eql c (char s n))))))
+
 (defun trim (s) 
  "kill leading,trailing whitespace"
   (string-trim '(#\Space #\Tab #\Newline) s))
@@ -272,13 +279,6 @@ OPTIONS:
 (eg "data" (lambda ()
 	      "testing file reading"
 	      (print (cols-x (data-cols  (data! "../data/auto93.csv"))))))
-(defun charn (s c &optional (n 0))
-  "is `s` a string holding `c` at position `n`?"
-  (if (stringp s)
-    (if (< n 0) 
-      (charn s c (+ (length s) n))
-      (and (>= n 0) (< n (length s)) (eql c (char s n))))))
-
 
 (setf *settings* (cli (settings *help*)))
 (if (! help) (about) (egs))
