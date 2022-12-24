@@ -30,13 +30,6 @@ OPTIONS:
 	    (car (setf ,lst (cons (cons ,x ,init) ,lst))))))
 
 ;; ### strings
-(defun charn (s c &optional (n 0))
-  "is `s` a string holding `c` at position `n`?"
-  (if (stringp s)
-    (if (< n 0) 
-      (charn s c (+ (length s) n))
-      (and (>= n 0) (< n (length s)) (eql c (char s n))))))
-
 (defun trim (s) 
  "kill leading,trailing whitespace"
   (string-trim '(#\Space #\Tab #\Newline) s))
@@ -74,6 +67,7 @@ OPTIONS:
   "Random int 0..n-1"
   (floor (* n (/ (rand base) base))))
 
+;; ### settings
 (defun settings (s)
   "for lines like '  -Key Flag ..... Default', return (KEY flag (thing Default))"
   (loop :for (flag key . lst) 
@@ -82,7 +76,6 @@ OPTIONS:
         :collect (list :key (intern(string-upcase key)) 
 		       :value (thing(car (last lst))) :flag flag)))
 
-;; ### settings
 (defun cli (settings &optional (args #+clisp ext:*args* 
 				     #+sbcl sb-ext:*posix-argv*))
   "update settings from command-line (non-boolean settings need a value after the flag;
@@ -279,6 +272,13 @@ OPTIONS:
 (eg "data" (lambda ()
 	      "testing file reading"
 	      (print (cols-x (data-cols  (data! "../data/auto93.csv"))))))
+(defun charn (s c &optional (n 0))
+  "is `s` a string holding `c` at position `n`?"
+  (if (stringp s)
+    (if (< n 0) 
+      (charn s c (+ (length s) n))
+      (and (>= n 0) (< n (length s)) (eql c (char s n))))))
+
 
 (setf *settings* (cli (settings *help*)))
 (if (! help) (about) (egs))
