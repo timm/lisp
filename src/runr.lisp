@@ -90,16 +90,16 @@ OPTIONS:
   boolean settings just expect a flag (and, if used on command line, this flips the default)"
   (dolist (setting settings settings)
     (let ((b4  (getf setting :value))
-          (now (second (member (getf setting :flag) args :test 'equal))))
+          (now (member (getf setting :flag) args :test 'equal)))
       (if now
-        (setf (getf setting :value) (cond ((eq b4 t)   nil)
-                                          ((eq b4 nil) t)
-                                          (t           (thing now))))))))
+        (setf (getf setting :value) (cond ((eql b4 t)   nil)
+                                          ((eql b4 nil) t)
+                                          (t  (thing (second now)))))))))
 
 ;; ### egs
-(defmacro eg (what fun)
+(defmacro eg (what doc &body body)
   "define an example"
-  `(push (list :name ',what :fun ,fun) *egs*))
+  `(push (list :name ,what :doc ,doc :fun (lambda () ,@body)) *egs*))
 
 (defun egs ()
   "run 'all' actions or just the (! action) action 
@@ -124,7 +124,7 @@ OPTIONS:
   "show the help string (built from *help* and the doc strings from *egs*"
   (format t "~a~%~%ACTIONS:~%" *help*)
   (dolist (eg (reverse *egs*))
-    (format t "  -g ~10a ; ~a~%" (getf eg :name) (documentation (getf eg :fun) 'function))))
+    (format t "  -g ~10a : ~a~%" (getf eg :name) (getf eg :doc))))
 
 ;;; ## Data
 (defun isNum    (s) (and (> (length s) 1) (upper-case-p (char s 0))))
@@ -152,12 +152,13 @@ OPTIONS:
 (defmethod mid ((i sym)) (sym-mode i))
 (defmethod div ((i sym))
   "Diversity (entropy)."
-  (with-slots (has n) i (labels ((fun (p) (* -1 (* p (log p 2)))))
-			  (loop for (_ . n1) in has sum (fun (/ n1 n))))))
+  (with-slots (has n) i 
+    (labels ((fun (p) (* -1 (* p (log p 2)))))
+      (loop for (_ . n1) in has sum (fun (/ n1 n))))))
 
 (defmethod dist ((i sym) x y)
   (cond ((and (equal x #\?) (equal x #\?)) 1)
-	(t                  (if (equal x y) 0 1))))
+        (t                  (if (equal x y) 0 1))))
 
 ;; ### num
 (defstruct num (at 0) (txt "") (n 0) (mu 0) (m2 0) (w 1) (lo 1E31) (hi -1321))
@@ -197,8 +198,8 @@ OPTIONS:
   "create something that holds `cells`"
   (make-row :cells cells))
 
-(defmethod th ((r row) (c num))    (elt (row-cells r) (num-at c)))
-(defmethod th ((r row) (c sym))    (elt (row-cells r) (sym-at c)))
+(defmethod th ((r row) (c num))    (th r (num-at c)))
+(defmethod th ((r row) (c sym))    (th r (sym-at c)))
 (defmethod th ((r row) (n number)) (elt (row-cells r) n))
 
 ;; ### Cols
@@ -243,43 +244,38 @@ OPTIONS:
       (incf n))))
 
 ;;; ## Demos
-(eg "my"  (lambda () 
-            "show options" 
-            (print 2) t))
+(eg "my" "show options" 
+    (print 2) t)
 
-(eg "ls"  (lambda () 
-            "show options" 
-            (print *settings*) t))
+(eg "ls"  "show options" 
+    (print *settings*) t)
 
-(eg "geta" (lambda (&aux (lst '((b . 100)))) 
-             "test adaptive alist"
-             (incf (geta 'a lst))
-             (incf (geta 'a lst))
-             (incf (geta 'a lst))
-             (equal 3 (cdr (assoc 'a lst)))))
+(eg "geta" "test adaptive alist"
+    (let ((lst '((b . 100))))
+      (incf (geta 'a lst))
+      (incf (geta 'a lst))
+      (incf (geta 'a lst))
+      (equal 3 (cdr (assoc 'a lst)))))
 
-(eg "lines" (lambda ()
-              "testing file reading"
-              (with-lines "../data/auto93.csv" 
-                          (lambda (s) (format t "~a~%" s)))))
+(eg "lines" "testing file reading"
+    (with-lines "../data/auto93.csv" 
+                (lambda (s) (format t "~a~%" s))))
 
-(eg "num" (lambda (&aux (n (num! 10 "num"))) 
-            "test number"  
-            (dolist (i '(1 1 1 1 2 2 3)) (add n i))
-            (and (equalp 11/7 (mid n)) (equalp 0.7867958 (div n)))))
+(eg "num" "test number"  
+    (let  ((n (num! 10 "num"))) 
+      (dolist (i '(1 1 1 1 2 2 3)) (add n i))
+      (and (equalp 11/7 (mid n)) (equalp 0.7867958 (div n)))))
 
-(eg "sym" (lambda (&aux (s (sym! 10 "num"))) 
-            "test symbols"  
-            (dolist (i '(a a a a b b c)) (add s i))
-            (and (equalp 'a (mid s)) (equalp 1.3787835 (div s)))))
+(eg "sym" "test symbols"  
+    (let ((s (sym! 10 "num"))) 
+      (dolist (i '(a a a a b b c)) (add s i))
+      (and (equalp 'a (mid s)) (equalp 1.3787835 (div s)))))
 
-(eg "cols" (lambda ()
-             "create some columns"
-             (print (cols! '("Aas" "state" "Weight-")) t)))
+(eg "cols" "create some columns"
+    (print (cols! '("Aas" "state" "Weight-")) t))
 
-(eg "data" (lambda ()
-             "testing file reading"
-             (print (cols-x (data-cols  (data! "../data/auto93.csv"))))))
+(eg "data" "testing file reading"
+    (print (cols-x (data-cols  (data! "../data/auto93.csv")))))
 
 (setf *settings* (cli (settings *help*)))
 (if (! help) (about) (egs))
