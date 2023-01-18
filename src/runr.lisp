@@ -12,6 +12,7 @@ USAGE: lisp runr.lisp [OPTIONS]
 OPTIONS:
   -h   help     show help              = nil
   -g   action   start up action        = none
+  -f   far      how far to seek poles  = .95
   -p   p        distance coeffecient   = 2
   -s   seed     random number seed     = 10013")
 
@@ -24,6 +25,9 @@ OPTIONS:
   "convenience function to access access settings"
   `(getf (car (member ',s *settings* :key (lambda (x) (getf x :key)) :test #'equal))
          :value))
+
+(defmacro ? (s x &rest xs)
+  (if xs `(? (slot-value ,s ',x) ,@xs) `(slot-value ,s ',x)))
 
 (defmacro geta (x lst &optional (init 0))
   "ensure that `lst` includes a cell (x num) and return the value of that cell"
@@ -235,13 +239,20 @@ OPTIONS:
             rows)
       (setf cols (cols! x)))))
 
-(defmethod dist ((i data) (row1 row) (row2 row))
+(defmethod dists ((i data) (row1 row) (row2 row) &optional (cols (? i cols x)))
   "Returns 0..1"
   (let ((d 0) (n 1E-32))
-    (dolist (col (cols-x (data-cols i))
-                 (expt (/ d n) (/ 1 (! p))))
-      (incf d (expt (dist col row1 row2) (! p)))
+    (dolist (col cols (expt (/ d n) (/ 1 (! p))))
+      (incf d (expt (dist col (th row1 (? col at)) (th row2 (? col at))) 
+                    (! p)))
       (incf n))))
+
+(defmethod around ((i data) (row1 row) &optional (rows (? i rows)) (cols (? i cols x)))
+   (sort (mapcar (lambda (row2) (cons (dists i row1 row2 cols) row2)) rows) #'< :key #'cdr))
+
+(defmethod far ((i data) (row1 row &optional (rows (? i rows)) (cols (? i cols x))))
+  (cdr (elt (around i row1 rows cols) 
+            (floor (* (! far) (length rows))))))
 
 ;;; ## Demos
 (eg "my" "show options" 
@@ -258,8 +269,10 @@ OPTIONS:
       (equal 3 (cdr (assoc 'a lst)))))
 
 (eg "lines" "testing file reading"
-    (with-lines "../data/auto93.csv" 
-                (lambda (s) (format t "~a~%" s))))
+    (let ((n 0))
+      (with-lines "../data/auto93.csv" 
+                  (lambda (s)  (incf n (length s))))
+      (eql  n 3192)))
 
 (eg "num" "test number"  
     (let  ((n (num! 10 "num"))) 
@@ -276,6 +289,18 @@ OPTIONS:
 
 (eg "data" "testing file reading"
     (print (cols-x (data-cols  (data! "../data/auto93.csv")))))
+
+(eg "dist" "dostance function" 
+    (let* ((n -1) 
+           (data (data! "../data/auto93.csv"))
+           (row1 (first (data-rows data))))
+      (format t "~%~a~%" (row-cells row1))
+      (dolist (row2 (data-rows data) t) 
+        (if (zerop (mod (incf n) 40)) 
+          (format t "~a ~a ~a~%" n (row-cells row2) (dists  data row1 row2))))))
+
+
+
 
 (setf *settings* (cli (settings *help*)))
 (if (! help) (about) (egs))
