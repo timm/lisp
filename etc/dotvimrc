@@ -182,3 +182,4 @@ autocmd Filetype markdown setlocal ts=2 sw=2 expandtab
 hi CursorLine   cterm=NONE ctermbg=0
 hi CursorColumn cterm=NONE ctermbg=0
 nnoremap <Leader>c :set cursorline! cursorcolumn!<CR>
+hi Normal guibg=NONE ctermbg=NONE

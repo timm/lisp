@@ -10,11 +10,12 @@ runr: simple lisp
 USAGE: lisp runr.lisp [OPTIONS]
 
 OPTIONS:
-  -h   help     show help              = nil
-  -g   action   start up action        = none
-  -f   far      how far to seek poles  = .95
-  -p   p        distance coeffecient   = 2
-  -s   seed     random number seed     = 10013")
+  -h   help          show help                  = nil
+  -g   action        start up action            = none
+  -f   far           how far to seek poles      = .95
+  -R   right-margin  pretty print right margin  = 1000
+  -p   p             distance coeffecient       = 2
+  -s   seed          random number seed         = 10013")
 
 (defvar *egs* nil)
 (defvar *settings* nil)
@@ -114,8 +115,10 @@ OPTIONS:
       (let ((name (getf eg :name)))
         (when (or (equal (! action) name) 
                   (equal (! action) "all"))
-          (setf *settings* b4
-                *seed* (! seed))
+          (print (! right-margin))
+          (setf *settings*           b4
+                *print-right-margin* (! right-margin)
+                *seed*               (! seed))
           (format t "TESTING ~a " name)  
           (cond ((funcall (getf eg :fun)) (format t "PASS ✅~%"))
                 (t                        (format t "FAIL ❌~%")
@@ -250,10 +253,10 @@ OPTIONS:
 (defmethod around ((i data) (row1 row) &optional (rows (? i rows)) (cols (? i cols x)))
    (sort (mapcar (lambda (row2) (cons (dists i row1 row2 cols) row2)) rows) #'< :key #'cdr))
 
-(defmethod far ((i data) (row1 row &optional (rows (? i rows)) (cols (? i cols x))))
-  (cdr (elt (around i row1 rows cols) 
-            (floor (* (! far) (length rows))))))
-
+; (defmethod far ((i data) (row1 row &optional (rows (? i rows)) (cols (? i cols x))))
+;   (cdr (elt (around i row1 rows cols) 
+;             (floor (* (! far) (length rows))))))
+;
 ;;; ## Demos
 (eg "my" "show options" 
     (print 2) t)
