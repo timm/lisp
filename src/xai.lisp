@@ -6,9 +6,9 @@
 (defvar *help* "
 xai: simple lisp
 (c) 2023 Tim Menzies <timm@ieee.org> BSD-2
-
+   
 USAGE: lisp xai.lisp [OPTIONS] [-g ACTION]
-
+    
 OPTIONS:
   -h   help          show help                  = nil
   -g   action        start up action            = none
@@ -23,7 +23,7 @@ OPTIONS:
 ;;; ## Lib
 ;; ### macros
 (defmacro ? (x &optional (lst '*settings*))
-  "alist accessor macro"
+  "alist accessor macro (defaults to querying *settings*)"
   `(cdr (assoc ',x ,lst :test #'equal)))
 
 (defmacro aif (test then &optional else)
@@ -31,22 +31,22 @@ OPTIONS:
   `(let ((it ,test)) (if it ,then ,else)))
 
 (defmacro geta (x lst &optional (init 0))
-  "ensure that `lst` includes a cell (x num) and return the value of that cell"
+  "(1) ensure that `lst` includes (x num); (2) return the value of that cell"
   `(cdr (or (assoc ,x ,lst :test #'equal)
             (car (setf ,lst (cons (cons ,x ,init) ,lst))))))
 
 ;; ### strings
-(defun charn (s c &optional (n 0))
+(defun got (s c &optional (n 0))
   "is `s` a string holding `c` at position `n` (and `n` can be negative)?"
   (if (stringp s)
     (if (< n 0) 
-      (charn s c (+ (length s) n))
+      (got s c (+ (length s) n))
       (and (>= n 0) (< n (length s)) (eql c (char s n))))))
 
 (defun trim (s) 
  "kill leading,trailing whitespace"
   (string-trim '(#\Space #\Tab #\Newline) s))
-                      
+
 ;; ### things
 (defun thing (s &aux (s1 (trim s)))
   "coerce `s` into a number or string or t or nil or #\?"
@@ -67,10 +67,11 @@ OPTIONS:
   "Call `fun` for each line in `file`"
   (with-open-file (s file) 
     (loop (funcall fun (funcall filter (or (read-line s nil) (return)))))))
-            
+
 ;; ### random
 ; Unlike Common Lisp, these  randoms let reset the seed.
 (defvar *seed* 10013)
+
 (defun rand (&optional (n 2))
   "Random float 0.. < n"
   (setf *seed* (mod (* 16807.0d0 *seed*) 2147483647.0d0))
@@ -86,7 +87,7 @@ OPTIONS:
   (loop 
     :for (flag key . lst) 
     :in  (subseqs s #\NewLine (lambda (s1) (subseqs s1 #\Space #'trim)))
-    :if  (charn flag #\-) 
+    :if  (got flag #\-) 
     :collect (cons (intern (string-upcase key)) 
                    (cli args flag (thing (car (last lst)))))))
 
@@ -119,35 +120,36 @@ OPTIONS:
   (resetting random seed and other setting before each action)"
   (let ((fails 0)
         (b4 (copy-list *settings*)))
-    (dolist (eg (reverse *egs*))
-      (let ((name (first eg)))
+    (dolist (x (reverse *egs*))
+      (let ((name (first x)))
         (when (or (equal (? action) name) 
                   (equal (? action) "all"))
           (setf *settings*           b4
                 *print-right-margin* (? right-margin)
                 *seed*               (? seed))
           (format t "▶️  TEST: ~a " name)  
-          (cond ((funcall (third eg)) (format t "✅ PASS ~%"))
+          (cond ((funcall (third x)) (format t "✅ PASS ~%"))
                 (t                    (format t "❌ FAIL ~%")
                                       (incf fails))))))
     (stop fails)))
 
-;; ### egs and help
+;### egs and help
 (defun about ()
   "show the help string (built from *help* and the doc strings from *egs*"
   (format t "~a~%~%ACTIONS:~%" *help*)
-  (dolist (eg (reverse *egs*))
-    (format t "  -g ~10a : ~a~%" (first eg) (second eg))))
+  (dolist (x (reverse *egs*))
+    (format t "  -g ~10a : ~a~%" (first x) (second x))))
 
 ;;; ## Data
-(defun isNum    (s) (and (> (length s) 1) (upper-case-p (char s 0))))
+(defun isSym    (x) (eql 'Sym (type-of x)))
+(defun isNums   (s) (and (> (length s) 1) (upper-case-p (char s 0))))
 (defun isGoal   (s) (or (isKlass s) (isLess s) (isMore s)))
-(defun isIgnore (s) (charn s #\X -1))
-(defun isKlass  (s) (charn s #\! -1))
-(defun isLess   (s) (charn s #\- -1))
-(defun isMore   (s) (charn s #\+ -1))
-                 
-;; ### sym
+(defun isIgnore (s) (got s #\X -1))
+(defun isKlass  (s) (got s #\! -1))
+(defun isLess   (s) (got s #\- -1))
+(defun isMore   (s) (got s #\+ -1))
+
+;### sym
 (defstruct sym (at 0) (txt "") (n 0) has (w 1) mode (most 0))
 (defun sym! (&optional (at 0) (txt ""))
   "summarizes streams of numbers"
@@ -173,7 +175,7 @@ OPTIONS:
   (cond ((and (equal x #\?) (equal x #\?)) 1)
         (t                  (if (equal x y) 0 1))))
 
-;; ### num
+;### num
 (defstruct num (at 0) (txt "") (n 0) (mu 0) (m2 0) (w 1) (lo 1E31) (hi -1321))
 (defun num! (&optional (at 0) (txt ""))
   "summarizes streams of numbers"
@@ -215,13 +217,13 @@ OPTIONS:
 (defmethod th ((r row) (c sym))    (th r (sym-at c)))
 (defmethod th ((r row) (n number)) (elt (row-cells r) n))
 
-;; ### Cols
+;### Cols
 (defstruct cols all x y klass)
 (defun cols! (lst &aux (i (make-cols)) (at -1))
   "factory for generating column headers from list of column names"
   (with-slots (all x y klass) i
     (dolist (txt lst i)
-      (let ((col (funcall (if (isNum txt) #'num! #'sym!) (incf at) txt))) 
+      (let ((col (funcall (if (isNums txt) #'num! #'sym!) (incf at) txt))) 
         (push col all)
         (when (not (isIgnore txt))
           (if (isGoal txt) (push col y) (push col x))
