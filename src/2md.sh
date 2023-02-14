@@ -1,4 +1,4 @@
-BEGIN { print "<html><body>" }
+BEGIN { print "<html><head></head><body>" }
 END   { print "</body></html>" }
 
 /vi: set/            { next }
