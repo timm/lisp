@@ -20,19 +20,20 @@ OPTIONS:
 (defvar *egs* nil)
 (defvar *settings* nil)
 
-
 ;;; ## Lib
 ;; ### macros
 (defmacro ? (x &optional (lst '*settings*))
   "alist accessor macro"
   `(cdr (assoc ',x ,lst :test #'equal)))
-(print 100)
+
+(defmacro aif (test then &optional else)
+  "anaphoric if"
+  `(let ((it ,test)) (if it ,then ,else)))
 
 (defmacro geta (x lst &optional (init 0))
   "ensure that `lst` includes a cell (x num) and return the value of that cell"
   `(cdr (or (assoc ,x ,lst :test #'equal)
             (car (setf ,lst (cons (cons ,x ,init) ,lst))))))
-
 
 ;; ### strings
 (defun charn (s c &optional (n 0))
@@ -76,41 +77,42 @@ OPTIONS:
   (* n (- 1.0d0 (/ *seed* 2147483647.0d0))))
 
 (defun rint (&optional (n 2) &aux (base 10000000000.0))
-  "Random int 0..n-1"
+  "random int 0..n-1"
   (floor (* n (/ (rand base) base))))
 
 ;; ### settings
-(defun settings (s)
+(defun settings (s &optional args)
   "for lines like '  -Key Flag ..... Default', return (KEY flag (thing Default))"
   (loop 
     :for (flag key . lst) 
     :in  (subseqs s #\NewLine (lambda (s1) (subseqs s1 #\Space #'trim)))
     :if  (charn flag #\-) 
-    :collect (cons flag  (list (intern (string-upcase key)) (thing (car (last lst)))))))
+    :collect (cons (intern (string-upcase key)) 
+                   (cli args flag (thing (car (last lst)))))))
 
-(print (settings *help*))
-(defun quit (&optional (x 0))
-  #+clisp (ext:exit x)
+(defun cli (args flag b4)
+  "If `flag` is in `args`, then change  `b4` using command-line values; 
+   if `b4` is a boolean, there is no need for command-line values-- just flip `b4`."
+  (aif (member flag args :test 'equal)
+    (cond ((eql b4 t) nil)
+          ((eql b4 nil) t)
+          (t (thing (second it))))
+    b4))
+
+(defun args () 
+  "return command line flags"
+  #+clisp ext:*args*  
+  #+sbcl sb-ext:*posix-argv*)
+
+(defun stop (&optional (x 0)) 
+  "quit lisp"
+  #+clisp (ext:exit x) 
   #+sbcl  (sb-ext:exit :code x))
-
-(quit)
-
-(defun cli (settings &optional (args #+clisp ext:*args* 
-                                     #+sbcl sb-ext:*posix-argv*))
-  "update settings from command-line (non-boolean settings need a value after the flag;
-  boolean settings just expect a flag (and, if used on command line, this flips the default)"
-  (dolist (setting settings settings)
-    (let ((b4  (getf setting :value))
-          (now (member (getf setting :flag) args :test 'equal)))
-      (if now
-        (setf (getf setting :value) (cond ((eql b4 t)   nil)
-                                          ((eql b4 nil) t)
-                                          (t  (thing (second now)))))))))
 
 ;; ### egs
 (defmacro eg (what doc &body body)
   "define an example"
-  `(push (list :name ,what :doc ,doc :fun (lambda () ,@body)) *egs*))
+  `(push (list ,what ,doc (lambda () ,@body)) *egs*))
 
 (defun egs ()
   "run 'all' actions or just the (! action) action 
@@ -118,25 +120,24 @@ OPTIONS:
   (let ((fails 0)
         (b4 (copy-list *settings*)))
     (dolist (eg (reverse *egs*))
-      (let ((name (getf eg :name)))
+      (let ((name (first eg)))
         (when (or (equal (? action) name) 
                   (equal (? action) "all"))
-          (print (? right-margin))
           (setf *settings*           b4
                 *print-right-margin* (? right-margin)
                 *seed*               (? seed))
-          (format t "TESTING ~a " name)  
-          (cond ((funcall (getf eg :fun)) (format t "PASS ✅~%"))
-                (t                        (format t "FAIL ❌~%")
-                                          (incf fails))))))
-    (quit fails)))
+          (format t "▶️  TEST: ~a " name)  
+          (cond ((funcall (third eg)) (format t "✅ PASS ~%"))
+                (t                    (format t "❌ FAIL ~%")
+                                      (incf fails))))))
+    (stop fails)))
 
 ;; ### egs and help
 (defun about ()
   "show the help string (built from *help* and the doc strings from *egs*"
   (format t "~a~%~%ACTIONS:~%" *help*)
   (dolist (eg (reverse *egs*))
-    (format t "  -g ~10a : ~a~%" (getf eg :name) (getf eg :doc))))
+    (format t "  -g ~10a : ~a~%" (first eg) (second eg))))
 
 ;;; ## Data
 (defun isNum    (s) (and (> (length s) 1) (upper-case-p (char s 0))))
@@ -251,11 +252,11 @@ OPTIONS:
   "Returns 0..1"
   (let ((d 0) (n 1E-32))
     (dolist (col cols (expt (/ d n) (/ 1 (? p))))
-      (incf d (expt (dist col (th row1 (? col at)) (th row2 (slot-value col 'at))) 
+      (incf d (expt (dist col (th row1 (slot-value col 'at)) (th row2 (slot-value col 'at))) 
                     (? p)))
       (incf n))))
 
-(defmethod around ((i data) (row1 row) &optional (rows (? i rows)) (cols (? i cols x)))
+(defmethod around ((i data) (row1 row) &optional (rows (data-rows i)) (cols (data-cols i)))
    (sort (mapcar (lambda (row2) (cons (dists i row1 row2 cols) row2)) rows) #'< :key #'cdr))
 
 ; (defmethod far ((i data) (row1 row &optional (rows (? i rows)) (cols (? i cols x))))
@@ -307,5 +308,5 @@ OPTIONS:
         (if (zerop (mod (incf n) 40)) 
           (format t "~a ~a ~a~%" n (row-cells row2) (dists  data row1 row2))))))
 
-;(setf *settings* (cli (settings *help*)))
-;(if (? help) (about) (egs))
+(setf *settings* (settings *help* (args)))
+(if (? help) (about) (egs))
