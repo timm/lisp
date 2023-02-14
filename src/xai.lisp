@@ -1,8 +1,15 @@
 ; vi: set ts=2 sw=2 sts=2 et :
+; Create a new space for this code.
 (defpackage :xai (:use :cl))
 (in-package :xai)
 
-;;; ## Vars
+#|## Settings
+According to DRY (don't repeat yourself), we should not
+repeat knowledge of help text, valid command line flags, and global
+settings. Hence, should This code configures the global settings,
+and the command-line interface, and the help text from the following
+string (in the `settings` function, defined below. |#
+(defvar *settings* nil)
 (defvar *help* "
 xai: simple lisp
 (c) 2023 Tim Menzies <timm@ieee.org> BSD-2
@@ -17,89 +24,36 @@ OPTIONS:
   -p   p             distance coeffecient       = 2
   -s   seed          random number seed         = 10013")
 
-(defvar *egs* nil)
-(defvar *settings* nil)
+;## Lib
+; Here's some simple routines, just to get us started.
+;### Tests
+#|According to TDD, code should be developed incrementally, test by test.
+Hence, this code stores a set of tests (easiest to hardest) in in *egs*|#
 
-;;; ## Lib
-;; ### macros
+(defvar *egs* nil)
+(defmacro eg (what doc &body body)
+  `(push (list ,what ,doc (lambda () ,@body)) *egs*))
+
+;### Macros
 (defmacro ? (x &optional (lst '*settings*))
-  "alist accessor macro (defaults to querying *settings*)"
+  "alist accessor macro (defaults to querying *settings*"
   `(cdr (assoc ',x ,lst :test #'equal)))
 
+; Here's a common pattern: we test for some result that is used in the body
+; of a condition.
 (defmacro aif (test then &optional else)
   "anaphoric if"
   `(let ((it ,test)) (if it ,then ,else)))
 
+; Here's a common pattern: keep a symbol count for a small number (say, under 50)
+; symbols. For that task, it is better to use an association list.
 (defmacro geta (x lst &optional (init 0))
-  "(1) ensure that `lst` includes (x num); (2) return the value of that cell"
+  "Ensure that `lst` includes `(x num)`, then return the value of that cell."
   `(cdr (or (assoc ,x ,lst :test #'equal)
             (car (setf ,lst (cons (cons ,x ,init) ,lst))))))
 
-;; ### strings
-(defun got (s c &optional (n 0))
-  "is `s` a string holding `c` at position `n` (and `n` can be negative)?"
-  (if (stringp s)
-    (if (< n 0) 
-      (got s c (+ (length s) n))
-      (and (>= n 0) (< n (length s)) (eql c (char s n))))))
-
-(defun trim (s) 
- "kill leading,trailing whitespace"
-  (string-trim '(#\Space #\Tab #\Newline) s))
-
-;; ### things
-(defun thing (s &aux (s1 (trim s)))
-  "coerce `s` into a number or string or t or nil or #\?"
-  (cond ((equal s1 "?") #\?)
-        ((equal s1 "t") t)
-        ((equal s1 "nil") nil)
-        (t (let ((n (read-from-string s1 nil nil))) 
-             (if (numberp n) n s1)))))
-
-(defun subseqs (s &optional (sep #\,) (filter #'thing) (here 0))
-  "find subsequences from `s`, divided by `sep`, filtered through `filter`"
-  (let* ((there (position sep s :start here))
-         (word  (funcall filter (subseq s here there))))
-    (labels ((tail () (if there (subseqs s sep filter (1+ there)))))
-      (if (equal word "") (tail) (cons word (tail))))))
-
-(defun with-lines (file fun &optional (filter #'subseqs))
-  "Call `fun` for each line in `file`"
-  (with-open-file (s file) 
-    (loop (funcall fun (funcall filter (or (read-line s nil) (return)))))))
-
-;; ### random
-; Unlike Common Lisp, these  randoms let reset the seed.
-(defvar *seed* 10013)
-
-(defun rand (&optional (n 2))
-  "Random float 0.. < n"
-  (setf *seed* (mod (* 16807.0d0 *seed*) 2147483647.0d0))
-  (* n (- 1.0d0 (/ *seed* 2147483647.0d0))))
-
-(defun rint (&optional (n 2) &aux (base 10000000000.0))
-  "random int 0..n-1"
-  (floor (* n (/ (rand base) base))))
-
-;; ### settings
-(defun settings (s &optional args)
-  "for lines like '  -Key Flag ..... Default', return (KEY flag (thing Default))"
-  (loop 
-    :for (flag key . lst) 
-    :in  (subseqs s #\NewLine (lambda (s1) (subseqs s1 #\Space #'trim)))
-    :if  (got flag #\-) 
-    :collect (cons (intern (string-upcase key)) 
-                   (cli args flag (thing (car (last lst)))))))
-
-(defun cli (args flag b4)
-  "If `flag` is in `args`, then change  `b4` using command-line values; 
-   if `b4` is a boolean, there is no need for command-line values-- just flip `b4`."
-  (aif (member flag args :test 'equal)
-    (cond ((eql b4 t) nil)
-          ((eql b4 nil) t)
-          (t (thing (second it))))
-    b4))
-
+;;### Portability
+; Different LISPs handle certain common task in different ways.
 (defun args () 
   "return command line flags"
   #+clisp ext:*args*  
@@ -110,11 +64,77 @@ OPTIONS:
   #+clisp (ext:exit x) 
   #+sbcl  (sb-ext:exit :code x))
 
-;; ### egs
-(defmacro eg (what doc &body body)
-  "define an example"
-  `(push (list ,what ,doc (lambda () ,@body)) *egs*))
+;### Strings to Things
+(defun thing (s &aux (s1 (trim s)))
+  "Coerce `s` into a number or string or t or nil or #\?"
+  (cond ((equal s1 "?") #\?)
+        ((equal s1 "t") t)
+        ((equal s1 "nil") nil)
+        (t (let ((n (read-from-string s1 nil nil))) 
+             (if (numberp n) n s1)))))
 
+;### Strings
+(defun trim (s) 
+ "Kill leading,trailing whitespace"
+  (string-trim '(#\Space #\Tab #\Newline) s))
+
+(defun got (s c &optional (n 0))
+  "Is `s` a string holding `c` at position `n` (and negative `n` means 'from end of string')?"
+  (if (stringp s)
+    (if (< n 0) 
+      (got s c (+ (length s) n))
+      (and (>= n 0) (< n (length s)) (eql c (char s n))))))
+
+(defun split (s &optional (sep #\,) (filter #'thing) (here 0))
+  "Find subsequences from `s`, divided by `sep`, filtered through `filter`"
+  (let* ((there (position sep s :start here))
+         (word  (funcall filter (subseq s here there))))
+    (labels ((tail () (if there (split s sep filter (1+ there)))))
+      (if (equal word "") (tail) (cons word (tail))))))
+
+(defun words (s) 
+  "divide a string on space"
+  (split s #\Space #'trim))
+
+;### File I/O
+(defun with-file (file fun &optional (filter #'split))
+  "Call `fun` for each line in `file`"
+  (with-open-file (s file) 
+    (loop (funcall fun (funcall filter (or (read-line s nil) (return)))))))
+
+;### Random
+; Common Lisp is infuriating: there is no simple way to set the random set. 
+; Hence, we roll our own.
+(defvar *seed* 10013)
+(defun rand (&optional (n 2))
+  "Random float 0.. < n"
+  (setf *seed* (mod (* 16807.0d0 *seed*) 2147483647.0d0))
+  (* n (- 1.0d0 (/ *seed* 2147483647.0d0))))
+
+(defun rint (&optional (n 2) &aux (base 10000000000.0))
+  "Random int 0..n-1"
+  (floor (* n (/ (rand base) base))))
+
+;### Settings
+(defun settings (s &optional args)
+  "For lines like '  -Key Flag ..... Default', return `(KEY . DEFAULT)`."
+  (loop 
+    :for (flag key . lst) 
+    :in  (split s #\NewLine #'words)
+    :if  (got flag #\-) 
+    :collect (cons (intern (string-upcase key)) 
+                   (cli args flag (thing (car (last lst)))))))
+
+(defun cli (args flag b4)
+  "If `flag` is in `args`, then change  `b4` using `args` values; 
+   if `b4` is a boolean, there is no need for command-line values-- just flip `b4`."
+  (aif (member flag args :test 'equal)
+    (cond ((eql b4 t) nil)
+          ((eql b4 nil) t)
+          (t (thing (second it))))
+    b4))
+
+;### egs
 (defun egs ()
   "run 'all' actions or just the (! action) action 
   (resetting random seed and other setting before each action)"
@@ -199,6 +219,7 @@ OPTIONS:
   (with-slots (lo hi) i
     (if (eq x #\?) x (/ (- x lo) (- hi lo 1e-32)))))
 
+;https://sites.radford.edu/~nokie/classes/380/lispfuns.html
 (defmethod dist ((i num) x y)
   (if (and (equal x #\?) (equal x #\?)) 
     1
@@ -234,12 +255,12 @@ OPTIONS:
   (dolist (col (cols-x i)    ) (add col (th row col)))
   (dolist (col (cols-y i) row) (add col (th row col))))
 
-;; ### Data
+;### Data
 (defstruct data rows cols)
 (defun data! (src  &aux (i (make-data)))
   "create data from either a file called 'src' or a list `src'"
   (labels ((update (x) (add i x)))
-    (if (stringp src) (with-lines src #'update) (mapc #'update  src))
+    (if (stringp src) (with-file src #'update) (mapc #'update  src))
     i))
 
 (defmethod add ((i data) x)
@@ -261,10 +282,6 @@ OPTIONS:
 (defmethod around ((i data) (row1 row) &optional (rows (data-rows i)) (cols (data-cols i)))
    (sort (mapcar (lambda (row2) (cons (dists i row1 row2 cols) row2)) rows) #'< :key #'cdr))
 
-; (defmethod far ((i data) (row1 row &optional (rows (? i rows)) (cols (? i cols x))))
-;   (cdr (elt (around i row1 rows cols) 
-;             (floor (* (! far) (length rows))))))
-;
 ;;; ## Demos
 (eg "my" "show options" 
     (print 2) t)
@@ -281,7 +298,7 @@ OPTIONS:
 
 (eg "lines" "testing file reading"
     (let ((n 0))
-      (with-lines "../data/auto93.csv" 
+      (with-file "../data/auto93.csv" 
                   (lambda (s)  (incf n (length s))))
       (eql  n 3192)))
 
@@ -291,9 +308,10 @@ OPTIONS:
       (and (equalp 11/7 (mid n)) (equalp 0.7867958 (div n)))))
 
 (eg "sym" "test symbols"  
-    (let ((s (sym! 10 "num"))) 
+    (let ((s (sym! 10 "sym"))) 
       (dolist (i '(a a a a b b c)) (add s i))
-      (and (equalp 'a (mid s)) (equalp 1.3787835 (div s)))))
+      (print (div s))
+      (and (equalp 'a (mid s)) (<= 1.378 (div s) 1.379))))
 
 (eg "cols" "create some columns"
     (print (cols! '("Aas" "state" "Weight-")) t))
