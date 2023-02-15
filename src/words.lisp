@@ -1,0 +1,6 @@
+(let (result) 
+  (do-external-symbols (s :common-lisp) (push s result)) 
+  (format t "\\b(")
+  (dolist (word  (sort result #'string<))
+    (format t "|~a" word))
+  (format t ")\\b"))

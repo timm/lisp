@@ -5,18 +5,9 @@
 (defpackage :xai (:use :cl))
 (in-package :xai)
 
-; This code is divided as follows:
-;
-; - _Settings_: control vars;
-; - _Lib_: standard utils;
-; - _Data_: data models;
-; - _Demos_: test cases;
-; - _Start-up_: and away we go
-;
 ;[TOC]
-;
 
-;## Settings: used to define command-line flags and global `*settings`
+;## Settings: defines command-line and `*settings`
 (defvar *settings* nil)
 (defvar *help* "
 xai: simple lisp
@@ -32,7 +23,7 @@ OPTIONS:
   -p   p             distance coeffecient       = 2
   -s   seed          random number seed         = 10013")
 
-;## Macros: must be defined before rest
+;## Macros: must be defined first
 ;- `eg`: define an example (for our test suite)
 ;- `?`: Alist accessor: Defaults to querying `*settings*`
 ;- `aif`: anaophic if: use when testing on a result alsoneeded by `then`
@@ -44,10 +35,9 @@ OPTIONS:
 (defmacro geta (x lst &optional (init 0))      `(cdr (or (assoc ,x ,lst :test #'equal) 
                                                          (car (setf ,lst (cons (cons ,x ,init) ,lst))))))
 
-;## Demos
+#|## Demos: showing off
 According to TDD, code should be developed incrementally, test by test.
 Hence, this code stores a set of tests (easiest to hardest) in in *egs*. |#
-
 
 (eg "my" "show options" 
     (print 2) t)
@@ -96,18 +86,18 @@ Hence, this code stores a set of tests (easiest to hardest) in in *egs*. |#
 #|### Portability
 Different LISPs handle certain common task in different ways.
 
-_Accessing command-line flags._ |#
+Accessing command-line flags. |#
 (defun args () 
   #+clisp ext:*args*  
   #+sbcl sb-ext:*posix-argv*)
 
-;_Quit LISP._|#
+;Quit LISP.|#
 (defun stop (&optional (x 0)) 
   #+clisp (ext:exit x) 
   #+sbcl  (sb-ext:exit :code x))
 
 ;### Strings to Things
-;_Coerce `s`_ into a number or string or t or nil or #\?.
+;Coerce `s` into a number or string or t or nil or #\?.
 (defun thing (s &aux (s1 (trim s)))
   (cond ((equal s1 "?") #\?)
         ((equal s1 "t") t)
@@ -116,30 +106,30 @@ _Accessing command-line flags._ |#
              (if (numberp n) n s1)))))
 
 ;### Strings
-;_Kill whitespace_ at start, at end.
+;Kill whitespace at start, at end.
 (defun trim (s) 
   (string-trim '(#\Space #\Tab #\Newline) s))
 
-;_Is `s` a string holding `c`_ at position `n` (and negative `n` means 'from end of string')?.
+;Is `s` a string holding `c` at position `n` (and negative `n` means 'from end of string')?.
 (defun got (s c &optional (n 0))
   (if (stringp s)
     (if (< n 0) 
       (got s c (+ (length s) n))
       (and (>= n 0) (< n (length s)) (eql c (char s n))))))
 
-;_Split  `s`, divided by `sep`_ filtered through `filter`.
+;Split  `s`, divided by `sep` filtered through `filter`.
 (defun split (s &optional (sep #\,) (filter #'thing) (here 0))
   (let* ((there (position sep s :start here))
          (word  (funcall filter (subseq s here there))))
     (labels ((tail () (if there (split s sep filter (1+ there)))))
       (if (equal word "") (tail) (cons word (tail))))))
 
-;_Divide a string_ on space.
+;Divide a string on space.
 (defun words (s) 
   (split s #\Space #'trim))
 
 ;### File I/O
-;_Call `fun` for each line in `file`_.
+;Call `fun` for each line in `file`.
 (defun with-file (file fun &optional (filter #'split))
   (with-open-file (s file) 
     (loop (funcall fun (funcall filter (or (read-line s nil) (return)))))))
@@ -148,20 +138,20 @@ _Accessing command-line flags._ |#
 Common Lisp is infuriating: there is no simple way to set the random set. 
 Hence, we roll our own.    
 
-_Set random seed._ |#
+Set random seed. |#
 (defvar *seed* 10013)
 
-;_Random float 0.. < n._
+;Random float 0.. < n.
 (defun rand (&optional (n 2))
   (setf *seed* (mod (* 16807.0d0 *seed*) 2147483647.0d0))
   (* n (- 1.0d0 (/ *seed* 2147483647.0d0))))
 
-; _Random int 0..n-1._
+;Random int 0..n-1.
 (defun rint (&optional (n 2) &aux (base 10000000000.0))
   (floor (* n (/ (rand base) base))))
 
 ;### Settings
-; _For lines like '  -Key Flag ..... Default', return `(KEY . DEFAULT)`._
+; For lines like '  -Key Flag ..... Default', return `(KEY . DEFAULT)`.
 (defun settings (s &optional args)
   (loop 
     :for (flag key . lst) 
@@ -181,7 +171,7 @@ just flip `b4`. |#
     b4))
 
 #|### Tests
-#| Run 'all' actions or just the `(? action)` action (resetting
+Run 'all' actions or just the `(? action)` action (resetting
 random seed and other setting before each action). Return the number
 of example failures to the operating system. |#
 (defun egs ()
@@ -200,8 +190,8 @@ of example failures to the operating system. |#
                                      (incf fails))))))
     (stop fails)))
 
-;#### egs and help
-; _Show the help string_ (built from *help* and the doc strings from *egs*.
+#|#### egs and help
+Show the help string (built from *help* and the doc strings from *egs*. |#
 (defun about ()
   (format t "~a~%~%ACTIONS:~%" *help*)
   (dolist (x (reverse *egs*))
@@ -216,8 +206,8 @@ of example failures to the operating system. |#
 (defun isLess   (s) (got s #\- -1))
 (defun isMore   (s) (got s #\+ -1))
 
-;### sym
-; _Summarizes streams of numbers_.
+#|### sym
+Summarizes streams of numbers. |#
 (defstruct sym (at 0) (txt "") (n 0) has (w 1) mode (most 0))
 (defun sym! (&optional (at 0) (txt ""))
   (make-sym :at at :txt txt :w (if (isLess txt) -1 1)))
@@ -275,7 +265,7 @@ of example failures to the operating system. |#
       (if (eq y #\?) (setf y (if (< x .5) 1 0)))
       (abs (- x y)))))
 
-; _Create something that holds `cells`s._
+; Create something that holds `cells`s.
 (defstruct row cells y-used)
 (defun row! (cells)
   (make-row :cells cells))
@@ -285,7 +275,7 @@ of example failures to the operating system. |#
 (defmethod th ((r row) (n number)) (elt (row-cells r) n))
 
 ;### Cols
-; _Factory for generating column headers_ from list of column names.
+; Factory for generating column headers from list of column names.
 (defstruct cols all x y klass)
 (defun cols! (lst &aux (i (make-cols)) (at -1))
   (with-slots (all x y klass) i
@@ -296,20 +286,20 @@ of example failures to the operating system. |#
           (if (isGoal txt) (push col y) (push col x))
           (if (isKlass txt) (setf klass col)))))))
 
-; _Update x and y column headers_ from data in row. returns row.
+;Update x and y column headers from data in row. returns row.
 (defmethod add ((i cols) row)
   (dolist (col (cols-x i)    ) (add col (th row col)))
   (dolist (col (cols-y i) row) (add col (th row col))))
 
-;### Data
-; _Create data_ from either a file called 'src' or a list `src'.
+#|### Data
+Create data from either a file called 'src' or a list `src'. |#
 (defstruct data rows cols)
 (defun data! (src  &aux (i (make-data)))
   (labels ((update (x) (add i x)))
     (if (stringp src) (with-file src #'update) (mapc #'update  src))
     i))
 
-; _Make `cols`_ (if currently missing) or update the cols and rows.
+;Make `cols` (if currently missing) or update the cols and rows.
 (defmethod add ((i data) x)
   (with-slots (cols rows) i
     (if cols 
@@ -317,7 +307,7 @@ of example failures to the operating system. |#
             rows)
       (setf cols (cols! x)))))
 
-; _Returns 0..1._
+;Returns 0..1.
 (defmethod dists ((i data) (row1 row) (row2 row) &optional (cols (cols-x (data-cols i))))
   (let ((d 0) (n 1E-32))
     (dolist (col cols (expt (/ d n) (/ 1 (? p))))
@@ -328,9 +318,7 @@ of example failures to the operating system. |#
 (defmethod around ((i data) (row1 row) &optional (rows (data-rows i)) (cols (data-cols i)))
    (sort (mapcar (lambda (row2) (cons (dists i row1 row2 cols) row2)) rows) #'< :key #'cdr))
 
-
 ;## Start-up
 (setf *settings* (settings *help* (args)))
 (if (? help) (about) (egs))
-
 
