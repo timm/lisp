@@ -16,12 +16,7 @@
 ;[TOC]
 ;
 
-#|## Settings
-According to DRY (don't repeat yourself), we should not
-repeat knowledge of help text, valid command line flags, and global
-settings. Hence, should This code configures the global settings,
-and the command-line interface, and the help text from the following
-string (in the `settings` function, defined below). |#
+;## Settings: used to define command-line flags and global `*settings`
 (defvar *settings* nil)
 (defvar *help* "
 xai: simple lisp
@@ -37,25 +32,67 @@ OPTIONS:
   -p   p             distance coeffecient       = 2
   -s   seed          random number seed         = 10013")
 
-;## Lib
-; Here's some simple routines, just to get us started.
-;### Macros
-;_Alist accessor_. Defaults to querying `*settings*`.
-(defmacro ? (x &optional (lst '*settings*))
-  `(cdr (assoc ',x ,lst :test #'equal)))
+;## Macros: must be defined before rest
+;- `eg`: define an example (for our test suite)
+;- `?`: Alist accessor: Defaults to querying `*settings*`
+;- `aif`: anaophic if: use when testing on a result alsoneeded by `then`
+;- `geta`: symbol frequency counter: faster than hashtables for, say or less symbols.
+(defvar *egs* nil)
+(defmacro eg   (what doc &body body)           `(push (list ,what ,doc (lambda () ,@body)) *egs*))
+(defmacro ?    (x &optional (lst '*settings*)) `(cdr (assoc ',x ,lst :test #'equal)))
+(defmacro aif  (test then &optional else)      `(let ((it ,test)) (if it ,then ,else)))
+(defmacro geta (x lst &optional (init 0))      `(cdr (or (assoc ,x ,lst :test #'equal) 
+                                                         (car (setf ,lst (cons (cons ,x ,init) ,lst))))))
 
-#| _Anaphoric if_. Use when we test for some result that is used
-in the body ; of a condition. |#
-(defmacro aif (test then &optional else)
-  `(let ((it ,test)) (if it ,then ,else)))
+;## Demos
+According to TDD, code should be developed incrementally, test by test.
+Hence, this code stores a set of tests (easiest to hardest) in in *egs*. |#
 
-#| _Keep a symbol count for a few keys_  (say, under 50).  For that
-task, it is better to use an association list.  This code ensure
-that `lst` includes `(x num)`, then return the value of that cell. |#
-(defmacro geta (x lst &optional (init 0))
-  `(cdr (or (assoc ,x ,lst :test #'equal)
-            (car (setf ,lst (cons (cons ,x ,init) ,lst))))))
 
+(eg "my" "show options" 
+    (print 2) t)
+
+(eg "ls"  "show options" 
+    (print *settings*) t)
+
+(eg "geta" "test adaptive alist"
+    (let ((lst '((b . 100))))
+      (incf (geta 'a lst))
+      (incf (geta 'a lst))
+      (incf (geta 'a lst))
+      (equal 3 (cdr (assoc 'a lst)))))
+
+(eg "lines" "testing file reading"
+    (let ((n 0))
+      (with-file "../data/auto93.csv" 
+                  (lambda (s)  (incf n (length s))))
+      (eql  n 3192)))
+
+(eg "num" "test number"  
+    (let  ((n (num! 10 "num"))) 
+      (dolist (i '(1 1 1 1 2 2 3)) (add n i))
+      (and (equalp 11/7 (mid n)) (equalp 0.7867958 (div n)))))
+
+(eg "sym" "test symbols"  
+    (let ((s (sym! 10 "sym"))) 
+      (dolist (i '(a a a a b b c)) (add s i))
+      (print (div s))
+      (and (equalp 'a (mid s)) (<= 1.378 (div s) 1.379))))
+
+(eg "cols" "create some columns"
+    (print (cols! '("Aas" "state" "Weight-")) t))
+
+(eg "data" "testing file reading"
+    (print (cols-x (data-cols  (data! "../data/auto93.csv")))))
+
+(eg "dist" "dostance function" 
+    (let* ((n -1) 
+           (data (data! "../data/auto93.csv"))
+           (row1 (first (data-rows data))))
+      (format t "~%~a~%" (row-cells row1))
+      (dolist (row2 (data-rows data) t) 
+        (if (zerop (mod (incf n) 40)) 
+          (format t "~a ~a ~a~%" n (row-cells row2) (dists  data row1 row2))))))
 #|### Portability
 Different LISPs handle certain common task in different ways.
 
@@ -144,13 +181,6 @@ just flip `b4`. |#
     b4))
 
 #|### Tests
-According to TDD, code should be developed incrementally, test by test.
-Hence, this code stores a set of tests (easiest to hardest) in in *egs*. |#
-
-(defvar *egs* nil)
-(defmacro eg (what doc &body body)
-  `(push (list ,what ,doc (lambda () ,@body)) *egs*))
-
 #| Run 'all' actions or just the `(? action)` action (resetting
 random seed and other setting before each action). Return the number
 of example failures to the operating system. |#
@@ -298,51 +328,6 @@ of example failures to the operating system. |#
 (defmethod around ((i data) (row1 row) &optional (rows (data-rows i)) (cols (data-cols i)))
    (sort (mapcar (lambda (row2) (cons (dists i row1 row2 cols) row2)) rows) #'< :key #'cdr))
 
-;## Demos
-(eg "my" "show options" 
-    (print 2) t)
-
-(eg "ls"  "show options" 
-    (print *settings*) t)
-
-(eg "geta" "test adaptive alist"
-    (let ((lst '((b . 100))))
-      (incf (geta 'a lst))
-      (incf (geta 'a lst))
-      (incf (geta 'a lst))
-      (equal 3 (cdr (assoc 'a lst)))))
-
-(eg "lines" "testing file reading"
-    (let ((n 0))
-      (with-file "../data/auto93.csv" 
-                  (lambda (s)  (incf n (length s))))
-      (eql  n 3192)))
-
-(eg "num" "test number"  
-    (let  ((n (num! 10 "num"))) 
-      (dolist (i '(1 1 1 1 2 2 3)) (add n i))
-      (and (equalp 11/7 (mid n)) (equalp 0.7867958 (div n)))))
-
-(eg "sym" "test symbols"  
-    (let ((s (sym! 10 "sym"))) 
-      (dolist (i '(a a a a b b c)) (add s i))
-      (print (div s))
-      (and (equalp 'a (mid s)) (<= 1.378 (div s) 1.379))))
-
-(eg "cols" "create some columns"
-    (print (cols! '("Aas" "state" "Weight-")) t))
-
-(eg "data" "testing file reading"
-    (print (cols-x (data-cols  (data! "../data/auto93.csv")))))
-
-(eg "dist" "dostance function" 
-    (let* ((n -1) 
-           (data (data! "../data/auto93.csv"))
-           (row1 (first (data-rows data))))
-      (format t "~%~a~%" (row-cells row1))
-      (dolist (row2 (data-rows data) t) 
-        (if (zerop (mod (incf n) 40)) 
-          (format t "~a ~a ~a~%" n (row-cells row2) (dists  data row1 row2))))))
 
 ;## Start-up
 (setf *settings* (settings *help* (args)))

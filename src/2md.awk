@@ -9,7 +9,7 @@ BEGIN { IGNORECASE=1;
          print  "  padding: 2rem;"
          print  "  margin: auto;"
          print  "}"
-         print  "pre { padding:3px; border: 1px solid #AAA; "
+         print  "pre { padding:3px; xborder: 1px solid #AAA; "
 	 print  "      background: #F9F9F9; }"
          print  "img.right200 { width: 200px; border:1px solid #0039a6; padding:3px; margin:5px; float:right; }"      
          print "</style>" 
