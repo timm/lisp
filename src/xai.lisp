@@ -1,13 +1,13 @@
 ; vi: set ts=2 sw=2 sts=2 et :
 ;<img align=right src="https://www.lisperati.com/lisplogo_flag2_256.png">
-;# Xplainable AI, Made Easy
+;<font size=20pt><b>AI, Made Easy</b></font><br>
 ;**Tim Menzies** 
 (defpackage :xai (:use :cl))
 (in-package :xai)
 
 ;[TOC]
 
-;## Settings: defines command-line and `*settings`
+;## Settings  (defines command-line and `*settings*`)
 (defvar *settings* nil)
 (defvar *help* "
 xai: simple lisp
@@ -23,27 +23,31 @@ OPTIONS:
   -p   p             distance coeffecient       = 2
   -s   seed          random number seed         = 10013")
 
-;## Macros: must be defined first
-;- `eg`: define an example (for our test suite)
-;- `?`: Alist accessor: Defaults to querying `*settings*`
-;- `aif`: anaophic if: use when testing on a result alsoneeded by `then`
-;- `geta`: symbol frequency counter: faster than hashtables for, say or less symbols.
+;## Macros (must be defined first)
 (defvar *egs* nil)
-(defmacro eg   (what doc &body body)           `(push (list ,what ,doc (lambda () ,@body)) *egs*))
-(defmacro ?    (x &optional (lst '*settings*)) `(cdr (assoc ',x ,lst :test #'equal)))
-(defmacro aif  (test then &optional else)      `(let ((it ,test)) (if it ,then ,else)))
-(defmacro geta (x lst &optional (init 0))      `(cdr (or (assoc ,x ,lst :test #'equal) 
-                                                         (car (setf ,lst (cons (cons ,x ,init) ,lst))))))
+(defmacro eg (what doc &body body)           
+  "define a new example"
+  `(push (list ,what ,doc (lambda () ,@body)) *egs*))
 
-#|## Demos: showing off
+(defmacro ? (x &optional lst)
+  "alist accessor, defaults to searching `*settings*`"
+  `(cdr (assoc ',x (or ,lst *settings*) :test #'equal)))
+
+(defmacro aif (test then &optional else)      
+  "use when testing on a result that is also needed by `then`"
+  `(let ((it ,test)) (if it ,then ,else)))
+
+(defmacro freq (x lst &optional (init 0))      
+  "frequency counts for small set of symbols, say less than 50"
+  `(cdr (or (assoc ,x ,lst :test #'equal) 
+            (car (setf ,lst (cons (cons ,x ,init) ,lst))))))
+
+#|## Demos
 According to TDD, code should be developed incrementally, test by test.
 Hence, this code stores a set of tests (easiest to hardest) in in *egs*. |#
 
-(eg "my" "show options" 
-    (print 2) t)
-
 (eg "ls"  "show options" 
-    (print *settings*) t)
+    (print *settings*))
 
 (eg "geta" "test adaptive alist"
     (let ((lst '((b . 100))))
@@ -64,10 +68,10 @@ Hence, this code stores a set of tests (easiest to hardest) in in *egs*. |#
       (and (equalp 11/7 (mid n)) (equalp 0.7867958 (div n)))))
 
 (eg "sym" "test symbols"  
-    (let ((s (sym! 10 "sym"))) 
-      (dolist (i '(a a a a b b c)) (add s i))
-      (print (div s))
-      (and (equalp 'a (mid s)) (<= 1.378 (div s) 1.379))))
+    (let ((s (sym 10 "sym"))) 
+      (dolist (i '(a a a a b b c)) (adds s i))
+      (print (divs s))
+      (and (equalp 'a (mids s)) (<= 1.378 (divs s) 1.379))))
 
 (eg "cols" "create some columns"
     (print (cols! '("Aas" "state" "Weight-")) t))
@@ -83,76 +87,79 @@ Hence, this code stores a set of tests (easiest to hardest) in in *egs*. |#
       (dolist (row2 (data-rows data) t) 
         (if (zerop (mod (incf n) 40)) 
           (format t "~a ~a ~a~%" n (row-cells row2) (dists  data row1 row2))))))
-#|### Portability
-Different LISPs handle certain common task in different ways.
 
-Accessing command-line flags. |#
+#|## Library
+### Portability
+Different LISPs handle certain common task in different ways. |#
 (defun args () 
+  "accessing command-line flats"
   #+clisp ext:*args*  
   #+sbcl sb-ext:*posix-argv*)
 
-;Quit LISP.|#
 (defun stop (&optional (x 0)) 
+  "quit list"
   #+clisp (ext:exit x) 
   #+sbcl  (sb-ext:exit :code x))
 
 ;### Strings to Things
-;Coerce `s` into a number or string or t or nil or #\?.
 (defun thing (s &aux (s1 (trim s)))
+  "coerce `s` into a number or string or t or nil or #\?"
   (cond ((equal s1 "?") #\?)
         ((equal s1 "t") t)
         ((equal s1 "nil") nil)
         (t (let ((n (read-from-string s1 nil nil))) 
              (if (numberp n) n s1)))))
 
+;### Lists
+(defun per (seq &optional (p .5) &aux (v (coerce seq 'vector)))
+  (elt v (fllor (* p (length v)))))
+
 ;### Strings
-;Kill whitespace at start, at end.
 (defun trim (s) 
+  "kill whitespace at start, at end"
   (string-trim '(#\Space #\Tab #\Newline) s))
 
-;Is `s` a string holding `c` at position `n` (and negative `n` means 'from end of string')?.
 (defun got (s c &optional (n 0))
-  (if (stringp s)
+  "Does `s` hold `c` at position `n` (negative `n` means 'from end of string')"
+  (if (and (stringp s) (> (length s) 0))
     (if (< n 0) 
       (got s c (+ (length s) n))
       (and (>= n 0) (< n (length s)) (eql c (char s n))))))
 
-;Split  `s`, divided by `sep` filtered through `filter`.
 (defun split (s &optional (sep #\,) (filter #'thing) (here 0))
+  "split  `s`, divided by `sep` filtered through `filter`"
   (let* ((there (position sep s :start here))
          (word  (funcall filter (subseq s here there))))
     (labels ((tail () (if there (split s sep filter (1+ there)))))
       (if (equal word "") (tail) (cons word (tail))))))
 
-;Divide a string on space.
 (defun words (s) 
+  "divide a string on space"
   (split s #\Space #'trim))
 
 ;### File I/O
-;Call `fun` for each line in `file`.
 (defun with-file (file fun &optional (filter #'split))
+  "call `fun` for each line in `file`"
   (with-open-file (s file) 
     (loop (funcall fun (funcall filter (or (read-line s nil) (return)))))))
 
 #|### Random
 Common Lisp is infuriating: there is no simple way to set the random set. 
-Hence, we roll our own.    
+Hence, we roll our own. |#   
 
-Set random seed. |#
 (defvar *seed* 10013)
-
-;Random float 0.. < n.
 (defun rand (&optional (n 2))
+  "random float 0.. < n"
   (setf *seed* (mod (* 16807.0d0 *seed*) 2147483647.0d0))
   (* n (- 1.0d0 (/ *seed* 2147483647.0d0))))
 
-;Random int 0..n-1.
 (defun rint (&optional (n 2) &aux (base 10000000000.0))
+  "random int 0..n-1"
   (floor (* n (/ (rand base) base))))
 
 ;### Settings
-; For lines like '  -Key Flag ..... Default', return `(KEY . DEFAULT)`.
 (defun settings (s &optional args)
+  "for lines like '  -Key Flag ..... Default', return `(KEY . DEFAULT)`"
   (loop 
     :for (flag key . lst) 
     :in  (split s #\NewLine #'words)
@@ -160,21 +167,17 @@ Set random seed. |#
     :collect (cons (intern (string-upcase key)) 
                    (cli args flag (thing (car (last lst)))))))
 
-#| If `flag` is in `args`, then change  `b4` using `args` values;
-if `b4` is a boolean, there is no need for command-line values--
-just flip `b4`. |#
-(defun cli (args flag b4)
-  (aif (member flag args :test 'equal)
+(defun cli (lst flag b4)
+  "if `flag` in `lst`, then update `b4` from `lst`"
+  (aif (member flag lst :test 'equal)
     (cond ((eql b4 t) nil)
           ((eql b4 nil) t)
           (t (thing (second it))))
     b4))
 
-#|### Tests
-Run 'all' actions or just the `(? action)` action (resetting
-random seed and other setting before each action). Return the number
-of example failures to the operating system. |#
+;### Tests
 (defun egs ()
+  "run 'all' actions or just the `(? action)` action"
   (let ((fails 0)
         (b4 (copy-list *settings*)))
     (dolist (x (reverse *egs*))
@@ -190,16 +193,15 @@ of example failures to the operating system. |#
                                      (incf fails))))))
     (stop fails)))
 
-#|#### egs and help
-Show the help string (built from *help* and the doc strings from *egs*. |#
+;#### egs and help
 (defun about ()
+  "show help string (built from *help* and the doc strings from *egs*"
   (format t "~a~%~%ACTIONS:~%" *help*)
   (dolist (x (reverse *egs*))
     (format t "  -g ~10a : ~a~%" (first x) (second x))))
 
 ;## Data
-(defun isSym    (x) (eql 'Sym (type-of x)))
-(defun isNums   (s) (and (> (length s) 1) (upper-case-p (char s 0))))
+(defun isNum    (s) (and (> (length s) 1) (upper-case-p (char s 0))))
 (defun isGoal   (s) (or (isKlass s) (isLess s) (isMore s)))
 (defun isIgnore (s) (got s #\X -1))
 (defun isKlass  (s) (got s #\! -1))
@@ -209,22 +211,37 @@ Show the help string (built from *help* and the doc strings from *egs*. |#
 #|### sym
 Summarizes streams of numbers. |#
 (defstruct sym (at 0) (txt "") (n 0) has (w 1) mode (most 0))
-(defun sym! (&optional (at 0) (txt ""))
+(defun sym (&optional (at 0) (txt ""))
   (make-sym :at at :txt txt :w (if (isLess txt) -1 1)))
 
-(defmethod add ((i sym) x)
-  (with-slots (n has mode most) i
-    (unless (eq x #\?)
-      (incf n)
-      (incf (geta x has))
-      (when (> (geta x has) most)
-        (setf most (geta x has)
-              mode x)))))
+(defun add (col x &optional (inc 1))
+  (unless (eql col #\?)
+    (incf (slot-value col 'n) inc)
+    (if (num-p col) 
+      (add-num col x) 
+      (add-sym col x (incf (freq x (sym-has col)) inc)))))
 
-(defmethod mid ((i sym)) (sym-mode i))
-(defmethod div ((i sym))
+(defun add-sym (sym x n) 
+  (with-slots (most mode) sym
+    (if (> n most)
+      (setf most n
+            mode x))))
+
+(defun add-num (num x) 
+  (with-slots (lo hi ok has n) num
+    (setf lo (min lo x)
+          hi (max hi x))
+    (cond ((< (length has) (? max)) 
+           (setf ok nil)
+           (vector-push x has))
+          ((< (rand) (/ (? max) n)) 
+           (setf ok nil)
+           (setf (aref has (rint (length has))) x)))))
+
+(defun mids (sym) (sym-mode sym))
+(defun divs (sym)
   "Diversity (entropy)."
-  (with-slots (has n) i 
+  (with-slots (has n) sym 
     (labels ((fun (p) (* -1 (* p (log p 2)))))
       (loop for (_ . n1) in has sum (fun (/ n1 n))))))
 
@@ -233,8 +250,11 @@ Summarizes streams of numbers. |#
         (t                  (if (equal x y) 0 1))))
 
 ;### num
-(defstruct num (at 0) (txt "") (n 0) (mu 0) (m2 0) (w 1) (lo 1E31) (hi -1321))
-(defun num! (&optional (at 0) (txt ""))
+(defstruct num (at 0) (txt "") (n 0) (w 1)
+               (has (make-array 5 :fill-pointer 0 :adjustable t))
+               (lo 1E31) (hi -1321))
+
+(defun num (&optional (at 0) (txt ""))
   "summarizes streams of numbers"
   (make-num :at at :txt txt :w (if (isLess txt) -1 1)))
 
@@ -274,10 +294,10 @@ Summarizes streams of numbers. |#
 (defmethod th ((r row) (c sym))    (th r (sym-at c)))
 (defmethod th ((r row) (n number)) (elt (row-cells r) n))
 
-;### Cols
-; Factory for generating column headers from list of column names.
+;### Cols (factory
 (defstruct cols all x y klass)
 (defun cols! (lst &aux (i (make-cols)) (at -1))
+  "convert list of  column names to nums or syms"
   (with-slots (all x y klass) i
     (dolist (txt lst i)
       (let ((col (funcall (if (isNums txt) #'num! #'sym!) (incf at) txt))) 
@@ -286,29 +306,29 @@ Summarizes streams of numbers. |#
           (if (isGoal txt) (push col y) (push col x))
           (if (isKlass txt) (setf klass col)))))))
 
-;Update x and y column headers from data in row. returns row.
 (defmethod add ((i cols) row)
+  "update x and y column headers from data in row. returns row"
   (dolist (col (cols-x i)    ) (add col (th row col)))
   (dolist (col (cols-y i) row) (add col (th row col))))
 
-#|### Data
-Create data from either a file called 'src' or a list `src'. |#
+;### Data (for rows and cols)
 (defstruct data rows cols)
 (defun data! (src  &aux (i (make-data)))
+  "create data from either a file called 'src' or a list `src'"
   (labels ((update (x) (add i x)))
     (if (stringp src) (with-file src #'update) (mapc #'update  src))
     i))
 
-;Make `cols` (if currently missing) or update the cols and rows.
 (defmethod add ((i data) x)
+  "make `cols` (if currently missing) or update the cols and rows"
   (with-slots (cols rows) i
     (if cols 
       (push (add cols (if (row-p x) x (row! x))) 
             rows)
       (setf cols (cols! x)))))
 
-;Returns 0..1.
 (defmethod dists ((i data) (row1 row) (row2 row) &optional (cols (cols-x (data-cols i))))
+  "returns 0..1"
   (let ((d 0) (n 1E-32))
     (dolist (col cols (expt (/ d n) (/ 1 (? p))))
       (incf d (expt (dist col (th row1 (slot-value col 'at)) (th row2 (slot-value col 'at))) 
