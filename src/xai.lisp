@@ -1,11 +1,11 @@
 ; vi: set ts=2 sw=2 sts=2 et :
+;<img align=right width=250 
+;src="https://static.tvtropes.org/pmwiki/pub/images/rosie_7.png">
 ;<font size=20pt><b>AI for busy people</b></font><br>
 ;**Tim Menzies**
 (defpackage :xai (:use :cl))
 (in-package :xai)
 
-;<img align=right xwidth=250 src="https://screenshotbot.io/assets/images/integrations/botty.png">
-;
 ;[TOC]
 
 ;## Globals
@@ -122,8 +122,8 @@ Different LISPs handle certain common task in different ways. |#
              (if (numberp n) n s1)))))
 
 ;### Lists
-(defun per (seq &optional (p .5) &aux (v (coerce seq 'vector)))
-  (elt v (fllor (* p (length v)))))
+(defun per (seq &optional (p .5))
+  (elt seq (floor (* (min .999999 (max 0 p)) (length seq)))))
 
 ;### Strings
 (defun trim (s) 
@@ -168,6 +168,7 @@ Hence, we roll our own. |#
   (floor (* n (/ (rand base) base))))
 
 ;### Settings
+;If called with no `args`, then this just parses `*help*`. Otherwise, the defaults (from `*help*`) are updated from `args`.
 (defun settings (s &optional args)
   "for lines like '  -Key Flag ..... Default', return `(KEY . DEFAULT)`"
   (loop 
