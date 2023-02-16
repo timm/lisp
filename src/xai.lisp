@@ -1,14 +1,13 @@
 ; vi: set ts=2 sw=2 sts=2 et :
-;<img align=right src="https://www.lisperati.com/lisplogo_flag2_256.png">
-;<font size=20pt><b>AI, Made Easy</b></font><br>
+;<font size=20pt><b>AI for busy people</b></font><br>
+;<img align=right width=400 src="https://miro.medium.com/v2/format:webp/1*_XEK5hMqdyjVw0GzQu-KUw.png">
 ;**Tim Menzies** 
 (defpackage :xai (:use :cl))
 (in-package :xai)
 
 ;[TOC]
 
-;## Settings  (defines command-line and `*settings*`)
-(defvar *settings* nil)
+;## Globals
 (defvar *help* "
 xai: simple lisp
 (c) 2023 Tim Menzies <timm@ieee.org> BSD-2
@@ -23,28 +22,39 @@ OPTIONS:
   -p   p             distance coeffecient       = 2
   -s   seed          random number seed         = 10013")
 
-;## Macros (must be defined first)
+;From this help string, we fill in `*settings*` (and define the  command-line interface
+;using the  `(settings)` function, see below)
+(defvar *settings* nil)
+
+;Where to store test functions.
 (defvar *egs* nil)
+
+;Random number seed (used by `(rand), (rint)`).
+(defvar *seed* 10013)
+
+;## Macros
 (defmacro eg (what doc &body body)           
   "define a new example"
   `(push (list ,what ,doc (lambda () ,@body)) *egs*))
 
-(defmacro ? (x &optional lst)
+(defmacro ? (x &optional (lst '*settings*))
   "alist accessor, defaults to searching `*settings*`"
-  `(cdr (assoc ',x (or ,lst *settings*) :test #'equal)))
+  `(cdr (assoc ',x ,lst :test #'equal)))
 
 (defmacro aif (test then &optional else)      
-  "use when testing on a result that is also needed by `then`"
+  "used to test on a result that is also needed by `then`"
   `(let ((it ,test)) (if it ,then ,else)))
 
 (defmacro freq (x lst &optional (init 0))      
-  "frequency counts for small set of symbols, say less than 50"
+  "frequency counts for small group of symbols (say, less than 50)"
   `(cdr (or (assoc ,x ,lst :test #'equal) 
             (car (setf ,lst (cons (cons ,x ,init) ,lst))))))
 
 #|## Demos
-According to TDD, code should be developed incrementally, test by test.
-Hence, this code stores a set of tests (easiest to hardest) in in *egs*. |#
+According to TDD, code should be developed incrementally, test by test [^a].
+Hence, this code stores a set of tests (easiest to hardest) in in *egs*.
+
+[^a]: asdasas |#
 
 (eg "ls"  "show options" 
     (print *settings*))
@@ -147,7 +157,6 @@ Different LISPs handle certain common task in different ways. |#
 Common Lisp is infuriating: there is no simple way to set the random set. 
 Hence, we roll our own. |#   
 
-(defvar *seed* 10013)
 (defun rand (&optional (n 2))
   "random float 0.. < n"
   (setf *seed* (mod (* 16807.0d0 *seed*) 2147483647.0d0))
@@ -211,7 +220,7 @@ Hence, we roll our own. |#
 #|### sym
 Summarizes streams of numbers. |#
 (defstruct sym (at 0) (txt "") (n 0) has (w 1) mode (most 0))
-(defun sym (&optional (at 0) (txt ""))
+(defun sym! (&optional (at 0) (txt ""))
   (make-sym :at at :txt txt :w (if (isLess txt) -1 1)))
 
 (defun add (col x &optional (inc 1))
@@ -229,14 +238,14 @@ Summarizes streams of numbers. |#
 
 (defun add-num (num x) 
   (with-slots (lo hi ok has n) num
-    (setf lo (min lo x)
-          hi (max hi x))
-    (cond ((< (length has) (? max)) 
-           (setf ok nil)
-           (vector-push x has))
-          ((< (rand) (/ (? max) n)) 
-           (setf ok nil)
-           (setf (aref has (rint (length has))) x)))))
+    (labels ((add-end () (setf ok nil) (vector-push x has))
+             (add-any () (setf ok nil) (setf (aref has (rint (length has))) x)))
+      (setf lo (min lo x)
+            hi (max hi x))
+      (if  (< (length has) (? max)) 
+        (add-end)
+        (if (< (rand) (/ (? max) n))
+          (add-any)))
 
 (defun mids (sym) (sym-mode sym))
 (defun divs (sym)
