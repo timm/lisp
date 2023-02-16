@@ -11,7 +11,7 @@ the complete state of the entire assembly line. The trick is effectively using
 the available data. In practice, this means summarizing large data
 sets to find the “pearls  in the dust"-- that is, the data that
 really matters. 
-<img align=right width=300 
+<img align=right width=300  style="margin-top:40px;"
 src="https://www.uklinkology.co.uk/wp-content/uploads/2022/02/Success-Stories.png">|#
 
 ;[TOC]
