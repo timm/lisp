@@ -1,10 +1,11 @@
 ; vi: set ts=2 sw=2 sts=2 et :
 ;<font size=20pt><b>AI for busy people</b></font><br>
-;<img align=right width=400 src="https://miro.medium.com/v2/format:webp/1*_XEK5hMqdyjVw0GzQu-KUw.png">
-;**Tim Menzies** 
+;**Tim Menzies**
 (defpackage :xai (:use :cl))
 (in-package :xai)
 
+;<img align=right xwidth=250 src="https://screenshotbot.io/assets/images/integrations/botty.png">
+;
 ;[TOC]
 
 ;## Globals
