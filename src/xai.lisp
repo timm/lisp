@@ -1,10 +1,18 @@
 ; vi: set ts=2 sw=2 sts=2 et :
-;<img align=right width=250 
-;src="https://static.tvtropes.org/pmwiki/pub/images/rosie_7.png">
 ;<font size=20pt><b>AI for busy people</b></font><br>
-;**Tim Menzies**
+;**Tim Menzies** <timm@ieee.org>, http://timm.github.io
 (defpackage :xai (:use :cl))
 (in-package :xai)
+
+#| In the  21st-century, the problem is not accessing data but
+ignoring irrelevancies.  Most people  can electronically access
+mountains of data such as all transactions in the  past two years or
+the complete state of the entire assembly line. The trick is effectively using
+the available data. In practice, this means summarizing large data
+sets to find the “pearls  in the dust"-- that is, the data that
+really matters. 
+<img align=right width=300 
+src="https://www.uklinkology.co.uk/wp-content/uploads/2022/02/Success-Stories.png">|#
 
 ;[TOC]
 
@@ -30,7 +38,8 @@ OPTIONS:
 ;Where to store test functions.
 (defvar *egs* nil)
 
-;Random number seed (used by `(rand), (rint)`).
+;Common Lisp is infuriating: there is no simple way to set the random set. 
+;Hence, we roll our own (and here's our  random number seed).
 (defvar *seed* 10013)
 
 ;## Macros
@@ -154,9 +163,7 @@ Different LISPs handle certain common task in different ways. |#
   (with-open-file (s file) 
     (loop (funcall fun (funcall filter (or (read-line s nil) (return)))))))
 
-#|### Random
-Common Lisp is infuriating: there is no simple way to set the random set. 
-Hence, we roll our own. |#   
+;### Random
 
 (defun rand (&optional (n 2))
   "random float 0.. < n"
@@ -239,12 +246,12 @@ Summarizes streams of numbers. |#
 
 (defun add-num (num x) 
   (with-slots (lo hi ok has n) num
-    (labels ((add-at-end  () (setf ok nil) (vector-push x has))
-             (replace-any () (setf ok nil) (setf (aref has (rint (length has))) x)))
       (setf lo (min lo x)
             hi (max hi x))
-      (cond ((< (length has) (? max)) (add-at-end))
-            ((< (rand) (/ (? max) n)) (replace-any))))))
+      (cond ((< (length has) (? max)) 
+             (setf ok nil) (vector-push x has))
+            ((< (rand) (/ (? max) n)) 
+             (setf ok nil) (setf (aref has (rint (length has))) x)))))
 
 (defun mids (sym) (sym-mode sym))
 (defun divs (sym)
@@ -254,8 +261,9 @@ Summarizes streams of numbers. |#
       (loop for (_ . n1) in has sum (fun (/ n1 n))))))
 
 (defmethod dist ((i sym) x y)
-  (cond ((and (equal x #\?) (equal x #\?)) 1)
-        (t                  (if (equal x y) 0 1))))
+  (if (and (equal x #\?) (equal x #\?)) 
+      1
+      (if (equal x y) 0 1)))
 
 ;### num
 (defstruct num (at 0) (txt "") (n 0) (w 1)
@@ -350,3 +358,30 @@ Summarizes streams of numbers. |#
 (setf *settings* (settings *help* (args)))
 (if (? help) (about) (egs))
 
+;## License
+; 
+; Copyright 2023, Tim Menzies
+; 
+; Redistribution and use in source and binary forms, with or without
+; modification, are permitted provided that the following conditions
+; are met:
+; 
+; 1. Redistributions of source code must retain the above copyright
+; notice, this list of conditions and the following disclaimer.
+; 
+; 2. Redistributions in binary form must reproduce the above copyright
+; notice, this list of conditions and the following disclaimer in the
+; documentation and/or other materials provided with the distribution.
+; 
+; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+; “AS IS” AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+; LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+; FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+; COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+; INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+; BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+; CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+; LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+; ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+; POSSIBILITY OF SUCH DAMAGE.
