@@ -233,20 +233,17 @@ Summarizes streams of numbers. |#
 
 (defun add-sym (sym x n) 
   (with-slots (most mode) sym
-    (if (> n most)
-      (setf most n
-            mode x))))
+    (if (> n most) (setf most n
+                         mode x))))
 
 (defun add-num (num x) 
   (with-slots (lo hi ok has n) num
-    (labels ((add-end () (setf ok nil) (vector-push x has))
-             (add-any () (setf ok nil) (setf (aref has (rint (length has))) x)))
+    (labels ((add-at-end  () (setf ok nil) (vector-push x has))
+             (replace-any () (setf ok nil) (setf (aref has (rint (length has))) x)))
       (setf lo (min lo x)
             hi (max hi x))
-      (if  (< (length has) (? max)) 
-        (add-end)
-        (if (< (rand) (/ (? max) n))
-          (add-any)))
+      (cond ((< (length has) (? max)) (add-at-end))
+            ((< (rand) (/ (? max) n)) (replace-any))))))
 
 (defun mids (sym) (sym-mode sym))
 (defun divs (sym)
