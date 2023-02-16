@@ -19,7 +19,7 @@ BEGIN {
   print "  background:   #EDEDED} "##FFF; }"
   print "img.right200 {"
   print "  width:200px;border:1px solid #0039a6; padding:3px;margin:5px;float:right;"
-  print "}""      
+  print "}"      
   print "</style>" 
   print "</head><body>" }
 
