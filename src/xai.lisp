@@ -70,11 +70,11 @@ Hence, this code stores a set of tests (easiest to hardest) in in *egs*.
     (print *settings*))
 
 (eg "geta" "test adaptive alist"
-    (let ((lst '((b . 100))))
-      (incf (geta 'a lst))
-      (incf (geta 'a lst))
-      (incf (geta 'a lst))
-      (equal 3 (cdr (assoc 'a lst)))))
+    (let ((lst '((a . 100))))
+      (incf (freq 'a lst))
+      (incf (freq 'a lst))
+      (incf (freq 'a lst))
+      (equal 3 (? 'a lst))))
 
 (eg "lines" "testing file reading"
     (let ((n 0))
@@ -223,8 +223,8 @@ Different LISPs handle certain common task in different ways. |#
   (lo most-positive-fixnum) (hi (1- most-positive-fixnum)))
 
 (defstruct cols
-  "asd"
-  all x y klass)
+  "holds sets of rows and columns"
+  names all x y klass)
 
 ;#### egs and help
 (defun about ()
@@ -234,32 +234,22 @@ Different LISPs handle certain common task in different ways. |#
     (format t "  -g ~10a : ~a~%" (first x) (second x))))
 
 ;## Data
-(defun isNum   (s) (and (> (length s) 0) (upper-case-p (char txt 0)))
+(defun isNum   (s) (and (> (length s) 0) (upper-case-p (char s 0))))
 (defun isGoal  (s) (or (isKlass s) (isLess s) (isMore s)))
 (defun isKlass (s) (got s #\! -1))
 (defun isLess  (s) (got s #\- -1))
 (defun isMore  (s) (got s #\+ -1))
 (defun isIgnored  (s) (got s #\? -1))
 
-(defun cols (lst &aux (n 0) (it (make-cols)))
-  (with-slots (all x y klass)
-    (dolist (txt lst it)
-      (let ((it (make-instance (if (isNum txt) 'num 'sym) :at (incf n) :txt txt)))
-        (push all col)
+(defun cols (lst &aux (n 0) (col (make-cols :names lst)))
+  (with-slots (all x y klass) col
+    (dolist (txt lst )
+      (let ((col (make-instance (if (isNum txt) 'num 'sym) :at (incf n) :txt txt)))
+        (push col all)
+        (if (isLess txt) (setf (slot-value col 'w) 0))
         (unless (isIgnored txt)
-          (if (isKlass col) (setf klass col)
-            (if (isGoal txt) (push col x) (push col y)))))))
-
-       
-    (setf all (mapcar 
-                (lambda (txt)
-    
-  &optional (at 0) (txt " "))
-  (let* ((what  (if (isNum txt) #'make-name #'make-sym))
-         (new   (funcall (isNum txt) :at at :txt txt)))
-      (setf (slot-value new 'is((isIgnore (s) (got s #\X -1))
-       (isGoal   (s) (or (got s #! -1) (got s #\- -1) (got s #\+ -1)))
-       (isKlass  (s) (got s #\! -1)))
+          (if (isKlass col) (setf klass col))
+          (if (isGoal txt) (push col x) (push col y)))))))
 
 
 ;### sym
@@ -298,88 +288,89 @@ Different LISPs handle certain common task in different ways. |#
   "diversity is stdev for nums, or entropy for syms"
   (if (num-p col) 
     (/ (- (per (have col) .9) (per (have col) .1)) 2.58)
-    (with-slots (have n) sym 
+    (with-slots (has n) col 
       (labels ((fun (p) (* -1 (* p (log p 2)))))
         (loop for (_ . n1) in has sum (fun (/ n1 n)))))))
 
-### num
-(defmethod dist ((i sym) x y)
-  (if (and (equal x #\?) (equal x #\?)) 
-      1
-      (if (equal x y) 0 1)))
+;### num
+(defun dist (data row1 row2 &optional (cols (cols-x (data-cols data))))
+  (let ((n 0) (d 0))
+    (dolist (col cols (expt (/ d  n) (/ 1 (? p))))
+      (incf n)
+      (incf d (expt (dist1 col (elt row1 (col-at col)) 
+                               (elt row2 (col-at col))) 
+                    (? p))))))
 
-;
-
-(defmethod mid ((i num)) (num-mu i))
-(defmethod div ((i num))
-  (with-slots (n m2) i (if (<= n 1) 0 (sqrt (/ m2 (- n 1))))))
-
-(defmethod norm ((i num) x) ;;; Map 'x' 0..1 (unless unknown, unless too small)
-  (with-slots (lo hi) i
-    (if (eq x #\?) x (/ (- x lo) (- hi lo 1e-32)))))
-
-(defmethod dist ((i num) x y)
+(defun dist1 (col x y)
   (if (and (equal x #\?) (equal x #\?)) 
     1
-    (let ((x (norm i x))
-          (y (norm i y)))
-      (if (eq x #\?) (setf x (if (< y .5) 1 0)))
-      (if (eq y #\?) (setf y (if (< x .5) 1 0)))
-      (abs (- x y)))))
+    (if (sym-p col)
+      (if (equal x y) 0 1)
+      (let ((x (norm col x))
+            (y (norm col y)))
+        (if (eq x #\?) (setf x (if (< y .5) 1 0)))
+        (if (eq y #\?) (setf y (if (< x .5) 1 0)))
+        (abs (- x y))))))
 
-; Create something that holds `cells`s.
-(defstruct row cells y-used)
-(defun row! (cells)
-  (make-row :cells cells))
-
-(defmethod th ((r row) (c num))    (th r (num-at c)))
-(defmethod th ((r row) (c sym))    (th r (sym-at c)))
-(defmethod th ((r row) (n number)) (elt (row-cells r) n))
-
-;### Cols (factory
-(defstruct cols all x y klass)
-(defun cols! (lst &aux (i (make-cols)) (at -1))
-  "convert list of  column names to nums or syms"
-  (with-slots (all x y klass) i
-    (dolist (txt lst i)
-      (let ((col (funcall (if (isNums txt) #'num! #'sym!) (incf at) txt))) 
-        (push col all)
-        (when (not (isIgnore txt))
-          (if (isGoal txt) (push col y) (push col x))
-          (if (isKlass txt) (setf klass col)))))))
-
-(defmethod add ((i cols) row)
-  "update x and y column headers from data in row. returns row"
-  (dolist (col (cols-x i)    ) (add col (th row col)))
-  (dolist (col (cols-y i) row) (add col (th row col))))
-
-;### Data (for rows and cols)
-(defstruct data rows cols)
-(defun data! (src  &aux (i (make-data)))
-  "create data from either a file called 'src' or a list `src'"
-  (labels ((update (x) (add i x)))
-    (if (stringp src) (with-file src #'update) (mapc #'update  src))
-    i))
-
-(defmethod add ((i data) x)
-  "make `cols` (if currently missing) or update the cols and rows"
-  (with-slots (cols rows) i
-    (if cols 
-      (push (add cols (if (row-p x) x (row! x))) 
-            rows)
-      (setf cols (cols! x)))))
-
-(defmethod dists ((i data) (row1 row) (row2 row) &optional (cols (cols-x (data-cols i))))
-  "returns 0..1"
-  (let ((d 0) (n 1E-32))
-    (dolist (col cols (expt (/ d n) (/ 1 (? p))))
-      (incf d (expt (dist col (th row1 (slot-value col 'at)) (th row2 (slot-value col 'at))) 
-                    (? p)))
-      (incf n))))
-
-(defmethod around ((i data) (row1 row) &optional (rows (data-rows i)) (cols (data-cols i)))
-   (sort (mapcar (lambda (row2) (cons (dists i row1 row2 cols) row2)) rows) #'< :key #'cdr))
-
+(defun norm (num x) 
+  "map 'x' 0..1 (unless unknown, unless too small"
+  (with-slots (lo hi) num
+    (if (eq x #\?) x (/ (- x lo) (- hi lo 1e-32)))))
+;
+;
+;; Create something that holds `cells`s.
+;(defstruct row cells y-used)
+;(defun row! (cells)
+;  (make-row :cells cells))
+;
+;(defmethod th ((r row) (c num))    (th r (num-at c)))
+;(defmethod th ((r row) (c sym))    (th r (sym-at c)))
+;(defmethod th ((r row) (n number)) (elt (row-cells r) n))
+;
+;;### Cols (factory
+;(defstruct cols all x y klass)
+;(defun cols! (lst &aux (i (make-cols)) (at -1))
+;  "convert list of  column names to nums or syms"
+;  (with-slots (all x y klass) i
+;    (dolist (txt lst i)
+;      (let ((col (funcall (if (isNums txt) #'num! #'sym!) (incf at) txt))) 
+;        (push col all)
+;        (when (not (isIgnore txt))
+;          (if (isGoal txt) (push col y) (push col x))
+;          (if (isKlass txt) (setf klass col)))))))
+;
+;(defmethod add ((i cols) row)
+;  "update x and y column headers from data in row. returns row"
+;  (dolist (col (cols-x i)    ) (add col (th row col)))
+;  (dolist (col (cols-y i) row) (add col (th row col))))
+;
+;;### Data (for rows and cols)
+;(defstruct data rows cols)
+;(defun data! (src  &aux (i (make-data)))
+;  "create data from either a file called 'src' or a list `src'"
+;  (labels ((update (x) (add i x)))
+;    (if (stringp src) (with-file src #'update) (mapc #'update  src))
+;    i))
+;
+;(defmethod add ((i data) x)
+;  "make `cols` (if currently missing) or update the cols and rows"
+;  (with-slots (cols rows) i
+;    (if cols 
+;      (push (add cols (if (row-p x) x (row! x))) 
+;            rows)
+;      (setf cols (cols! x)))))
+;
+;(defmethod dists ((i data) (row1 row) (row2 row) &optional (cols (cols-x (data-cols i))))
+;  "returns 0..1"
+;  (let ((d 0) (n 1E-32))
+;    (dolist (col cols (expt (/ d n) (/ 1 (? p))))
+;      (incf d (expt (dist col (th row1 (slot-value col 'at)) (th row2 (slot-value col 'at))) 
+;                    (? p)))
+;      (incf n))))
+;
+;(defmethod around ((i data) (row1 row) &optional (rows (data-rows i)) (cols (data-cols i)))
+;   (sort (mapcar (lambda (row2) (cons (dists i row1 row2 cols) row2)) rows) #'< :key #'cdr))
+;
 ;## Start-up
 (setf *settings* (settings *help* (args)))
 (if (? help) (about) (egs))
