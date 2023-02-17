@@ -27,7 +27,7 @@ OPTIONS:
   -h   help          show help                  = nil
   -g   action        start up action            = none
   -f   far           how far to seek poles      = .95
-  -R   right-margin  pretty print right margin  = 1000
+  -m   max           max size of num cache      = 512
   -p   p             distance coeffecient       = 2
   -s   seed          random number seed         = 10013")
 
@@ -43,6 +43,7 @@ OPTIONS:
 (defvar *seed* 10013)
 
 ;## Macros
+;Stuff we need to put at the top.
 (defmacro eg (what doc &body body)           
   "define a new example"
   `(push (list ,what ,doc (lambda () ,@body)) *egs*))
@@ -74,7 +75,7 @@ Hence, this code stores a set of tests (easiest to hardest) in in *egs*.
       (incf (freq 'a lst))
       (incf (freq 'a lst))
       (incf (freq 'a lst))
-      (equal 3 (? 'a lst))))
+      (equal 103 (? a lst))))
 
 (eg "lines" "testing file reading"
     (let ((n 0))
@@ -83,23 +84,28 @@ Hence, this code stores a set of tests (easiest to hardest) in in *egs*.
       (eql  n 3192)))
 
 (eg "num" "test number"  
-    (let  ((n (num! 10 "num"))) 
+    (let  ((n (make-num))) 
       (dolist (i '(1 1 1 1 2 2 3)) (add n i))
-      (and (equalp 11/7 (mid n)) (equalp 0.7867958 (div n)))))
+      (and (equalp 1 (mid n)) (<= 0.77 (div n) 0.78))))
+
+(eg "nums" "test lots of number"  
+    (let  ((n (make-num))) 
+      (dotimes (i 10000)  (add n (rand)))
+      (and (<= .49  (mid n) .51) (<= .31  (div n) .32))))
 
 (eg "sym" "test symbols"  
-    (let ((s (sym 10 "sym"))) 
-      (dolist (i '(a a a a b b c)) (adds s i))
-      (print (divs s))
-      (and (equalp 'a (mids s)) (<= 1.378 (divs s) 1.379))))
+    (let ((s (make-sym))) 
+      (dolist (i '(a a a a b b c)) (add s i))
+      (print (div s))
+      (and (equalp 'a (mid s)) (<= 1.378 (div s) 1.379))))
 
 (eg "cols" "create some columns"
-    (print (cols! '("Aas" "state" "Weight-")) t))
+    (print (cols '("Aas" "state" "Weight-")) t))
 
-(eg "data" "testing file reading"
+'(eg "data" "testing file reading"
     (print (cols-x (data-cols  (data! "../data/auto93.csv")))))
 
-(eg "dist" "dostance function" 
+'(eg "dist" "dostance function" 
     (let* ((n -1) 
            (data (data! "../data/auto93.csv"))
            (row1 (first (data-rows data))))
@@ -107,6 +113,103 @@ Hence, this code stores a set of tests (easiest to hardest) in in *egs*.
       (dolist (row2 (data-rows data) t) 
         (if (zerop (mod (incf n) 40)) 
           (format t "~a ~a ~a~%" n (row-cells row2) (dists  data row1 row2))))))
+
+;## Structs
+(defstruct sym 
+  "summarizes streams of numbers"
+  (at 0) (txt "") (n 0) has (w 1) mode (most 0))
+
+(defstruct num 
+  "summarizes streams of numbers"
+  (at 0) (txt "") (n 0) (w 1) ok
+  (has (make-array 5 :fill-pointer 0 :adjustable t))
+  (lo most-positive-fixnum) (hi most-negative-fixnum))
+
+(defstruct cols
+  "holds sets of rows and columns"
+  names all x y klass)
+
+;## Data
+(defun isNum   (s) (and (> (length s) 0) (upper-case-p (char s 0))))
+(defun isGoal  (s) (or (isKlass s) (isLess s) (isMore s)))
+(defun isKlass (s) (got s #\! -1))
+(defun isLess  (s) (got s #\- -1))
+(defun isMore  (s) (got s #\+ -1))
+(defun isIgnored  (s) (got s #\? -1))
+
+(defun cols (lst &aux (n 0) (col (make-cols :names lst)))
+  (with-slots (all x y klass) col
+    (dolist (txt lst col)
+      (let ((col (funcall (if (isNum txt) 'make-num 'make-sym) :at (incf n) :txt txt)))
+        (push col all)
+        (if (isLess txt) (setf (slot-value col 'w) -1))
+        (unless (isIgnored txt)
+          (if (isKlass col) (setf klass col))
+          (if (isGoal txt) (push col x) (push col y)))))))
+
+;### sym
+(defun add (col x &optional (inc 1))
+  (unless (eql col #\?)
+    (incf (slot-value col 'n) inc)
+    (if (num-p col) 
+      (add-num col x) 
+      (add-sym col x (incf (freq x (sym-has col)) inc)))))
+
+(defun add-sym (sym x n) 
+  (with-slots (most mode) sym
+    (if (> n most) (setf most n
+                         mode x))))
+
+(defun add-num (num x) 
+  (with-slots (lo hi ok has n) num
+      (setf lo (min lo x)
+            hi (max hi x))
+      (cond ((< (length has) (? max)) 
+             (setf ok nil) (vector-push-extend x has))
+            ((<= (rand) (/ (? max) n)) 
+             (setf ok nil) (setf (aref has (rint (length has))) x)))))
+
+(defun have (col)
+  (if (and (num-p col) (not (num-ok col)))
+    (sort (num-has col) #'<))
+  (setf (num-ok col) t)
+  (slot-value col 'has))
+
+(defun mid (col)
+   (if (num-p col) (per (have col) .5) (sym-mode col)))
+
+(defun div (col)
+  "diversity is stdev for nums, or entropy for syms"
+  (if (num-p col) 
+    (/ (- (per (have col) .9) (per (have col) .1)) 2.58)
+    (with-slots (has n) col 
+      (labels ((fun (p) (* -1 (* p (log p 2)))))
+        (loop for (_ . n1) in has sum (fun (/ n1 n)))))))
+
+;### num
+(defun dist (data row1 row2 &optional (cols (cols-x (data-cols data))))
+  (let ((n 0) (d 0))
+    (dolist (col cols (expt (/ d  n) (/ 1 (? p))))
+      (incf n)
+      (incf d (expt (dist1 col (elt row1 (col-at col)) 
+                               (elt row2 (col-at col))) 
+                    (? p))))))
+
+(defun dist1 (col x y)
+  (if (and (equal x #\?) (equal x #\?)) 
+    1
+    (if (sym-p col)
+      (if (equal x y) 0 1)
+      (let ((x (norm col x))
+            (y (norm col y)))
+        (if (eq x #\?) (setf x (if (< y .5) 1 0)))
+        (if (eq y #\?) (setf y (if (< x .5) 1 0)))
+        (abs (- x y))))))
+
+(defun norm (num x) 
+  "map 'x' 0..1 (unless unknown, unless too small"
+  (with-slots (lo hi) num
+    (if (eq x #\?) x (/ (- x lo) (- hi lo 1e-32)))))
 
 #|## Library
 ### Portability
@@ -165,12 +268,12 @@ Different LISPs handle certain common task in different ways. |#
 
 ;### Random
 
-(defun rand (&optional (n 2))
+(defun rand (&optional (n 1))
   "random float 0.. < n"
   (setf *seed* (mod (* 16807.0d0 *seed*) 2147483647.0d0))
   (* n (- 1.0d0 (/ *seed* 2147483647.0d0))))
 
-(defun rint (&optional (n 2) &aux (base 10000000000.0))
+(defun rint (&optional (n 1) &aux (base 10000000000.0))
   "random int 0..n-1"
   (floor (* n (/ (rand base) base))))
 
@@ -203,7 +306,6 @@ Different LISPs handle certain common task in different ways. |#
         (when (or (equal (? action) name) 
                   (equal (? action) "all"))
           (setf *settings*           b4
-                *print-right-margin* (? right-margin)
                 *seed*               (? seed))
           (format t "▶️  TEST: ~a " name)  
           (cond ((funcall (third x)) (format t "✅ PASS ~%"))
@@ -211,111 +313,13 @@ Different LISPs handle certain common task in different ways. |#
                                      (incf fails))))))
     (stop fails)))
 
-;## Structs
-(defstruct sym 
-  "summarizes streams of numbers"
-  (at 0) (txt "") (n 0) has (w 1) mode (most 0))
-
-(defstruct num 
-  "summarizes streams of numbers"
-  (at 0) (txt "") (n 0) (w 1)
-  (has (make-array 5 :fill-pointer 0 :adjustable t))
-  (lo most-positive-fixnum) (hi (1- most-positive-fixnum)))
-
-(defstruct cols
-  "holds sets of rows and columns"
-  names all x y klass)
-
-;#### egs and help
 (defun about ()
   "show help string (built from *help* and the doc strings from *egs*"
   (format t "~a~%~%ACTIONS:~%" *help*)
   (dolist (x (reverse *egs*))
     (format t "  -g ~10a : ~a~%" (first x) (second x))))
 
-;## Data
-(defun isNum   (s) (and (> (length s) 0) (upper-case-p (char s 0))))
-(defun isGoal  (s) (or (isKlass s) (isLess s) (isMore s)))
-(defun isKlass (s) (got s #\! -1))
-(defun isLess  (s) (got s #\- -1))
-(defun isMore  (s) (got s #\+ -1))
-(defun isIgnored  (s) (got s #\? -1))
 
-(defun cols (lst &aux (n 0) (col (make-cols :names lst)))
-  (with-slots (all x y klass) col
-    (dolist (txt lst )
-      (let ((col (make-instance (if (isNum txt) 'num 'sym) :at (incf n) :txt txt)))
-        (push col all)
-        (if (isLess txt) (setf (slot-value col 'w) 0))
-        (unless (isIgnored txt)
-          (if (isKlass col) (setf klass col))
-          (if (isGoal txt) (push col x) (push col y)))))))
-
-
-;### sym
-
-(defun add (col x &optional (inc 1))
-  (unless (eql col #\?)
-    (incf (slot-value col 'n) inc)
-    (if (num-p col) 
-      (add-num col x) 
-      (add-sym col x (incf (freq x (sym-has col)) inc)))))
-
-(defun add-sym (sym x n) 
-  (with-slots (most mode) sym
-    (if (> n most) (setf most n
-                         mode x))))
-
-(defun add-num (num x) 
-  (with-slots (lo hi ok has n) num
-      (setf lo (min lo x)
-            hi (max hi x))
-      (cond ((< (length has) (? max)) 
-             (setf ok nil) (vector-push x has))
-            ((< (rand) (/ (? max) n)) 
-             (setf ok nil) (setf (aref has (rint (length has))) x)))))
-
-(defun have (col)
-  (if (and (num-p col) (not (num-ok col)))
-    (sort (num-has col) #'<))
-  (setf (num-ok col) t)
-  (slot-value col 'has))
-
-(defun mid (col)
-   (if (num-p col) (per (have col) .5) (sym-mode col)))
-
-(defun div (col)
-  "diversity is stdev for nums, or entropy for syms"
-  (if (num-p col) 
-    (/ (- (per (have col) .9) (per (have col) .1)) 2.58)
-    (with-slots (has n) col 
-      (labels ((fun (p) (* -1 (* p (log p 2)))))
-        (loop for (_ . n1) in has sum (fun (/ n1 n)))))))
-
-;### num
-(defun dist (data row1 row2 &optional (cols (cols-x (data-cols data))))
-  (let ((n 0) (d 0))
-    (dolist (col cols (expt (/ d  n) (/ 1 (? p))))
-      (incf n)
-      (incf d (expt (dist1 col (elt row1 (col-at col)) 
-                               (elt row2 (col-at col))) 
-                    (? p))))))
-
-(defun dist1 (col x y)
-  (if (and (equal x #\?) (equal x #\?)) 
-    1
-    (if (sym-p col)
-      (if (equal x y) 0 1)
-      (let ((x (norm col x))
-            (y (norm col y)))
-        (if (eq x #\?) (setf x (if (< y .5) 1 0)))
-        (if (eq y #\?) (setf y (if (< x .5) 1 0)))
-        (abs (- x y))))))
-
-(defun norm (num x) 
-  "map 'x' 0..1 (unless unknown, unless too small"
-  (with-slots (lo hi) num
-    (if (eq x #\?) x (/ (- x lo) (- hi lo 1e-32)))))
 ;
 ;
 ;; Create something that holds `cells`s.
