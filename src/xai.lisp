@@ -1,6 +1,6 @@
 ; vi: set ts=2 sw=2 sts=2 et :
 ;<font size=20pt><b>AI for busy people</b></font><br>
-;**Tim Menzies** <timm@ieee.org>, http://timm.github.io
+;**Tim Menzies**<br><timm@ieee.org><br>http://timm.github.io
 (defpackage :xai (:use :cl))
 (in-package :xai)
 
@@ -211,6 +211,21 @@ Different LISPs handle certain common task in different ways. |#
                                      (incf fails))))))
     (stop fails)))
 
+;## Structs
+(defstruct sym 
+  "summarizes streams of numbers"
+  (at 0) (txt "") (n 0) has (w 1) mode (most 0))
+
+(defstruct num 
+  "summarizes streams of numbers"
+  (at 0) (txt "") (n 0) (w 1)
+  (has (make-array 5 :fill-pointer 0 :adjustable t))
+  (lo most-positive-fixnum) (hi (1- most-positive-fixnum)))
+
+(defstruct cols
+  "asd"
+  all x y klass)
+
 ;#### egs and help
 (defun about ()
   "show help string (built from *help* and the doc strings from *egs*"
@@ -219,18 +234,35 @@ Different LISPs handle certain common task in different ways. |#
     (format t "  -g ~10a : ~a~%" (first x) (second x))))
 
 ;## Data
-(defun isNum    (s) (and (> (length s) 1) (upper-case-p (char s 0))))
-(defun isGoal   (s) (or (isKlass s) (isLess s) (isMore s)))
-(defun isIgnore (s) (got s #\X -1))
-(defun isKlass  (s) (got s #\! -1))
-(defun isLess   (s) (got s #\- -1))
-(defun isMore   (s) (got s #\+ -1))
+(defun isNum   (s) (and (> (length s) 0) (upper-case-p (char txt 0)))
+(defun isGoal  (s) (or (isKlass s) (isLess s) (isMore s)))
+(defun isKlass (s) (got s #\! -1))
+(defun isLess  (s) (got s #\- -1))
+(defun isMore  (s) (got s #\+ -1))
+(defun isIgnored  (s) (got s #\? -1))
 
-#|### sym
-Summarizes streams of numbers. |#
-(defstruct sym (at 0) (txt "") (n 0) has (w 1) mode (most 0))
-(defun sym! (&optional (at 0) (txt ""))
-  (make-sym :at at :txt txt :w (if (isLess txt) -1 1)))
+(defun cols (lst &aux (n 0) (it (make-cols)))
+  (with-slots (all x y klass)
+    (dolist (txt lst it)
+      (let ((it (make-instance (if (isNum txt) 'num 'sym) :at (incf n) :txt txt)))
+        (push all col)
+        (unless (isIgnored txt)
+          (if (isKlass col) (setf klass col)
+            (if (isGoal txt) (push col x) (push col y)))))))
+
+       
+    (setf all (mapcar 
+                (lambda (txt)
+    
+  &optional (at 0) (txt " "))
+  (let* ((what  (if (isNum txt) #'make-name #'make-sym))
+         (new   (funcall (isNum txt) :at at :txt txt)))
+      (setf (slot-value new 'is((isIgnore (s) (got s #\X -1))
+       (isGoal   (s) (or (got s #! -1) (got s #\- -1) (got s #\+ -1)))
+       (isKlass  (s) (got s #\! -1)))
+
+
+;### sym
 
 (defun add (col x &optional (inc 1))
   (unless (eql col #\?)
@@ -253,36 +285,30 @@ Summarizes streams of numbers. |#
             ((< (rand) (/ (? max) n)) 
              (setf ok nil) (setf (aref has (rint (length has))) x)))))
 
-(defun mids (sym) (sym-mode sym))
-(defun divs (sym)
-  "Diversity (entropy)."
-  (with-slots (has n) sym 
-    (labels ((fun (p) (* -1 (* p (log p 2)))))
-      (loop for (_ . n1) in has sum (fun (/ n1 n))))))
+(defun have (col)
+  (if (and (num-p col) (not (num-ok col)))
+    (sort (num-has col) #'<))
+  (setf (num-ok col) t)
+  (slot-value col 'has))
 
+(defun mid (col)
+   (if (num-p col) (per (have col) .5) (sym-mode col)))
+
+(defun div (col)
+  "diversity is stdev for nums, or entropy for syms"
+  (if (num-p col) 
+    (/ (- (per (have col) .9) (per (have col) .1)) 2.58)
+    (with-slots (have n) sym 
+      (labels ((fun (p) (* -1 (* p (log p 2)))))
+        (loop for (_ . n1) in has sum (fun (/ n1 n)))))))
+
+### num
 (defmethod dist ((i sym) x y)
   (if (and (equal x #\?) (equal x #\?)) 
       1
       (if (equal x y) 0 1)))
 
-;### num
-(defstruct num (at 0) (txt "") (n 0) (w 1)
-               (has (make-array 5 :fill-pointer 0 :adjustable t))
-               (lo 1E31) (hi -1321))
-
-(defun num (&optional (at 0) (txt ""))
-  "summarizes streams of numbers"
-  (make-num :at at :txt txt :w (if (isLess txt) -1 1)))
-
-(defmethod add ((i num) x) ;;; Add one thing, updating 'lo,hi'
-  (with-slots (n lo hi mu m2) i
-    (unless (eq x #\?)
-      (incf n)
-      (let ((d (- x mu)))
-        (incf mu (/ d n))
-        (incf m2 (* d (- x mu)))
-        (setf lo (min x lo)
-              hi (max x hi))))))
+;
 
 (defmethod mid ((i num)) (num-mu i))
 (defmethod div ((i num))
