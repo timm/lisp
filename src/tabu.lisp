@@ -61,37 +61,36 @@ OPTIONS:
   (setf (num-ok num) t)
   (num-has num))
 
-(defun col-factory (&key (txt "") (at 0))
+(defun str->col (&key (txt "") (at 0))
   (funcall  (if (isNum txt) #'make-num #'make-sym) 
             :at at :txt txt
             :w   (if (isLess txt) -1 1)))
 
-(defun cols-factory (lst &aux (self (make-cols :names lst)) (n -1))
+(defun lst->cols (lst &aux (self (make-cols :names lst)) (n -1))
   (with-slots (all x y klass) self
-    (labels ((keeping (txt &aux (col (col-factory :txt txt :at (incf n)))) 
+    (labels ((worker (txt &aux (col (str->col :txt txt :at (incf n)))) 
                       (push col all)
                       (unless (isIgnored txt)
-                        (if (isKlass txt)  (setf klass col))
+                        (if (isKlass txt) (setf klass col))
                         (if (isGoal txt) (push col y) (push col x)))))
-      (mapcar #'keeping lst)
+      (mapcar #'worker lst)
       self)))
 
-(defun data-factory (src &optional more &aux (self (make-data)))
+(defun src->data (src &optional more &aux (self (make-data)))
   (labels ((row (lst) (add self lst)))
     (cond 
       ((stringp  src) (with-file src #'row)  self)
       ((consp src)    (mapcar #'row src)     self)
-      ((data-p src)   (data-factory (make-data) 
-                                    (cons (list (cols-names (data-cols src))) more))))))
+      ((data-p src)   (src->data (cons (list (cols-names (data-cols src))) more))))))
 
 (defmethod add ((self data) lst)
   (aif (data-cols self)
     (push (add it lst)  (data-rows self))
-    (setf (data-cols self) (cols-factory lst))))
+    (setf (data-cols self) (lst->cols lst))))
 
 (defmethod add ((self cols) lst)
-  (dolist (tmp (list (cols-x self) (cols-y self)) lst)
+  (dolist (tmp `(,(cols-x self) ,(cols-y self)) lst)
     (dolist (col tmp)
       (add col (elt lst (slot-value col 'at))))))
 
-(print  (holds (second (cols-x  (data-cols (data-factory (? file)))))))
+(print  (holds (second (cols-x  (data-cols (src->data (? file)))))))
