@@ -1,4 +1,6 @@
 ; vi: set ts=2 sw=2 sts=2 et :
+(defpackage :tabu (:use :cl))
+(in-package :tabu)
 (load "tabu-lib")
 (defvar *help* "
 
@@ -11,7 +13,6 @@ OPTIONS:
   -s   seed   random numbe seed  = 10013")
 
 (defvar *settings* (settings *help* (args)))
-(print *settings*)
 ;----------------------------------------------------------
 
 (defun isNum   (s) (and (> (length s) 0) (upper-case-p (char s 0))))
@@ -19,17 +20,20 @@ OPTIONS:
 (defun isKlass (s) (got s #\! -1))
 (defun isLess  (s) (got s #\- -1))
 (defun isMore  (s) (got s #\+ -1))
-(defun isIgnored (s) (got s #\? -1))
+(defun isIgnored (s) (got s #\X -1))
 
 (defstruct data rows cols)
 
 (defstruct cols all x y names)
 
 (defstruct sym 
-  (at 0) (txt "") (n 0) (w 1) has most mode)
+  (at 0) (txt "") (n 0) (w 1) has (most 0) mode)
 
 (defstruct num 
-  (at 0) (txt "") (n 0) (w 1) ok 
+  (at 0) (txt "") (n 0) (w 1) 
+  (hi most-negative-fixnum) 
+  (lo most-positive-fixnum)
+  ok
   (has (make-array 5 :fill-pointer 0 :adjustable t)))
 
 (defmethod add ((self sym) x)
@@ -40,9 +44,11 @@ OPTIONS:
      (if (> (freq x has) most) (setf most (freq x has) mode x)))))
 
 (defmethod add ((self num) x)
-  (with-slots (has ok n) self
+  (with-slots (has ok n lo hi) self
     (unless (eql x #\?)
       (incf n)
+      (setf lo (min lo x)
+            hi (max hi x))
       (cond ((< (length has) (? max)) 
              (setf ok nil) 
              (vector-push-extend x has))
@@ -55,36 +61,37 @@ OPTIONS:
   (setf (num-ok num) t)
   (num-has num))
 
-(defun make-col (&key (txt "") (at 0))
+(defun col-factory (&key (txt "") (at 0))
   (funcall  (if (isNum txt) #'make-num #'make-sym) 
             :at at :txt txt
             :w   (if (isLess txt) -1 1)))
 
-(defun defcols (lst &aux (self (make-cols :names lst)) (n -1))
+(defun cols-factory (lst &aux (self (make-cols :names lst)) (n -1))
   (with-slots (all x y klass) self
-    (labels ((defcol (txt &aux (col (make-col :txt txt :at (incf n)))) 
-                     (push col all)
-                     (unless (isIgnored txt)
-                       (if (isKlass txt)  (setf klass col))
-                       (if (isGoal txt) (push col y) (push col x)))))
-      (mapcar #'defcol lst)
+    (labels ((keeping (txt &aux (col (col-factory :txt txt :at (incf n)))) 
+                      (push col all)
+                      (unless (isIgnored txt)
+                        (if (isKlass txt)  (setf klass col))
+                        (if (isGoal txt) (push col y) (push col x)))))
+      (mapcar #'keeping lst)
       self)))
 
-(defun defdata (src &optional more &aux (self (make-data)))
+(defun data-factory (src &optional more &aux (self (make-data)))
   (labels ((row (lst) (add self lst)))
     (cond 
       ((stringp  src) (with-file src #'row)  self)
       ((consp src)    (mapcar #'row src)     self)
-      ((data-p src)   (defdata (make-data) (cons (list (cols-names (data-cols src))) more))))))
+      ((data-p src)   (data-factory (make-data) 
+                                    (cons (list (cols-names (data-cols src))) more))))))
 
 (defmethod add ((self data) lst)
   (aif (data-cols self)
     (push (add it lst)  (data-rows self))
-    (setf (data-cols self) (defcols lst))))
+    (setf (data-cols self) (cols-factory lst))))
 
 (defmethod add ((self cols) lst)
   (dolist (tmp (list (cols-x self) (cols-y self)) lst)
     (dolist (col tmp)
       (add col (elt lst (slot-value col 'at))))))
 
-(print (defdata (? file)))
+(print  (holds (second (cols-x  (data-cols (data-factory (? file)))))))
