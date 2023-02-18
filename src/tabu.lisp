@@ -67,21 +67,24 @@ OPTIONS:
             :w   (if (isLess txt) -1 1)))
 
 (defun lst->cols (lst &aux (self (make-cols :names lst)) (n -1))
-  (with-slots (all x y klass) self
-    (labels ((worker (txt &aux (col (str->col :txt txt :at (incf n)))) 
-                      (push col all)
-                      (unless (isIgnored txt)
-                        (if (isKlass txt) (setf klass col))
-                        (if (isGoal txt) (push col y) (push col x)))))
-      (mapcar #'worker lst)
-      self)))
+  (labels 
+    ((worker (txt &aux (col (str->col :txt txt :at (incf n)))) 
+             (with-slots (all x y klass) self
+               (push col all)
+               (unless (isIgnored txt)
+                 (if (isKlass txt) (setf klass col))
+                 (if (isGoal txt) (push col y) (push col x)))))
+     (mapc #'worker lst)
+     self)))
 
-(defun src->data (src &optional more &aux (self (make-data)))
+(defun src->data (src &optional rows &aux (self (make-data)))
+  "Load form file if (stringp src);  load from list if (consp src); copy structure if (data-p src)"
   (labels ((row (lst) (add self lst)))
-    (cond 
-      ((stringp  src) (with-file src #'row)  self)
-      ((consp src)    (mapcar #'row src)     self)
-      ((data-p src)   (src->data (cons (list (cols-names (data-cols src))) more))))))
+    (cond ((stringp  src) (with-file src #'row))
+          ((consp src)    (mapc #'row src))
+          ((data-p src)   (row  (cols-names (data-cols src)))))
+    (mapc #'row rows)
+    self))
 
 (defmethod add ((self data) lst)
   (aif (data-cols self)
