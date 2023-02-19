@@ -1,12 +1,4 @@
 ; vi: set ts=2 sw=2 sts=2 et :
-;  __                 __                 
-; /\ \__             /\ \                
-; \ \ ,_\     __     \ \ \____   __  __  
-;  \ \ \/   /'__`\    \ \ '__`\ /\ \/\ \ 
-;   \ \ \_ /\ \L\.\_   \ \ \L\ \\ \ \_\ \
-;    \ \__\\ \__/.\_\   \ \_,__/ \ \____/
-;     \/__/ \/__/\/_/    \/___/   \/___/ 
-
 (defpackage :tabu (:use :cl))
 (in-package :tabu)
 (load "tabu-lib")
@@ -15,6 +7,7 @@
 tabu.lisp
 
 OPTIONS:
+  -b   bins   max bin numbers    = 16
   -f   file   csv file           = ../data/auto93.csv
   -m   max    max num cace       = 512
   -p   p      dist coeffecient   = 2
@@ -36,6 +29,9 @@ OPTIONS:
   (at 0) (txt "") (n 0) (w 1) ; w=1,-1 means "maximize", "minimize"
   (hi most-negative-fixnum) 
   (lo most-positive-fixnum)
+  bins)
+
+(defstruct sample
   ok   ; true if `has` is currently sorted.
   (has ; holds ?max items. if full, new items replace any old
      (make-array 5 5 :fill-pointer 0 :adjustable t)))
@@ -102,18 +98,20 @@ OPTIONS:
      (if (> (freq x has) most) (setf most (freq x has) mode x)))))
 
 (defmethod add ((self num) x)
-  "updates `lo`, `hi`, `has` and `ok`"
+  "updates `lo`, `hi`"
   (with-slots (has ok n lo hi) self
     (unless (eql x #\?)
       (incf n)
       (setf lo (min lo x)
-            hi (max hi x))
-      (cond ((< (length has) (? max)) 
-             (setf ok nil) 
-             (vector-push-extend x has))
-            ((<= (rand) (/ (? max) n)) 
-             (setf ok nil) 
-             (setf (aref has (rint (length has))) x))))))
+            hi (max hi x)))))
+
+(defmethod bin ((self sym) x) x)
+(defmethod bin ((self num) x) 
+  (with-slots (lo hi) self
+    (if (= x hi) 
+        (1- (? bins)) 
+        (floor (- x lo) / (/ (- hi lo) (? bins))))))
+
 ;-------------------------------------------------------------------------------
 ;## Query
 (defun holds (num)
