@@ -105,6 +105,7 @@ OPTIONS:
       (setf lo (min lo x)
             hi (max hi x)))))
 
+
 (defmethod bin ((self sym) x) x)
 (defmethod bin ((self num) x) 
   (with-slots (lo hi) self
