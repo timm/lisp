@@ -34,7 +34,7 @@ OPTIONS:
 (defstruct sample
   ok   ; true if `has` is currently sorted.
   (has ; holds ?max items. if full, new items replace any old
-     (make-array 5 5 :fill-pointer 0 :adjustable t)))
+     (make-array 5  :fill-pointer 0 :adjustable t)))
 
 (defstruct sym 
   "sumamrizes a stream of symbols"
@@ -49,27 +49,22 @@ OPTIONS:
 (defun isIgnored (s) (got s #\X -1))
 ;-------------------------------------------------------------------------------
 ;## Create
-(defun str->col (&key (txt "") (at 0))
-  "column name to num or sysm"
-  (funcall  (if (isNum txt) #'make-num #'make-sym) 
-            :at at :txt txt
-            :w   (if (isLess txt) -1 1)))
-
-(defun lst->cols (lst &aux (self (make-cols :names lst)) (n -1))
+(defun lst->cols (lst &aux (self (make-cols :names lst)))
   "column names to cols, then added to `all` and (maybe) `x`, `y`, and `klass`"
-  (labels 
-    ((worker (txt &aux (col (str->col :txt txt :at (incf n)))) 
-             (with-slots (all x y klass) self
-               (push col all)
-               (unless (isIgnored txt)
-                 (if (isKlass txt) (setf klass col))
-                 (if (isGoal txt) (push col y) (push col x)))))
-     (mapc #'worker lst)
-     self)))
+  (with-slots (all x y klass) self
+    (loop :for at :from 0 :and txt :in lst do
+      (let* ((maker (if (isNum txt) #'make-num #'make-sym))
+             (col   (funcall maker :at at :txt txt :w (if (isLess txt) -1 1))))
+        (push col all)
+        (unless (isIgnored txt)
+          (if (isKlass txt) (setf klass col))
+          (if (isGoal txt) (push col y) (push col x)))))
+    self))
 
+(defun make-row (x) x)
 (defun src->data (src &optional rows &aux (self (make-data)))
-  "Load form file if (stringp src);  load from list if (consp src); copy structure if (data-p src)"
-  (labels ((row (lst) (add self lst)))
+  "from file if (stringp src); from list if (consp src); mimic structure if (data-p src)"
+  (labels ((row (x) (add self x)))
     (cond ((stringp  src) (with-file src #'row))
           ((consp src)    (mapc #'row src))
           ((data-p src)   (row  (cols-names (data-cols src)))))
@@ -105,20 +100,20 @@ OPTIONS:
       (setf lo (min lo x)
             hi (max hi x)))))
 
-
-(defmethod bin ((self sym) x) x)
-(defmethod bin ((self num) x) 
-  (with-slots (lo hi) self
-    (if (= x hi) 
-        (1- (? bins)) 
-        (floor (- x lo) / (/ (- hi lo) (? bins))))))
-
+;
+; (defmethod bin ((self sym) x) x)
+; (defmethod bin ((self num) x) 
+;   (with-slots (lo hi) self
+;     (if (= x hi) 
+;         (1- (? bins)) 
+;         (floor (- x lo) / (/ (- hi lo) (? bins))))))
+;
 ;-------------------------------------------------------------------------------
 ;## Query
 (defun holds (num)
   "returns `has`, sorted"
-  (unless (num-ok num) (sort (num-has num) #'<))
-  (setf (num-ok num) t)
+  ;(unless (num-ok num) (sort (num-has num) #'<))
+  ;(setf (num-ok num) t)
   (num-has num))
 
-(print  (holds (second (cols-x  (data-cols (src->data (? file)))))))
+(print     (data-cols (src->data (? file))))
