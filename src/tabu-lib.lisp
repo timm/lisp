@@ -19,6 +19,16 @@
   #+clisp ext:*args*  
   #+sbcl sb-ext:*posix-argv*)
 ;-------------------------------------------------------------------------------
+(defvar *seed* 10013)
+(defun rand (&optional (n 1))
+  "random float 0.. < n"
+  (setf *seed* (mod (* 16807.0d0 *seed*) 2147483647.0d0))
+  (* n (- 1.0d0 (/ *seed* 2147483647.0d0))))
+
+(defun rint (&optional (n 1) &aux (base 10000000000.0))
+  "random int 0..n-1"
+  (floor (* n (/ (rand base) base))))
+;-------------------------------------------------------------------------------
 ;##  Lists
 (defun per (seq &optional (p .5))
   (elt seq (floor (* (min .999999 (max 0 p)) (length seq)))))
@@ -59,6 +69,9 @@
   "call `fun` for each line in `file`"
   (with-open-file (s file) 
     (loop (funcall fun (funcall filter (or (read-line s nil) (return)))))))
+
+
+
 ;-------------------------------------------------------------------------------
 ;## Settings
 (defun settings (s &optional args)
