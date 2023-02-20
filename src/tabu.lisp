@@ -1,4 +1,4 @@
-; vi: set ts=2 sw=2 sts=2 et :
+; vim: set ts=2 sw=2 sts=2 et :
 (defpackage :tabu (:use :cl))
 (in-package :tabu)
 (load "tabu-lib")
@@ -86,7 +86,7 @@ OPTIONS:
      (incf (freq x has))
      (if (> (freq x has) most) (setf most (freq x has) mode x)))))
 
-(defmethod add ((self num) x) ;;; Add one thing, updating 'lo,hi'
+(defmethod add ((self num) x ) ;;; Add one thing, updating 'lo,hi'
   "updates `lo`, `hi`, `mu`, `sd`"
   (with-slots (n lo hi mu m2) self
     (unless (eq x #\?)
@@ -111,8 +111,8 @@ OPTIONS:
   "return standard deviation"
   (with-slots (n m2) self (if (<= n 1) 0 (sqrt (/ m2 (- n 1))))))
 
-(defmethod like1 ((self num) x &optional prior)
-	(declare (ignore prior))
+(defmethod like1 ((self num) x prior)
+  (declare (ignore prior))
   (with-slots (mu n) self
     (let ((sd (div self))
           (ε  1E-32))
@@ -123,43 +123,40 @@ OPTIONS:
                                     (+ ε (* 2 sd sd))))))
                  (/ nom (+ denom ε ))))))))
 
-(defmethod like1 ((self sym) x &optional prior))
-   (with-slots (n has) self
-       (/ (+ (freq x has) (* (? m) prior)) (+ n (? m)))))
+(defmethod like1 ((self sym) x prior)
+  (with-slots (n has) self
+    (/ (+ (freq x has) (* (? m) prior)) 
+       (+ n (? m)))))
 
-; (defmethod like ((self data) lst &optional prior)
-; (let ((prior (+  (? k) 1 (length (data-rows self))) (+ prior
-;   (loop for col in (cols-x (data-cols self)) sum 
-;       (let ((x (elt lst (col-at col))))
-;          (unless (eql x #\?)
-;         
-;     n    = len(i.rows)
-;     k, m = THE.nb.k, THE.nb.m
-;     like = prior = (n + k) / (ns + k*2)
-;     for c in i.all.decs:
-;       x     = lst[c.pos]
-;       if x == THE.char.no: continue
-;       f     = c.bag.get(x,0)
-;       inc   = (f + m*prior) / (n + m)
-;       like *= inc
-;
+(defmethod like ((self data) lst nall nh)
+  (let* ((prior (/  (+ (? k) 1 (length (data-rows self))) (+ all (* nh (? k)))))
+         (tmp   (log prior)))
+    (loop :for col :in (cols-x (data-cols self)) :sum 
+      (let ((x (elt lst (col-at col))))
+        (if (eql x #\?) 
+          0 
+          (log (like1 col x prior)))))))
+
 (defun tests ()
   (labels
-    ((rand! (&aux (n (make-num)))
+    ((ok () (setf *seed* (? seed)))
+     (rand! (&aux (n (make-num)))
+            (ok)
             (dotimes (i 1000) (add n (expt (rand) 2)))
-            (assert (<= .33 (mid n) .34))
-            (assert (<= .29 (div n) .3)))
+            (assert (<= .35 (mid n) .36))
+            (assert (<= .30 (div n) .31)))
      (num!  (&aux (n (make-num)))
+            (ok)
             (dotimes (i 1000) (add n i))
             (assert  (<= 498 (mid n) 502)))
      (sym!  (&aux (s (make-sym)))
+            (ok)
             (dolist (x '(a a a a b b c)) (add s x))
             (assert (<= 1.37 (div s) 1.38) () "sym"))
      (data! (&aux (d (src->data (? file))))
-       (print (length (data-rows d)))
-       (print (cols-x (data-cols d)))
-       )
-     )
+            (ok)
+            (print (length (data-rows d)))
+            (print (cols-x (data-cols d)))))
     (rand!) (num!) (sym!) (data!)))
 
 (tests)
