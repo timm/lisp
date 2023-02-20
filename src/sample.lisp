@@ -20,8 +20,9 @@
 
 (defmethod  holds ((self sample))
   "returns `has`, sorted"
-  (unless (num-ok num) (sort (num-has num) #'<))
-  (setf (num-ok num) t)
-  (num-has num))
+  (with-slots (ok has) self
+    (unless ok (sort has #'<))
+    (setf ok t)
+    has))
 
 
