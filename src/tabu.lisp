@@ -9,7 +9,9 @@ tabu.lisp
 OPTIONS:
   -b   bins   max bin numbers    = 16
   -f   file   csv file           = ../data/auto93.csv
+  -K   k      bayesian K         = 1
   -m   max    max num cace       = 512
+  -M   m      bayesian M         = 2
   -p   p      dist coeffecient   = 2
   -s   seed   random numbe seed  = 10013")
 
@@ -100,16 +102,17 @@ OPTIONS:
 (defmethod mid ((self num)) (num-mu   self))
 
 (defmethod div ((self sym))
-  "Diversity (entropy)."
+  "diversity (entropy)."
   (with-slots (has n) self 
-    (labels ((fun (p) (* -1 (* p (log p 2)))))
+    (labels ((fun (p) (if (<= p 0) 0 (* -1 (* p (log p 2))))))
       (loop for (_ . n1) in has sum (fun (/ n1 n))))))
 
 (defmethod div ((self num))
   "return standard deviation"
   (with-slots (n m2) self (if (<= n 1) 0 (sqrt (/ m2 (- n 1))))))
 
-(defmethod like ((self num) x)
+(defmethod like1 ((self num) x &optional prior)
+	(declare (ignore prior))
   (with-slots (mu n) self
     (let ((sd (div self))
           (ε  1E-32))
@@ -120,11 +123,32 @@ OPTIONS:
                                     (+ ε (* 2 sd sd))))))
                  (/ nom (+ denom ε ))))))))
 
+(defmethod like1 ((self sym) x &optional prior))
+   (with-slots (n has) self
+       (/ (+ (freq x has) (* (? m) prior)) (+ n (? m)))))
+
+; (defmethod like ((self data) lst &optional prior)
+; (let ((prior (+  (? k) 1 (length (data-rows self))) (+ prior
+;   (loop for col in (cols-x (data-cols self)) sum 
+;       (let ((x (elt lst (col-at col))))
+;          (unless (eql x #\?)
+;         
+;     n    = len(i.rows)
+;     k, m = THE.nb.k, THE.nb.m
+;     like = prior = (n + k) / (ns + k*2)
+;     for c in i.all.decs:
+;       x     = lst[c.pos]
+;       if x == THE.char.no: continue
+;       f     = c.bag.get(x,0)
+;       inc   = (f + m*prior) / (n + m)
+;       like *= inc
+;
 (defun tests ()
   (labels
     ((rand! (&aux (n (make-num)))
-            (dotimes (i 1000) (add n (rand)))
-            (assert (<= .48 (mid n) .52) () "_rand"))
+            (dotimes (i 1000) (add n (expt (rand) 2)))
+            (assert (<= .33 (mid n) .34))
+            (assert (<= .29 (div n) .3)))
      (num!  (&aux (n (make-num)))
             (dotimes (i 1000) (add n i))
             (assert  (<= 498 (mid n) 502)))
