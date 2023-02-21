@@ -122,38 +122,40 @@ OPTIONS:
                                     (+ tiny (* 2 sd sd))))))
                  (/ nom (+ denom tiny))))))))
 
-(defmethod like ((self data) row nall nh)
-  (let ((prior (/  (+ (? k) 1 (length (data-rows self))) (+ nall (* nh (? k)))))
-        (+ (log prior) (loop :for col :in (cols-x (data-cols self)) :sum 
-                             (let ((x (elt row (col-at col))))
-                               (if (eql x #\?) 
-                                 0 
-                                 (log (like1 col x prior)))))))
+'(defmethod like ((self data) row nall nh)
+  (with-slots (rows cols) self 
+    (let ((prior (/  (1+ (? k) (length rows)) (+ nall (* nh (? k)))))
+          (+ (log prior) 
+             (loop :for col :in (cols-x cols) :sum 
+                   (let ((x (elt row (col-at col))))
+                     (if (eql x #\?) 
+                       0 
+                       (log (like1 col x prior))))))))))
 
 (defmethod classify ((self data) row hs &aux out (most most-negative-fixnum))
   (dolist (h hs (values out most))
-    (let ((tmp (like h row (data-n data) (1+ (length hs)))))
+    (let ((tmp (like h row (data-n self) (1+ (length hs)))))
       (if (> tmp  most) (setq most tmp 
                               out h)))))
 
 (defun tests ()
   (labels
-    ((ok () (setf *seed* (? seed)))
+    ((ok (x) (format t "testing ~a~%" x ) (setf *seed* (? seed)))
      (rand! (&aux (n (make-num)))
-            (ok)
+            (ok 'rand!)
             (dotimes (i 1000) (add n (expt (rand) 2)))
             (assert (<= .35 (mid n) .36))
             (assert (<= .30 (div n) .31)))
      (num!  (&aux (n (make-num)))
-            (ok)
+            (ok 'num!)
             (dotimes (i 1000) (add n i))
             (assert  (<= 498 (mid n) 502)))
      (sym!  (&aux (s (make-sym)))
-            (ok)
+            (ok 'sym!)
             (dolist (x '(a a a a b b c)) (add s x))
             (assert (<= 1.37 (div s) 1.38) () "sym"))
      (data! (&aux (d (src->data (? file))))
-            (ok)
+            (ok 'data!)
             ;(print (length (data-rows d)))
             ;(print (cols-x (data-cols d)))))
             ))
