@@ -24,7 +24,7 @@ OPTIONS:
 
 (defstruct cols 
   "stores everything in `all`, independent/dependent things in `x`,`y`"
-  all x y names)
+  all x y names klass)
 
 (defstruct num 
   "sumamrizes a stream of numbers"
@@ -111,31 +111,35 @@ OPTIONS:
   "return standard deviation"
   (with-slots (n m2) self (if (<= n 1) 0 (sqrt (/ m2 (- n 1))))))
 
-(defmethod like1 ((self num) x prior)
-  (declare (ignore prior))
-  (with-slots (mu n) self
-    (let ((sd (div self))
-          (ε  1E-32))
-      (cond ((< x (- mu (* 4 sd))) 0)
-            ((> x (+ mu (* 4 sd))) 0)
-            (t (let ((denom (sqrt (* 2 pi sd sd)))
-                     (nom   (exp (/ (* -1 (expt (- x mu) 2)) 
-                                    (+ ε (* 2 sd sd))))))
-                 (/ nom (+ denom ε ))))))))
-
 (defmethod like1 ((self sym) x prior)
   (with-slots (n has) self
     (/ (+ (freq x has) (* (? m) prior)) 
        (+ n (? m)))))
 
-(defmethod like ((self data) lst nall nh)
-  (let* ((prior (/  (+ (? k) 1 (length (data-rows self))) (+ all (* nh (? k)))))
-         (tmp   (log prior)))
-    (loop :for col :in (cols-x (data-cols self)) :sum 
-      (let ((x (elt lst (col-at col))))
-        (if (eql x #\?) 
-          0 
-          (log (like1 col x prior)))))))
+(defmethod like1 ((self num) x  _)
+  (with-slots (mu n) self
+    (let ((sd (div self))
+          (tiny  1E-32))
+      (cond ((< x (- mu (* 4 sd))) 0)
+            ((> x (+ mu (* 4 sd))) 0)
+            (t (let ((denom (sqrt (* 2 pi sd sd)))
+                     (nom   (exp (/ (* -1 (expt (- x mu) 2)) 
+                                    (+ tiny (* 2 sd sd))))))
+                 (/ nom (+ denom tiny))))))))
+
+(defmethod like ((self data) row nall nh)
+  (let ((prior (/  (+ (? k) 1 (length (data-rows self))) (+ nall (* nh (? k)))))
+        (+ (log prior) (loop :for col :in (cols-x (data-cols self)) :sum 
+                             (let ((x (elt row (col-at col))))
+                               (if (eql x #\?) 
+                                 0 
+                                 (log (like1 col x prior)))))))
+
+(defmethod classify ((self data) row hs &aux out (most most-negative-fixnum))
+  (dolist (h hs (values out most))
+    (let ((tmp (like h row (data-n data) (1+ (length hs)))))
+      (if (> tmp  most) (setq most tmp 
+                              out h)))))
 
 (defun tests ()
   (labels
@@ -155,8 +159,9 @@ OPTIONS:
             (assert (<= 1.37 (div s) 1.38) () "sym"))
      (data! (&aux (d (src->data (? file))))
             (ok)
-            (print (length (data-rows d)))
-            (print (cols-x (data-cols d)))))
+            ;(print (length (data-rows d)))
+            ;(print (cols-x (data-cols d)))))
+            ))
     (rand!) (num!) (sym!) (data!)))
 
 (tests)
