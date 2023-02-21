@@ -38,12 +38,11 @@
   "kill whitespace at start, at end"
   (string-trim '(#\Space #\Tab #\Newline) s))
 
-(defun got (s c &optional (n 0))
-  "Does `s` hold `c` at position `n` (negative `n` means 'from end of string')"
-  (if (and (stringp s) (> (length s) 0))
-    (if (< n 0) 
-      (got s c (+ (length s) n))
-      (and (>= n 0) (< n (length s)) (eql c (char s n))))))
+(defun got (s n &rest chars)
+  "Does `s` hold any of `chars` at position `n` (negative `n` means 'from end of string')"
+  (dolist (c chars)
+    (if (eql c (char s (if (>= n 0) n (+ (length s) n))))
+      (return-from got t))))
 
 (defun split (s &optional (sep #\,) (filter #'thing) (here 0))
   "split  `s`, divided by `sep` filtered through `filter`"

@@ -41,19 +41,14 @@ OPTIONS:
 (defun lst->cols (lst &aux (self (make-cols :names lst)))
   "column names to cols, then added to `all` and (maybe) `x`, `y`, and `klass`"
   (with-slots (all x y klass) self
-    (labels ((isKlass   (s) (got s #\! -1))
-             (isLess    (s) (got s #\- -1))
-             (isMore    (s) (got s #\+ -1))
-             (isIgnored (s) (got s #\X -1))
-             (isGoal    (s) (or (isKlass s) (isLess s) (isMore s)))
-             (isNum     (s) (and (> (length s) 0) (upper-case-p (char s 0)))))
-      (loop :for at :from 0 :and txt :in lst do
-        (let* ((maker (if (isNum txt) #'make-num #'make-sym))
-               (col   (funcall maker :at at :txt txt :w (if (isLess txt) -1 1))))
-          (push col all)
-          (unless (isIgnored txt)
-            (if (isKlass txt) (setf klass col))
-            (if (isGoal txt) (push col y) (push col x)))))))
+    (loop :for at :from 0 :and txt :in lst :do
+       (let* ((isNum (and (> (length txt) 0) (upper-case-p (char txt 0))))
+              (what (if (isNum txt) #'make-num #'make-sym))
+              (col (funcall what :at at :txt txt :w (if (got txt -1 #\-) -1 1))))
+         (push col all)
+         (unless (got txt -1 #\X)
+           (if (got txt -1 #\! txt)     (setf klass col))
+           (if (got txt -1 #\! #\+ #\-) (push col y) (push col x))))))
   self)
 
 (defun src->data (src &optional rows &aux (self (make-data)))
