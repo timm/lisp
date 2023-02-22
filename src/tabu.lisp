@@ -43,7 +43,7 @@ OPTIONS:
   (with-slots (all x y klass) self
     (loop :for at :from 0 :and txt :in lst :do
        (let* ((isNum (and (> (length txt) 0) (upper-case-p (char txt 0))))
-              (what (if (isNum txt) #'make-num #'make-sym))
+              (what (if isNum #'make-num #'make-sym))
               (col (funcall what :at at :txt txt :w (if (got txt -1 #\-) -1 1))))
          (push col all)
          (unless (got txt -1 #\X)
@@ -140,7 +140,7 @@ OPTIONS:
 
 (defun tests ()
   (labels
-    ((ok (x) (format t "testing ~a~%" x ) (setf *seed* (? seed)))
+    ((ok (x) (format *error-output* "testing ~a~%" x ) (setf *seed* (? seed)))
      (rand! (&aux (n (make-num)))
             (ok 'rand!)
             (dotimes (i 1000) (add n (expt (rand) 2)))
@@ -156,9 +156,10 @@ OPTIONS:
             (assert (<= 1.37 (div s) 1.38) () "sym"))
      (data! (&aux (d (src->data (? file))))
             (ok 'data!)
-            ;(print (length (data-rows d)))
-            ;(print (cols-x (data-cols d)))))
-            ))
-    (rand!) (num!) (sym!) (data!)))
+            (assert (eql 398 (length (data-rows d))))
+            (assert (eql 4 (length (cols-x (data-cols d)))))))
+    (rand!) 
+    (num!) (sym!) (data!)
+    ))
 
 (tests)

@@ -40,9 +40,11 @@
 
 (defun got (s n &rest chars)
   "Does `s` hold any of `chars` at position `n` (negative `n` means 'from end of string')"
-  (dolist (c chars)
-    (if (eql c (char s (if (>= n 0) n (+ (length s) n))))
-      (return-from got t))))
+  (let ((n (if (>= n 0) n (+ (length s) n))))
+    (if (and (stringp s)  (>= (1- (length s)) n))
+      (dolist (c chars)
+        (if (eql c (char s n))
+          (return-from got t))))))
 
 (defun split (s &optional (sep #\,) (filter #'thing) (here 0))
   "split  `s`, divided by `sep` filtered through `filter`"
@@ -68,17 +70,14 @@
   "call `fun` for each line in `file`"
   (with-open-file (s file) 
     (loop (funcall fun (funcall filter (or (read-line s nil) (return)))))))
-
-
-
 ;-------------------------------------------------------------------------------
 ;## Settings
 (defun settings (s &optional args)
   "for lines like '  -Key Flag ..... Default', return `(KEY . DEFAULT)`"
   (loop 
     :for (flag key . lst) 
-    :in  (split s #\NewLine #'words)
-    :if  (got flag #\-) 
+    :in   (split s #\NewLine #'words)
+    :if  (got flag 0 #\-) 
     :collect (cons (intern (string-upcase key)) 
                    (cli args flag (thing (car (last lst)))))))
 

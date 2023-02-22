@@ -1,4 +1,5 @@
 let &shell='/bin/bash --init-file ../../ful'
+"let &shell='/bin/bash  ../../ful'
 set list
 set listchars=tab:>-
 set backupdir-=.
