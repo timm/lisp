@@ -160,11 +160,12 @@ OPTIONS:
 
 (let ((fails 0)
       (b4 (copy-tree *settings*)))
-  (loop :for (key . fun) :in (tests) :do
-    (when (member (? go) `("all" ,key) :key #'equalp)
+  (loop :for (key fun) :in (tests) :do
+    (when (member (? go) (list "all" key) :key #'equalp)
       (copy-tree b4)
       (setf *seed* (? seed))
       (format t "~%~a " key)
-      (cond ((funcall fun) (format t " PASSED"))
-            (t             (format t " FAILED")
-                           (incf fails))))))
+      (cond ((funcall fun) (princ " PASSED ✅"))
+            (t             (princ " FAILED ❌")
+                           (incf fails)))))
+  (stop fails))

@@ -18,6 +18,11 @@
   "accessing command-line flats"
   #+clisp ext:*args*  
   #+sbcl sb-ext:*posix-argv*)
+
+(defun stop (&optional (x 0)) 
+  "quit list"
+  #+clisp (ext:exit x)
+  #+sbcl  (sb-ext:exit :code x))
 ;-------------------------------------------------------------------------------
 (defvar *seed* 10013)
 (defun rand (&optional (n 1))
