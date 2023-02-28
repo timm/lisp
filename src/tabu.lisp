@@ -9,6 +9,7 @@ tabu.lisp
 OPTIONS:
   -b   bins   max bin numbers    = 16
   -f   file   csv file           = ../data/auto93.csv
+  -g   go     start up action    = nothing
   -K   k      bayesian K         = 1
   -m   max    max num cace       = 512
   -M   m      bayesian M         = 2
@@ -139,27 +140,27 @@ OPTIONS:
                               out h)))))
 
 (defun tests ()
-  (labels
-    ((ok (x) (format *error-output* "testing ~a~%" x ) (setf *seed* (? seed)))
-     (rand! (&aux (n (make-num)))
-            (ok 'rand!)
-            (dotimes (i 1000) (add n (expt (rand) 2)))
-            (assert (<= .35 (mid n) .36))
-            (assert (<= .30 (div n) .31)))
-     (num!  (&aux (n (make-num)))
-            (ok 'num!)
-            (dotimes (i 1000) (add n i))
-            (assert  (<= 498 (mid n) 502)))
-     (sym!  (&aux (s (make-sym)))
-            (ok 'sym!)
-            (dolist (x '(a a a a b b c)) (add s x))
-            (assert (<= 1.37 (div s) 1.38) () "sym"))
-     (data! (&aux (d (src->data (? file))))
-            (ok 'data!)
-            (assert (eql 398 (length (data-rows d))))
-            (assert (eql 4 (length (cols-x (data-cols d)))))))
-    (rand!) 
-    (num!) (sym!) (data!)
-    ))
+  `((rand 
+      ,(lambda (&aux (n (make-num)))
+         (dotimes (i 1000) (add n (expt (rand) 2)))
+         (assert (<= .35 (mid n) .36))
+         (assert (<= .30 (div n) .31))))
+    (num 
+      ,(lambda (&aux (n (make-num)))
+         (dotimes (i 1000) (add n i))
+         (assert  (<= 498 (mid n) 502))))
+    (sym 
+      ,(lambda (&aux (s (make-sym)))
+         (dolist (x '(a a a a b b c)) (add s x))
+         (assert (<= 1.37 (div s) 1.38) () "sym")))
+    (data 
+      ,(lambda (&aux (d (src->data (? file))))
+         (assert (eql 398 (length (data-rows d))))
+         (assert (eql 4 (length (cols-x (data-cols d)))))))))
 
-(tests)
+(let ((b4 (copy-tree *settings*)))
+  (loop :for (key . fun) :in (tests) :do
+    (if (member (? go) `("all" ,key) :key #'equalp)
+      (setf *settings* (copy-tree b4))
+      (setf *seed* (? seed))
+      (format t "~%~a ~a~%" key fun))))
