@@ -158,9 +158,13 @@ OPTIONS:
          (assert (eql 398 (length (data-rows d))))
          (assert (eql 4 (length (cols-x (data-cols d)))))))))
 
-(let ((b4 (copy-tree *settings*)))
+(let ((fails 0)
+      (b4 (copy-tree *settings*)))
   (loop :for (key . fun) :in (tests) :do
-    (if (member (? go) `("all" ,key) :key #'equalp)
-      (setf *settings* (copy-tree b4))
+    (when (member (? go) `("all" ,key) :key #'equalp)
+      (copy-tree b4)
       (setf *seed* (? seed))
-      (format t "~%~a ~a~%" key fun))))
+      (format t "~%~a " key)
+      (cond ((funcall fun) (format t " PASSED"))
+            (t             (format t " FAILED")
+                           (incf fails))))))
