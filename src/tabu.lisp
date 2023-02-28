@@ -16,7 +16,7 @@ OPTIONS:
   -p   p      dist coeffecient   = 2
   -s   seed   random numbe seed  = 10013")
 
-(defvar *settings* (settings *help* (args)))
+(setf *settings* (settings *help*))
 ;-------------------------------------------------------------------------------
 ;## Structs
 (defstruct data 
@@ -138,34 +138,3 @@ OPTIONS:
     (let ((tmp (like h row (data-n self) (1+ (length hs)))))
       (if (> tmp  most) (setq most tmp 
                               out h)))))
-
-(defun tests ()
-  `((rand 
-      ,(lambda (&aux (n (make-num)))
-         (dotimes (i 1000) (add n (expt (rand) 2)))
-         (assert (<= .35 (mid n) .36))
-         (assert (<= .30 (div n) .31))))
-    (num 
-      ,(lambda (&aux (n (make-num)))
-         (dotimes (i 1000) (add n i))
-         (assert  (<= 498 (mid n) 502))))
-    (sym 
-      ,(lambda (&aux (s (make-sym)))
-         (dolist (x '(a a a a b b c)) (add s x))
-         (assert (<= 1.37 (div s) 1.38) () "sym")))
-    (data 
-      ,(lambda (&aux (d (src->data (? file))))
-         (assert (eql 398 (length (data-rows d))))
-         (assert (eql 4 (length (cols-x (data-cols d)))))))))
-
-(let ((fails 0)
-      (b4 (copy-tree *settings*)))
-  (loop :for (key fun) :in (tests) :do
-    (when (member (? go) (list "all" key) :key #'equalp)
-      (copy-tree b4)
-      (setf *seed* (? seed))
-      (format t "~%~a " key)
-      (cond ((funcall fun) (princ " PASSED ✅"))
-            (t             (princ " FAILED ❌")
-                           (incf fails)))))
-  (stop fails))

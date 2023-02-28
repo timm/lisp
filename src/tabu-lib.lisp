@@ -1,4 +1,7 @@
 ; vi: set ts=2 sw=2 sts=2 et :
+;## Globals
+(defvar *settings* nil)
+
 ;## Macros
 (defmacro ? (x &optional (lst '*settings*)) 
   "alist accessor, defaults to searching `*settings*`"
@@ -19,7 +22,7 @@
   #+clisp ext:*args*  
   #+sbcl sb-ext:*posix-argv*)
 
-(defun stop (&optional (x 0)) 
+(defun bye (&optional (x 0)) 
   "quit list"
   #+clisp (ext:exit x)
   #+sbcl  (sb-ext:exit :code x))
