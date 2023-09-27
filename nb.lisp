@@ -1,4 +1,4 @@
-(defmacro ? (s x &rest xs)  ;
+(defmacro ? (s x &rest xs)    
   (if (null xs) `(slot-value ,s ',x) `(? (slot-value ,s ',x) ,@xs)))
 
 (defmacro inca (x a &optional (n  1))
