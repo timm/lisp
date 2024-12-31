@@ -3,7 +3,7 @@ $(HOME)/tmp/%.html : %.lisp
 	cp pygments*.css $(dir $@)
 	(sh header.sh $^; gawk -f 2md.awk $^  | python3 markup.py; echo "</body></html>") > $@
 
-$(HOME)/tmp/tabu.pdf :   ## make pdf
+~/tmp/%.pdf : %.lisp  ## make pdf
 	@mkdir -p $(dir $@)
 	@echo "pdf-ing $@ ... "
 	@a2ps -jr             \
@@ -19,5 +19,5 @@ $(HOME)/tmp/tabu.pdf :   ## make pdf
 		--footer="page %p."             \
 		-M letter                        \
 		--file-align=fill  \
-		-o $@.ps tabu.lisp tabu-lib.lisp
-	@ps2pdf $@.ps $@; rm $@.ps
+		-o $@.ps $^
+	@ps2pdf $@.ps $@.pdf; rm $@.ps

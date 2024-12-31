@@ -136,16 +136,14 @@
 
 (defun chr (s n )
   "Return nth character from `s`. Negative `n` denote indexes from back." 
-  (let* ((s (if (symbolp s) (symbol-name s) s))
-         (n (if (< n 0) (+ n (length s)) n)))           
-    (char s n)))
+  (let ((s (if (stringp s) s (symbol-name s))))
+    (char s (if (>= n 0) n (+ n (length s))))))         
 
 (defun s->thing (s &aux (s1 (string-trim '(#\Space #\Tab) s)))
   "Coerce `s` to an atomic thing."
-  (let ((it (let ((*read-eval* nil)) (read-from-string s1 ""))))
+  (let* ((*read-eval* nil)
+         (it (read-from-string s1 "")))
     (cond ((numberp it)     it)
-          ((eq it t)        t)
-          ((eq it nil)      nil)
           ((string= it "?") '?)
           (t                s1))))
 
