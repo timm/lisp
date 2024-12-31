@@ -1,4 +1,4 @@
-(defmacro ? (s x &rest xs)
+(defmacro ? (s x &rest xs)    
   (if (null xs) `(slot-value ,s ',x) `(? (slot-value ,s ',x) ,@xs)))
 
 (defmacro inca (x a &optional (n  1))
@@ -11,7 +11,7 @@
 (defstruct cols all x y)
 (defstruct sample rows (cols (make-cols)))
 
-(defmethod add ((s sample) lst &aux (n -1))
+(defmethod add ((s sample) lst &aux (n -1)) 
   (if cols
     (mapc #'(lambda (col x) (datum s col x (incf n)  )) lst (? s col) lst)
     (mapc #'(lambda (x)     (cell s        (incf n) x)) lst)))
@@ -26,5 +26,5 @@
 
 (defun add-columns (sample lst)
   (dolist (n (length v))
-     (let ((name (aref (add-column s n (aref v s))))))
+     (let ((name (aref (add-column s n (aref v s))))))))
 
