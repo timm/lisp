@@ -31,7 +31,7 @@ OPTIONS:
   -p   p             distance coeffecient       = 2
   -s   seed          random number seed         = 10013")
 
-;From this help string, we fill in `*settings*` (and define the  command-line interface
+;From this help string, we fill in `*setttings*` (and define the  command-line interface
 ;using the  `(settings)` function, see below)
 (defvar *settings* nil)
 
