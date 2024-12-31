@@ -33,6 +33,15 @@
 (defstruct data rows cols)
 
 ;-------------------------------------------------------------------------------
+(defmethod adds ((self data) src)
+  (if (stringp src)
+      (with-csv s (lambda (x) (add self x)))
+      (dolist (x src) (add self x)))
+  self)
+
+(defmethod add ((self data) row)
+  (push $rows (add $cols row)))
+
 (defmethod add ((self cols) row)
   (mapcar #'add $all row)
   row)
@@ -55,15 +64,6 @@
     (add $cols(if (> new $most)
                   (setf $mode x
                         $most new)))))
-
-(defmethod add ((sef data) row)
-  (push $rows (add $cols row)))
-
-(defmethod adds ((self data) src)
-  (if (stringp src)
-      (with-csv s (lambda (r) (add self r)))
-      (dolist (y x) (add self y)))
-  self)
 
 ;-------------------------------------------------------------------------------
 (defun inca (a x)
