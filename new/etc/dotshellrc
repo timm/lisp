@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# vim: ft=bash ts=2 sw=2 sts=2 et :
+hi() { 
+  clear
+  echo -ne "\033[1;33m"
+  cat<<-'EOF'
+  
+  '(the 
+     (parentheses 
+       (are (the 
+         point)))) 
+
+EOF
+  echo -ne "\033[0m"
+  echo "Short cuts:"
+  alias | sed 's/alias /  /'
+  echo ""
+  tput sgr0
+}
+
+here="$(cd $( dirname "${BASH_SOURCE[0]}" ) && pwd )"
+
+alias ..='cd ..'
+alias ...='cd ../../../'
+
+alias egrep='egrep --color=auto'
+alias fgrep='fgrep --color=auto'
+alias kseed='lua kseed.lua'
+alias h="history"
+alias ls="ls -G"
+alias vi="emacs -q -l ../etc/doteditrc"
+
+export BASH_SILENCE_DEPRECATION_WARNING=1
+export PATH="$PWD:/opt/homebrew/bin:$PATH"
+
+here() { cd $1; basename `pwd`; }
+PROMPT_COMMAND='echo -ne "🆑  $(git branch 2>/dev/null | grep '^*' | colrm 1 2):";PS1="$(here ..)/$(here .):\!\e[m ▶ "'
+hi

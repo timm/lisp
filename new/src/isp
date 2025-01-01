@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+f=$1.lisp
+shift
+$(which sbcl) --noinform --script $f  $* \
+  2> >( gawk '/^Backtrace / {exit} 1' ) 
