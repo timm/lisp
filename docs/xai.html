@@ -1,0 +1,293 @@
+<html>
+  <head>
+    <title>xai.lisp</title>
+    <link rel="shortcut icon" type="image/jpg" href="lispicon.png">
+    <link rel="stylesheet" href="pygments-tango.css">
+    <style>
+      body {
+        font-family: Optima,Segoe, "Segoe UI", Candara, Calibri, Arial,sans-serif;
+        line-height: 1.25;
+        max-width: 700px;
+        padding: 5px;
+        margin: auto;
+        background: #CCC;
+      }
+      pre {
+        padding:3px; border-bottom: 1px solid #EEE; margin-left: 25px;
+        border-radius:7px;
+        box-shadow: 0 3px 7px rgb(0 0 0 / 0.2);
+        background: #EDEDED
+      }
+      img.right200 {
+        width:200px;border:1px solid #0039a6; padding:3px;margin:5px;float:right;
+      }      
+    </style> 
+  </head>
+<body>
+<p><font size=20pt><b>AI for busy people</b></font><br>
+<strong>Tim Menzies</strong><br><a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#116;&#105;&#109;&#109;&#64;&#105;&#101;&#101;&#101;&#46;&#111;&#114;&#103;">&#116;&#105;&#109;&#109;&#64;&#105;&#101;&#101;&#101;&#46;&#111;&#114;&#103;</a><br>http://timm.github.io</p>
+<p>Understanding turns insight into action.
+ <img align=right width=300  style="margin-top:40px;"
+ src="https://www.uklinkology.co.uk/wp-content/uploads/2022/02/Success-Stories.png"></p>
+<div class="toc">
+<ul>
+<li><a href="#sbcl-hacks">SBCL Hacks</a></li>
+<li><a href="#globals">Globals</a></li>
+<li><a href="#set-up">Set up</a><ul>
+<li><a href="#macros">Macros</a></li>
+</ul>
+</li>
+<li><a href="#structs">Structs</a></li>
+<li><a href="#update">Update</a></li>
+<li><a href="#query">Query</a></li>
+<li><a href="#utils">Utils</a></li>
+<li><a href="#start-up-actions">Start-up Actions</a></li>
+<li><a href="#start-up">Start-up</a></li>
+</ul>
+</div>
+<p><br clear=all></p>
+<h2 id="sbcl-hacks">SBCL Hacks</h2>
+<pre><code>#+sbcl (declaim (sb-ext:muffle-conditions cl:style-warning))
+</code></pre>
+<pre>
+(<font color=darkblue><b>defun</b></font> args()
+  <font color=darkred><b>"Access command line."</b></font>
+  (cdr #+clisp ext:*args* #+sbcl sb-ext:*posix-argv*))
+</pre>
+
+<p>From here down, it should all be standard LISP.</p>
+<h2 id="globals">Globals</h2>
+<pre>
+(<font color=darkblue><b>defstruct</b></font> about
+  <font color=darkred><b>"Struct for file meta info."</b></font>
+  (what  <font color=darkred><b>"min.lisp"</b></font>)
+  (why   <font color=darkred><b>"optimization tricks"</b></font>)
+  (when  <font color=darkred><b>"(c) 2024"</b></font>)
+  (how   <font color=darkred><b>"MIT license"</b></font>)
+  (who   <font color=darkred><b>"Tim Menzies"</b></font>)
+  (where <font color=darkred><b>"timm@ieee.org"</b></font>))
+</pre>
+
+<pre>
+(<font color=darkblue><b>defstruct</b></font> settings
+  <font color=darkred><b>"Struct for all settings."</b></font>
+  (seed    1234567891)
+  (buckets 2)
+  (pp      2)
+  (train   <font color=darkred><b>"../../moot/optimize/misc/auto93.csv"</b></font>)
+  (about  (make-about)))
+</pre>
+
+<h2 id="set-up">Set up</h2>
+<pre>
+(<font color=darkblue><b>defvar</b></font> *settings* (make-settings))
+</pre>
+
+<h3 id="macros">Macros</h3>
+<pre>
+(<font color=darkblue><b>defmacro</b></font> o (x f &rest fs)
+  <font color=darkred><b>"Nested access to slots."</b></font>
+  (if fs
+      `(o (slot-value ,x ',f) . ,fs)
+      `(slot-value ,x ',f)))
+</pre>
+
+<pre>
+(<font color=darkblue><b>defmacro</b></font> ? (&rest slots)
+  <font color=darkred><b>"Access settings."</b></font>
+  `(o *settings* . ,slots))
+</pre>
+
+<pre>
+(set-macro-character #\$ 
+   #'(lambda (s _)
+       <font color=darkred><b>"Expand $x to (slot-value self 'x)."</b></font>
+       `(slot-value self ',(read s t nil t))))
+</pre>
+
+<h2 id="structs">Structs</h2>
+<pre>
+(<font color=darkblue><b>defstruct</b></font> (data (:constructor %make-data))
+  <font color=darkred><b>"stores rows, summarized in cols (columns)"</b></font>
+  rows cols)
+</pre>
+
+<pre>
+(<font color=darkblue><b>defmethod</b></font> make-data (src &key sortp &aux (self (%make-data)))
+  <font color=darkred><b>"Load in csv rows, or rows from a list into a `data`."</b></font>
+  (if (stringp src)
+      (with-csv src (lambda (x) (add self x)))
+      (dolist (x src) (add self x)))
+  (if sortp
+      (setf $rows (sort $rows #'< :key (lambda (r) (ydist self r)))))
+  self)
+</pre>
+
+<pre>
+(<font color=darkblue><b>defstruct</b></font> col
+  <font color=darkred><b>"Columns have a `txt` name, a `pos` and count `n` of things seen."</b></font>
+  (n 0) (pos 0) (txt <font color=darkred><b>""</b></font>))
+</pre>
+
+<pre>
+(<font color=darkblue><b>defstruct</b></font> (sym (:include col))
+  <font color=darkred><b>"`Sym`s summarize symbolic columns."</b></font>
+  has (most 0) mode klass)
+</pre>
+
+<pre>
+(<font color=darkblue><b>defstruct</b></font> (num (:include col) (:constructor %make-num))
+  <font color=darkred><b>"`Num`s summarize numeric columns."</b></font>
+  (mu 0) (m2 0) (sd 0) (lo 1E32) (hi -1E32) (goal 1))
+</pre>
+
+<pre>
+(<font color=darkblue><b>defun</b></font> make-num (&key (txt <font color=darkred><b>""</b></font>) (pos 0))
+  <font color=darkred><b>"Constructor. For `nums`."</b></font>
+  (%make-num :txt txt :pos pos :goal (if (eql #\- (chr txt -1)) 0 1)))
+</pre>
+
+<pre>
+(<font color=darkblue><b>defstruct</b></font> (cols (:constructor %make-cols))
+  <font color=darkred><b>"`Cols` have `names` and `all` the cols and some cols stored in `x` and `y`."</b></font>
+  all x y names)
+</pre>
+
+<pre>
+(<font color=darkblue><b>defun</b></font> make-cols (names &aux (self (%make-cols :names names)))
+  <font color=darkred><b>"Constructor. `Names` tells us what `nums` and `syms` to make."</b></font>
+  (dolist (name names self)
+    (let* ((a   (chr name 0))
+          (z    (chr name -1))
+          (what (if (upper-case-p a) #'%make-num #'%make-sym))
+          (col  (funcall what :txt name :pos (length $all))))
+      (push col $all)
+      (unless (eql z #\X)
+        (if (eql z #\!) (setf $klass col))
+        (if (member z '(#\! #\- #\+)) (push col $y) (push col $x))))))
+</pre>
+
+<h2 id="update">Update</h2>
+<pre>
+(<font color=darkblue><b>defmethod</b></font> add ((self data) row)
+  <font color=darkred><b>"Keep the row, update the `cols` summaries."</b></font>
+  (push $rows (add $cols row)))
+</pre>
+
+<pre>
+(<font color=darkblue><b>defmethod</b></font> add ((self cols) row)
+  (mapcar #'add $all row))
+</pre>
+
+<pre>
+(<font color=darkblue><b>defmethod</b></font> add ((self num) x)
+  <font color=darkred><b>"For non-empty cells, add `x`. Always return `x`."</b></font>
+  (unless (eql x '?)
+    (incf $n)
+    (add1 self x))
+  x)
+</pre>
+
+<pre>
+(<font color=darkblue><b>defmethod</b></font> add1 ((self num) x)
+  <font color=darkred><b>"Update numeric summaries with `x`."</b></font>
+  (let ((d (- x $mu)))
+    (incf $mu (/ d $n))
+    (incf $m2 (* d (- x $mu)))
+    (setf $sd (if (< $m2 2) 0 (sqrt (/ $m2 (- $n 1))))
+          $lo (min x $lo)
+          $hi (max x $hi))))
+</pre>
+
+<pre>
+(<font color=darkblue><b>defmethod</b></font> add1 ((self sym) x)
+  <font color=darkred><b>"Update symbolic summaries with `x`."</b></font>
+  (let ((new (inca $has x)))
+    (add $cols(if (> new $most)
+                  (setf $mode x
+                        $most new)))))
+</pre>
+
+<h2 id="query">Query</h2>
+<pre>
+(<font color=darkblue><b>defun</b></font> cell (col row)
+  <font color=darkred><b>"Access a column in a row."</b></font>
+  (elt row (o col pos)))
+</pre>
+
+<pre>
+(<font color=darkblue><b>defmethod</b></font> norm ((self num) x)
+  <font color=darkred><b>"Normalizes x 0..1."</b></font>
+  (if (eql '? x) x (/ (- x $lo) (- $hi $lo + 1E-32))))
+</pre>
+
+<pre>
+(<font color=darkblue><b>defmethod</b></font> ydist ((self data) row)
+  (let* ((ys (o self cols y))
+         (d (<font color=darkblue><b>loop</b></font> :for col :in ys
+                  :sum (expt (abs (- (o col goal) (norm self (cell col row))))
+                             (? pp)))))
+    (expt (/ d (length ys)) (/ 1 (? pp)))))
+</pre>
+
+<h2 id="utils">Utils</h2>
+<pre>
+(<font color=darkblue><b>defun</b></font> inca (a x)
+  <font color=darkred><b>"Ensure `a` has a key for `x`, add one to that count."</b></font>
+  (incf (cdr (or (assoc x a :test #'equal)
+                 (car (setf a (cons (cons x 0) a)))))))
+</pre>
+
+<pre>
+(<font color=darkblue><b>defun</b></font> chr (s n )
+  <font color=darkred><b>"Return nth character from `s`. Negative `n` denote indexes from back."</b></font> 
+  (let ((s (if (stringp s) s (symbol-name s))))
+    (char s (if (>= n 0) n (+ n (length s))))))         
+</pre>
+
+<pre>
+(<font color=darkblue><b>defun</b></font> thing (s &aux (s1 (string-trim '(#\Space #\Tab) s)))
+  <font color=darkred><b>"Coerce `s` to an atomic thing."</b></font>
+  (let* ((*read-eval* nil)
+         (it (read-from-string s1 <font color=darkred><b>""</b></font>)))
+    (cond ((numberp it)     it)
+          ((string= it <font color=darkred><b>"?"</b></font>) '?)
+          (t                s1))))
+</pre>
+
+<pre>
+(<font color=darkblue><b>defun</b></font> things (s &optional (sep #\,) (here 0)) ; --> list
+  <font color=darkred><b>"split string to items, divided on `sep; then coerce each item"</b></font>
+  (let ((there (position sep s :start here)))
+    (cons (thing (subseq s here there))
+          (if there (things s sep (1+ there))))))
+</pre>
+
+<pre>
+(<font color=darkblue><b>defun</b></font> with-csv (&optional file (fun #'print) end)
+  <font color=darkred><b>"call `fun` on all lines in `file`, after running lines through `filter`"</b></font>
+  (with-open-file (s (or file *standard-input*))
+    (<font color=darkblue><b>loop</b></font> (funcall fun (things (or (read-line s nil)
+                                      (return end)))))))
+</pre>
+
+<h2 id="start-up-actions">Start-up Actions</h2>
+<pre>
+(<font color=darkblue><b>defun</b></font> <font color=darkblue><b>eg</b></font>--data (&optional file)
+  <font color=darkred><b>"CLI action. Process data."</b></font>
+    (print (or file (? train)))
+  (let ((data (make-data (or file (? train)))))
+    (dolist (col (o data cols y))
+      (format t <font color=darkred><b>"~a~%"</b></font> col))))
+</pre>
+
+<h2 id="start-up">Start-up</h2>
+<pre>
+(<font color=darkblue><b>loop</b></font> :for (flag arg) :on (args) :by #'cdr
+      :do  (let ((com (intern (format nil <font color=darkred><b>"EG~:@(~a~)"</b></font> flag))))
+             (if (fboundp com)
+                 (funcall com (if arg (thing arg))))))
+</pre>
+
+<p>That's all folks.</p>
+</body></html>
