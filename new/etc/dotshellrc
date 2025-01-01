@@ -28,7 +28,7 @@ alias fgrep='fgrep --color=auto'
 alias kseed='lua kseed.lua'
 alias h="history"
 alias ls="ls -G"
-alias vi="emacs -q -l ../etc/doteditrc"
+alias emacs="emacs -q -l ../etc/doteditrc"
 
 export BASH_SILENCE_DEPRECATION_WARNING=1
 export PATH="$PWD:/opt/homebrew/bin:$PATH"
