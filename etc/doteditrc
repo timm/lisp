@@ -2,8 +2,6 @@
   ;; Replace "sbcl" with the path to your implementation
     (setq inferior-lisp-program "sbcl")
 
-
-
 (load-theme 'deeper-blue t)
 (setq column-number-mode t)
 ;(menu-bar-mode 0) 
@@ -21,5 +19,9 @@
   (global-hl-line-mode 1)
   (setq-default indent-tabs-mode nil)
   (setq-default fill-column 52))
+
+(setq comment-auto-fill-only-comments nil)
+(setq-default comment-column 0)
+(setq-default indent-line-function 'indent-relative)
 
 (global-set-key "\C-cs" 'slime-selector)

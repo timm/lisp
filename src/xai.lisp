@@ -1,6 +1,23 @@
-#+sbcl
-(declaim (sb-ext:muffle-conditions cl:style-warning))
+;<font size=20pt><b>AI for busy people</b></font><br>
+;**Tim Menzies**<br><timm@ieee.org><br>http://timm.github.io
 
+; Understanding turns insight into action.
+; <img align=right width=300  style="margin-top:40px;"
+; src="https://www.uklinkology.co.uk/wp-content/uploads/2022/02/Success-Stories.png">|#
+
+; [TOC]
+
+; <br clear=all>
+;## SBCL Hacks
+
+    #+sbcl (declaim (sb-ext:muffle-conditions cl:style-warning))
+
+(defun args()
+  "Access command line."
+  (cdr #+clisp ext:*args* #+sbcl sb-ext:*posix-argv*))
+
+; From here down, it should all be standard LISP.
+;## Globals
 (defstruct about
   "Struct for file meta info."
   (what  "min.lisp")
@@ -18,9 +35,10 @@
   (train   "../../moot/optimize/misc/auto93.csv")
   (about  (make-about)))
 
-;-------------------------------------------------------------------------------
+;## Set up
 (defvar *settings* (make-settings))
 
+;### Macros
 (defmacro o (x f &rest fs)
   "Nested access to slots."
   (if fs
@@ -31,11 +49,12 @@
   "Access settings."
   `(o *settings* . ,slots))
 
-(set-macro-character #\$ #'(lambda (s _)
-                             "Expand $x to (slot-value self 'x)."
-                             `(slot-value self ',(read s t nil t))))
+(set-macro-character #\$ 
+   #'(lambda (s _)
+       "Expand $x to (slot-value self 'x)."
+       `(slot-value self ',(read s t nil t))))
 
-;-------------------------------------------------------------------------------
+;## Structs
 (defstruct (data (:constructor %make-data))
   "stores rows, summarized in cols (columns)"
   rows cols)
@@ -81,7 +100,7 @@
         (if (eql z #\!) (setf $klass col))
         (if (member z '(#\! #\- #\+)) (push col $y) (push col $x))))))
 
-;-------------------------------------------------------------------------------
+;## Update
 (defmethod add ((self data) row)
   "Keep the row, update the `cols` summaries."
   (push $rows (add $cols row)))
@@ -104,7 +123,7 @@
     (setf $sd (if (< $m2 2) 0 (sqrt (/ $m2 (- $n 1))))
           $lo (min x $lo)
           $hi (max x $hi))))
-                
+
 (defmethod add1 ((self sym) x)
   "Update symbolic summaries with `x`."
   (let ((new (inca $has x)))
@@ -112,7 +131,7 @@
                   (setf $mode x
                         $most new)))))
 
-;-------------------------------------------------------------------------------
+;## Query
 (defun cell (col row)
   "Access a column in a row."
   (elt row (o col pos)))
@@ -128,7 +147,7 @@
                              (? pp)))))
     (expt (/ d (length ys)) (/ 1 (? pp)))))
 
-;-------------------------------------------------------------------------------
+;## Utils
 (defun inca (a x)
   "Ensure `a` has a key for `x`, add one to that count."
   (incf (cdr (or (assoc x a :test #'equal)
@@ -139,7 +158,7 @@
   (let ((s (if (stringp s) s (symbol-name s))))
     (char s (if (>= n 0) n (+ n (length s))))))         
 
-(defun s->thing (s &aux (s1 (string-trim '(#\Space #\Tab) s)))
+(defun thing (s &aux (s1 (string-trim '(#\Space #\Tab) s)))
   "Coerce `s` to an atomic thing."
   (let* ((*read-eval* nil)
          (it (read-from-string s1 "")))
@@ -147,19 +166,19 @@
           ((string= it "?") '?)
           (t                s1))))
 
-(defun s->things (s &optional (sep #\,) (here 0)) ; --> list
+(defun things (s &optional (sep #\,) (here 0)) ; --> list
   "split string to items, divided on `sep; then coerce each item"
   (let ((there (position sep s :start here)))
-    (cons (s->thing (subseq s here there))
-          (if there (s->things s sep (1+ there))))))
+    (cons (thing (subseq s here there))
+          (if there (things s sep (1+ there))))))
 
 (defun with-csv (&optional file (fun #'print) end)
   "call `fun` on all lines in `file`, after running lines through `filter`"
   (with-open-file (s (or file *standard-input*))
-    (loop (funcall fun (s->things (or (read-line s nil)
+    (loop (funcall fun (things (or (read-line s nil)
                                       (return end)))))))
 
-;-------------------------------------------------------------------------------
+;## Start-up Actions
 (defun eg--data (&optional file)
   "CLI action. Process data."
     (print (or file (? train)))
@@ -167,11 +186,10 @@
     (dolist (col (o data cols y))
       (format t "~a~%" col))))
 
-(defun args()
-  "Access command line."
-  (cdr #+clisp ext:*args* #+sbcl sb-ext:*posix-argv*))
-
+;## Start-up
 (loop :for (flag arg) :on (args) :by #'cdr
       :do  (let ((com (intern (format nil "EG~:@(~a~)" flag))))
              (if (fboundp com)
-                 (funcall com (if arg (s->thing arg))))))
+                 (funcall com (if arg (thing arg))))))
+
+; That's all folks.
