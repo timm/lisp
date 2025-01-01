@@ -96,7 +96,7 @@
            (z    (chr name -1))
            (what (if (upper-case-p a) #'make-num #'make-sym))
            (col  (funcall what :txt name :pos (incf pos))))
-      (push col all)
+        (push col all)
       (unless (eql z #\X)
         (if (eql z #\!) (setf klass col))
         (if (member z '(#\! #\- #\+)) (push col y) (push col x))))))
@@ -185,13 +185,14 @@
 
 (defun eg--csv (&aux (pos -1))
   (with-csv (? train)  (lambda (r)
-                   (if (zerop (mod (incf pos) 30))  (print r)))))
+    (if (zerop (mod (incf pos) 30))  (print r)))))
 
-(defun eg--data ()
+(defun eg--data (&aux (pos -1))
   "CLI action. Process data."
-  (let ((data (make-data (? train) :sortp t)))
-    (dolist (col (o data cols y))
-      (format t "~&~a~%" col))))
+  (let ((self (make-data (? train) :sortp t)))
+    (dolist (row $rows)
+       (when (zerop (mod (incf pos) 30))  
+         (format t "~,2f ~a~%" (ydist self row) row)))))
 
 ;## Start-up
 (loop :for (flag arg) :on (args) :by #'cdr

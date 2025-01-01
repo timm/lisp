@@ -97,6 +97,13 @@
 </pre>
 
 <pre>
+(<font color=darkblue><b>defmacro</b></font> has (lst x)
+  <font color=darkred><b>"Return `lst`'s  slot value for `x` (if missing, initialize x's slot to 0)."</b></font>
+  `(cdr (or (assoc ,x ,lst :test #'equal)
+            (car (setf ,lst (cons (cons ,x 0) ,lst))))))
+</pre>
+
+<pre>
 (set-macro-character #\$ 
    #'(lambda (s _)
        <font color=darkred><b>"Expand $x to (slot-value self 'x)."</b></font>
@@ -115,10 +122,10 @@
 (<font color=darkblue><b>defmethod</b></font> make-data (src &key sortp &aux (self (%make-data)))
   <font color=darkred><b>"Load in csv rows, or rows from a list into a `data`."</b></font>
   (if (stringp src)
-      (with-csv src (lambda (x) (add self x)))
+      (with-csv src #'(lambda (x) (add self x)))
       (dolist (x src) (add self x)))
   (if sortp
-      (setf $rows (sort $rows #'< :key (lambda (r) (ydist self r)))))
+      (setf $rows (sort $rows #'< :key (lambda (row) (ydist self row)))))
   self)
 </pre>
 
@@ -133,7 +140,7 @@
 <pre>
 (<font color=darkblue><b>defstruct</b></font> (sym (:include col))
   <font color=darkred><b>"`Sym`s summarize symbolic columns."</b></font>
-  has (most 0) mode klass)
+  seen (most 0) mode klass)
 </pre>
 
 <h3 id="num">Num</h3>
@@ -152,29 +159,32 @@
 <h3 id="cols">Cols</h3>
 <pre>
 (<font color=darkblue><b>defstruct</b></font> (cols (:constructor %make-cols))
-  <font color=darkred><b>"Container for all the columns (store in `all`, some also stored in `x,y`"</b></font>. 
-  all x y names)
+  <font color=darkred><b>"Container for all the columns (store in `all`, some also stored in `x,y`."</b></font> 
+  all x y names klass)
 </pre>
 
 <pre>
-(<font color=darkblue><b>defun</b></font> make-cols (names &aux (self (%make-cols :names names)))
+(<font color=darkblue><b>defun</b></font> make-cols (names &aux (pos -1) x y klass all)
   <font color=darkred><b>"Constructor. `Names` tells us what `nums` and `syms` to make."</b></font>
-  (dolist (name names self)
-    (let* ((a   (chr name 0))
-          (z    (chr name -1))
-          (what (if (upper-case-p a) #'%make-num #'%make-sym))
-          (col  (funcall what :txt name :pos (length $all))))
-      (push col $all)
+  (dolist (name names (%make-cols :x x :y y :klass klass :names names
+                                  :all (reverse all)))
+    (let* ((a    (chr name 0))
+           (z    (chr name -1))
+           (what (if (upper-case-p a) #'make-num #'make-sym))
+           (col  (funcall what :txt name :pos (incf pos))))
+        (push col all)
       (unless (eql z #\X)
-        (if (eql z #\!) (setf $klass col))
-        (if (member z '(#\! #\- #\+)) (push col $y) (push col $x))))))
+        (if (eql z #\!) (setf klass col))
+        (if (member z '(#\! #\- #\+)) (push col y) (push col x))))))
 </pre>
 
 <h2 id="update">Update</h2>
 <pre>
 (<font color=darkblue><b>defmethod</b></font> add ((self data) row)
   <font color=darkred><b>"Keep the row, update the `cols` summaries."</b></font>
-  (push $rows (add $cols row)))
+  (if $cols
+    (push (add $cols row) $rows)
+    (setf $cols (make-cols row))))
 </pre>
 
 <pre>
@@ -183,7 +193,7 @@
 </pre>
 
 <pre>
-(<font color=darkblue><b>defmethod</b></font> add ((self num) x)
+(<font color=darkblue><b>defmethod</b></font> add ((self col) x)
   <font color=darkred><b>"For non-empty cells, add `x`. Always return `x`."</b></font>
   (unless (eql x '?)
     (incf $n)
@@ -205,15 +215,15 @@
 <pre>
 (<font color=darkblue><b>defmethod</b></font> add1 ((self sym) x)
   <font color=darkred><b>"Update symbolic summaries with `x`."</b></font>
-  (let ((new (inca $has x)))
-    (add $cols(if (> new $most)
-                  (setf $mode x
-                        $most new)))))
+  (let ((new (incf (has $seen x))))
+    (if (> new $most)
+      (setf $mode x
+            $most new))))
 </pre>
 
 <h2 id="query">Query</h2>
 <pre>
-(<font color=darkblue><b>defun</b></font> cell (col row)
+(<font color=darkblue><b>defun</b></font> at (col row)
   <font color=darkred><b>"Access a column in a row."</b></font>
   (elt row (o col pos)))
 </pre>
@@ -221,16 +231,14 @@
 <pre>
 (<font color=darkblue><b>defmethod</b></font> norm ((self num) x)
   <font color=darkred><b>"Normalizes x 0..1."</b></font>
-  (if (eql '? x) x (/ (- x $lo) (- $hi $lo + 1E-32))))
+  (if (eql x '?) x (/ (- x $lo) (- $hi $lo 1E-32))))
 </pre>
 
 <pre>
 (<font color=darkblue><b>defmethod</b></font> ydist ((self data) row)
-  (let* ((ys (o self cols y))
-         (d (<font color=darkblue><b>loop</b></font> :for col :in ys
-                  :sum (expt (abs (- (o col goal) (norm self (cell col row))))
-                             (? pp)))))
-    (expt (/ d (length ys)) (/ 1 (? pp)))))
+  (let ((d (<font color=darkblue><b>loop</b></font> :for c :in (o $cols y)
+                 :sum (expt (abs (- (o c goal) (norm c (at c row)))) (? pp)))))
+    (expt (/ d (length (o $cols y))) (/ 1 (? pp)))))
 </pre>
 
 <h2 id="utils">Utils</h2>
@@ -276,20 +284,31 @@
 
 <h2 id="start-up-actions">Start-up Actions</h2>
 <pre>
-(<font color=darkblue><b>defun</b></font> <font color=darkblue><b>eg</b></font>--data (&optional file)
+(<font color=darkblue><b>defun</b></font> <font color=darkblue><b>eg</b></font>--settings ()
+  (print *settings*))
+</pre>
+
+<pre>
+(<font color=darkblue><b>defun</b></font> <font color=darkblue><b>eg</b></font>--csv (&aux (pos -1))
+  (with-csv (? train)  (lambda (r)
+    (if (zerop (mod (incf pos) 30))  (print r)))))
+</pre>
+
+<pre>
+(<font color=darkblue><b>defun</b></font> <font color=darkblue><b>eg</b></font>--data (&aux (pos -1))
   <font color=darkred><b>"CLI action. Process data."</b></font>
-    (print (or file (? train)))
-  (let ((data (make-data (or file (? train)))))
-    (dolist (col (o data cols y))
-      (format t <font color=darkred><b>"~a~%"</b></font> col))))
+  (let ((self (make-data (? train) :sortp t)))
+    (dolist (row $rows)
+       (when (zerop (mod (incf pos) 30))  
+         (format t <font color=darkred><b>"~,2f ~a~%"</b></font> (ydist self row) row)))))
 </pre>
 
 <h2 id="start-up">Start-up</h2>
 <pre>
 (<font color=darkblue><b>loop</b></font> :for (flag arg) :on (args) :by #'cdr
       :do  (let ((com (intern (format nil <font color=darkred><b>"EG~:@(~a~)"</b></font> flag))))
-             (if (fboundp com)
-                 (funcall com (if arg (thing arg))))))
+              (if (fboundp com)
+                 (funcall com))))
 </pre>
 
 <p>That's all folks.</p>

@@ -27,6 +27,8 @@ alias lisp="rlwrap sbcl --noinform "
 
 export BASH_SILENCE_DEPRECATION_WARNING=1
 export PATH="$PWD:/opt/homebrew/bin:$PATH"
+export PYTHONPATH="/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages:$PYTHONPATH"
+
 
 isp() {
   f=$1

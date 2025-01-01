@@ -42,4 +42,5 @@ push: ## commit to main
 		-M letter                       \
 		--file-align=fill                \
 		-o $@.ps $^
-	@ps2pdf $@.ps $@.pdf; rm $@.ps
+	@ps2pdf $@.ps $@; rm $@.ps
+	open $@
