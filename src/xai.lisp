@@ -57,7 +57,6 @@
 
 (defmethod make-data (src &key sortp &aux (self (%make-data)))
   "Load in csv rows, or rows from a list into a `data`."
-  (break "your-breakpoint-name")
   (if (stringp src)
       (with-csv src #'(lambda (x) (add self x)))
       (dolist (x src) (add self x)))
@@ -87,40 +86,36 @@
 ;### Cols
 (defstruct (cols (:constructor %make-cols))
   "Container for all the columns (store in `all`, some also stored in `x,y`." 
-  all x y names)
+  all x y names klass)
 
-(defun make-cols (names &aux (self (%make-cols :names names)))
+(defun make-cols (names &aux (pos -1) x y klass all)
   "Constructor. `Names` tells us what `nums` and `syms` to make."
-  (dolist (name names self)
-    (let* ((a   (chr name 0))
+  (dolist (name names (%make-cols :x x :y y :klass klass :names names
+                                  :all (reverse all)))
+    (let* ((a    (chr name 0))
            (z    (chr name -1))
            (what (if (upper-case-p a) #'make-num #'make-sym))
-           (col  (funcall what :txt name :pos (length $all))))
-      (push col $all)
+           (col  (funcall what :txt name :pos (incf pos))))
+      (push col all)
       (unless (eql z #\X)
-        (if (eql z #\!) (setf $klass col))
-        (if (member z '(#\! #\- #\+)) (push col $y) (push col $x))))))
+        (if (eql z #\!) (setf klass col))
+        (if (member z '(#\! #\- #\+)) (push col y) (push col x))))))
 
 ;## Update
 (defmethod add ((self data) row)
   "Keep the row, update the `cols` summaries."
-  (print row)
   (if $cols
-    (push $rows (add $cols row))
-    (setf $cols (make-cols row)))
-  (print 44))
+    (push (add $cols row) $rows)
+    (setf $cols (make-cols row))))
 
 (defmethod add ((self cols) row)
-  (print $all)
   (mapcar #'add $all row))
 
 (defmethod add ((self col) x)
   "For non-empty cells, add `x`. Always return `x`."
-  (format t ":: ~a ~a~%" x self)
   (unless (eql x '?)
     (incf $n)
-    (add1 self x)
-    (print 33))
+    (add1 self x))
   x)
 
 (defmethod add1 ((self num) x)
@@ -135,7 +130,6 @@
 (defmethod add1 ((self sym) x)
   "Update symbolic summaries with `x`."
   (let ((new (incf (has $seen x))))
-    (format t "~&~a ~a~%" new $seen)
     (if (> new $most)
       (setf $mode x
             $most new))))
@@ -147,14 +141,12 @@
 
 (defmethod norm ((self num) x)
   "Normalizes x 0..1."
-  (if (eql '? x) x (/ (- x $lo) (- $hi $lo + 1E-32))))
+  (if (eql x '?) x (/ (- x $lo) (- $hi $lo 1E-32))))
 
 (defmethod ydist ((self data) row)
-  (let* ((ys (o self cols y))
-         (d (loop :for col :in ys
-                  :sum (expt (abs (- (o col goal) (norm self (at col row))))
-                             (? pp)))))
-    (expt (/ d (length ys)) (/ 1 (? pp)))))
+  (let ((d (loop :for c :in (o $cols y)
+                 :sum (expt (abs (- (o c goal) (norm c (at c row)))) (? pp)))))
+    (expt (/ d (length (o $cols y))) (/ 1 (? pp)))))
 
 ;## Utils
 (defun inca (a x)
@@ -187,20 +179,24 @@
     (loop (funcall fun (things (or (read-line s nil)
                                       (return end)))))))
 
-;## Start-up Actions
-(defun eg--data (&optional file)
+;##  Start-up Actions
+(defun eg--settings ()
+  (print *settings*))
+
+(defun eg--csv (&aux (pos -1))
+  (with-csv (? train)  (lambda (r)
+                   (if (zerop (mod (incf pos) 30))  (print r)))))
+
+(defun eg--data ()
   "CLI action. Process data."
-    (print (or file (? train)))
-  (let ((data (make-data
-               (or file (? train))
-               :sortp nil)))
+  (let ((data (make-data (? train) :sortp t)))
     (dolist (col (o data cols y))
-      (format t "~a~%" col))))
+      (format t "~&~a~%" col))))
 
 ;## Start-up
 (loop :for (flag arg) :on (args) :by #'cdr
       :do  (let ((com (intern (format nil "EG~:@(~a~)" flag))))
-             (if (fboundp com)
-                 (funcall com (if arg (thing arg))))))
+              (if (fboundp com)
+                 (funcall com))))
 
 ; That's all folks.

@@ -29,9 +29,9 @@ export BASH_SILENCE_DEPRECATION_WARNING=1
 export PATH="$PWD:/opt/homebrew/bin:$PATH"
 
 isp() {
-  f=$1.lisp
+  f=$1
   shift
-  $(which sbcl) --noinform --script $f  $* 2> >( gawk '/^Backtrace / {exit} 1' ) 
+  $(which sbcl) --noinform --script $f  $* 2>&1 | less
 }
 
 there() { cd $1; basename `pwd`; }
