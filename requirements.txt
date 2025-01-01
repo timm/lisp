@@ -1,2 +1,1 @@
-sudo npm install -g docco
-brew install rlwrap
+brew install sbcl gawk rlwrap
