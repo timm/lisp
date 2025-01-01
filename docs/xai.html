@@ -24,39 +24,8 @@
     </style> 
   </head>
 <body>
-<p><font size=20pt><b>AI for busy people</b></font><br>
-<strong>Tim Menzies</strong><br><a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#116;&#105;&#109;&#109;&#64;&#105;&#101;&#101;&#101;&#46;&#111;&#114;&#103;">&#116;&#105;&#109;&#109;&#64;&#105;&#101;&#101;&#101;&#46;&#111;&#114;&#103;</a><br>http://timm.github.io</p>
-<p>Understanding turns insight into action.
- <img align=right width=300  style="margin-top:40px;"
- src="https://www.uklinkology.co.uk/wp-content/uploads/2022/02/Success-Stories.png"></p>
-<div class="toc">
-<ul>
-<li><a href="#sbcl-hacks">SBCL Hacks</a></li>
-<li><a href="#globals">Globals</a></li>
-<li><a href="#set-up">Set up</a><ul>
-<li><a href="#macros">Macros</a></li>
-</ul>
-</li>
-<li><a href="#structs">Structs</a></li>
-<li><a href="#update">Update</a></li>
-<li><a href="#query">Query</a></li>
-<li><a href="#utils">Utils</a></li>
-<li><a href="#start-up-actions">Start-up Actions</a></li>
-<li><a href="#start-up">Start-up</a></li>
-</ul>
-</div>
-<p><br clear=all></p>
-<h2 id="sbcl-hacks">SBCL Hacks</h2>
-<pre><code>#+sbcl (declaim (sb-ext:muffle-conditions cl:style-warning))
-</code></pre>
-<pre>
-(<font color=darkblue><b>defun</b></font> args()
-  <font color=darkred><b>"Access command line."</b></font>
-  (cdr #+clisp ext:*args* #+sbcl sb-ext:*posix-argv*))
-</pre>
-
-<p>From here down, it should all be standard LISP.</p>
-<h2 id="globals">Globals</h2>
+<p>&nbsp;<h1><font size=20pt><b>AI for busy people</b></font></h1>
+ Understanding turns insight into action.</p>
 <pre>
 (<font color=darkblue><b>defstruct</b></font> about
   <font color=darkred><b>"Struct for file meta info."</b></font>
@@ -78,9 +47,38 @@
   (about  (make-about)))
 </pre>
 
+<div class="toc">
+<ul>
+<li><a href="#set-up">Set up</a><ul>
+<li><a href="#macros">Macros</a></li>
+</ul>
+</li>
+<li><a href="#structs">Structs</a><ul>
+<li><a href="#data">Data</a></li>
+<li><a href="#col">Col</a></li>
+<li><a href="#sym">Sym</a></li>
+<li><a href="#num">Num</a></li>
+<li><a href="#cols">Cols</a></li>
+</ul>
+</li>
+<li><a href="#update">Update</a></li>
+<li><a href="#query">Query</a></li>
+<li><a href="#utils">Utils</a></li>
+<li><a href="#start-up-actions">Start-up Actions</a></li>
+<li><a href="#start-up">Start-up</a></li>
+</ul>
+</div>
 <h2 id="set-up">Set up</h2>
 <pre>
 (<font color=darkblue><b>defvar</b></font> *settings* (make-settings))
+</pre>
+
+<pre>
+(<font color=darkblue><b>defun</b></font> args()
+  <font color=darkred><b>"Access command line."</b></font>
+  (cdr #+clisp ext:*args* #+sbcl sb-ext:*posix-argv*))
+
+#+sbcl (declaim (sb-ext:muffle-conditions cl:style-warning))
 </pre>
 
 <h3 id="macros">Macros</h3>
@@ -106,6 +104,7 @@
 </pre>
 
 <h2 id="structs">Structs</h2>
+<h3 id="data">Data</h3>
 <pre>
 (<font color=darkblue><b>defstruct</b></font> (data (:constructor %make-data))
   <font color=darkred><b>"stores rows, summarized in cols (columns)"</b></font>
@@ -123,18 +122,21 @@
   self)
 </pre>
 
+<h3 id="col">Col</h3>
 <pre>
 (<font color=darkblue><b>defstruct</b></font> col
   <font color=darkred><b>"Columns have a `txt` name, a `pos` and count `n` of things seen."</b></font>
   (n 0) (pos 0) (txt <font color=darkred><b>""</b></font>))
 </pre>
 
+<h3 id="sym">Sym</h3>
 <pre>
 (<font color=darkblue><b>defstruct</b></font> (sym (:include col))
   <font color=darkred><b>"`Sym`s summarize symbolic columns."</b></font>
   has (most 0) mode klass)
 </pre>
 
+<h3 id="num">Num</h3>
 <pre>
 (<font color=darkblue><b>defstruct</b></font> (num (:include col) (:constructor %make-num))
   <font color=darkred><b>"`Num`s summarize numeric columns."</b></font>
@@ -147,9 +149,10 @@
   (%make-num :txt txt :pos pos :goal (if (eql #\- (chr txt -1)) 0 1)))
 </pre>
 
+<h3 id="cols">Cols</h3>
 <pre>
 (<font color=darkblue><b>defstruct</b></font> (cols (:constructor %make-cols))
-  <font color=darkred><b>"`Cols` have `names` and `all` the cols and some cols stored in `x` and `y`."</b></font>
+  <font color=darkred><b>"Container for all the columns (store in `all`, some also stored in `x,y`"</b></font>. 
   all x y names)
 </pre>
 

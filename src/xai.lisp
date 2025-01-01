@@ -1,23 +1,6 @@
-;<font size=20pt><b>AI for busy people</b></font><br>
-;**Tim Menzies**<br><timm@ieee.org><br>http://timm.github.io
-
+;&nbsp;<h1><font size=20pt><b>AI for busy people</b></font></h1>
 ; Understanding turns insight into action.
-; <img align=right width=300  style="margin-top:40px;"
-; src="https://www.uklinkology.co.uk/wp-content/uploads/2022/02/Success-Stories.png">|#
 
-; [TOC]
-
-; <br clear=all>
-;## SBCL Hacks
-
-    #+sbcl (declaim (sb-ext:muffle-conditions cl:style-warning))
-
-(defun args()
-  "Access command line."
-  (cdr #+clisp ext:*args* #+sbcl sb-ext:*posix-argv*))
-
-; From here down, it should all be standard LISP.
-;## Globals
 (defstruct about
   "Struct for file meta info."
   (what  "min.lisp")
@@ -35,8 +18,15 @@
   (train   "../../moot/optimize/misc/auto93.csv")
   (about  (make-about)))
 
+; [TOC]   
 ;## Set up
 (defvar *settings* (make-settings))
+
+(defun args()
+  "Access command line."
+  (cdr #+clisp ext:*args* #+sbcl sb-ext:*posix-argv*))
+   
+#+sbcl (declaim (sb-ext:muffle-conditions cl:style-warning))
 
 ;### Macros
 (defmacro o (x f &rest fs)
@@ -49,33 +39,43 @@
   "Access settings."
   `(o *settings* . ,slots))
 
+(defmacro has (lst x)
+  "Return `lst`'s  slot value for `x` (if missing, initialize x's slot to 0)."
+  `(cdr (or (assoc ,x ,lst :test #'equal)
+            (car (setf ,lst (cons (cons ,x 0) ,lst))))))
+
 (set-macro-character #\$ 
    #'(lambda (s _)
        "Expand $x to (slot-value self 'x)."
        `(slot-value self ',(read s t nil t))))
 
 ;## Structs
+;### Data
 (defstruct (data (:constructor %make-data))
   "stores rows, summarized in cols (columns)"
   rows cols)
 
 (defmethod make-data (src &key sortp &aux (self (%make-data)))
   "Load in csv rows, or rows from a list into a `data`."
+  (break "your-breakpoint-name")
   (if (stringp src)
-      (with-csv src (lambda (x) (add self x)))
+      (with-csv src #'(lambda (x) (add self x)))
       (dolist (x src) (add self x)))
   (if sortp
-      (setf $rows (sort $rows #'< :key (lambda (r) (ydist self r)))))
+      (setf $rows (sort $rows #'< :key (lambda (row) (ydist self row)))))
   self)
 
+;### Col
 (defstruct col
   "Columns have a `txt` name, a `pos` and count `n` of things seen."
   (n 0) (pos 0) (txt ""))
 
+;### Sym
 (defstruct (sym (:include col))
   "`Sym`s summarize symbolic columns."
-  has (most 0) mode klass)
+  seen (most 0) mode klass)
 
+;### Num
 (defstruct (num (:include col) (:constructor %make-num))
   "`Num`s summarize numeric columns."
   (mu 0) (m2 0) (sd 0) (lo 1E32) (hi -1E32) (goal 1))
@@ -84,17 +84,18 @@
   "Constructor. For `nums`."
   (%make-num :txt txt :pos pos :goal (if (eql #\- (chr txt -1)) 0 1)))
 
+;### Cols
 (defstruct (cols (:constructor %make-cols))
-  "`Cols` have `names` and `all` the cols and some cols stored in `x` and `y`."
+  "Container for all the columns (store in `all`, some also stored in `x,y`." 
   all x y names)
 
 (defun make-cols (names &aux (self (%make-cols :names names)))
   "Constructor. `Names` tells us what `nums` and `syms` to make."
   (dolist (name names self)
     (let* ((a   (chr name 0))
-          (z    (chr name -1))
-          (what (if (upper-case-p a) #'%make-num #'%make-sym))
-          (col  (funcall what :txt name :pos (length $all))))
+           (z    (chr name -1))
+           (what (if (upper-case-p a) #'make-num #'make-sym))
+           (col  (funcall what :txt name :pos (length $all))))
       (push col $all)
       (unless (eql z #\X)
         (if (eql z #\!) (setf $klass col))
@@ -103,16 +104,23 @@
 ;## Update
 (defmethod add ((self data) row)
   "Keep the row, update the `cols` summaries."
-  (push $rows (add $cols row)))
+  (print row)
+  (if $cols
+    (push $rows (add $cols row))
+    (setf $cols (make-cols row)))
+  (print 44))
 
 (defmethod add ((self cols) row)
+  (print $all)
   (mapcar #'add $all row))
 
-(defmethod add ((self num) x)
+(defmethod add ((self col) x)
   "For non-empty cells, add `x`. Always return `x`."
+  (format t ":: ~a ~a~%" x self)
   (unless (eql x '?)
     (incf $n)
-    (add1 self x))
+    (add1 self x)
+    (print 33))
   x)
 
 (defmethod add1 ((self num) x)
@@ -126,13 +134,14 @@
 
 (defmethod add1 ((self sym) x)
   "Update symbolic summaries with `x`."
-  (let ((new (inca $has x)))
-    (add $cols(if (> new $most)
-                  (setf $mode x
-                        $most new)))))
+  (let ((new (incf (has $seen x))))
+    (format t "~&~a ~a~%" new $seen)
+    (if (> new $most)
+      (setf $mode x
+            $most new))))
 
 ;## Query
-(defun cell (col row)
+(defun at (col row)
   "Access a column in a row."
   (elt row (o col pos)))
 
@@ -143,7 +152,7 @@
 (defmethod ydist ((self data) row)
   (let* ((ys (o self cols y))
          (d (loop :for col :in ys
-                  :sum (expt (abs (- (o col goal) (norm self (cell col row))))
+                  :sum (expt (abs (- (o col goal) (norm self (at col row))))
                              (? pp)))))
     (expt (/ d (length ys)) (/ 1 (? pp)))))
 
@@ -182,7 +191,9 @@
 (defun eg--data (&optional file)
   "CLI action. Process data."
     (print (or file (? train)))
-  (let ((data (make-data (or file (? train)))))
+  (let ((data (make-data
+               (or file (? train))
+               :sortp nil)))
     (dolist (col (o data cols y))
       (format t "~a~%" col))))
 

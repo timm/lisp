@@ -1,6 +1,22 @@
-(load (expand-file-name "~/.quicklisp/slime-helper.el"))
-  ;; Replace "sbcl" with the path to your implementation
-    (setq inferior-lisp-program "sbcl")
+; for some good tips, see https://github.com/shaneikennedy/.emacs.d/blob/master/init.el
+
+(require 'package)
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+(package-initialize)
+(unless (package-installed-p 'slime)
+  (package-refresh-contents)
+  (package-install 'slime))
+
+(require 'slime)
+(slime-setup '(slime-fancy slime-quicklisp slime-repl slime-asdf))
+
+;; Optional enhancements
+(setq slime-contribs '(slime-fancy))
+(setq slime-autodoc-mode t)
+(setq slime-complete-symbol*-fancy t)
+(setq slime-description-autofocus t)
+;; Replace "sbcl" with the path to your implementation
+(setq inferior-lisp-program "/opt/homebrew/bin/sbcl")
 
 (load-theme 'deeper-blue t)
 (setq column-number-mode t)

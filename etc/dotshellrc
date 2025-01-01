@@ -22,7 +22,7 @@ here="$(cd $( dirname "${BASH_SOURCE[0]}" ) && pwd )"
 
 alias h="history"
 alias ls="ls -G"
-alias emacs="emacs -q -l ../etc/doteditrc"
+alias emacs="emacs -nw -q -l ../etc/doteditrc"
 alias lisp="rlwrap sbcl --noinform "
 
 export BASH_SILENCE_DEPRECATION_WARNING=1
