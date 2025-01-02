@@ -138,9 +138,9 @@
             $most new))))
 
 ;### Query
-(defun at (col row)
+(defmethod at ((self col) row)
   "Access a column in a row."
-  (elt row (o col pos)))
+  (elt row $pos))
 
 (defmethod norm ((self num) x)
   "Normalizes x 0..1."
@@ -205,6 +205,7 @@
 (defun eg--data (&aux (pos -1))
   "CLI action. Process data."
   (let ((self (make-data (? train) :sortp t)))
+    (format t "d ~a~%" (o self cols names)) 
     (dolist (row $rows)
        (when (zerop (mod (incf pos) 30))  
          (format t "~,2f ~a~%" (ydist self row) row)))))
