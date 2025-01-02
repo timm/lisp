@@ -33,7 +33,7 @@ export PYTHONPATH="/Library/Frameworks/Python.framework/Versions/3.13/lib/python
 isp() {
   f=$1
   shift
-  $(which sbcl) --noinform --script $f  $* 2>&1 | less
+  $(which sbcl) --noinform --script $f  $* 2> >( gawk '/4:/ {exit} 1' ) 
 }
 
 there() { cd $1; basename `pwd`; }

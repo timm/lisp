@@ -1,5 +1,7 @@
-;&nbsp;<h1><font size=20pt><b>AI for busy people</b></font></h1>
-; Understanding turns insight into action.
+;&nbsp;<p>
+; <img align=right width=200 src="https://chiselapp.com/user/MistressRemilia/repository/CL-MeltySynth/uv/lisp-logo.png">
+; <h1><font size=20pt><b>AI for busy people</b></font></h1>
+; Understanding  :snake: turns insight into action.
 
 (defstruct about
   "Struct for file meta info."
@@ -50,7 +52,7 @@
        `(slot-value self ',(read s t nil t))))
 
 ;## Structs
-;### Data
+;### Data (has _rows_ and _cols_)
 (defstruct (data (:constructor %make-data))
   "stores rows, summarized in cols (columns)"
   rows cols)
@@ -64,17 +66,17 @@
       (setf $rows (sort $rows #'< :key (lambda (row) (ydist self row)))))
   self)
 
-;### Col
+;### Col (has _pos_  and _txt_ name)
 (defstruct col
   "Columns have a `txt` name, a `pos` and count `n` of things seen."
   (n 0) (pos 0) (txt ""))
 
-;### Sym
+;#### Sym (isa _Col_, has symbol _counts_)
 (defstruct (sym (:include col))
   "`Sym`s summarize symbolic columns."
-  seen (most 0) mode klass)
+  counts (most 0) mode klass)
 
-;### Num
+;#### Num (isa _Col_, has _mu_, _sd_, _lo_ and _hi_ bounds)
 (defstruct (num (:include col) (:constructor %make-num))
   "`Num`s summarize numeric columns."
   (mu 0) (m2 0) (sd 0) (lo 1E32) (hi -1E32) (goal 1))
@@ -83,7 +85,7 @@
   "Constructor. For `nums`."
   (%make-num :txt txt :pos pos :goal (if (eql #\- (chr txt -1)) 0 1)))
 
-;### Cols
+;### Cols (factory for making _Cols_ from list of _names_)
 (defstruct (cols (:constructor %make-cols))
   "Container for all the columns (store in `all`, some also stored in `x,y`." 
   all x y names klass)
@@ -101,7 +103,8 @@
         (if (eql z #\!) (setf klass col))
         (if (member z '(#\! #\- #\+)) (push col y) (push col x))))))
 
-;## Update
+;## Methods
+;### Update
 (defmethod add ((self data) row)
   "Keep the row, update the `cols` summaries."
   (if $cols
@@ -129,12 +132,12 @@
 
 (defmethod add1 ((self sym) x)
   "Update symbolic summaries with `x`."
-  (let ((new (incf (has $seen x))))
+  (let ((new (incf (has $counts x))))
     (if (> new $most)
       (setf $mode x
             $most new))))
 
-;## Query
+;### Query
 (defun at (col row)
   "Access a column in a row."
   (elt row (o col pos)))
@@ -144,11 +147,16 @@
   (if (eql x '?) x (/ (- x $lo) (- $hi $lo 1E-32))))
 
 (defmethod ydist ((self data) row)
-  (let ((d (loop :for c :in (o $cols y)
-                 :sum (expt (abs (- (o c goal) (norm c (at c row)))) (? pp)))))
-    (expt (/ d (length (o $cols y))) (/ 1 (? pp)))))
+  (minkowski
+   (o $cols y)
+   (lambda (col) (- (o col goal) (norm col (at col row))))))
 
-;## Utils
+(defmethod xdist ((self data) row1 row2)
+  (minkowski
+   (o $cols x) 
+   (lambda (col) (dist col (norm col (at col row1)) (norm col (at col row2))))))
+
+;## Functions
 (defun inca (a x)
   "Ensure `a` has a key for `x`, add one to that count."
   (incf (cdr (or (assoc x a :test #'equal)
@@ -179,7 +187,14 @@
     (loop (funcall fun (things (or (read-line s nil)
                                       (return end)))))))
 
-;##  Start-up Actions
+(defmethod minkowski (lst fun)
+  "p-th root of normalized sum of absolute values in `lst`, raised to p."
+  (expt (/ (loop :for x :in lst :sum (expt (abs (funcall fun x)) (? pp)))
+           (length lst))
+        (/ 1 (? pp))))
+
+;##  Start-up
+;### Actions
 (defun eg--settings ()
   (print *settings*))
 
@@ -194,7 +209,7 @@
        (when (zerop (mod (incf pos) 30))  
          (format t "~,2f ~a~%" (ydist self row) row)))))
 
-;## Start-up
+;### Start-up Control
 (loop :for (flag arg) :on (args) :by #'cdr
       :do  (let ((com (intern (format nil "EG~:@(~a~)" flag))))
               (if (fboundp com)
