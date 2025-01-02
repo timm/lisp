@@ -3,10 +3,13 @@
 ; <h1><font size=20pt><b>AI for busy people</b></font></h1>
 ; Understanding  :snake: turns insight into action.
 
+(defpackage :instant-ai (:use :common-lisp))
+(in-package :instant-ai)
+
 (defstruct about
-  "Struct for file meta info."
-  (what  "min.lisp")
-  (why   "optimization tricks")
+  "Struct for general info."
+  (what  "nstant.lisp")
+  (why   "instant AI tricks")
   (when  "(c) 2024")
   (how   "MIT license")
   (who   "Tim Menzies")
@@ -157,11 +160,41 @@
    (lambda (col) (dist col (norm col (at col row1)) (norm col (at col row2))))))
 
 ;## Functions
+;### Numeric trics
 (defun inca (a x)
   "Ensure `a` has a key for `x`, add one to that count."
   (incf (cdr (or (assoc x a :test #'equal)
                  (car (setf a (cons (cons x 0) a)))))))
 
+(defmethod minkowski (lst fun)
+  "p-th root of normalized sum of absolute values in `lst`, raised to p."
+  (expt (/ (loop :for x :in lst :sum (expt (abs (funcall fun x)) (? pp)))
+           (length lst))
+        (/ 1 (? pp))))
+
+;### Lisp Tricks
+;#### Random
+(defmethod nshuffle ((seq cons))
+  "shuffling a list is slow, so first coerce to a vector"
+  (coerce (nshuffle (coerce seq 'vector))  'cons))
+
+(defmethod nshuffle ((seq vector))
+  "shuffle a vector"
+  (loop :for i from (length seq) :downto 2
+        :do (rotatef (elt seq (random i)) (elt seq (1- i))))
+  seq)
+
+(defvar *seed* (? seed))
+(defun randi (&optional (n 1))
+  "return a random integer"
+  (floor (* n (/ (randf 1000.0) 1000))))
+
+(defun randf (&optional (n 1.0))
+  "return a random float"
+  (setf *seed* (mod (* 16807.0d0 *seed*) 2147483647.0d0))
+  (* n (- 1.0d0 (/ *seed* 2147483647.0d0))))
+
+;### String tricks
 (defun chr (s n )
   "Return nth character from `s`. Negative `n` denote indexes from back." 
   (let ((s (if (stringp s) s (symbol-name s))))
@@ -181,28 +214,26 @@
     (cons (thing (subseq s here there))
           (if there (things s sep (1+ there))))))
 
+;### File I/O
 (defun with-csv (&optional file (fun #'print) end)
   "call `fun` on all lines in `file`, after running lines through `filter`"
   (with-open-file (s (or file *standard-input*))
     (loop (funcall fun (things (or (read-line s nil)
                                       (return end)))))))
 
-(defmethod minkowski (lst fun)
-  "p-th root of normalized sum of absolute values in `lst`, raised to p."
-  (expt (/ (loop :for x :in lst :sum (expt (abs (funcall fun x)) (? pp)))
-           (length lst))
-        (/ 1 (? pp))))
-
 ;##  Start-up
 ;### Actions
-(defun eg--settings ()
+(defun eg-s(s)
+  (setf *seed* (setf (? seed) s)))
+
+(defun eg--settings (_)
   (print *settings*))
 
-(defun eg--csv (&aux (pos -1))
+(defun eg--csv (_ &aux (pos -1))
   (with-csv (? train)  (lambda (r)
     (if (zerop (mod (incf pos) 30))  (print r)))))
 
-(defun eg--data (&aux (pos -1))
+(defun eg--data (_ &aux (pos -1))
   "CLI action. Process data."
   (let ((self (make-data (? train) :sortp t)))
     (format t "d ~a~%" (o self cols names)) 
@@ -214,6 +245,6 @@
 (loop :for (flag arg) :on (args) :by #'cdr
       :do  (let ((com (intern (format nil "EG~:@(~a~)" flag))))
               (if (fboundp com)
-                 (funcall com))))
+                 (funcall com (if arg (thing arg))))))
 
 ; That's all folks.

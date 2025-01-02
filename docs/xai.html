@@ -30,6 +30,11 @@
 <h1><font size=20pt><b>AI for busy people</b></font></h1></p>
 <p>Understanding  :snake: turns insight into action.</p>
 <pre>
+(<font color=darkblue><b>defpackage</b></font> :ai-lite (:use :common-lisp))
+(<font color=darkblue><b>in-package</b></font> :ai-lite)
+</pre>
+
+<pre>
 (<font color=darkblue><b>defstruct</b></font> about
   <font color=darkred><b>"Struct for file meta info."</b></font>
   (what  <font color=darkred><b>"min.lisp"</b></font>)
@@ -71,7 +76,12 @@
 <li><a href="#query">Query</a></li>
 </ul>
 </li>
-<li><a href="#functions">Functions</a></li>
+<li><a href="#functions">Functions</a><ul>
+<li><a href="#numeric-trics">Numeric trics</a></li>
+<li><a href="#string-tricks">String tricks</a></li>
+<li><a href="#file-io">File I/O</a></li>
+</ul>
+</li>
 <li><a href="#start-up">Start-up</a><ul>
 <li><a href="#actions">Actions</a></li>
 <li><a href="#start-up-control">Start-up Control</a></li>
@@ -235,9 +245,9 @@
 
 <h3 id="query">Query</h3>
 <pre>
-(<font color=darkblue><b>defun</b></font> at (col row)
+(<font color=darkblue><b>defmethod</b></font> at ((self col) row)
   <font color=darkred><b>"Access a column in a row."</b></font>
-  (elt row (o col pos)))
+  (elt row $pos))
 </pre>
 
 <pre>
@@ -261,6 +271,7 @@
 </pre>
 
 <h2 id="functions">Functions</h2>
+<h3 id="numeric-trics">Numeric trics</h3>
 <pre>
 (<font color=darkblue><b>defun</b></font> inca (a x)
   <font color=darkred><b>"Ensure `a` has a key for `x`, add one to that count."</b></font>
@@ -268,6 +279,15 @@
                  (car (setf a (cons (cons x 0) a)))))))
 </pre>
 
+<pre>
+(<font color=darkblue><b>defmethod</b></font> minkowski (lst fun)
+  <font color=darkred><b>"p-th root of normalized sum of absolute values in `lst`, raised to p."</b></font>
+  (expt (/ (<font color=darkblue><b>loop</b></font> :for x :in lst :sum (expt (abs (funcall fun x)) (? pp)))
+           (length lst))
+        (/ 1 (? pp))))
+</pre>
+
+<h3 id="string-tricks">String tricks</h3>
 <pre>
 (<font color=darkblue><b>defun</b></font> chr (s n )
   <font color=darkred><b>"Return nth character from `s`. Negative `n` denote indexes from back."</b></font> 
@@ -293,20 +313,13 @@
           (if there (things s sep (1+ there))))))
 </pre>
 
+<h3 id="file-io">File I/O</h3>
 <pre>
 (<font color=darkblue><b>defun</b></font> with-csv (&optional file (fun #'print) end)
   <font color=darkred><b>"call `fun` on all lines in `file`, after running lines through `filter`"</b></font>
   (with-open-file (s (or file *standard-input*))
     (<font color=darkblue><b>loop</b></font> (funcall fun (things (or (read-line s nil)
                                       (return end)))))))
-</pre>
-
-<pre>
-(<font color=darkblue><b>defmethod</b></font> minkowski (lst fun)
-  <font color=darkred><b>"p-th root of normalized sum of absolute values in `lst`, raised to p."</b></font>
-  (expt (/ (<font color=darkblue><b>loop</b></font> :for x :in lst :sum (expt (abs (funcall fun x)) (? pp)))
-           (length lst))
-        (/ 1 (? pp))))
 </pre>
 
 <h2 id="start-up">Start-up</h2>
@@ -326,6 +339,7 @@
 (<font color=darkblue><b>defun</b></font> <font color=darkblue><b>eg</b></font>--data (&aux (pos -1))
   <font color=darkred><b>"CLI action. Process data."</b></font>
   (let ((self (make-data (? train) :sortp t)))
+    (format t <font color=darkred><b>"d ~a~%"</b></font> (o self cols names)) 
     (dolist (row $rows)
        (when (zerop (mod (incf pos) 30))  
          (format t <font color=darkred><b>"~,2f ~a~%"</b></font> (ydist self row) row)))))
