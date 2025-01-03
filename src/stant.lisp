@@ -161,6 +161,18 @@
    (o $cols x) 
    (lambda (col) (dist col (norm col (at col row1)) (norm col (at col row2))))))
 
+;; (defmethod kprune ((self data) k)
+;;   (let (( (elt $rows (
+;  (krune1 (nshuffle $rows) k)))))))
+
+;; (defmethod kprune ((self data) k &keys (samples 32))
+;;   (let ((z (list (any $rows))))
+;;     (dotimes (k1 (1- k) z)
+;;       (let (u (all 0))
+;;         (dotimes (_ samples)
+;;           (let ((row1 (any $rows))
+;;                 (closest (sort z #'lt :key (lambda (row2) (xdist self row1 row2))) 
+      
 ;## Functions
 ;### Numeric trics
 (defun inca (a x)
@@ -176,6 +188,10 @@
 
 ;### Lisp Tricks
 ;#### Random
+(defun any (seq)
+  "return a random item from seq"
+  (elt seq (floor (randf (length seq)))))
+
 (defmethod nshuffle ((seq cons))
   "shuffling a list is slow, so first coerce to a vector"
   (coerce (nshuffle (coerce seq 'vector))  'cons))
