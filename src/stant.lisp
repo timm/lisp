@@ -1,10 +1,9 @@
 ;&nbsp;<p>
-; <img align=right width=200 src="https://chiselapp.com/user/MistressRemilia/repository/CL-MeltySynth/uv/lisp-logo.png">
-; <h1><font size=20pt><b>AI for busy people</b></font></h1>
-; Understanding  :snake: turns insight into action.
-
-(defpackage :instant-ai (:use :common-lisp))
-(in-package :instant-ai)
+;<img align=right width=200
+;src="https://chiselapp.com/user/MistressRemilia/repository/CL-MeltySynth/uv/lisp-logo.png">
+;<h1><font size=20pt><b>AI for busy people</b></font></h1>
+;The more minimal the art, the<br>more maximum the explanation. <br>
+;-- Hilton Kramer
 
 (defstruct about
   "Struct for general info."
@@ -58,12 +57,13 @@
 ;### Data (has _rows_ and _cols_)
 (defstruct (data (:constructor %make-data))
   "stores rows, summarized in cols (columns)"
-  rows cols)
+  cols
+  (rows (make-array 0 :fill-pointer 0 :adjustable t)))
 
 (defmethod make-data (src &key sortp &aux (self (%make-data)))
   "Load in csv rows, or rows from a list into a `data`."
   (if (stringp src)
-      (with-csv src #'(lambda (x) (add self x)))
+      (with-csv src #'(lambda (x) (add self (coerce x 'vector))))
       (dolist (x src) (add self x)))
   (if sortp
       (setf $rows (sort $rows #'< :key (lambda (row) (ydist self row)))))
@@ -86,6 +86,7 @@
 
 (defun make-num (&key (txt "") (pos 0))
   "Constructor. For `nums`."
+
   (%make-num :txt txt :pos pos :goal (if (eql #\- (chr txt -1)) 0 1)))
 
 ;### Cols (factory for making _Cols_ from list of _names_)
@@ -95,27 +96,28 @@
 
 (defun make-cols (names &aux (pos -1) x y klass all)
   "Constructor. `Names` tells us what `nums` and `syms` to make."
-  (dolist (name names (%make-cols :x x :y y :klass klass :names names
-                                  :all (reverse all)))
+  (loop :for name :across names :do
     (let* ((a    (chr name 0))
            (z    (chr name -1))
            (what (if (upper-case-p a) #'make-num #'make-sym))
            (col  (funcall what :txt name :pos (incf pos))))
-        (push col all)
+      (push col all)
       (unless (eql z #\X)
         (if (eql z #\!) (setf klass col))
-        (if (member z '(#\! #\- #\+)) (push col y) (push col x))))))
+        (if (member z '(#\! #\- #\+)) (push col y) (push col x)))))
+  (%make-cols :x x :y y :klass klass :names names :all (reverse all)))
 
 ;## Methods
 ;### Update
 (defmethod add ((self data) row)
   "Keep the row, update the `cols` summaries."
   (if $cols
-    (push (add $cols row) $rows)
-    (setf $cols (make-cols row))))
+      (vector-push-extend (add $cols row) $rows)
+      (setf $cols (make-cols row))))
 
 (defmethod add ((self cols) row)
-  (mapcar #'add $all row))
+  (mapcar (lambda (col) (add col (at col row))) $all)
+  row)
 
 (defmethod add ((self col) x)
   "For non-empty cells, add `x`. Always return `x`."
@@ -223,22 +225,23 @@
 
 ;##  Start-up
 ;### Actions
+  
 (defun eg-s(s)
   (setf *seed* (setf (? seed) s)))
 
-(defun eg--settings (_)
+(defun eg--settings (&optional _)
   (print *settings*))
 
-(defun eg--csv (_ &aux (pos -1))
+(defun eg--csv (&optional _ &aux (pos -1))
   (with-csv (? train)  (lambda (r)
     (if (zerop (mod (incf pos) 30))  (print r)))))
 
-(defun eg--data (_ &aux (pos -1))
+(defun eg--data (&optional _ &aux (pos -1))
   "CLI action. Process data."
   (let ((self (make-data (? train) :sortp t)))
-    (format t "d ~a~%" (o self cols names)) 
-    (dolist (row $rows)
-       (when (zerop (mod (incf pos) 30))  
+    (format t "d ~a~%" (o self cols names))
+    (loop :for row :across $rows :do
+      (when (zerop (mod (incf pos) 30))
          (format t "~,2f ~a~%" (ydist self row) row)))))
 
 ;### Start-up Control
