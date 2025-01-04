@@ -7,7 +7,7 @@
 
 (defstruct about
   "Struct for general info."
-  (what  "nstant.lisp")
+  (what  "k.lisp")
   (why   "instant AI tricks")
   (when  "(c) 2024")
   (how   "MIT license")
@@ -161,18 +161,24 @@
    (o $cols x) 
    (lambda (col) (dist col (norm col (at col row1)) (norm col (at col row2))))))
 
-;; (defmethod kprune ((self data) k)
-;;   (let (( (elt $rows (
-;  (krune1 (nshuffle $rows) k)))))))
+(defmethod kprune ((self data) k &keys (samples 32))
+  (let ((out `(,(any $rows))))
+    (dotimes (k1 (1- k) out)
+      (push (_kprune self out (many $rows samples))
+            out))))
 
-;; (defmethod kprune ((self data) k &keys (samples 32))
-;;   (let ((z (list (any $rows))))
-;;     (dotimes (k1 (1- k) z)
-;;       (let (u (all 0))
-;;         (dotimes (_ samples)
-;;           (let ((row1 (any $rows))
-;;                 (closest (sort z #'lt :key (lambda (row2) (xdist self row1 row2))) 
-      
+(defun _kprune (data out rows &aux it tmp (all-d 0))
+  (labels ((dist (r1 r2) (xdist data r1 r2)))
+    (dolist (r1 rows)  
+      (let ((close (first (sort out #'< :key (lambda (r2) (dist r1 r2))))))
+        (incf all-d (first (push `(,(expt (dist r1 close) 2) ,close)
+                                 tmp)))))
+    (let (r (randf all-d))
+      (loop :for (d one) :in tmp :while (>= r 0) :do
+        (setf it one)
+        (decf r d))
+      (or it (cadar tmp)))))
+                  
 ;## Functions
 ;### Numeric trics
 (defun inca (a x)
@@ -191,6 +197,9 @@
 (defun any (seq)
   "return a random item from seq"
   (elt seq (floor (randf (length seq)))))
+
+(defun many (seq &optional (n (length seq)) &aux out)
+  (dotimes (_ n out) (push (any seq) out)))
 
 (defmethod nshuffle ((seq cons))
   "shuffling a list is slow, so first coerce to a vector"
