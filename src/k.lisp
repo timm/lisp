@@ -167,17 +167,11 @@
       (push (_kprune self out (many $rows samples))
             out))))
 
-(defun _kprune (data out rows &aux it tmp (all-d 0))
-  (labels ((dist (r1 r2) (xdist data r1 r2)))
-    (dolist (r1 rows)  
-      (let ((close (first (sort out #'< :key (lambda (r2) (dist r1 r2))))))
-        (incf all-d (first (push `(,(expt (dist r1 close) 2) ,close)
-                                 tmp)))))
-    (let (r (randf all-d))
-      (loop :for (d one) :in tmp :while (>= r 0) :do
-        (setf it one)
-        (decf r d))
-      (or it (cadar tmp)))))
+(defun _kprune (data out rows)
+  (let ((n (make-num)))
+    (mapcar #'(lambda (r1)
+                (first (sort out #'< :key (lambda (r2)
+                                            `(, (add n (expt (xdist data r1 r2) 2)) r2))))))
                   
 ;## Functions
 ;### Numeric trics
@@ -194,6 +188,15 @@
 
 ;### Lisp Tricks
 ;#### Random
+(defun pick (seq f &aux (all 0))
+  (labels ((pairs (x &aux (fx (funcall x)))
+             (incf all fx)
+             `(,fx ,x )))
+    (let* ((seq (sort (mapcar seq #'pairs) #'> :key #'car))
+           (r (randf all)))
+      (or (loop :for (fx x) :in seq :if (<= (decf r fx) 0) :return x)
+          (car seq)))))
+                                          
 (defun any (seq)
   "return a random item from seq"
   (elt seq (floor (randf (length seq)))))
