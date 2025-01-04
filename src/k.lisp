@@ -161,6 +161,12 @@
    (o $cols x) 
    (lambda (col) (dist col (norm col (at col row1)) (norm col (at col row2))))))
 
+(defmethod around ((self data) row1 &optional (rows $rows))
+  (sort rows #'< :key (lambda (row2) (xdist self row1 row2))))
+
+(defmethod kth ((self data) row1 &optional (k 5) (rows $rows))
+  (subseq (around self row1 rows) k))
+
 (defmethod kprune ((self data) k &keys (samples 32))
   (let ((out `(,(any $rows))))
     (dotimes (k1 (1- k) out)
@@ -169,7 +175,12 @@
 
 (defun _kprune (data out rows)
   (let ((n (make-num)))
-    (mapcar #'(lambda (r1)
+    (labels (aroun22
+             (mapcar 
+               #'(ambda (r) let ((far (car (around  data one rows))))
+               `(,(xdist data far one) far))  
+               data one 1 row
+                         (sort (lambda (rorows
                 (first (sort out #'< :key (lambda (r2)
                                             `(, (add n (expt (xdist data r1 r2) 2)) r2))))))
                   
