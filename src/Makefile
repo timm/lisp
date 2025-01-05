@@ -30,7 +30,7 @@ push: ## commit to main
 	@echo "pdf-ing $@ ... "
 	@a2ps -jr                \
 		-q                    \
-		--chars-per-line=90    \
+		--chars-per-line=81    \
 		--line-numbers=1        \
 		--highlight-level=normal \
 		--borders=no              \
