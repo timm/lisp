@@ -5,7 +5,7 @@
 ;The more minimal the art, the<br>more maximum the explanation. <br>
 ;-- Hilton Kramer
 
-(defstruct about
+(defstruct abouts
   "Struct for general info."
   (what  "k.lisp")
   (why   "instant AI tricks")
@@ -14,13 +14,16 @@
   (who   "Tim Menzies")
   (where "timm@ieee.org"))
 
+(defstruct bayes (k 1) (m 2))
+
 (defstruct settings
   "Struct for all settings."
   (seed    1234567891)
   (buckets 2)
   (pp      2)
   (train   "../../moot/optimize/misc/auto93.csv")
-  (about  (make-about)))
+  (bayes  (make-bayes))
+  (about  (make-abouts)))
 
 ; [TOC]   
 ;## Set up
@@ -56,7 +59,7 @@
 (set-macro-character #\$ 
    #'(lambda (s _)
        "Expand $x to (slot-value self 'x)."
-       `(slot-value self ',(read s t nil t))))
+       `(slot-value self ',(read s t nil t))))
 
 ;## Structs
 ;### Data (has _rows_ and _cols_)
@@ -152,35 +155,8 @@
   (let ((new (incf (has $counts) n)))
     (if (> new $most)
       (setf $mode x
-            $most new))))
+            $most new))))
 
-;### Merge
-(defmethod merge ((i sym) (j sym) (eps 20))
-  "Merge `i`,`j` if they are too small or if too complex."
-  (let ((k (make-sym)))
-    (loop :for (x . n) :in (o i counts) :do (add k x n))
-    (loop :for (x . n) :in (o j counts) :do (add k x n))
-    (if (or (< (o i n) eps)
-            (< (o j n) eps)
-            (<= (ent k) (/ (+ (* (o i n) (ent i))
-                              (* (o j n) (ent j)))
-                           (o k n))))
-        k)))
-
-(defun merges (lst xtra &aux out pairs)
-  "Run `merge` over all items in `lst`."
-  (dolist (one lst)
-    (if out
-        (aif (merge one (car out) xtra)
-             (setf (car out) it)
-             (push one out))
-        (setf out (list one)))
-    (push `(,one ,(length out)) pairs))
-  (loop :for (one n) :in pairs :do
-    (setf (o one meta) (elt out n)
-          (o one meta rank) (code-char (+ (char-code #\a) n))))
-  out)
- 
 ;### Query
 (defmethod at ((self col) row)
   "Access a column in a row."
@@ -204,6 +180,53 @@
        (sqrt (+ (/ (* sd1 sd1) n1)
                 (/ (* sd2 sd2) n2))))))
 
+(defmethod merge ((i sym) (j sym) (eps 20))
+  "Merge `i`,`j` if they are too small or if too complex."
+  (let ((k (make-sym)))
+    (dolist (it `(,i ,j))
+      (loop :for (x . n) :in (o it counts) :do (add k x n)))
+    (if (or (< (o i n) eps)
+            (< (o j n) eps)
+            (<= (ent k) (/ (+ (* (o i n) (ent i))
+                              (* (o j n) (ent j)))
+                           (o k n))))
+        k)))
+
+(defun merges (lst xtra &aux out pairs)
+  "Run `merge` over all items in `lst`."
+  (dolist (one lst)
+    (if out
+        (aif (merge one (car out) xtra)
+             (setf (car out) it)
+             (push one out))
+        (setf out (list one)))
+    (push `(,one ,(length out)) pairs))
+  (loop :for (one n) :in pairs :do
+    (setf (o one meta) (elt out n)
+          (o one meta rank) (code-char (+ (char-code #\a) n))))
+  out)
+
+;#### Bayes
+(defmethod like ((self sym) x prior)
+  (/ (+ (or (cdr (assoc x $counts)) 0)
+        (* (? bayes m) prior))
+     (+ $n (? bayes m))))
+
+(defmethod like ((self num) x _)
+  "Calculate the Gaussian PDF for value xa."
+  (/ (exp (- (/ (* (expt (- x $mu) 2))
+                (* 2 $sd $sd))))
+     (* #sd (sqrt (* 2 pi)))))
+
+(defmethod like ((self data) row all n)                 
+  (let* ((prior (/ (+ (length $rows) (? k)) (+ all (* (? k) n))))
+         (out prior))
+    (dolist (col (o $cols x) out)
+      (let ((x (at col row)))
+        (unless (eql x '?) 
+          (setf out (* out (max 0 (min 1 (like col x prior))))))))))
+
+;#### Dist
 (defmethod ydist ((self data) row)
   "Over y columns, return distance to goals."
   (minkowski
@@ -230,7 +253,7 @@
         (incf all (car (push `(,(expt (dist near) 2) ,row) pairs))))))
   (setf all (randf all))
   (or (loop :for (d row) :in pairs :if (<= (decf all d) 0) :return row)
-      (second (car pairs))))
+      (second (car pairs))))
 
 ;## Functions
 ;### Stats
@@ -322,7 +345,7 @@
   "call `fun` on all lines in `file`, after running lines through `filter`"
   (with-open-file (s (or file *standard-input*))
     (loop (funcall fun (things (or (read-line s nil)
-                                      (return end)))))))
+                                      (return end)))))))
 
 ;##  Start-up
 ;### Actions

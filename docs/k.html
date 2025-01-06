@@ -69,7 +69,10 @@ src="https://chiselapp.com/user/MistressRemilia/repository/CL-MeltySynth/uv/lisp
 </li>
 <li><a href="#methods">Methods</a><ul>
 <li><a href="#update">Update</a></li>
-<li><a href="#merge">Merge</a></li>
+<li><a href="#query">Query</a><ul>
+<li><a href="#dist">Dist</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li><a href="#functions">Functions</a><ul>
@@ -135,7 +138,7 @@ src="https://chiselapp.com/user/MistressRemilia/repository/CL-MeltySynth/uv/lisp
 (set-macro-character #\$ 
    #'(lambda (s _)
        <font color=darkred><b>"Expand $x to (slot-value self 'x)."</b></font>
-       `(slot-value self ',(read s t nil t))))
+       `(slot-value self ',(read s t nil t))))
 </pre>
 
 <h2 id="structs">Structs</h2>
@@ -206,7 +209,7 @@ src="https://chiselapp.com/user/MistressRemilia/repository/CL-MeltySynth/uv/lisp
       (unless (eql z #\X)
         (if (eql z #\!) (setf klass col))
         (if (member z '(#\! #\- #\+)) (push col y) (push col x)))))
-  (%make-cols :x x :y y :klass klass :names names :all (reverse all)))
+  (%make-cols :x x :y y :klass klass :names names :all (reverse all)))
 </pre>
 
 <h2 id="methods">Methods</h2>
@@ -260,37 +263,8 @@ src="https://chiselapp.com/user/MistressRemilia/repository/CL-MeltySynth/uv/lisp
             $most new))))
 </pre>
 
-<h3 id="merge">Merge</h3>
+<h3 id="query">Query</h3>
 <pre>
-(<font color=darkblue><b>defmethod</b></font> merge ((i sym) (j sym) (eps 20))
-  <font color=darkred><b>"Merge `i`,`j` if they are too small or if too complex."</b></font>
-  (let ((k (make-sym)))
-    (<font color=darkblue><b>loop</b></font> :for (x . n) :in (o i counts) :do (add k x n))
-    (<font color=darkblue><b>loop</b></font> :for (x . n) :in (o j counts) :do (add k x n))
-    (if (or (< (o i n) eps)
-            (< (o j n) eps)
-            (<= (ent k) (/ (+ (* (o i n) (ent i))
-                              (* (o j n) (ent j)))
-                           (o k n))))
-        k)))
-</pre>
-
-<pre>
-(<font color=darkblue><b>defun</b></font> merges (lst xtra &aux out pairs)
-  <font color=darkred><b>"Run `merge` over all items in `lst`."</b></font>
-  (dolist (one lst)
-    (if out
-        (aif (merge one (car out) xtra)
-             (setf (car out) it)
-             (push one out))
-        (setf out (list one)))
-    (push `(,one ,(length out)) pairs))
-  (<font color=darkblue><b>loop</b></font> :for (one n) :in pairs :do
-    (setf (o one meta) (elt out n)
-          (o one meta rank) (code-char (+ (char-code #\a) n))))
-  out)
-
-### Query
 (<font color=darkblue><b>defmethod</b></font> at ((self col) row)
   <font color=darkred><b>"Access a column in a row."</b></font>
   (elt row $pos))
@@ -320,6 +294,7 @@ src="https://chiselapp.com/user/MistressRemilia/repository/CL-MeltySynth/uv/lisp
                 (/ (* sd2 sd2) n2))))))
 </pre>
 
+<h4 id="dist">Dist</h4>
 <pre>
 (<font color=darkblue><b>defmethod</b></font> ydist ((self data) row)
   <font color=darkred><b>"Over y columns, return distance to goals."</b></font>
@@ -354,6 +329,34 @@ src="https://chiselapp.com/user/MistressRemilia/repository/CL-MeltySynth/uv/lisp
   (setf all (randf all))
   (or (<font color=darkblue><b>loop</b></font> :for (d row) :in pairs :if (<= (decf all d) 0) :return row)
       (second (car pairs))))
+#### Merge
+(<font color=darkblue><b>defmethod</b></font> merge ((i sym) (j sym) (eps 20))
+  <font color=darkred><b>"Merge `i`,`j` if they are too small or if too complex."</b></font>
+  (let ((k (make-sym)))
+    (<font color=darkblue><b>loop</b></font> :for (x . n) :in (o i counts) :do (add k x n))
+    (<font color=darkblue><b>loop</b></font> :for (x . n) :in (o j counts) :do (add k x n))
+    (if (or (< (o i n) eps)
+            (< (o j n) eps)
+            (<= (ent k) (/ (+ (* (o i n) (ent i))
+                              (* (o j n) (ent j)))
+                           (o k n))))
+        k)))
+</pre>
+
+<pre>
+(<font color=darkblue><b>defun</b></font> merges (lst xtra &aux out pairs)
+  <font color=darkred><b>"Run `merge` over all items in `lst`."</b></font>
+  (dolist (one lst)
+    (if out
+        (aif (merge one (car out) xtra)
+             (setf (car out) it)
+             (push one out))
+        (setf out (list one)))
+    (push `(,one ,(length out)) pairs))
+  (<font color=darkblue><b>loop</b></font> :for (one n) :in pairs :do
+    (setf (o one meta) (elt out n)
+          (o one meta rank) (code-char (+ (char-code #\a) n))))
+  out)
 </pre>
 
 <h2 id="functions">Functions</h2>

@@ -28,8 +28,7 @@ push: ## commit to main
 ~/tmp/%.pdf: %.lisp  ## lisp to pdf in ~/tmp
 	@mkdir -p $(dir $@)
 	@echo "pdf-ing $@ ... "
-	@a2ps -jr                \
-		-q                    \
+	@a2ps -jrBq                \
 		--chars-per-line=81    \
 		--line-numbers=1        \
 		--highlight-level=normal \
