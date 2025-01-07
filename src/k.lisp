@@ -216,7 +216,7 @@
   "Calculate the Gaussian PDF for value xa."
   (/ (exp (- (/ (* (expt (- x $mu) 2))
                 (* 2 $sd $sd))))
-     (* #sd (sqrt (* 2 pi)))))
+     (* $sd (sqrt (* 2 pi)))))
 
 (defmethod like ((self data) row all n)                 
   (let* ((prior (/ (+ (length $rows) (? k)) (+ all (* (? k) n))))
@@ -290,7 +290,6 @@
   (expt (/ (loop :for x :in lst :sum (expt (abs (funcall fun x)) (? pp)))
            (length lst))
         (/ 1 (? pp))))
-
 
 ;#### Randoms                                        
 (defun any (seq)
