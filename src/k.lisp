@@ -226,6 +226,24 @@
         (unless (eql x '?) 
           (setf out (* out (max 0 (min 1 (like col x prior))))))))))
 
+(defconstant *aqure*
+  '((xplor . (lambda (b r _) (/ (+ b r)
+                                (abs (- b r -1E-32)))))
+    (xploit . (lambda (b r _) (/ b
+                                 (+ r 1E-32))))
+    (adapt . (lambda (b r p &aux (q (- 1 p)))
+               (/ (+ b (* q r))
+                  (abs (- (* b q) r -1E-32)))))))
+
+(defun guess ((self data) &key (train 0.33) (start 4)
+                            (stop 25) (acq (cdar *acquire*)))
+  (let (best rest done)
+    (labels ((yes (r) (like best r (length done) 2))
+             (no  (r) (like rest r (length done) 2))
+             (maybe (r) (funcall acq (yes r) (no r) (/ (length done) stop))))
+      (let
+  
+                    
 ;#### Dist
 (defmethod ydist ((self data) row)
   "Over y columns, return distance to goals."
@@ -345,7 +363,7 @@
   "call `fun` on all lines in `file`, after running lines through `filter`"
   (with-open-file (s (or file *standard-input*))
     (loop (funcall fun (things (or (read-line s nil)
-                                      (return end)))))))
+                                   (return end)))))))
 
 ;##  Start-up
 ;### Actions
