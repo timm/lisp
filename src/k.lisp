@@ -54,7 +54,7 @@
 (defmacro has (lst x)
   "Return `lst`'s  slot value for `x` (if missing, initialize x's slot to 0)."
   `(cdr (or (assoc ,x ,lst :test #'equal)
-            (car (setf ,lst (cons (cons ,x 0) ,lst))))))
+            (car(setf ,lst (cons (cons ,x 0) ,lst))))))
 
 (set-macro-character #\$ 
    #'(lambda (s _)
@@ -227,22 +227,24 @@
           (setf out (* out (max 0 (min 1 (like col x prior))))))))))
 
 (defconstant *aqure*
-  '((xplor . (lambda (b r _) (/ (+ b r)
-                                (abs (- b r -1E-32)))))
-    (xploit . (lambda (b r _) (/ b
-                                 (+ r 1E-32))))
-    (adapt . (lambda (b r p &aux (q (- 1 p)))
-               (/ (+ b (* q r))
-                  (abs (- (* b q) r -1E-32)))))))
+  '((xplor .  (lambda (b r _) (/ (+ b r) (abs (- b r -1E-32)))))
+    (xploit . (lambda (b r _) (/ b (+ r 1E-32))))
+    (adapt .  (lambda (b r p &aux (q (- 1 p)))
+                (/ (+ b (* q r)) (abs (- (* b q) r -1E-32)))))))
 
-(defun guess ((self data) &key (train 0.33) (start 4)
+(defun guess ((self data) &key (ntrain .33) (start 4)
                             (stop 25) (acq (cdar *acquire*)))
   (let (best rest done)
     (labels ((yes (r) (like best r (length done) 2))
              (no  (r) (like rest r (length done) 2))
              (maybe (r) (funcall acq (yes r) (no r) (/ (length done) stop))))
-      (let
-  
+      (let* (rows   (subseq (nshuffle $rows)
+                            (ni (floor (min 500 (* ntrain (length $rows)))))
+                            
+             (n2    (min (length rows)
+             (done  (subseq $rows 0 start))
+             (todo  (subseq $rows start n))
+             (test  (nshuffle $rows) n (min 500))
                     
 ;#### Dist
 (defmethod ydist ((self data) row)
