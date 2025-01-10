@@ -1,39 +1,33 @@
+(defun nshuffle (seq)
+	(loop :for i :from (length seq) :downto 2 :do 
+		(rotatef (elt seq (random i)) (elt seq (1- i))))
+	seq)
 
-(defun kmeans++ (data k)
-  "K-means++ initialization for clustering."
-  (let ((centroids (list)))
-    ;; Randomly choose the first centroid
-    (push (random-choice (data-rows data)) centroids)
-    ;; Choose the remaining k-1 centroids
-    (loop repeat (1- k)
-          do (let ((distances (mapcar #'(lambda (row)
-                                          (apply #'min
-                                                 (mapcar #'(lambda (c)
-                                                             (distance row c))
-                                                         centroids)))
-                                      (data-rows data))))
-               (let ((prob (normalize (mapcar #'(lambda (d) (* d d)) distances))))
-                 (push (weighted-random-choice (data-rows data) prob) centroids))))
-    centroids))
+(defun bst+ (tree value)
+  "Insert VALUE into the BST TREE."
+  (if (null tree) 
+    (list value nil nil)
+    (let ((node  (first tree))
+          (left  (second tree))
+          (right (third tree)))
+      (if (< value node)
+        (list node (bst+ left value) right)
+        (list node left (bst+ right value))))))
+
+(defun show3 (tree &optional (lvl 0))
+  (when tree
+    (format t "~v@{~A ~:*~}" lvl "|..")
+    (format t "~a~%" (first tree))
+    (show3 (second tree) (+ 1 lvl))
+    (show3 (third tree) (+ 1 lvl))))
+
+;; Example usage
+(dotimes (_ 10)
+	(terpri)
+	(let* ((tree nil) lst)
+		(dotimes (_ 50) (push (random 1000) lst))
+		(dolist (x lst) (setq tree (bst+  tree x)))
+		(show3 tree)))
 
 
-(defun distance (point1 point2)
-  "Calculate Euclidean distance between two points."
-  (sqrt (reduce #'+ (mapcar #'(lambda (x y) (expt (- x y) 2)) point1 point2))))
 
-(defun normalize (lst)
-  "Normalize a list to sum to 1."
-  (let ((sum (reduce #'+ lst)))
-    (mapcar #'(lambda (x) (/ x sum)) lst)))
-
-(defun weighted-random-choice (items weights)
-  "Select an item based on weighted probabilities."
-  (let* ((cumulative (reduce #'(lambda (acc x) (append acc (list (+ (or (car (last acc)) 0) x)))) weights :initial-value nil))
-         (rand (random (car (last cumulative)))))
-    (loop for item in items
-          for cum in cumulative
-          when (> cum rand) return item)))
-
-(defun random-choice (items)
-  "Select a random item from a list."
-  (nth (random (length items)) items))
