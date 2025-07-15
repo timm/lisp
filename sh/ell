@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+## help sh/ell : : fire up a custom shell
+Here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+Here=$Here exec bash --rcfile "$Here/dotbash.rc" -i
+
+# | Command     | Meaning                                |
+# | ----------- | -------------------------------------- |
+# | **sh-ell**  | Start an interactive shell             |
+# | **sh-are**  | Git push (share your work)             |
+# | **sh-all**  | Show all available `sh-*` scripts      |
+# | **sh-ow**   | Pretty-print or display something      |
+# | **sh-out**  | Echo or print something loudly         |
+# | **sh-ed**   | Open editor (e.g. `nvim`)              |
+# | **sh-ush**  | Silence output / suppress logs         |
+# | **sh-ade**  | Hide details / collapse verbose info   |
+# | **sh-op**   | Build or compile (like a workshop)     |
+# | **sh-uck**  | Unpack or extract archive (tar/zip)    |
+# | **sh-ake**  | Rebuild or rerun from scratch          |
+# | **sh-ift**  | Switch branches or environments        |
+# | **sh-ort**  | Summarize or trim output               |
+# | **sh-ine**  | Highlight/show key results             |
+# | **sh-rug**  | Reset to last known good (meh, revert) |
+# | **sh-ock**  | Force push or hard action              |
+# | **sh-ave**  | Strip whitespace or format files       |
+# | **sh-leep** | Delay/sleep/pause                      |
+# | **sh-adow** | Run something in background            |
