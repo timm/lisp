@@ -61,6 +61,7 @@ if [[ $- == *i* ]]; then
   col0=$(tput sgr0)
   col1=$(tput setaf 6)  # cyan
   col2=$(tput setaf 5)  # magenta
+  col3=$(tput setaf 3)  # magenta
   cat <<EOF
  ${col1}.-.
 (o o)  ${col2}boo!
@@ -74,7 +75,7 @@ $Here/all
 echo
 
 # Pretty print aliases in columns with colors
-alias | sort | awk -v b="$bold" -v c1="$col1" -v c2="$col2" -v r="$col0" '
+alias | sort | awk -v b="$bold" -v c1="$col1" -v c2="$col3" -v r="$col0" '
   BEGIN {
     print b c1 "🧷 Aliases:" r
     w = 0
@@ -82,7 +83,7 @@ alias | sort | awk -v b="$bold" -v c1="$col1" -v c2="$col2" -v r="$col0" '
   {
     gsub(/'\''/, "", $0)  # remove single quotes
     split($0, a, "=")
-    printf("  %s%-10s%s → %s%s\n", c2, a[1], r, b, a[2])
+    printf("  %s%-10s%s → %s%s\n", c2, a[1], r, "", a[2])
   }'
 
 fi
