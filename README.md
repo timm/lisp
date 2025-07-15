@@ -9,7 +9,7 @@
    alt="Source Code"></a>
 <a href="https://github.com/timm/slip/blob/main/LICENSE.md"><img
    src="https://img.shields.io/badge/&copy;2025-MIT-brightgreen.svg?xstyle=for-the-badge"
-   alt="License"></a>
+   alt="License"></a><br clear=all>
 
 # README
 
