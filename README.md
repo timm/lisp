@@ -1,4 +1,4 @@
-<img align=right src="docs/lisp.png" align=right width=250>
+<img align=right src="docs/lisp.png" align=right width=200>
 <a href="https://en.wikipedia.org/wiki/Explainable_artificial_intelligence"><img
    src="https://img.shields.io/badge/for-AI,XAI-blue?xstyle=flat&"></a>
 <a href="https://gigamonkeys.com/book/introduction-why-lisp"><img
@@ -9,7 +9,7 @@
    alt="Source Code"></a>
 <a href="https://github.com/timm/slip/blob/main/LICENSE.md"><img
    src="https://img.shields.io/badge/&copy;2025-MIT-brightgreen.svg?xstyle=for-the-badge"
-   alt="License"></a>
+   alt="License"></a><br clear=all>
 
 # README
 
