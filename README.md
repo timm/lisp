@@ -3,7 +3,7 @@
    src="https://img.shields.io/badge/for-AI,XAI-blue?xstyle=flat&"></a>
 <a href="https://gigamonkeys.com/book/introduction-why-lisp"><img
    src="https://img.shields.io/badge/uses-Lisp-purple.svg?xstyle=for-the-badge"
-   alt="Language"></a>
+   alt="Language"><br></a>
 <a href="https://github.com/timm/slip"><img
    src="https://img.shields.io/badge/src-code-orange.svg?xstyle=for-the-badge"
    alt="Source Code"></a>
