@@ -7,7 +7,7 @@
 <a href="https://github.com/timm/slip"><img
    src="https://img.shields.io/badge/src-code-orange.svg?xstyle=for-the-badge"
    alt="Source Code"></a>
-<a href="https://github.com/timm/slip/blob/main/LICENSE.md"><img
+<a href="https://github.com/timm/lisp/blob/main/LICENSE.md"><img
    src="https://img.shields.io/badge/&copy;2025-MIT-brightgreen.svg?xstyle=for-the-badge"
    alt="License"></a><br clear=all>
 
