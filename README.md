@@ -1,4 +1,5 @@
-<img src="docs/lisp.png" align="left" width="200"><br>
+<img src="docs/lisp.png" align="left" width="200">
+
 <a href="https://timm.github.io/lisp/ezr.html">
   <img src="https://img.shields.io/badge/docs-view%20online-9cf.svg?logo=read-the-docs&logoColor=white" alt="Docs">
 </a>
