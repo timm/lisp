@@ -1,4 +1,3 @@
-<img src="docs/lisp.png" width="200">
 
 <a href="https://timm.github.io/lisp/ezr.html">
   <img src="https://img.shields.io/badge/docs-view%20online-9cf.svg?logo=read-the-docs&logoColor=white" alt="Docs">
@@ -14,7 +13,9 @@
 </a>
 <a href="https://github.com/timm/lisp/blob/main/LICENSE.md">
   <img src="https://img.shields.io/badge/%C2%A92025-MIT-28a745.svg?logo=opensourceinitiative&logoColor=white" alt="License">
-</a><br clear="all">
+</a>
+
+<img src="docs/lisp.png" width="200">
 
 Minimal, extensible Common Lisp script for explainable multi-objective reasoning. 
 It supports incremental data analysis using symbolic and numeric columns, 
