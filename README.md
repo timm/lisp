@@ -11,9 +11,6 @@
    src="https://img.shields.io/badge/&copy;2025-MIT-brightgreen.svg?xstyle=for-the-badge"
    alt="License"></a><br clear=all>
 
-# README
-
-
 Minimal, extensible Common Lisp script for explainable multi-objective reasoning. 
 It supports incremental data analysis using symbolic and numeric columns, 
 and allows structured row-wise updates with explainable decision logic.
