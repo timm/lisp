@@ -1,4 +1,5 @@
-<img src="docs/lisp.png"  width=200><a href="https://en.wikipedia.org/wiki/Explainable_artificial_intelligence"><img
+<img src="docs/lisp.png" align=middle width=200><a 
+   href="https://en.wikipedia.org/wiki/Explainable_artificial_intelligence"><img
    src="https://img.shields.io/badge/for-AI,XAI-blue?xstyle=flat&"></a>
 <a href="https://gigamonkeys.com/book/introduction-why-lisp"><img
    src="https://img.shields.io/badge/uses-Lisp-purple.svg?xstyle=for-the-badge"
