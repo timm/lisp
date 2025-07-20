@@ -27,10 +27,6 @@ ezr.lisp: multi-objective explanation
 ;;------------------------------------------------------------------------------
 ;; ## Macros
 
-;; Lambda short cut
-(defmacro -> (args &body body) 
-  `(lambda ,(if (listp args) args (list args)) ,@body))
-
 ;; Ensure `lst` has a counter for `x`   
 ;; (so `(incf (has x lst))` can increment).
 (defmacro has (x lst) 
@@ -39,12 +35,18 @@ ezr.lisp: multi-objective explanation
 
 ;; Short cut for slot access within `self`.
 (set-macro-character #\$
-  (-> (stream char) `(slot-value self ',(read stream t nil t))))
+  (lambda (stream char) `(slot-value self ',(read stream t nil t))))
 
 ;; Nested access to slots."
 (defmacro o (x f &rest fs)
   (if fs `(o (slot-value ,x ',f) . ,fs)
     `(slot-value ,x ',f)))
+
+(defmacro run(&body body)
+  #-sbcl `(progn ,@body)
+  #+sbcl `(handler-case 
+            (progn ,@body) (error (e) (format t "❌ Error: ~A~%" e))))
+
 
 ;;-----------------------------------------------------------------------------
 ;; ## Make nu things
