@@ -46,8 +46,8 @@ ezr.lisp: multi-objective explanation
 
 (defun nuData (&optional (inits nil)  &aux (self (make-data)))
   (if (stringp inits) 
-    (mapcsv (lambda x (add self x)) inits)
-    (mapcar (lambda x (add self x)) inits))
+    (mapcsv (lambda (x) (add self x)) inits)
+    (mapcar (lambda (x) (add self x)) inits))
   self)
 
 (defun nuCols (names &aux x y all klass)
@@ -111,7 +111,6 @@ ezr.lisp: multi-objective explanation
   (car (reduce (lambda (a b) (if (> (cdr a) (cdr b)) a b)) $has)))
 
 (defmethod div ((self num)) $sd)
-
 (defmethod div ((self sym))
   (- (loop :for (_ . n) :in $has :sum  (* (/ n $n) (log (/ n $n) 2)))))
 
