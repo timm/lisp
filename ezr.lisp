@@ -37,7 +37,7 @@ ezr.lisp: multi-objective explanation
 (set-macro-character #\$
   (lambda (stream char) `(slot-value self ',(read stream t nil t))))
 
-;; Nested access to slots."
+;; Nested access to slots.
 (defmacro o (x f &rest fs)
   (if fs `(o (slot-value ,x ',f) . ,fs)
     `(slot-value ,x ',f)))
@@ -46,7 +46,6 @@ ezr.lisp: multi-objective explanation
   #-sbcl `(progn ,@body)
   #+sbcl `(handler-case 
             (progn ,@body) (error (e) (format t "❌ Error: ~A~%" e))))
-
 
 ;;-----------------------------------------------------------------------------
 ;; ## Make nu things
@@ -254,14 +253,6 @@ ezr.lisp: multi-objective explanation
                                 ((eq b4 nil) t)
                                 (t (thing (second it))))
                           b4))))
-
-;; Only called if we are the top-level. And when we run, do not show long taces.
-(defmacro when-main (&body body)
-  `(when (and *load-pathname* *load-truename*
-              (equal (truename *load-pathname*) *load-truename*))
-     #-sbcl (progn ,@body)
-     #+sbcl (handler-case 
-              (progn ,@body) (error (e) (format t "❌ Error: ~A~%" e)))))
 
 ;;-----------------------------------------------------------------------------
 ;; ## Start

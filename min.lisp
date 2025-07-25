@@ -37,38 +37,46 @@ ezr.lisp: multi-objective explanation
 (set-macro-character #\$
   (lambda (stream char) `(slot-value self ',(read stream t nil t))))
 
+(defmacro when-main (&body body)
+  `(when (and *load-pathname* *load-truename*
+              (equal (truename *load-pathname*) *load-truename*))
+     ,@body))
+
 ;-------------------------------------------------------------------------------
-(defun nuSym (&key inits (at 0) (txt " "))
-  (adds inits (make-sym :at at :txt txt)))
+(defmethod new ((self sym) &key inits (at 0) (txt " "))
+  (setf $at at $txt txt)
+  (adds inits self))
 
-(defun nuNum (&key inits (at 0) (txt " "))
-  (adds inits (make-num :at at :txt txt :goal (if (chrp txt -1 #\-)  0 1))))
+(defmethod new ((self num) &key inits (at 0) (txt " "))
+  (setf $at at $txt txt $goal (if (chrp txt -1 #\-)  0 1))
+  (adds inits self))
 
-(defun nuData (&optional (inits nil)  &aux (self (make-data)))
+(defmethod new ((self data) &key inits)
   (if (stringp inits) 
     (mapcsv (lambda (x) (add self x)) inits)
     (mapcar (lambda (x) (add self x)) inits))
   self)
 
-(defun nuCols (names &aux x y all klass)
-  (dolist (txt names)
-    (let* ((aa   (chr txt 0))
-           (zz   (chr txt -1))
-           (what (if (upper-case-p aa)  #'nuNum #'nuSym))
-           (col  (funcall what :txt txt :at (length all))))
-      (push col all)
-      (unless (eql zz  #\X)
-        (if (eql zz #\!) (setf klass col))
-        (if (member zz '(#\! #\- #\+)) 
-          (push col y)
-          (push col x)))))
-  (make-cols :names names :klass klass 
-             :x (reverse x) :y (reverse y) :all (reverse all)))
+(defmethod new ((self cols) &key names)
+  (let (x y all)
+    (dolist (txt names)
+      (let* ((aa   (chr txt  0))
+             (zz   (chr txt -1))
+             (what (if (upper-case-p aa)  #'make-num #'make-sym))
+             (col  (new (funcall what :txt txt :at (length all)))))
+        (push col all)
+        (unless (eql zz  #\X)
+          (if (eql zz #\!) (setf $klass col))
+          (if (member zz '(#\! #\- #\+)) 
+            (push col y)
+            (push col x)))))
+    (setf $names names $x (reverse x) $y (reverse y) $all (reverse all)))
+  self)
 
 ;-------------------------------------------------------------------------------
 (defun adds (lst &optional it)
   (dolist (x lst it)
-    (setf it (or it (if (numberp x) (make-num) (make-sym))))
+    (setf it (or it (new (make-num))))
     (add it x)))
 
 (defmethod sub (self v &key zap)  (add self v :zap zap :inc -1))
@@ -93,14 +101,11 @@ ezr.lisp: multi-objective explanation
   v)
 
 (defmethod add ((self data) (row cons) &key (inc 1) zap )
-  (cond ((not $cols)
-         (setf $cols (nuCols row)))
-        ((> inc 0)
-         (push row $rows)
-         (add $cols row :inc inc))
-        (zap
-          (setf $rows (remove row $rows :test #'equal))
-          (add $cols row :inc inc))))
+  (cond ((not $cols) (setf $cols (new (make-cols) :names row)))
+        ((> inc 0)   (push row $rows)
+                     (add $cols row :inc inc))
+        (zap         (setf $rows (remove row $rows :test #'equal))
+                     (add $cols row :inc inc))))
 
 (defmethod add ((self cols) row &key (inc 1))
   (mapcar (lambda (col x) (add col x :inc inc)) $all row))
@@ -171,15 +176,15 @@ ezr.lisp: multi-objective explanation
     (assert (and (near 10 $mu 0.02) (near 1 $sd)))))
 
 (defun eg--thing (_)
-  (loop for (s isa) in '(("10.1" float) ("3" integer) ("abc" string))
-       do (format t "~a ~a ~a~%" s (thing s) (eql isa (type-of (thing s))))))
+  (loop :for (s isa) :in '(("10.1" float) ("3" integer) ("abc" string))
+       :do (format t "~a ~a ~a~%" s (thing s) (eql isa (type-of (thing s))))))
 
 (defun eg--sym (_) 
-  (let ((self (adds '(a a a a b b c))))
+  (let ((self (adds '(a a a a b b c) (make-sym))))
     (assert (near 1.38 (div self)))))
 
 (defun eg--data(_) 
-  (let ((self (nuData (? file))))
+  (let ((self (new (make-data) :inits (? file))))
     (mapcar 'print (o $cols y))))
 
 ;;-----------------------------------------------------------------------------
@@ -192,11 +197,6 @@ ezr.lisp: multi-objective explanation
                                 ((eq b4 nil) t)
                                 (t (thing (second it))))
                           b4))))
-
-(defmacro when-main (&body body)
-  `(when (and *load-pathname* *load-truename*
-              (equal (truename *load-pathname*) *load-truename*))
-     ,@body))
 
 ;;-----------------------------------------------------------------------------
 (setf *seed* (? seed))
