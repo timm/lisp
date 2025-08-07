@@ -13,8 +13,6 @@ ezr.lisp: multi-objective explanation
   (file  "-f"  "data file"        
          "../moot/optimize/misc/auto93.csv")))
 
-(defmacro ? (x) `(fourth (assoc ',x *options*)))
-
 ;-------------------------------------------------------------------------------
 (defstruct data rows cols)
 (defstruct cols x y all names klass)
@@ -22,25 +20,17 @@ ezr.lisp: multi-objective explanation
 (defstruct num (n 0) (at 0) (txt " ") (mu 0) (m2 0) 
                (sd 0) (lo 1e32) (hi -1e32) (goal 1))
 
+(print (make-num))
+
 ;-------------------------------------------------------------------------------
-(defmacro o (x f &rest fs)
-  (if fs `(o (slot-value ,x ',f) . ,fs) `(slot-value ,x ',f)))
+(defmacro ? (x) `(fourth (assoc ',x *options*)))
 
 (defmacro run (&body src)
   #-sbcl `(progn ,@bsrc)
   #+sbcl `(handler-case (progn ,@src) (error (e) (format t "❌ bad: ~A~%" e))))
 
-(defmacro has (x lst) 
-  `(cdr (or (assoc ,x ,lst :test #'equal)
-            (car (setf ,lst (cons (cons ,x 0) ,lst))))))
-
 (set-macro-character #\$
   (lambda (stream char) `(slot-value self ',(read stream t nil t))))
-
-(defmacro when-main (&body body)
-  `(when (and *load-pathname* *load-truename*
-              (equal (truename *load-pathname*) *load-truename*))
-     ,@body))
 
 ;-------------------------------------------------------------------------------
 (defmethod new ((self sym) &key inits (at 0) (txt " "))
@@ -82,22 +72,24 @@ ezr.lisp: multi-objective explanation
 (defmethod sub (self v &key zap)  (add self v :zap zap :inc -1))
 
 (defmethod add ((self sym) v &key (inc 1)) 
-  (when (not (eq v '?))
+  (unless (string= v "?")
     (incf $n inc)
-    (incf (has v $has) inc))
+    (incf (cdr (or (assoc v $has :test #'equal)
+                   (car (setf $has (cons (cons v 0) $has))))) 
+          inc))
   v)
 
 (defmethod add ((self num) v &key (inc 1))
-  (unless (eq v '?)
+  (unless (string= v '?)
     (incf $n inc)
     (setf $lo (min v $lo)
           $hi (max v $hi))
     (if (and (< inc 0) (< $n 2))
       (setf $mu 0 $m2 0 $sd 0 $n 0)
       (let* ((d (- v $mu)))
-        (setf $mu (+ $mu (* inc (/ d $n)))
-              $m2 (+ $m2 (* inc (* d (- v $mu))))
-              $sd (if (< $n 2) 0 (sqrt (/ (max 0 $m2) (1- $n))))))))
+        (setf $mu (+ $mu (* inc (/ d $n))))
+        (setf $m2 (+ $m2 (* inc (* d (- v $mu)))))
+        (setf $sd (if (< $n 2) 0 (sqrt (/ (max 0 $m2) (1- $n))))))))
   v)
 
 (defmethod add ((self data) (row cons) &key (inc 1) zap )
@@ -185,7 +177,7 @@ ezr.lisp: multi-objective explanation
 
 (defun eg--data(_) 
   (let ((self (new (make-data) :inits (? file))))
-    (mapcar 'print (o $cols y))))
+    (mapcar 'print (data-y (data-cols self)))))
 
 ;;-----------------------------------------------------------------------------
 ;; ## Main
@@ -200,7 +192,7 @@ ezr.lisp: multi-objective explanation
 
 ;;-----------------------------------------------------------------------------
 (setf *seed* (? seed))
-(when-main
+(when (equal *load-truename* (truename *load-pathname*))
   (setf *options* (cli *options*))
   (loop :for (flag arg) :on (args) :by #'cdr :do
     (let ((com (intern (format nil "EG~:@(~a~)" flag))))
