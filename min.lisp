@@ -20,8 +20,6 @@ ezr.lisp: multi-objective explanation
 (defstruct num (n 0) (at 0) (txt " ") (mu 0) (m2 0) 
                (sd 0) (lo 1e32) (hi -1e32) (goal 1))
 
-(print (make-num))
-
 ;-------------------------------------------------------------------------------
 (defmacro ? (x) `(fourth (assoc ',x *options*)))
 
@@ -51,7 +49,7 @@ ezr.lisp: multi-objective explanation
   (dolist (txt names)
     (let* ((zz   (chr txt -1))
            (what (if (upper-case-p (chr txt 0))  #'make-num #'make-sym))
-           (col  (new (funcall what :txt txt :at (length all)))))
+           (col  (new (funcall what :txt txt :at (length $all)))))
       (push col $all)
       (unless (eql zz  #\X)
         (if (eql zz #\!) (setf $klass col))
@@ -68,7 +66,7 @@ ezr.lisp: multi-objective explanation
 (defmethod sub (self v &key zap)  (add self v :zap zap :inc -1))
 
 (defmethod add ((self sym) v &key (inc 1)) 
-  (unless (string= v "?")
+  (unless (eql v "?")
     (incf $n inc)
     (incf (cdr (or (assoc v $has :test #'equal)
                    (car (setf $has (cons (cons v 0) $has))))) 
@@ -76,15 +74,15 @@ ezr.lisp: multi-objective explanation
   v)
 
 (defmethod add ((self num) v &key (inc 1))
-  (unless (string= v '?)
+  (unless (eql v '?)
     (incf $n inc)
     (setf $lo (min v $lo)
           $hi (max v $hi))
     (if (and (< inc 0) (< $n 2))
       (setf $mu 0 $m2 0 $sd 0 $n 0)
       (let* ((d (- v $mu)))
-        (setf $mu (+ $mu (* inc (/ d $n))))
-        (setf $m2 (+ $m2 (* inc (* d (- v $mu)))))
+        (incf $mu (* inc (/ d $n)))
+        (incf $m2 (* inc (* d (- v $mu))))
         (setf $sd (if (< $n 2) 0 (sqrt (/ (max 0 $m2) (1- $n))))))))
   v)
 
@@ -99,9 +97,15 @@ ezr.lisp: multi-objective explanation
   (mapcar (lambda (col x) (add col x :inc inc)) $all row))
 
 ;;------------------------------------------------------------------------------
+(defmethod mid ((self data)) 
+  (mapcar #'mid (cols-all $cols)))
+
 (defmethod mid ((self num)) $mu)
 (defmethod mid ((self sym))
   (car (reduce (lambda (a b) (if (> (cdr a) (cdr b)) a b)) $has)))
+
+(defmethod div ((self data)) 
+  (mapcar #'div (cols-all $cols)))
 
 (defmethod div ((self num)) $sd)
 (defmethod div ((self sym))
@@ -164,27 +168,30 @@ ezr.lisp: multi-objective explanation
     (assert (and (near 10 $mu 0.02) (near 1 $sd)))))
 
 (defun eg--thing (_)
-  (loop :for (s isa) :in '(("10.1" float) ("3" integer) ("abc" string))
-       :do (format t "~a ~a ~a~%" s (thing s) (eql isa (type-of (thing s))))))
+  (loop :for (s isa) :in '(("10.1" 10.1) ("3" 3) ("abc" "abc"))
+    :do (format t "~a ~a ~a~%" s (thing s) 
+          (assert (equal (type-of isa) (type-of (thing s)))))))
 
 (defun eg--sym (_) 
   (let ((self (adds '(a a a a b b c) (make-sym))))
     (assert (near 1.38 (div self)))))
 
-(defun eg--data(_) 
-  (let ((self (new (make-data) :inits (? file))))
-    (mapcar 'print (data-y (data-cols self)))))
+(defun eg--mids(_) 
+  (print (mid (new (make-data) :inits (? file)))))
+
+(defun eg--divs(_) 
+  (print (div (new (make-data) :inits (? file)))))
 
 ;;-----------------------------------------------------------------------------
 ;; ## Main
-
 (defun cli (options &aux it)
   (loop :for (key flag help b4) :in options :collect
-    (list key flag help (if (setf it (member flag (args) :test #'string=))
-                          (cond ((eq b4 t) nil)
-                                ((eq b4 nil) t)
-                                (t (thing (second it))))
-                          b4))))
+    (list key flag help 
+          (if (setf it (member flag (args) :test #'string=))
+            (cond ((eq b4 t) nil)
+                  ((eq b4 nil) t)
+                  (t (thing (second it))))
+            b4))))
 
 ;;-----------------------------------------------------------------------------
 (setf *seed* (? seed))
@@ -193,6 +200,5 @@ ezr.lisp: multi-objective explanation
   (loop :for (flag arg) :on (args) :by #'cdr :do
     (let ((com (intern (format nil "EG~:@(~a~)" flag))))
       (when (fboundp com)
-        (format *error-output*  "% ~a~%" flag)
         (setf *seed* (? seed))
         (run (funcall com (if arg (thing arg))))))))

@@ -79,16 +79,10 @@ $Here/all
 echo
 
 # Pretty print aliases in columns with colors
-alias | sort | awk -v b="$bold" -v c1="$col1" -v c2="$col3" -v r="$col0" '
-  BEGIN {
-    print b c1 "🧷 Aliases:" r
-    w = 0
-  }
-  {
-    gsub(/'\''/, "", $0)  # remove single quotes
-    split($0, a, "=")
-    printf("  %s%-10s%s → %s%s\n", c2, a[1], r, "", a[2])
-  }'
-
+# alias | sort | awk -v b="$bold" -v c1="$col1" -v c2="$col3" -v r="$col0" '
+#  BEGIN { print b c1 "🧷 Aliases:" r; w = 0 }
+#  { gsub(/'\''/, "", $0)  # remove single quotes
+#    split($0, a, "=")
+#    printf("  %s%-10s%s → %s%s\n", c2, a[1], r, "", a[2]) }'
 fi
 
