@@ -133,18 +133,18 @@ ezr.lisp: multi-objective explanation
 (defun gauss (m sd)
   (+ m (* sd (sqrt (* -2 (log (rand 1.0)))) (cos (* 2 pi (rand 1.0))))))
 
-(defun thing (s &aux (s1 (string-trim '(#\Space #\Tab) s))) 
+(defun s->atom (s &aux (s1 (string-trim '(#\Space #\Tab) s))) 
   (let ((x (let ((*read-eval* nil)) (read-from-string s1 ""))))
     (if (or (numberp x) (member x '(t nil ?))) x s1)))
 
-(defun things (s &optional (sep #\,) (here 0)) 
+(defun s->list (s &optional (sep #\,) (here 0)) 
   (let ((there (position sep s :start here)))
-    (cons (thing (subseq s here there))
-          (if there (things s sep (1+ there))))))
+    (cons (s->atom (subseq s here there))
+          (if there (s->list s sep (1+ there))))))
 
 (defun mapcsv (fun file)
   (with-open-file (s (or file *standard-input*))
-    (loop (funcall fun (things (or (read-line s nil) 
+    (loop (funcall fun (s->list (or (read-line s nil) 
                                    (return)))))))
 
 ;;---------------------------------------------------------------------------
@@ -190,7 +190,7 @@ ezr.lisp: multi-objective explanation
           (if (setf it (member flag (args) :test #'string=))
             (cond ((eq b4 t) nil)
                   ((eq b4 nil) t)
-                  (t (thing (second it))))
+                  (t (s->atom (second it))))
             b4))))
 
 ;;-----------------------------------------------------------------------------
