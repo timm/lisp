@@ -10,8 +10,7 @@ ezr.lisp: multi-objective explanation
   (k     "-k"  "kth value"        2)
   (goal  "-g"  "start-up action"  "one")
   (seed  "-s"  "random number"    1234567891)
-  (file  "-f"  "data file"        
-         "../moot/optimize/misc/auto93.csv")))
+  (file  "-f"  "data file"        "../moot/optimize/misc/auto93.csv")))
 
 ;-------------------------------------------------------------------------------
 (defstruct data rows cols)
@@ -23,12 +22,16 @@ ezr.lisp: multi-objective explanation
 ;-------------------------------------------------------------------------------
 (defmacro ? (x) `(fourth (assoc ',x *options*)))
 
+(defmacro => (arg &rest src) `(lambda ,(if (listp arg) arg (list arg)) ,@src))
+
+(defmacro fn (fun &rest body) `(funcall ,fun ,@body))
+
 (defmacro run (&body src)
-  #-sbcl `(progn ,@bsrc)
+  #-sbcl `(progn ,@src)
   #+sbcl `(handler-case (progn ,@src) (error (e) (format t "❌ bad: ~A~%" e))))
 
 (set-macro-character #\$
-  (lambda (stream char) `(slot-value self ',(read stream t nil t))))
+  (=> (stream char) `(slot-value self ',(read stream t nil t))))
 
 ;-------------------------------------------------------------------------------
 (defmethod new ((self sym) &key inits (at 0) (txt " "))
@@ -41,7 +44,7 @@ ezr.lisp: multi-objective explanation
 
 (defmethod new ((self data) &key inits)
   (if (stringp inits) 
-    (mapcsv (lambda (x) (add self x)) inits)
+    (mapcsv (=> x (add self x)) inits)
     (adds inits self))
   self)
 
@@ -49,7 +52,7 @@ ezr.lisp: multi-objective explanation
   (dolist (txt names)
     (let* ((zz   (chr txt -1))
            (what (if (upper-case-p (chr txt 0))  #'make-num #'make-sym))
-           (col  (new (funcall what :txt txt :at (length $all)))))
+           (col  (new (fn what :txt txt :at (length $all)))))
       (push col $all)
       (unless (eql zz  #\X)
         (if (eql zz #\!) (setf $klass col))
@@ -63,38 +66,38 @@ ezr.lisp: multi-objective explanation
     (setf it (or it (new (make-num))))
     (add it x)))
 
-(defmethod sub (self v &key zap)  (add self v :zap zap :inc -1))
+(defmethod sub (self v &key zap)  (add self v :inc -1 :zap zap))
 
-(defmethod add ((self sym) v &key (inc 1)) 
+(defmethod add ((self sym) v &key (inc 1) zap) 
   (unless (eql v "?")
     (incf $n inc)
-    (incf (cdr (or (assoc v $has :test #'equal)
-                   (car (setf $has (cons (cons v 0) $has))))) 
-          inc))
-  v)
+    (_add1 self v inc zap))
+   v)
 
-(defmethod add ((self num) v &key (inc 1))
-  (unless (eql v '?)
-    (incf $n inc)
-    (setf $lo (min v $lo)
-          $hi (max v $hi))
-    (if (and (< inc 0) (< $n 2))
-      (setf $mu 0 $m2 0 $sd 0 $n 0)
-      (let* ((d (- v $mu)))
-        (incf $mu (* inc (/ d $n)))
-        (incf $m2 (* inc (* d (- v $mu))))
-        (setf $sd (if (< $n 2) 0 (sqrt (/ (max 0 $m2) (1- $n))))))))
-  v)
+(defmethod _add1 ((self sym) v inc _)
+  (incf (cdr (or (assoc v $has :test #'equal)
+                 (car (setf $has (cons (cons v 0) $has))))) 
+        inc))
 
-(defmethod add ((self data) (row cons) &key (inc 1) zap )
+(defmethod _add1 ((self num) v inc _)
+  (setf $lo (min v $lo)
+        $hi (max v $hi))
+  (if (and (< inc 0) (< $n 2))
+    (setf $mu 0 $m2 0 $sd 0 $n 0)
+    (let* ((d (- v $mu)))
+      (incf $mu (* inc (/ d $n)))
+      (incf $m2 (* inc (* d (- v $mu))))
+      (setf $sd (if (< $n 2) 0 (sqrt (/ (max 0 $m2) (1- $n))))))))
+
+(defmethod _add1 ((self data) row inc zap)
   (cond ((not $cols) (setf $cols (new (make-cols) :names row)))
         ((> inc 0)   (push row $rows)
                      (add $cols row :inc inc))
-        (zap         (setf $rows (remove row $rows :test #'equal))
+        (t           (if zap (setf $rows (remove row $rows :test #'equal)))
                      (add $cols row :inc inc))))
 
-(defmethod add ((self cols) row &key (inc 1))
-  (mapcar (lambda (col x) (add col x :inc inc)) $all row))
+(defmethod _add1 ((self cols) row inc zap)
+  (mapcar (=> (col x) (_add1 col x inc zap)) $all row))
 
 ;;------------------------------------------------------------------------------
 (defmethod mid ((self data)) 
@@ -102,7 +105,7 @@ ezr.lisp: multi-objective explanation
 
 (defmethod mid ((self num)) $mu)
 (defmethod mid ((self sym))
-  (car (reduce (lambda (a b) (if (> (cdr a) (cdr b)) a b)) $has)))
+  (car (reduce (=> (a b) (if (> (cdr a) (cdr b)) a b)) $has)))
 
 (defmethod div ((self data)) 
   (mapcar #'div (cols-all $cols)))
@@ -144,8 +147,8 @@ ezr.lisp: multi-objective explanation
 
 (defun mapcsv (fun file)
   (with-open-file (s (or file *standard-input*))
-    (loop (funcall fun (s->list (or (read-line s nil) 
-                                   (return)))))))
+    (loop (fn fun (s->list (or (read-line s nil) 
+                               (return)))))))
 
 ;;---------------------------------------------------------------------------
 (defun eg-h (_) 
@@ -201,4 +204,4 @@ ezr.lisp: multi-objective explanation
     (let ((com (intern (format nil "EG~:@(~a~)" flag))))
       (when (fboundp com)
         (setf *seed* (? seed))
-        (run (funcall com (if arg (thing arg))))))))
+        (run (fn com (if arg (thing arg))))))))
