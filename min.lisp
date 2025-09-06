@@ -1,4 +1,4 @@
-#!/usr/bin/env sbcl --script
+;!/usr/bin/env sbcl --script
 ;; <!-- vim: set lispwords+=has,loop,format ts=2 sw=2 sts=2 et : -->
 #+sbcl (declaim (sb-ext:muffle-conditions cl:style-warning))
 
@@ -15,10 +15,9 @@ ezr.lisp: multi-objective explanation
 ;-------------------------------------------------------------------------------
 (defstruct cols x y all names klass)
 (defstruct data (n 0) rows cols)
-(defstruct col  (n 0) (at 0) (txt " "))
-(defstruct (sym (:include col))  has)
-(defstruct (num (:include col)) 
-   (mu 0) (m2 0) (sd 0) (lo 1e32) (hi -1e32) (goal 1))
+(defstruct sym (n 0) (at 0) (txt " ") has)
+(defstruct num (n 0) (at 0) (txt " ") 
+               (mu 0) (m2 0) (sd 0) (lo 1e32) (hi -1e32) (goal 1))
 
 ;-------------------------------------------------------------------------------
 (defmacro ? (x) `(fourth (assoc ',x *options*)))
@@ -67,23 +66,26 @@ ezr.lisp: multi-objective explanation
     (setf i (or i (new (make-num))))
     (add i x)))
 
-(defmethod sub (i v &key zap)  (add i v :inc -1 :zap zap))
+(defun sub (i v &optional zap)  (add i v -1 zap))
 
-(defmethod add ((i cols) row &key (inc 1) zap)
-  (mapcar (=> (col x) (_add1 col x inc zap)) $all row))
-
-(defmethod add ((i col) v &key (inc 1)) 
+(defun add (i v &optional (inc 1) zap) 
   (unless (eql v "?")
     (incf $n inc)
-    (_add1 i v inc zap))
-   v)
+    (typecase i 
+      (sym  (_sym+  i v inc)) 
+      (num  (_num+  i v inc)) 
+      (cols (_cols+ i v inc))
+      (data (_data+ i v inc zap)) ))
+  v)
 
-(defmethod _add1 ((i sym) v inc)
+(defun _sym+ (i v inc) 
   (incf (cdr (or (assoc v $has :test #'equal)
-                 (car (setf $has (cons (cons v 0) $has))))) 
-        inc))
+                 (car (setf $has (cons (cons v 0) $has))))) inc))
 
-(defmethod _add1 ((i num) v inc)
+(defun _cols+ (i v inc) 
+  (mapcar (=> (x col) (add col x inc)) row $all))
+
+(defun _num+ (i v inc) 
   (setf $lo (min v $lo)
         $hi (max v $hi))
   (if (and (< inc 0) (< $n 2))
@@ -93,12 +95,12 @@ ezr.lisp: multi-objective explanation
       (incf $m2 (* inc (* d (- v $mu))))
       (setf $sd (if (< $n 2) 0 (sqrt (/ (max 0 $m2) (1- $n))))))))
 
-(defmethod _add1 ((i data) row inc zap)
+(defun _data+  (i v inc zap)
   (cond ((not $cols) (setf $cols (new (make-cols) :names row)))
         ((> inc 0)   (push row $rows)
-                     (add $cols row :inc inc))
+                     (add $cols row inc))
         (t           (if zap (setf $rows (remove row $rows :test #'equal)))
-                     (add $cols row :inc inc))))
+                     (sub $cols v))))
 
 ;;------------------------------------------------------------------------------
 (defmethod mid ((i data)) 
