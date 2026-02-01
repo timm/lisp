@@ -12,28 +12,28 @@ ezr.lisp: multi-objective explanation
   (seed  "-s"  "random number"    1234567891)
   (file  "-f"  "data file"        "../moot/optimize/misc/auto93.csv")))
 
-;-------------------------------------------------------------------------------
+;------------------------------------------------------------------------
 (defstruct cols x y all names klass)
 (defstruct data (n 0) rows cols)
 (defstruct sym (n 0) (at 0) (txt " ") has)
 (defstruct num (n 0) (at 0) (txt " ") 
                (mu 0) (m2 0) (sd 0) (lo 1e32) (hi -1e32) (goal 1))
 
-;-------------------------------------------------------------------------------
+;------------------------------------------------------------------------
 (defmacro ? (x) `(fourth (assoc ',x *options*)))
 
-(defmacro => (arg &rest src) `(lambda ,(if (listp arg) arg (list arg)) ,@src))
-
-(defmacro fn (fun &rest body) `(funcall ,fun ,@body))
+(defmacro => (arg &rest src) 
+  `(lambda ,(if (listp arg) arg (list arg)) ,@src))
 
 (defmacro run (&body src)
   #-sbcl `(progn ,@src)
-  #+sbcl `(handler-case (progn ,@src) (error (e) (format t "❌ bad: ~A~%" e))))
+  #+sbcl `(handler-case (progn ,@src) 
+            (error (e) (format t "❌ bad: ~A~%" e))))
 
 (set-macro-character #\$
   (=> (stream char) `(slot-value i ',(read stream t nil t))))
 
-;-------------------------------------------------------------------------------
+;------------------------------------------------------------------------
 (defmethod new ((i sym) &key inits (at 0) (txt " "))
   (setf $at at $txt txt)
   (adds inits i))
@@ -52,7 +52,7 @@ ezr.lisp: multi-objective explanation
   (dolist (txt names)
     (let* ((zz   (chr txt -1))
            (what (if (upper-case-p (chr txt 0))  #'make-num #'make-sym))
-           (col  (new (fn what :txt txt :at (length $all)))))
+           (col  (new (funcall what :txt txt :at (length $all)))))
       (push col $all)
       (unless (eql zz  #\X)
         (if (eql zz #\!) (setf $klass col))
@@ -60,7 +60,7 @@ ezr.lisp: multi-objective explanation
   (setf $names names $x (reverse $x) $y (reverse $y) $all (reverse $all))
   i)
 
-;------------------------------------------------------------------------------
+;-----------------------------------------------------------------------
 (defun adds (lst &optional i)
   (dolist (x lst i)
     (setf i (or i (new (make-num))))
@@ -97,12 +97,12 @@ ezr.lisp: multi-objective explanation
 
 (defun _data+  (i v inc zap)
   (cond ((not $cols) (setf $cols (new (make-cols) :names row)))
-        ((> inc 0)   (push row $rows)
-                     (add $cols row inc))
-        (t           (if zap (setf $rows (remove row $rows :test #'equal)))
-                     (sub $cols v))))
+        ((> inc 0) (push row $rows)
+                   (add $cols row inc))
+        (t         (if zap (setf $rows (remove row $rows :test #'equal)))
+                   (sub $cols v))))
 
-;;------------------------------------------------------------------------------
+;;-----------------------------------------------------------------------
 (defmethod mid ((i data)) 
   (mapcar #'mid (cols-all $cols)))
 
@@ -117,7 +117,7 @@ ezr.lisp: multi-objective explanation
 (defmethod div ((i sym))
   (- (loop :for (_ . n) :in $has :sum  (* (/ n $n) (log (/ n $n) 2)))))
 
-;;------------------------------------------------------------------------------
+;;-----------------------------------------------------------------------
 ;; ## Functions
 (defun args () (cdr #+clisp ext:*args* #+sbcl sb-ext:*posix-argv*))
 
@@ -150,10 +150,10 @@ ezr.lisp: multi-objective explanation
 
 (defun mapcsv (fun file)
   (with-open-file (s (or file *standard-input*))
-    (loop (fn fun (s->list (or (read-line s nil) 
-                               (return)))))))
+    (loop (funcall fun (s->list (or (read-line s nil) 
+                                    (return)))))))
 
-;;---------------------------------------------------------------------------
+;;--------------------------------------------------------------------
 (defun eg-h (_) 
   (format t "~a~%~%Options:~%" *help*)
   (loop :for (key flag help default) :in *options* :do
@@ -188,7 +188,7 @@ ezr.lisp: multi-objective explanation
 (defun eg--divs(_) 
   (print (div (new (make-data) :inits (? file)))))
 
-;;-----------------------------------------------------------------------------
+;;----------------------------------------------------------------------
 ;; ## Main
 (defun cli (options &aux it)
   (loop :for (key flag help b4) :in options :collect
@@ -199,7 +199,7 @@ ezr.lisp: multi-objective explanation
                   (t (s->atom (second it))))
             b4))))
 
-;;-----------------------------------------------------------------------------
+;;----------------------------------------------------------------------
 (setf *seed* (? seed))
 (when (equal *load-truename* (truename *load-pathname*))
   (setf *options* (cli *options*))
@@ -207,4 +207,4 @@ ezr.lisp: multi-objective explanation
     (let ((com (intern (format nil "EG~:@(~a~)" flag))))
       (when (fboundp com)
         (setf *seed* (? seed))
-        (run (fn com (if arg (thing arg))))))))
+        (run (funcall com (if arg (thing arg))))))))
