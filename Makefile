@@ -5,7 +5,7 @@
 		-Br               \
 		--quiet            \
 		--landscape          \
-		--font-size=5 \
+    --chars-per-line=95 \
 		--line-numbers=1      \
 		--borders=no           \
 		--pro=color             \

@@ -189,24 +189,18 @@ ezr.lisp: multi-objective explanation
 (defun gauss (m sd)
   (+ m (* sd (sqrt (* -2 (log (rand 1.0)))) (cos (* 2 pi (rand 1.0))))))
 
-;; ### String 2 Thing
-
-;; String -> atom
 (defun thing (s &aux (s1 (string-trim '(#\Space #\Tab) s))) 
   (let ((x (let ((*read-eval* nil)) (read-from-string s1 ""))))
     (if (or (numberp x) (member x '(t nil ?))) x s1)))
 
-;; string -> list of atoms (dividing on comma)
 (defun things (s &optional (sep #\,) (here 0)) 
   (let ((there (position sep s :start here)))
     (cons (thing (subseq s here there))
           (if there (things s sep (1+ there))))))
 
-;; csv file -> list of list of atom.
 (defun mapcsv (fun file)
   (with-open-file (s (or file *standard-input*))
-    (loop (funcall fun (things (or (read-line s nil) 
-                                   (return)))))))
+    (loop (funcall fun (things (or (read-line s nil) (return)))))))
 
 ;;---------------------------------------------------------------------------
 ;; ## Examples

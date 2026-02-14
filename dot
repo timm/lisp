@@ -1,0 +1,4 @@
+lisp() {
+  f=$1; shift
+  sbcl --script $f.lisp "$@" 2>&1 | sed -n '/^Backtrace/q;p'
+}
