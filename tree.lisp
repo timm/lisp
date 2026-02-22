@@ -1,7 +1,14 @@
 #!/usr/bin/env sbcl --script
 #+sbcl (declaim (sb-ext:muffle-conditions cl:style-warning))
 
-(defvar *the* '(seed 42 file "auto93.csv" bins 7 Budget 50 leaf 4 p 2 Show 30 Check 5))
+(defvar *the* '(seed 42 
+                file "auto93.csv" 
+                bins 7 
+                Budget 50
+                leaf 4 
+                p 2 
+                Show 30 
+                Check 5))
 
 ;;;; macros ----------------------------------------------------------
 (defmacro ? (x) `(getf *the* ',x))
@@ -64,13 +71,13 @@
 (defun add (col v &optional (inc 1))
   (unless (eq v '?)
     (incf (slot-value col 'n) inc)
-    (add1 col v inc))
+    (_add col v inc))
   v)
 
-(defmethod add1 ((self sym) v inc)
+(defmethod _add ((self sym) v inc)
   (incf (gethash v (sym-has self) 0) inc))
 
-(defmethod add1 ((self num) v inc)
+(defmethod _add ((self num) v inc)
   (let ((d (- v (num-mu self))))
     (incf (num-mu self) (* inc (/ d (num-n self))))
     (incf (num-m2 self) (* inc d (- v (num-mu self))))))
