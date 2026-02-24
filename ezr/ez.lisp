@@ -21,22 +21,18 @@
   (if (floatp x) (format nil "~,vf" (? decs) x) (princ-to-string x)))
 
 (defun cast (s &aux (s (string-trim " " s)))
-  (cond ((string-equal s "true")  1d0)
-        ((string-equal s "false") 0d0)
+  (cond ((string-equal s "true")  1)
+        ((string-equal s "false") 0)
         (t (let ((n (read-from-string s nil nil)))
-             (if (numberp n) (coerce n 'double-float) s)))))
+             (if (numberp n) n s)))))
 
-(defun split$ (ch str &aux (b (position ch str)))
-  (cons (string-trim " " (subseq str 0 (or b (length str))))
-        (when b (split$ ch (subseq str (1+ b))))))
+(defun atoms (ch str &aux (b (position ch str)))
+  (cons (cast (string-trim " " (subseq str 0 (or b (length str)))))
+          (when b (atoms ch (subseq str (1+ b))))))
 
-(defun line->row (line &aux (txt (car (split$ #\# line))))
-  (unless (string= txt "") (mapcar #'cast (split$ #\, txt))))
-
-(defun csv (file fn)
-  (with-open-file (s file)
-    (loop (let ((line (or (read-line s nil) (return-from csv))))
-            (aif (line->row line) (funcall fn it))))))
+(defun mapcsv (&optional (fun #'print) file end)
+  (with-open-file (s (or file *standard-input*))
+      (loop (funcall fun (atoms (or (read-line s nil) (return end)))))))
 
 (defun align (m &aux (ss (mapcar (lambda (r) (mapcar #'say r)) m)))
   (let ((ws (loop for i below (length (car ss))
