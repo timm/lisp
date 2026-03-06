@@ -1,3 +1,4 @@
+Lines?=95
 ~/tmp/%.pdf: %.lisp  Makefile ## .py ==> .pdf
 	@mkdir -p ~/tmp
 	@echo "pdf-ing $@ ... "
@@ -5,7 +6,7 @@
 		-Br               \
 		--quiet            \
 		--landscape          \
-    --chars-per-line=95 \
+    --chars-per-line=$(Lines) \
 		--line-numbers=1      \
 		--borders=no           \
 		--pro=color             \
