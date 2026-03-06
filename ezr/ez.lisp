@@ -124,8 +124,7 @@
 
 (defun order (d r rows) (sortby r2 rows (distx d r r2)))
 (defun nearest (d r rows) (car (order d r rows)))
-(defun furthest (d r rows)
-  (car (last (order d r rows))))
+(defun furthest (d r rows) (car (last (order d r rows))))
 
 ;; stats ---
 (defmethod pick ((i sym) &optional _)
@@ -150,13 +149,12 @@
 (defun prior (i n-all n-h)
   (/ (+ $n (? min)) (+ n-all (* (? min) n-h))))
 
-(defun likes (i row n-all n-h)
-  (let ((p (prior i n-all n-h)))
-    (+ (log p)
-       (loop for c in (cols-x $cols)
-         for v = (cell c row) unless (unk v)
-         sum (let ((l (like c v p)))
-               (if (plusp l) (log l) 0))))))
+(defun likes (i row n-all n-h &aux (p (prior i n-all n-h)))
+  (+ (log p)
+     (loop for c in (cols-x $cols)
+       for v = (cell c row) unless (unk v)
+       for l = (like c v p) if (plusp l)
+       sum (log l))))
 
 ;; lib ---
 (defmethod say (x)
