@@ -2,6 +2,7 @@
 GIT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 
 # aliases
+alias lisp="sbcl --script "
 tree() { command tree -C "$@"; }
 ls()   { command ls --color "$@"; }
 grep() { command grep --color=auto "$@"; }

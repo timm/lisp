@@ -1,15 +1,16 @@
 ;; ez.lisp: incremental Bayes (c) 2026 Tim Menzies MIT
 ; vim: set et ts=2 sw=2 lisp:
-#+sxbcl (setf sb-ext:*invoke-debugger-hook*
+#+sbcl (setf sb-ext:*invoke-debugger-hook*
              (lambda (c h) (declare (ignore h))
                (format *error-output* "~a~%" c) (sb-ext:exit :code 1)))
 
 (defparameter *the*
-  '(:neighbors 1 :min 2 :power 2 :decimals 2 :seed 1))
+  '(:neighbors 1 :min 2 :power 2 :decimals 2 :seed 1 :eps 0.35
+    :conf 0.95 :delta 0.195 :ks 1.36))
 
 (defmacro ? (x) `(getf *the* ,(intern (string x) "KEYWORD")))
 
-(defmacro dohash ((k v hash &optional result) &body body)
+(defmacro do-hash ((k v hash &optional result) &body body)
   `(progn (maphash (lambda (,k ,v) ,@body) ,hash) ,result))
 
 (defmacro collect ((v lst) &body body) 
@@ -80,7 +81,7 @@
 (defmethod mid ((i num)) (float $mu))
 
 (defmethod mid ((i sym) &aux m (mx 0))
-  (dohash (k v $has m)
+  (do-hash (k v $has m)
     (if (> v mx) (setf m k mx v))))
 
 (defun mids (i)
@@ -90,7 +91,7 @@
   (if (< $n 2) 0 (sqrt (/ (max 0 $m2) (1- $n)))))
 
 (defmethod spread ((i sym) &aux (e 0))
-  (dohash (k v $has e)
+  (do-hash (k v $has e)
     (let ((p (/ v $n))) (decf e (* p (log p 2))))))
 
 (defun z (i v)
@@ -133,7 +134,7 @@
 ;; stats ---
 (defmethod pick ((i sym) &optional _)
   (let ((r (* (random 1.0) $n)))
-    (dohash (k v $has)
+    (do-hash (k v $has)
             (if (<= (decf r v) 0) (return-from pick k)))))
 
 (defmethod pick ((i num) &optional v)
@@ -199,32 +200,34 @@
   #+clisp (setf *random-state* (make-random-state (? seed))))
 
 ;; demos ---
-(defun eg_all (&optional f) 
-  (eg_the)
-  (dolist (fn '(eg_csv eg_data eg_disty eg_abdsub eg_bayes))
+(defun eg-all (&optional f) 
+  (eg-the)
+  (dolist (fn '(eg-csv eg-data eg-disty eg-addsub eg-bayes))
+    (format t "~%;;;; ~s~%" fn)
+    (rseed (? seed))
     (funcall fn f)))
 
-(defun eg_the (&optional f) f
+(defun eg-the (&optional f) f
   (format t "~a~%" *the*))
 
-(defun eg_rand (&optional f) f
+(defun eg-rand (&optional f) f
   (loop repeat 2 do
     (rseed (? seed))
     (print (loop repeat 6 collect (random 1.0)))))
 
-(defun eg_csv (f &aux out)
+(defun eg-csv (f &aux out)
   (mapcsv (lambda (r) (push r out)) f)
   (align (eachn (nreverse out))))
 
-(defun eg_data (f &aux (d (data! f)))
+(defun eg-data (f &aux (d (data! f)))
   (align (list* (cols-names (data-cols d))
                 (mids d) (eachn (data-rows d)))))
 
-(defun eg_disty (f &aux (d (data! f)))
+(defun eg-disty (f &aux (d (data! f)))
   (align (cons (cols-names (data-cols d))
     (eachn (sortby r (data-rows d) (disty d r))))))
 
-(defun eg_addsub (f &aux (d (data! f))
+(defun eg-addsub (f &aux (d (data! f))
                     (rows (copy-list (data-rows d))) one two)
   (dolist (r (reverse rows))
     (sub d r)
@@ -236,7 +239,7 @@
              (or (not (numberp a))
                  (< (abs (- a b)) 0.01))) one two)))
 
-(defun eg_bayes (f &aux (d (data! f)) (n (data-n d)))
+(defun eg-bayes (f &aux (d (data! f)) (n (data-n d)))
   (print (sort (collect (r (eachn (data-rows d)))
                         (likes d r n 1)) #'<)))
 
@@ -244,10 +247,11 @@
 (defun cli (args)
   (loop for (k v) on args by #'cddr do
     (let* ((k    (string-trim "-" k))
-           (fn   (intern (string-upcase (format nil "EG_~a" k))))
+           (fn   (intern (string-upcase (format nil "EG-~a" k))))
            (flag (intern (string-upcase k) "KEYWORD")))
       (cond ((fboundp fn) (funcall fn (convert v)))
             ((member flag *the*) (setf (getf *the* flag) (convert v)))))))
 
-(cli #+sbcl (cdr sb-ext:*posix-argv*)
-     #+clisp (rest ext:*args*))
+(defun main()
+  (cli #+sbcl (cdr sb-ext:*posix-argv*)
+       #+clisp (rest ext:*args*)))
