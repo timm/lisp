@@ -1,0 +1,54 @@
+## vim: set ft=bash :
+GIT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+
+# aliases
+tree() { command tree -C "$@"; }
+ls()   { command ls --color "$@"; }
+grep() { command grep --color=auto "$@"; }
+col()  { command column -s, -t "$@"; }
+vi()   { command nvim -u $GIT_ROOT/ezr/.init.lua "$@"; }
+eza()  { command eza --icons=always "$@"; }
+
+# environment
+export EDITOR="$(command -v nano)"
+export BASH_SILENCE_DEPRECATION_WARNING=1
+export HISTSIZE=10000
+export HISTFILESIZE=20000
+
+# bash-only history behavior
+if [ -n "$BASH_VERSION" ]; then
+  export HISTCONTROL=ignoredups:erasedups
+fi
+
+# zsh-only history behavior
+if [ -n "$ZSH_VERSION" ]; then
+  setopt HIST_IGNORE_ALL_DUPS
+  setopt HIST_REDUCE_BLANKS
+fi
+
+# git helpers (portable)
+branch() {
+  git branch 2>/dev/null | awk '/^\*/ {print $2}'
+}
+
+dirty() {
+  [[ -n $(git status -s 2>/dev/null) ]] && echo "*"
+}
+
+# Leave these as raw escape codes
+bold=$(tput bold)
+col0=$(tput sgr0)
+col1=$(tput setaf 6)
+col2=$(tput setaf 3)
+
+# Wrap the variables inline using \[ and \]
+_prompt_string='🖖\[${bold}${col1}\]$(basename "$(dirname "$PWD")")/$(basename "$PWD")\[${col0}\] \[${col2}\]$(branch)$(dirty)\[${col0}\] ▶ '
+
+if [ -n "$ZSH_VERSION" ]; then
+  setopt PROMPT_SUBST
+  PROMPT="$_prompt_string"
+else
+  PROMPT_COMMAND='PS1="'"$_prompt_string"'"'
+fi
+
+[ -n "$1" ] && "$@"
