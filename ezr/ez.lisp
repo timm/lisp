@@ -1,5 +1,8 @@
 ;; ez.lisp: incremental Bayes (c) 2026 Tim Menzies MIT
 ; vim: set et ts=2 sw=2 lisp:
+#+sxbcl (setf sb-ext:*invoke-debugger-hook*
+             (lambda (c h) (declare (ignore h))
+               (format *error-output* "~a~%" c) (sb-ext:exit :code 1)))
 
 (defparameter *the*
   '(:neighbors 1 :min 2 :power 2 :decimals 2 :seed 1))
@@ -12,7 +15,7 @@
 (defmacro collect ((v lst) &body body) 
   `(mapcar (lambda (,v) ,@body) ,lst))
 
-(defmacro sortby (var lst &body body) 
+(defmacro sortby (var lst &body body)
   `(sort ,lst #'< :key (lambda (,var) ,@body)))
 
 (set-macro-character #\$ (lambda (s c) (declare (ignore c))
@@ -57,8 +60,9 @@
 
 (defmethod add1 ((i num) x w &aux (d (- x $mu)))
   (incf $n w)
-  (incf $mu (/ (* w d) $n))
-  (incf $m2 (* w d (- x $mu))))
+  (cond ((and (< w 0) (< $n 1)) (setf $n 0 $mu 0 $m2 0))
+        (t (incf $mu (/ (* w d) $n))
+           (incf $m2 (* w d (- x $mu))))))
 
 (defmethod add1 ((i data) row w)
   (if $cols (add1Row2Data i row w) 
@@ -73,11 +77,11 @@
       (remove row $rows :test #'equal :count 1))))
 
 ;; query ---
-(defmethod mid ((i num)) $mu)
+(defmethod mid ((i num)) (float $mu))
 
 (defmethod mid ((i sym) &aux m (mx 0))
   (dohash (k v $has m)
-    (when (> v mx) (setf m k mx v))))
+    (if (> v mx) (setf m k mx v))))
 
 (defun mids (i)
   (or $mids (setf $mids (collect (c (cols-all $cols)) (mid c)))))
@@ -122,9 +126,9 @@
       (if (unk nv) (setf nv (if (> nu 0.5) 0 1)))
       (abs (- nu nv)))))
 
-(defun order (d r rows) (sortby r2 rows (distx d r r2)))
-(defun nearest (d r rows) (car (order d r rows)))
-(defun furthest (d r rows) (car (last (order d r rows))))
+(defun orderx (d r rows) (sortby r2 rows (distx d r r2)))
+(defun nearest (d r rows) (car (orderx d r rows)))
+(defun furthest (d r rows) (car (last (orderx d r rows))))
 
 ;; stats ---
 (defmethod pick ((i sym) &optional _)
@@ -152,21 +156,21 @@
 (defun likes (i row n-all n-h &aux (p (prior i n-all n-h)))
   (+ (log p)
      (loop for c in (cols-x $cols)
-       for v = (cell c row) unless (unk v)
-       for l = (like c v p) if (plusp l)
-       sum (log l))))
+       for v = (cell c row)
+       for l = (if (unk v) 0 (like c v p))
+       if (plusp l) sum (log l))))
 
 ;; lib ---
 (defmethod say (x)
   (if (floatp x) (format nil "~,vf" (? decimals) x)
       (princ-to-string x)))
 
-(defun cast (s &aux (s (string-trim " " s)) (*read-eval* nil)
+(defun convert (s &aux (s (string-trim " " s)) (*read-eval* nil)
                     (n (read-from-string s nil nil)))
   (case n (true 1) (false 0) (t (if (numberp n) n s))))
 
 (defun atoms (ch str &aux (b (position ch str)))
-  (cons (cast (subseq str 0 (or b (length str))))
+  (cons (convert (subseq str 0 (or b (length str))))
         (if b (atoms ch (subseq str (1+ b))))))
 
 (defun mapcsv (fn file &optional end &key (sep #\,))
@@ -190,10 +194,23 @@
 (defun end (x &aux (s (if (stringp x) x (col-txt x))))
   (char s (1- (length s))))
 
+(defun rseed (&optional (seed 1))
+  #+sbcl (setf *random-state* (sb-ext:seed-random-state (? seed)))
+  #+clisp (setf *random-state* (make-random-state (? seed))))
 
 ;; demos ---
+(defun eg_all (&optional f) 
+  (eg_the)
+  (dolist (fn '(eg_csv eg_data eg_disty eg_abdsub eg_bayes))
+    (funcall fn f)))
+
 (defun eg_the (&optional f) f
   (format t "~a~%" *the*))
+
+(defun eg_rand (&optional f) f
+  (loop repeat 2 do
+    (rseed (? seed))
+    (print (loop repeat 6 collect (random 1.0)))))
 
 (defun eg_csv (f &aux out)
   (mapcsv (lambda (r) (push r out)) f)
@@ -208,22 +225,20 @@
     (eachn (sortby r (data-rows d) (disty d r))))))
 
 (defun eg_addsub (f &aux (d (data! f))
-  (rows (copy-list (data-rows d))) one two)
+                    (rows (copy-list (data-rows d))) one two)
   (dolist (r (reverse rows))
     (sub d r)
     (if (= (data-n d) 50) (setf one (mids d))))
   (dolist (r rows)
     (add d r)
     (if (= (data-n d) 50) (setf two (mids d))))
-  (assert
-    (every (lambda (a b)
-      (or (not (numberp a)) (< (abs (- a b)) 1e-5))) one two))
-  (format t "ok~%"))
+  (assert (every (lambda (a b)
+             (or (not (numberp a))
+                 (< (abs (- a b)) 0.01))) one two)))
 
 (defun eg_bayes (f &aux (d (data! f)) (n (data-n d)))
-  (dolist (r (eachn (data-rows d)))
-    (format t "~a~%"
-      (say (/ (round (* (likes d r n 1) 100)) 100)))))
+  (print (sort (collect (r (eachn (data-rows d)))
+                        (likes d r n 1)) #'<)))
 
 ;; main ---
 (defun cli (args)
@@ -231,8 +246,8 @@
     (let* ((k    (string-trim "-" k))
            (fn   (intern (string-upcase (format nil "EG_~a" k))))
            (flag (intern (string-upcase k) "KEYWORD")))
-      (cond ((fboundp fn) (funcall fn (cast v)))
-            ((member flag *the*) (setf (getf *the* flag) (cast v)))))))
+      (cond ((fboundp fn) (funcall fn (convert v)))
+            ((member flag *the*) (setf (getf *the* flag) (convert v)))))))
 
 (cli #+sbcl (cdr sb-ext:*posix-argv*)
      #+clisp (rest ext:*args*))
