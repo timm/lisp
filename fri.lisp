@@ -16,17 +16,21 @@
   (setf $goal (if (eq #\- (ch -1 $txt)) 0 1))
   i)
 
-(defun make-cols (names &aux (n 0) (i (make-cols :names names)))
-  (labels ((fn (s) (funcall (if (upper-case-p (ch s 0)) #'name-num #'make-sym) 
-                             s (incf n))))
-    (setf $all (mapcar #'fn  names))
+(defun make-cols (names &aux (n -1) (i (%make-cols :names names)))
+  (let ((one (lambda (txt)
+               (funcall (if (upper-case-p (ch txt 0)) #'make-num #'make-sym)
+                        :txt txt :at (incf n)))))
+    (setf $all (mapcar #'one names))
     (dolist (col $all i)
       (let ((z (ch (? col txt) -1)))
         (unless (eql z #\X)
           (if (find z "!-+") (push col $y) (push col $x)))))))
 
-(defun data (&optional rows &aux (i (%make-data :cols (cols (pop rows)))))
-  (dolist (row rows i) (add i row)))
+(defun make-data (&optional rows &aux (i (%make-data :cols (cols (car rows)))))
+  (dolist (row (cdr rows) i) (add i row)))
+
+(defun clone ((i data) &optional rows)
+  (make-data (cons $names rows)))
 
 ;------------------------------------------------------------------------------
 (defun add (x v (w 1))
