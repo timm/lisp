@@ -2,31 +2,33 @@
 (defparameter *the* 
   '(:p 2 :file "auto93.csv"))
 
-(defmacro ? (x) `(getf *the* ,(->key x)))
+(defmacro ? (x) `(getf *the* ',(intern (string x) :keyword)))
+(set-macro-character #\$ 
+  (lambda (s c) `(slot-value i ',(read s t nil t))))
 
 (defstruct sym (at 0) (txt " ") (n 0) has)
 (defstruct num (at 0) (txt " ") (n 0) (mu 0) )
 (defstruct cols names x y all)
 (defstruct data rows (cols (make-cols)) _mids)
 
-(defun sym! (&rest arg) (apply #'make-sym args))
+(defun sum (&optional (txt " ") (n 0)) (make-num :txt txt :at n))
 
-(defun num! (&rest args &aux (new (apply #'make-num args)))
-  (setf (num-goal new) (if (eq #\- (at -1 (num-txt new))) 0 1))
-  new)
+(defun num (&optional (txt " ") (n 0) (i (make-num :txt txt :at n)))
+  (setf $goal (if (eq #\- (ch -1 $txt)) 0 1))
+  i)
 
-(defun cols! (names &aux (new (make-cols :names names)))
-  (with-slots (all x y) new
-    (dolist (s names)
-      (let ((new (col! (ch s -1) (length all))))
-        (push new all)
-        (unless (eql (ch s -1)  #\X)
-          (if (find (ch s -1) "!-+") (push new y) (push new x)))))
-    (setf all (reverse all))
-    new))
+(defun cols (names &aux (i (make-cols :names names)))
+  (dolist (s names)
+    (let* ((n (length $all))
+           (col (if (upper-case-p (ch s 0)) (num s n) (sym s n))))
+      (push col $all)
+      (unless (eql (ch s -1)  #\X)
+        (if (find (ch s -1) "!-+") (push col $y) (push col $x)))))
+  (setf $all (reverse $all))
+  i)
 
-(defun data! (rows (&aux (it (make-data :cols (cols! (pop rows))))))
-  (dolist (row rows it) (add it row)))
+(defun data (rows &aux (i (make-data :cols (cols (pop rows)))))
+  (dolist (row rows i) (add i row)))
 
 ;------------------------------------------------------------------------------
 (defun add (x v (w 1))
@@ -35,11 +37,10 @@
     (add1 x v w))
   x)
 
-(defmethod add1 ((d data) row w)
-  (with-slots (rows cols _mids) d
-    (setf _mids nil)
-    (push row rows)
-    (mapcar (lambda (col v) (add col v w)) all row)))
+(defmethod add1 ((i data) row w)
+  (setf $_mids nil)
+  (push row $rows)
+  (mapcar (lambda (col v) (add col v w)) all row))
 
 (defun _sym+ (i v inc) 
   (incf (cdr (or (assoc v $has :test #'equal)
