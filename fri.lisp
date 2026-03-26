@@ -2,32 +2,30 @@
 (defparameter *the* 
   '(:p 2 :file "auto93.csv"))
 
-(defmacro ? (x) `(getf *the* ',(intern (string x) :keyword)))
-(set-macro-character #\$ 
-  (lambda (s c) `(slot-value i ',(read s t nil t))))
+(defmacro ! (x) `(getf *the* ',(intern (string x) :keyword)))
+(defmacro ? (x &rest at) (if at `(? (slot-value ,x ',(car at)) ,@(cdr at)) x))
+
+(set-macro-character #\$ (lambda (s c) `(slot-value i ',(read s t nil t))))
 
 (defstruct sym (at 0) (txt " ") (n 0) has)
-(defstruct num (at 0) (txt " ") (n 0) (mu 0) )
-(defstruct cols names x y all)
-(defstruct data rows (cols (make-cols)) _mids)
+(defstruct (num  (:constructor %make-num)) (at 0) (txt " ") (n 0) (mu 0) )
+(defstruct (cols (:constructor %make-cols)) names x y all)
+(defstruct (data (:constructor %make-data)) rows cols  _mid)
 
-(defun sum (&optional (txt " ") (n 0)) (make-num :txt txt :at n))
-
-(defun num (&optional (txt " ") (n 0) (i (make-num :txt txt :at n)))
+(defun make-num (&rest args &aux (i (apply #'%make-num args)))
   (setf $goal (if (eq #\- (ch -1 $txt)) 0 1))
   i)
 
-(defun cols (names &aux (i (make-cols :names names)))
-  (dolist (s names)
-    (let* ((n (length $all))
-           (col (if (upper-case-p (ch s 0)) (num s n) (sym s n))))
-      (push col $all)
-      (unless (eql (ch s -1)  #\X)
-        (if (find (ch s -1) "!-+") (push col $y) (push col $x)))))
-  (setf $all (reverse $all))
-  i)
+(defun make-cols (names &aux (n 0) (i (make-cols :names names)))
+  (labels ((fn (s) (funcall (if (upper-case-p (ch s 0)) #'name-num #'make-sym) 
+                             s (incf n))))
+    (setf $all (mapcar #'fn  names))
+    (dolist (col $all i)
+      (let ((z (ch (? col txt) -1)))
+        (unless (eql z #\X)
+          (if (find z "!-+") (push col $y) (push col $x)))))))
 
-(defun data (rows &aux (i (make-data :cols (cols (pop rows)))))
+(defun data (&optional rows &aux (i (%make-data :cols (cols (pop rows)))))
   (dolist (row rows i) (add i row)))
 
 ;------------------------------------------------------------------------------
