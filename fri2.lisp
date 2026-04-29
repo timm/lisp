@@ -1,9 +1,5 @@
 ; vim: set ft=lisp ts=2 sw=2 et lispwords+=with-slots,loop,unless :
-#+sbcl (declaim (sb-ext:muffle-conditions warning style-warning))
-#+sbcl (setf sb-ext:*invoke-debugger-hook* 
-             (lambda (c h) (declare (ignore h))
-               (format *error-output* "~&[ERROR] ~a~%" c)
-              (sb-ext:exit :code 1)))
+(import "lib")
 
 ; fri.lisp -- data-lite active learning in a single file.
 ; (c) 2026 Tim Menzies, timm@ieee.org, MIT license.
@@ -44,9 +40,7 @@
 ;   (? x a) -> (slot-value x 'a); chains: (? x a b c)
 ;   (aif t x y)  binds `it` to t's value inside x/y
 
-;=================================================================
-; Part 1 -- Config & Macros
-;=================================================================
+;## Part 1 : Config & Macros ------------------------------------
 (defparameter *the*
   '((p      2            "-p"  "distance coeffecient")
     (file   "auto93.csv" "-f"  "data file")
@@ -54,26 +48,7 @@
     (budget 50           "-b"  "max labels")
     (few    128          "-u"  "max unlabelled pool")))
 
-(defmacro defread (name (stream) &body body)
-  "Install BODY as reader-macro for char NAME (non-terminating)."
-  `(set-macro-character ,(character (symbol-name name))
-     (lambda (,stream c) (declare (ignore c)) ,@body)
-     t))
-
-(defread !(s) `(second (assoc ',(read s t nil t) *the*)))
-(defread $(s) `(slot-value i ',(read s t nil t)))
-
-(defmacro ? (x &rest at)
-  "Nested slot access: (? x a b) = (slot-value (slot-value x 'a) 'b)."
-  (if at `(? (slot-value ,x ',(car at)) ,@(cdr at)) x))
-
-(defmacro aif (test then &optional else)
-  "Anaphoric if: binds `it` to TEST's value for use in THEN/ELSE."
-  `(let ((it ,test)) (if it ,then ,else)))
-
-;=================================================================
-; Part 2 -- TYPES
-;=================================================================
+;## Part 2 : TYPES -----------------------------------------------
 (defstruct sym (at 0) (txt " ") (n 0) has)
 
 (defstruct (num  (:constructor %make-num))
@@ -83,6 +58,7 @@
 
 (defstruct (data (:constructor %make-data)) rows cols mid)
 
+;## Part 3 : CONSTRUCTORS ----------------------------------------
 (defun make-num (&rest args &aux (i (apply #'%make-num args)))
   (setf $heaven (if (eq #\- (ch $txt -1)) 0 1))
   i)
@@ -100,6 +76,7 @@
 (defun make-data (&optional rows)
   (adds (cdr rows) (%make-data :cols (make-cols (car rows)))))
 
+;## Part 4 : ADD -------------------------------------------------
 (defun adds (lst &optional (summary (make-num)))
   "Fold LST into SUMMARY (default Num) via `add`. Returns SUMMARY."
   (dolist (v lst summary)
@@ -108,18 +85,6 @@
 (defun sub (it v)
   "Remove V from IT (symmetric with `add`)."
   (add it v -1))
-
-(defmethod add ((i data) row &optional (w 1))
-  (setf $mid nil)
-  (add $cols row w)
-  (if (plusp w)
-      (push row $rows)
-      (setf $rows (remove row $rows :test #'equal :count 1)))
-  row)
-
-(defmethod add ((i cols) row &optional (w 1))
-  (mapcar (lambda (col v) (add col v w)) $all row)
-  row)
 
 (defmethod add ((i sym) v &optional (w 1))
   (unless (eql v '?)
@@ -140,15 +105,24 @@
                (incf $m2 (float (* w delta (- v $mu))))))))
   v)
 
+(defmethod add ((i data) row &optional (w 1))
+  (setf $mid nil)
+  (add $cols row w)
+  (if (plusp w)
+      (push row $rows)
+      (setf $rows (remove row $rows :test #'equal :count 1)))
+  row)
 
-;=================================================================
-; CHAPTER 3 -- COLUMN STATS & DISTANCE
-;=================================================================
-(defmethod mid ((i num)) $mu)
+(defmethod add ((i cols) row &optional (w 1))
+  (mapcar (lambda (col v) (add col v w)) $all row)
+  row)
 
+;## Part 5 : COLUMN STATS ----------------------------------------
 (defmethod mid ((i sym))
   (labels ((most (a b) (if (> (cdr a) (cdr b)) a b)))
     (car (reduce #'most $has))))
+
+(defmethod mid ((i num)) $mu)
 
 (defmethod mid ((i data))
   (or $mid (setf $mid (mapcar #'mid (? i cols all)))))
@@ -160,17 +134,19 @@
   (if (< $n 2) 0 (sqrt (/ (max 0 $m2) (1- $n)))))
 
 (defmethod norm ((i sym) v) v)
+
 (defmethod norm ((i num) v)
   (if (eq v '?) v
       (let ((z (/ (- v $mu) (+ (spread i) 1e-32))))
         (/ 1 (+ 1 (exp (* -1.7 (max -3 (min 3 z)))))))))
 
+;## Part 6 : DISTANCE --------------------------------------------
 (defun dist (lst f &aux (d 0))
   (dolist (v lst (expt (/ d (length lst)) (/ 1 !p)))
     (incf d (expt (funcall f v) !p))))
 
 (defun disty (data row &optional (cols (? data cols y)))
-  (dist cols 
+  (dist cols
         (lambda (i) (abs (- (norm i (elt row $at)) $heaven)))))
 
 (defmethod distx ((i data) r1 r2)
@@ -182,13 +158,13 @@
 (defmethod distx ((i sym) a b)
   (if (equal a b) 0 1))
 
-(defmethod distx ((i num) a b 
+(defmethod distx ((i num) a b
                           &aux (a (norm i a)) (b (norm i b)))
   (cond ((eq a '?) (abs (- b (if (> b 0.5) 0 1))))
         ((eq b '?) (abs (- a (if (> a 0.5) 0 1))))
         (t         (abs (- a b)))))
 
-;------------------ trees (XAI payoff) ----------------------
+; ## Part 7 : Trees  ---------------------------------------------
 (defstruct (tree (:copier nil)) d ynum col cut left right hdr)
 
 (defmethod branch? ((c sym) v cut) (equal v cut))
@@ -275,10 +251,7 @@ regularization: at ~50 labels, trying all thresholds overfits."
     (tree-show (? t0 left)  (1+ lvl))
     (tree-show (? t0 right) (1+ lvl))))
 
-
-;=================================================================
-; CHAPTER 4 -- ACTIVE LEARNING
-;=================================================================
+; ## Part 8 : ACTIVE LEARNING -----------------------------------
 (defun wins (god)
   "Score a row 0..100: 100=best disty, 50=median. Uses god truth."
   (let* ((ys (mapcar (lambda (r) (disty god r)) (? god rows)))
@@ -350,72 +323,7 @@ pay CHECK labels on top. Return (values train-win hold-win labels)."
                 (funcall w pick)
                 (+ labels check))))))
 
-;=================================================================
-; CHAPTER 5 -- UTILITIES
-;=================================================================
-(defvar *seed* !seed)
-
-(defun rand (&optional (n 1))
-  "Return reproducible float in [0,n). Advances *seed*."
-  (setf *seed* (mod (* 16807.0d0 *seed*) 2147483647.0d0))
-  (* n (- 1.0d0 (/ *seed* 2147483647.0d0))))
-
-(defun rint (&optional (n 100) &aux (base 1E10))
-  "Return reproducible integer in [0,n)."
-  (floor (* n (/ (rand base) base))))
-
-(defun shuffle (lst &aux (v (coerce lst 'vector)))
-  "Fisher-Yates shuffle of LST. Seeded via *seed*."
-  (loop for i from (1- (length v)) downto 1 do
-    (rotatef (aref v i) (aref v (rint (1+ i)))))
-  (coerce v 'list))
-
-(defun ch (s n)
-  "Char at position N of string S. Negative N counts from end."
-  (char s (if (minusp n) (+ (length s) n) n)))
-
-(defun split (s sep)
-  "Split string S on character SEP, returning list of substrings."
-  (loop for start = 0 then (1+ pos)
-    for pos = (position sep s :start start)
-    collect (subseq s start (or pos (length s))) while pos))
-
-(defun thing (str &aux (v (ignore-errors (read-from-string str))))
-  "Coerce STR to number, '? for \"?\", else leave as string."
-  (cond ((numberp v) v)
-        ((string= str "?") '?)
-        (t str)))
-
-(defun read-csv (file)
-  "Read FILE as CSV, coerce each cell via `thing`, yield list of rows."
-  (with-open-file (s file)
-    (loop for line = (read-line s nil) while line
-      collect (mapcar #'thing (split line #\,)))))
-
-(defun args ()
-  "Command-line args as list of strings (portable SBCL/CLISP)."
-  #+sbcl (cdr sb-ext:*posix-argv*) #+clisp ext:*args*)
-
-(defun run (it &optional arg)
-  "Dispatch --flag to EG-FLAG function (if fbound and named EG-*)."
-  (let* ((f (if (symbolp it) it (intern (format nil "EG~:@(~a~)" it))))
-         (n (symbol-name f)))
-    (when (and (fboundp f) (> (length n) 3) (string= n "EG-" :end1 3))
-      (setf *seed* !seed)
-      (if arg (funcall f arg) (funcall f))
-      t)))
-
-(defun cli (lsts)
-  "Walk argv in (flag arg) pairs: dispatch EG-* or update *the* slot."
-  (loop for (flag arg) on (args) by #'cddr do
-    (unless (run flag (thing arg))
-      (aif (find flag lsts :key #'third :test #'equalp)
-           (setf (second it) (thing arg))))))
-
-
-;=================================================================
-; CHAPTER 6 -- EXAMPLES  (teaching arc: simple -> complex)
-;=================================================================
+; ## Part 9 : EXAMPLES ----------------------------------------
 (defun %stride (rows key &optional (n 30))
   "Sort ROWS by KEY then print every Nth for quick eyeballing."
   (loop for x in (sort rows #'< :key key)
@@ -430,21 +338,19 @@ pay CHECK labels on top. Return (values train-win hold-win labels)."
   "Set the seed (both *seed* special and !seed entry in *the*)."
   (setf *seed* seed  !seed  seed))
 
-; ---- Step 1: show the config ----
-(defun eg--the (_) "Print *the* (command-line defaults)." (print *the*))
+(defun eg--the (_)
+  "Print *the* (command-line defaults)."
+  (print *the*))
 
-; ---- Step 2: read the file ----
 (defun eg--rows (&optional (file !file))
   "Read the CSV, print its tail."
   (let ((rows (read-csv file))) (print (subseq rows 380))))
 
-; ---- Step 3: build the Data struct ----
 (defun eg--data (&optional (file !file))
   "Build a Data object, print its y-columns."
   (let ((i (make-data (read-csv file))))
     (print (? i cols y))))
 
-; ---- Step 4: column summary stats ----
 (defun eg--stats (&optional (file !file))
   "Print mid, spread per column (introduces `mid` and `spread`)."
   (let ((i (make-data (read-csv file))))
@@ -452,7 +358,6 @@ pay CHECK labels on top. Return (values train-win hold-win labels)."
       (format t "~&~12a  mid=~a  spread=~a~%"
               (? c txt) (mid c) (spread c)))))
 
-; ---- Step 5: normalization ----
 (defun eg--norm (&optional (file !file))
   "One row: raw vs normalized for every y-column (introduces `norm`)."
   (let* ((i (make-data (read-csv file))) (r (car $rows)))
@@ -461,20 +366,17 @@ pay CHECK labels on top. Return (values train-win hold-win labels)."
         (format t "~&~8a  raw=~a  norm=~a~%"
                 (? c txt) v (norm c v))))))
 
-; ---- Step 6: goal distance ----
 (defun eg--ydata (&optional (file !file))
   "Sort rows by disty (distance to ideal y), stride-print."
   (let ((i (make-data (read-csv file))))
     (%stride $rows (lambda (r) (disty i r)))))
 
-; ---- Step 7: feature distance ----
 (defun eg--xdata (&optional (file !file))
   "Sort rows by distx from row 0 (feature-space distance)."
   (let* ((i (make-data (read-csv file)))
          (r0 (car $rows)))
     (%stride $rows (lambda (r) (distx i r0 r)))))
 
-; ---- Step 8: grow & show a tree from active-labeled rows ----
 (defun eg--tree (&optional (file !file))
   "Active-label, grow a tree from those labels, pretty-print it."
   (let ((rs (read-csv file)))
@@ -483,7 +385,6 @@ pay CHECK labels on top. Return (values train-win hold-win labels)."
       (format t "~&;; labels used: ~d~%" labels)
       (tree-show (tree-grow lab (? lab rows))))))
 
-; ---- Step 9: the whole pipeline ----
 (defun eg--active (&optional (file !file))
   "20 runs of train/test; report: train-win, hold-win, labels."
   (let* ((rs (read-csv file)) (god (make-data rs)) (w (wins god)))
@@ -491,5 +392,5 @@ pay CHECK labels on top. Return (values train-win hold-win labels)."
       (multiple-value-bind (train hold labels) (validate rs god w)
         (format t "~&~3d ~3d ~3d~%" train hold labels)))))
 
-;----------------------------------------------------
+; ## Last : ----------------------------------------------
 (cli *the*)
