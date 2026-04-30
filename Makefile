@@ -20,7 +20,7 @@ sh: ## launch dev shell (banner + etc/bash.rc)
 push: ## commit with prompted msg and push
 	@read -p "Reason? " msg; git commit -am "$$msg"; git push; git status
 
-Lines?=95
+Lines?=60
 ~/tmp/%.pdf: %.lisp  Makefile ## .py ==> .pdf
 	@mkdir -p ~/tmp
 	@echo "pdf-ing $@ ... "
