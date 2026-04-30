@@ -1,4 +1,5 @@
-#| AUTHOR-CONFIG
+#| 
+# AUTHOR-CONFIG
 audience: newly arrived US-university grad students
 assumed: basic programming skills
 language: Common Lisp (SBCL target)
@@ -9,7 +10,10 @@ naming-prefix: eg--
 tone: textbook
 voice: third |#
 
-#| fri2 is data-lite active learning in one file. It reads a
+#| 
+# overview
+
+fri2 is data-lite active learning in one file. It reads a
 CSV, summarises each column in constant space, computes a
 distance to the ideal goal vector, spends a fixed budget of
 labels to find good rows, then grows a tiny decision tree
