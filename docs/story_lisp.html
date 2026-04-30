@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>A Tour of fri2.lisp</title>
+  <style>
+    body { font-family: Georgia, serif; max-width: 760px; margin: 2em auto;
+           padding: 0 1em; line-height: 1.55; color: #222; }
+    h1, h2, h3 { font-family: -apple-system, sans-serif; }
+    h1 { border-bottom: 2px solid #444; padding-bottom: .2em; }
+    h2 { margin-top: 2em; color: #335; }
+    h3 { color: #557; font-size: 1.05em; }
+    pre, code { font-family: Menlo, Consolas, monospace; }
+    pre { background: #f4f4f0; padding: 1em; border-left: 3px solid #888;
+          overflow-x: auto; font-size: .9em; line-height: 1.4; }
+    code { background: #f4f4f0; padding: 1px 4px; border-radius: 3px; }
+    pre code { background: none; padding: 0; }
+    blockquote { border-left: 4px solid #ccb; color: #555; font-style: italic;
+                 margin: 1em 0; padding: .2em 1em; }
+    .sidebar { background: #fffce8; border: 1px solid #ddc;
+               padding: .5em 1em; margin: 1em 0; font-size: .95em; }
+    .note { background: #eef4ff; border-left: 3px solid #88a; padding: .3em .8em;
+            margin: .8em 0; font-size: .92em; }
+    table { border-collapse: collapse; margin: 1em 0; }
+    th, td { border: 1px solid #bbb; padding: .3em .8em; text-align: left; }
+    th { background: #eee; }
+    hr { border: none; border-top: 1px solid #ccc; margin: 2.5em 0; }
+  </style>
+</head>
+<body>
+
+<h1>A Tour of fri2.lisp &mdash; the first three steps</h1>
+
+<p><em>From one lonely atom, to a pair of rows, to two distributions facing off.
+Same arc as the Python tour; this time in Common Lisp; smallest code that earns
+the words &ldquo;that&rsquo;s odd&rdquo; and proposes a delta.</em></p>
+
+<blockquote>
+A value sits alone. It does not know if it is large or small. We give it a
+column &mdash; some friends to compare with &mdash; and now it can be surprised.
+We give the column a partner &mdash; another column, in another row &mdash; and
+now two rows can disagree. We give the rows siblings &mdash; two heaps of
+them &mdash; and now two distributions can argue about where the boundary
+should sit. Three steps. Three deltas.
+</blockquote>
+
+<div class="sidebar">
+<strong>Where we end up</strong>
+<pre><code>(defparameter *the* '((p 2 "-p" "minkowski") ...))
+(defstruct (num (:constructor %make-num))
+  (at 0) (txt " ") (n 0) (mu 0) (m2 0) (heaven 1))</code></pre>
+A <code>num</code> remembers a column in constant space. A <code>data</code>
+is a list of rows plus one <code>num</code> per column. Distance, surprise,
+splits &mdash; all of them lean on this one struct.
+</div>
+
+<h3>Getting ready</h3>
+
+<pre><code>$ sbcl --script fri2.lisp --the
+$ sbcl
+* (load "lib")
+* (load "fri2")</code></pre>
+
+<p>Every block below assumes you have <code>fri2.lisp</code> and
+<code>lib.lisp</code> loaded. Reader macros <code>!key</code> and
+<code>$slot</code> are live. <code>*seed*</code> is pinned to <code>1</code>
+so reproductions match.</p>
+
+<hr>
+
+<h2>1. A lonely atom</h2>
+
+<p><em>Type something. Anything.</em></p>
+
+<pre><code>* 42
+42
+* '?
+?
+* (list 42)
+(42)</code></pre>
+
+<p>The REPL evaluates anything. Atom, symbol, list. Not just function calls.</p>
+
+<p><em>What can we say about <code>42</code> alone?</em></p>
+
+<p>Nothing. Is 42 big? Small? Typical? The atom is a dot without an axis.
+Surprise has no meaning until there are companions to be surprised against.</p>
+
+<h3>The smallest companion: a Num</h3>
+
+<p>To call a value odd we need two scalars: a centre &micro; and a width &sigma;.
+Welford&rsquo;s 1962 trick stores both in constant space, updated one sample at
+a time, no list of past values kept.</p>
+
+<pre><code>  &mu;&#8345;  = &mu;&#8345;&#8331;&#8321; + (v &minus; &mu;&#8345;&#8331;&#8321;) / n
+  M&#8322;&#8345; = M&#8322;&#8345;&#8331;&#8321; + (v &minus; &mu;&#8345;&#8331;&#8321;) &middot; (v &minus; &mu;&#8345;)
+  &sigma;   = &radic;( M&#8322; / (n &minus; 1) )</code></pre>
+
+<p>The matching Lisp lives in <code>fri2.lisp</code> at the <code>(add ((i num)
+v &amp;optional (w 1)))</code> method:</p>
+
+<pre><code>(defmethod add ((i num) v &amp;optional (w 1))
+  (unless (eq v '?)
+    (cond ((and (minusp w) (&lt;= $n 2))
+           (setf $n 0 $mu 0 $m2 0))
+          (t (incf $n w)
+             (let ((delta (- v $mu)))
+               (incf $mu (float (/ (* w delta) $n)))
+               (incf $m2 (float (* w delta (- v $mu))))))))
+  v)</code></pre>
+
+<div class="note"><strong>Note.</strong> <code>$mu</code> updates
+<em>before</em> <code>$m2</code> reads it. Welford&rsquo;s identity uses the
+<em>new</em> mean for the m2 term. Not a bug.</div>
+
+<h3>Trace: feed it five numbers</h3>
+
+<pre><code>* (defparameter n (make-num))
+* (dolist (v '(10 20 30 40 50))
+    (add n v)
+    (format t "~&amp;after ~a: n=~a mu=~a m2=~a~%" v $n $mu $m2))
+after 10: n=1 mu=10.0 m2=0.0
+after 20: n=2 mu=15.0 m2=50.0
+after 30: n=3 mu=20.0 m2=200.0
+after 40: n=4 mu=25.0 m2=500.0
+after 50: n=5 mu=30.0 m2=1000.0
+* (spread n)
+15.811388</code></pre>
+
+<p>Five numbers in. Two scalars out. The list is gone; the summary remains.</p>
+
+<h3>&ldquo;That&rsquo;s odd&rdquo; &mdash; the smallest detector</h3>
+
+<p>With &micro; and &sigma; in hand, the smallest code that earns the words
+&ldquo;that&rsquo;s odd&rdquo; is a z-score:</p>
+
+<pre><code>  z = (v &minus; &mu;) / &sigma;</code></pre>
+
+<p>fri2 wraps this in <code>norm</code>, which clamps to &plusmn;3 (covering
+99.7% of a Gaussian) and squashes through a sigmoid so the result reads as
+&ldquo;fraction of column at or below v&rdquo;:</p>
+
+<pre><code>(defmethod norm ((i num) v)
+  (if (eq v '?) v
+      (let ((z (/ (- v $mu) (+ (spread i) 1e-32))))
+        (/ 1 (+ 1 (exp (* -1.7 (max -3 (min 3 z)))))))))</code></pre>
+
+<p>Try it on the Num we just built (&micro; = 30, &sigma; &approx; 15.8):</p>
+
+<pre><code>* (norm n 30)        ; the mean
+0.5
+* (norm n 80)        ; way above
+0.99
+* (norm n -10)       ; way below
+0.005
+* (norm n 35)        ; mildly above
+0.58</code></pre>
+
+<p>30 sits exactly at the median (0.5). 80 lands at the 99th percentile.
+&minus;10 at the first. 35 is unsurprising &mdash; barely above middle. The
+detector says &ldquo;that&rsquo;s odd&rdquo; whenever <code>norm</code> drifts
+toward 0 or 1.</p>
+
+<h3>The delta &mdash; what to do about it</h3>
+
+<p>Detection is not enough. The story needs a <em>delta</em>: a rule for what to
+do when something is odd. For one column the answer is the Welford increment
+itself.</p>
+
+<pre><code>  &Delta;&mu; = w &middot; (v &minus; &mu;) / n
+  &DeltaM;&#8322; = w &middot; (v &minus; &mu;_old) &middot; (v &minus; &mu;_new)</code></pre>
+
+<p>Two adds. The summary nudges toward the new value at rate <code>1/n</code>.
+A surprising point pulls &micro; harder than a typical one, because
+<code>(v &minus; &mu;)</code> is bigger. The column <em>learns</em> from the
+surprise. And, symmetrically, you can <em>unlearn</em>: pass <code>w =
+&minus;1</code> to <code>add</code>, or call <code>(sub n v)</code>:</p>
+
+<pre><code>* (sub n 50) (sub n 40)
+* (list $n $mu $m2 (spread n))
+(3 20.0 200.0 10.0)</code></pre>
+
+<p>Right back where we were after step 3. This reversibility is what makes
+chapter 3&rsquo;s comparison cheap.</p>
+
+<div class="note"><strong>Edge case.</strong> <code>(add n '?)</code> returns
+<code>?</code> and touches no slot. Missing values propagate, never aggregate.
+Every later piece &mdash; norm, dist, tree &mdash; respects this rail.</div>
+
+<hr>
+
+<h2>2. Two rows</h2>
+
+<p>One value found its bearings inside one column. A row is many values across
+many columns. Once we have two rows, we can ask: <em>are they near or far?</em>
+&mdash; and if far, <em>which columns drove it?</em></p>
+
+<h3>The smallest companion: a row</h3>
+
+<p>A row is just a list. The schema lives in the header.</p>
+
+<pre><code>* (defparameter rs (read-csv "auto93.csv"))
+* (first rs)
+("Clndrs" "Volume" "HpX" "Model" "origin" "Lbs-" "Acc+" "Mpg+")
+* (second rs)
+(8 304 193 70 1 4732 18.5 10)
+* (car (last rs))
+(4 86 65 80 3 2110 17.9 50)</code></pre>
+
+<p>Heavy V8 at row 1. Light four-cylinder at the end. A glance says these two
+rows are far apart. Now the smallest code to <em>prove</em> it.</p>
+
+<h3>distx &mdash; one number from many columns</h3>
+
+<p>Each x-column produces a per-cell gap. Roll up by Minkowski.</p>
+
+<pre><code>(defun dist (lst f &amp;aux (d 0))
+  (dolist (v lst (expt (/ d (length lst)) (/ 1 !p)))
+    (incf d (expt (funcall f v) !p))))
+
+(defmethod distx ((i data) r1 r2)
+  (dist (? i cols x)
+        (lambda (i)
+          (let ((a (elt r1 $at)) (b (elt r2 $at)))
+            (if (and (eq a '?) (eq b '?)) 1 (distx i a b))))))
+
+(defmethod distx ((i sym) a b) (if (equal a b) 0 1))
+
+(defmethod distx ((i num) a b
+                          &amp;aux (a (norm i a)) (b (norm i b)))
+  (cond ((eq a '?) (abs (- b (if (&gt; b 0.5) 0 1))))
+        ((eq b '?) (abs (- a (if (&gt; a 0.5) 0 1))))
+        (t         (abs (- a b)))))</code></pre>
+
+<p>Three rules. <strong>Sym</strong>: same or different (0 or 1).
+<strong>Num</strong>: normalize, then absolute difference. <strong>Missing</strong>:
+push the unknown to the extreme furthest from the known &mdash; pessimistic, so
+the dimension still costs something.</p>
+
+<pre><code>* (defparameter d (make-data rs))
+* (distx d (second rs) (second rs))           ; self
+0.0
+* (distx d (second rs) (third rs))            ; close twin
+0.040
+* (distx d (second rs) (car (last rs)))       ; opposite pole
+0.821</code></pre>
+
+<h3>&ldquo;That&rsquo;s odd&rdquo; for two rows</h3>
+
+<p>0.0 is identity. 0.04 is unsurprising. 0.82 is the alarm bell. Just like the
+z-score, <code>distx</code> turns a vector difference into one scalar that we
+can compare to a threshold.</p>
+
+<h3>The delta &mdash; which column drove it</h3>
+
+<p>The roll-up hides the cause. Unfold one step and the per-column gaps come
+back as a list:</p>
+
+<pre><code>* (loop for c in (? d cols x)
+        for a = (elt (second rs) (? c at))
+        for b = (elt (car (last rs)) (? c at))
+        collect (list (? c txt) a b (distx c a b)))
+(("Clndrs" 8 4   1.0)
+ ("Volume" 304 86 0.78)
+ ("Model"  70 80  0.71)
+ ("origin" 1 3    1.0))</code></pre>
+
+<p>Now the surprise is <em>actionable</em>. Two columns are maxed out:
+<code>Clndrs</code> and <code>origin</code> &mdash; categorical, no overlap.
+<code>Volume</code> and <code>Model</code> contribute another 0.7 each. If we
+were nudging row 2 toward row 1 to make it heavier, the deltas tell us which
+features to move first: cylinders, then origin, then volume.</p>
+
+<div class="note"><strong>Note.</strong> The distance does <em>not</em> use the
+y-columns. <code>Lbs-</code>, <code>Acc+</code>, and <code>Mpg+</code> are
+withheld. We are measuring rows by their cheap features, so we can later predict
+their expensive labels.</div>
+
+<hr>
+
+<h2>3. Two distributions</h2>
+
+<p>One row could surprise inside a column. Two rows could disagree across
+columns. Now: two heaps of rows. Two <code>data</code> objects sitting
+side-by-side, each with its own per-column &micro; and &sigma;. The question is
+no longer &ldquo;is this point odd?&rdquo; but <em>&ldquo;are these two
+populations the same?&rdquo;</em> &mdash; and if not, where is the boundary?</p>
+
+<h3>The smallest companion: split a Data in two</h3>
+
+<p>Sort by goal-distance. Top half is &ldquo;best&rdquo;, bottom half is
+&ldquo;rest&rdquo;.</p>
+
+<pre><code>* (defparameter ranked
+    (sort (copy-list (? d rows)) #'&lt; :key (lambda (r) (disty d r))))
+* (defparameter half (floor (length ranked) 2))
+* (defparameter best (make-data (cons (? d cols names)
+                                       (subseq ranked 0 half))))
+* (defparameter rest (make-data (cons (? d cols names)
+                                       (subseq ranked half))))
+* (length (? best rows)) (length (? rest rows))
+199
+199</code></pre>
+
+<p>Two distributions, materialized. Each <code>data</code> carries its own
+column summaries, ready to talk about themselves.</p>
+
+<h3>&ldquo;That&rsquo;s odd&rdquo; for two distributions</h3>
+
+<p>The minimum code to know the heaps differ on a column is to ask each Num for
+its &micro; and compare:</p>
+
+<pre><code>* (loop for cb in (? best cols x) for cr in (? rest cols x)
+        collect (list (? cb txt) (mid cb) (mid cr)))
+(("Clndrs" 4.21  6.55)
+ ("Volume" 122.3 234.8)
+ ("Model"  77.1  74.5)
+ ("origin" 2.10  1.40))</code></pre>
+
+<p>Best cars (low disty &mdash; light, efficient) average 4.2 cylinders.
+Rest average 6.5. Volume: 122 vs 235. The two populations live in different
+neighborhoods of feature space &mdash; that is the surprise.</p>
+
+<h3>The delta &mdash; one cut, the smallest</h3>
+
+<p>Knowing the heaps differ is not enough. We want a <em>rule</em>: one
+column, one threshold, that splits a fresh row into &ldquo;probably
+best&rdquo; or &ldquo;probably rest&rdquo;. Score every candidate cut by its
+weighted spread:</p>
+
+<pre><code>  score(cut) = n_left  &middot; &sigma;_left
+             + n_right &middot; &sigma;_right</code></pre>
+
+<p>Lower score = cleaner split. fri2 picks the median of each numeric column
+as its candidate cut (regularization &mdash; more cuts overfit at small N) and
+scans every column:</p>
+
+<pre><code>(defun tree-split (d c cut rs)
+  (let (l r (ln (make-num)) (rn (make-num)))
+    (dolist (row rs)
+      (if (go-left? c (elt row (? c at)) cut)
+          (progn (push row l) (add ln (disty d row)))
+          (progn (push row r) (add rn (disty d row)))))
+    (list (+ (* (? ln n) (spread ln)) (* (? rn n) (spread rn)))
+          c cut l r)))</code></pre>
+
+<p>Run it across every x-column on the labelled rows; pick the lowest-scoring
+cut.</p>
+
+<pre><code>* (defparameter splits (tree-splits d (? d rows) 3))
+* (defparameter best-split (extremum-by splits #'first #'&lt;))
+* (list (? (second best-split) txt) (third best-split))
+("Volume" 151)</code></pre>
+
+<p>One column, one number. <em>Volume &le; 151</em> is the smallest rule that
+separates &ldquo;best&rdquo; from &ldquo;rest&rdquo; with the lowest combined
+spread on the y-distance. That is the delta: do not just say the two
+distributions differ &mdash; say <em>where</em> the boundary lives, in a way a
+human can read aloud.</p>
+
+<div class="note"><strong>Note.</strong> The score is on <code>disty</code>,
+not on the column itself. We split a feature column, but we judge the split by
+how cleanly it separates <em>goal</em> outcomes. Cheap inputs, expensive labels
+&mdash; the same trade as chapter 12 of the Python tour.</div>
+
+<h3>From one cut to a tree</h3>
+
+<p>A single rule is the seed. Recurse on each side and you get the tree at
+<code>tree-grow</code> in <code>fri2.lisp</code>. Each leaf is a sentence. Each
+sentence is testable. The lonely atom of chapter 1, having found its column,
+its row, and its sibling distribution, has now produced a rule explainable in
+English.</p>
+
+<hr>
+
+<h2>Where we arrived</h2>
+
+<pre><code>  atom    &rarr;  &mu;,&sigma;       &rarr;  norm    &rarr;  &ldquo;is v odd?&rdquo;       &rarr;  Welford &Delta;
+  row     &rarr;  per-col gap &rarr;  distx   &rarr;  &ldquo;are r1,r2 odd?&rdquo; &rarr;  per-col deltas
+  heap    &rarr;  per-data Num&rarr;  spread  &rarr;  &ldquo;heaps differ?&rdquo;   &rarr;  one cut
+</code></pre>
+
+<p>Three iterations of the same shape: <em>summarize, detect, propose a
+delta</em>. Welford gives the column a memory. <code>distx</code> gives a pair
+of rows a verdict. The split-score gives two heaps a boundary. Each layer
+adds one structural fact &mdash; a column, a row, a heap &mdash; and gets one
+new noun in return: <em>surprise</em>, <em>direction</em>, <em>rule</em>.</p>
+
+<p>The lonely atom now knows where it stands &mdash; and, given two heaps of
+its kin, can write down the line that tells them apart.</p>
+
+</body>
+</html>
