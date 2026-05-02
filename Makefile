@@ -1,6 +1,8 @@
 SHELL    := /bin/bash
 GIT_ROOT := $(shell git rev-parse --show-toplevel 2>/dev/null)
 ETC      := $(GIT_ROOT)/etc
+A2PS_DIR := $(shell a2ps --list=defaults 2>/dev/null \
+              | awk '/library path/{getline; print $$1; exit}')
 
 CLS     := '\033[H\033[J'
 cRESET  := '\033[0m'
@@ -20,19 +22,15 @@ sh: ## launch dev shell (banner + etc/bash.rc)
 push: ## commit with prompted msg and push
 	@read -p "Reason? " msg; git commit -am "$$msg"; git push; git status
 
-Lines?=60
-~/tmp/%.pdf: %.lisp  Makefile ## .py ==> .pdf
+$(A2PS_DIR)/def.ssh: $(ETC)/def.ssh ## install a2ps style
+	@cp $< $@
+
+Lines ?= 60
+~/tmp/%.pdf: %.lisp Makefile $(A2PS_DIR)/def.ssh ## .lisp ==> .pdf
 	@mkdir -p ~/tmp
 	@echo "pdf-ing $@ ... "
-	@a2ps               \
-		-Br               \
-		--quiet            \
-		--landscape          \
-    --chars-per-line=$(Lines) \
-		--line-numbers=1      \
-		--borders=no           \
-		--pro=color             \
-		--columns=3              \
-		-M letter                 \
-		-o - $< | ps2pdf - $@
+	@a2ps --pretty-print=def -Br --quiet --landscape   \
+	      --pro=color --chars-per-line=$(Lines)        \
+	      --line-numbers=1 --borders=no --columns=3    \
+	      -M letter -o - $< | ps2pdf - $@
 	@open $@
