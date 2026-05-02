@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ren &mdash; tiny reader macros for Common Lisp</title>
+<meta name="description" content="ren is a five-macro extension to Common Lisp for code that fits in your head.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <a href="#" class="logo">ren</a>
+    <nav>
+      <a href="#why">Why</a>
+      <a href="#try">Try It</a>
+      <a href="#macros">Macros</a>
+      <a href="#example">Example</a>
+      <a href="https://github.com/timm/lisp">Source</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="container">
+    <h1>A Common Lisp dialect <br>that fits in your head.</h1>
+    <p class="tagline">
+      <strong>ren</strong> is five reader-macros, thirty lines of code,
+      and one rule: the subject is implicit.
+    </p>
+<pre><code><span class="c">;; methods read like prose &mdash; `i` is self, `$x` is its slot</span>
+(defmethod add ((i num) v)
+  (incf <span class="m">$n</span>)
+  (let ((d (- v <span class="m">$mu</span>)))
+    (incf <span class="m">$mu</span> (/ d <span class="m">$n</span>))
+    (incf <span class="m">$m2</span> (* d (- v <span class="m">$mu</span>)))))
+
+<span class="c">;; chain through structures, look up config, bind `it`</span>
+(when (< (<span class="m">?</span> data cols n) <span class="m">!budget</span>)
+  (<span class="m">aif</span> (next-row pool)
+       (label it)))</code></pre>
+  </div>
+</section>
+
+<section id="why">
+  <div class="container">
+    <h2>Why ren?</h2>
+    <div class="grid">
+      <div class="cell">
+        <h3>Tiny</h3>
+        <p>The whole language is one file: a reader-macro definer plus
+           four reader macros. Drop it in, <code>(load "lib")</code>,
+           and you're done.</p>
+      </div>
+      <div class="cell">
+        <h3>Anaphoric</h3>
+        <p>In a method, <code>i</code> is always self. In an
+           <code>aif</code>, <code>it</code> is always the test.
+           No more boilerplate <code>let</code>-bindings.</p>
+      </div>
+      <div class="cell">
+        <h3>Composable</h3>
+        <p><code>$</code>, <code>!</code>, and <code>?</code> read
+           as Lisp forms. They <code>setf</code>, they
+           <code>incf</code>, they nest &mdash; they're invisible
+           until you look.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="try">
+  <div class="container">
+    <h2>Try it</h2>
+    <p>Two files. No build system, no package manager, no
+       <code>asdf:load-system</code>. If you have CLISP or SBCL,
+       you have ren.</p>
+<pre><code>$ git clone https://github.com/timm/lisp
+$ cd lisp
+$ sbcl --script fri2.lisp --stats
+$ clisp fri2.lisp --tree</code></pre>
+  </div>
+</section>
+
+<section id="macros">
+  <div class="container">
+    <h2>The five macros</h2>
+
+    <article>
+      <h3><code class="m">!key</code></h3>
+      <p class="lead">Config lookup.</p>
+      <p>Reads from <code>*the*</code>, an alist of
+         <code>(name value flag doc)</code> tuples.
+         The flag and doc serve double duty as the
+         command-line spec.</p>
+<pre><code><span class="m">!budget</span>   <span class="c">;; &equiv;</span>   (second (assoc 'budget *the*))</code></pre>
+    </article>
+
+    <article>
+      <h3><code class="m">$field</code></h3>
+      <p class="lead">Self slot access.</p>
+      <p>Inside a method whose first parameter is named
+         <code>i</code>, <code>$field</code> expands to
+         <code>(slot-value i 'field)</code>. Works with
+         <code>setf</code>, <code>incf</code>, and friends.</p>
+<pre><code>(defmethod mid ((i num)) <span class="m">$mu</span>)
+
+(defmethod add ((i sym) v &amp;optional (w 1))
+  (unless (eql v '?)
+    (incf <span class="m">$n</span> w)))</code></pre>
+    </article>
+
+    <article>
+      <h3><code class="m">(? x a b c)</code></h3>
+      <p class="lead">Nested slot access.</p>
+      <p>Chains <code>slot-value</code> calls. <code>setf</code>-able.
+         Replaces the noisy <code>(slot-value (slot-value ...))</code>
+         tower.</p>
+<pre><code>(<span class="m">?</span> data cols y)
+<span class="c">;; &equiv;</span>
+(slot-value (slot-value data 'cols) 'y)</code></pre>
+    </article>
+
+    <article>
+      <h3><code class="m">(aif test then else)</code></h3>
+      <p class="lead">Anaphoric if.</p>
+      <p>Binds the test result to <code>it</code> in both
+         branches. Borrowed from Paul Graham's
+         <em>On Lisp</em>.</p>
+<pre><code>(<span class="m">aif</span> (find flag opts :key #'third :test #'equalp)
+     (setf (second it) (thing arg)))</code></pre>
+    </article>
+
+    <article>
+      <h3><code class="m">(defread c (s) body)</code></h3>
+      <p class="lead">Reader-macro definer.</p>
+      <p>Installs a one-character reader macro. The other four
+         macros are all built with this. Six lines of code,
+         and the language extends itself.</p>
+<pre><code>(<span class="m">defread</span> $(s)
+  `(slot-value i ',(read s t nil t)))
+
+(<span class="m">defread</span> !(s)
+  `(second (assoc ',(read s t nil t) *the*)))</code></pre>
+    </article>
+  </div>
+</section>
+
+<section id="example">
+  <div class="container">
+    <h2>A complete example</h2>
+    <p>Here is a streaming numeric summary &mdash; mean and
+       standard deviation in constant memory, using Welford's
+       method &mdash; written in plain Common Lisp on the left,
+       and in ren on the right.</p>
+
+    <div class="compare">
+      <div>
+        <h4>Plain Common Lisp</h4>
+<pre><code>(defmethod add ((self num) v)
+  (incf (slot-value self 'n))
+  (let ((d (- v (slot-value self 'mu))))
+    (incf (slot-value self 'mu)
+          (/ d (slot-value self 'n)))
+    (incf (slot-value self 'm2)
+          (* d (- v (slot-value self 'mu))))))</code></pre>
+      </div>
+      <div>
+        <h4>ren</h4>
+<pre><code>(defmethod add ((i num) v)
+  (incf <span class="m">$n</span>)
+  (let ((d (- v <span class="m">$mu</span>)))
+    (incf <span class="m">$mu</span> (/ d <span class="m">$n</span>))
+    (incf <span class="m">$m2</span> (* d (- v <span class="m">$mu</span>)))))</code></pre>
+      </div>
+    </div>
+
+    <p>Same code, half the noise, no new concepts. ren doesn't
+       hide Lisp &mdash; it gets out of the way.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <p>
+      &copy; 2026 Tim Menzies &middot;
+      <a href="https://github.com/timm/lisp/blob/main/LICENSE.md">MIT License</a> &middot;
+      <a href="https://github.com/timm/lisp">Source on GitHub</a>
+    </p>
+    <p class="small">
+      Inspired by <a href="https://wren.io/">wren</a>,
+      <em>On Lisp</em>, and the conviction that small is beautiful.
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>
