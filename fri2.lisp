@@ -41,9 +41,10 @@
 ;   (aif t x y)  binds `it` to t's value in x/y
 ;
 ; OO HELPERS
-;   (def name (struct-opts) (slots) (m args body)...)
-;     defines struct + arity-tagged methods name/N
-;   (msg sel obj a...)  -> (sel/N obj a...)
+;   (ren name [doc] opts slots (m args body)...)
+;     defstruct + defmethod each method on `i`. The
+;     pseudo-method (:make ARGS BODY) emits make-NAME
+;     and adds (:constructor %make-NAME) to OPTS.
 ;   (new cls k v ...)   -> (make-cls k v ...)
 
 ;## Part 1 : Config & Macros -------------------------
@@ -70,10 +71,10 @@
      (lambda (,stream c) (declare (ignore c)) ,@body)
      t))
 
-(defread |!|(s)
+(defread !(s)
   `(second (assoc ',(read s t nil t) *the*)))
 
-(defread |$|(s)
+(defread $(s)
   `(slot-value i ',(read s t nil t)))
 
 (defmacro ? (x &rest at)
@@ -90,33 +91,76 @@
 (defmacro fnn  (&body b) `(lambda (_ __)      ,@b))
 (defmacro fnnn (&body b) `(lambda (_ __ ___)  ,@b))
 
-;### OO helpers
+;### OO helpers
 (defun acc (c s) (intern (format nil "~A-~A" c s)))
 
 (defmacro new (cls &rest kvs)
   "(new num :goal 0) -> (make-num :goal 0)."
   `(,(intern (format nil "MAKE-~A" cls)) ,@kvs))
 
-(defmacro def (name opts slots &body methods)
-  "Defstruct + methods on NAME.
-   OPTS: list of defstruct options, e.g.
-     ((:constructor %make-num) (:include parent))
-   Each method: (mname (args...) body...)
-   Generates (defmethod mname ((i NAME) args...) body).
-   Special form (:make ARGS BODY...) emits
-     (defun make-NAME ARGS BODY...)
-   for custom constructors."
+(defmacro ren+ (name &body methods)
+  "Add methods to an existing struct NAME.
+
+   Each (mname (args...) body...) becomes
+     (defmethod mname ((i NAME) args...) body...).
+
+   :make is NOT accepted here -- the constructor is a
+   struct-time concern. Use REN to define a struct with
+   its make-NAME, then REN+ to add more methods later."
+  (when (find :make methods :key #'car)
+    (error "REN+ does not accept :make. Use REN."))
   `(progn
-     (defstruct (,name ,@opts) ,@slots)
      ,@(loop for (m args . body) in methods collect
-             (if (eq m :make)
-                 `(defun ,(intern (format nil "MAKE-~A" name))
-                      ,args ,@body)
-                 `(defmethod ,m ((i ,name) ,@args)
-                    ,@body)))
+             `(defmethod ,m ((i ,name) ,@args)
+                ,@body))
      ',name))
 
+(defmacro ren (name &rest rest)
+  "Defstruct + methods on NAME.
+
+   (ren NAME [DOC] SLOTS METHODS...)
+
+   DOC (optional string) becomes the defstruct docstring.
+   SLOTS is the slot list.
+   Pseudo-methods:
+     (:make ARGS BODY...)     body of make-NAME factory.
+     (:opts ((opt ...) ...))  extra defstruct options.
+   The macro always adds (:constructor %make-NAME) so the
+   private form is available; if no :make is given, a thin
+   wrapper (defun make-NAME (&rest args)
+            (apply #'%make-NAME args)) is emitted.
+
+   The method list (excluding :make) is forwarded to REN+."
+  (let* ((doc       (when (stringp (car rest)) (pop rest)))
+         (slots     (pop rest))
+         (methods   rest)
+         (extra     (find :opts methods :key #'car))
+         (methods   (remove :opts methods :key #'car))
+         (make-spec (find :make methods :key #'car))
+         (methods   (remove :make methods :key #'car))
+         (priv      (intern (format nil "%MAKE-~A" name)))
+         (pub       (intern (format nil  "MAKE-~A" name)))
+         (make-defun
+           (if make-spec
+               `(defun ,pub ,(cadr make-spec) ,@(cddr make-spec))
+               `(defun ,pub (&rest args) (apply #',priv args))))
+         (opts (cons `(:constructor ,priv)
+                     (and extra (cadr extra)))))
+    `(progn
+       (defstruct (,name ,@opts)
+         ,@(when doc (list doc))
+         ,@slots)
+       ,make-defun
+       (ren+ ,name ,@methods)
+       ',name)))
+
 (defmacro for/ (expr &rest cs)
+  "List comprehension. Nil results are skipped.
+
+   (for/ EXPR for var in lst [if TEST] ...)
+
+   E.g.  (for/ (* x x) for x in '(1 2 3 4 5) if (oddp x))
+                 ==> (1 9 25)"
   (labels ((walk (cs)
              (cond ((null cs)
                     `(let ((v ,expr)) (if v (list v) nil)))
@@ -127,9 +171,11 @@
                     `(if ,(cadr cs) ,(walk (cddr cs)) nil)))))
     (walk cs)))
 
-(def sym ()
+(ren sym "Symbolic column: count + frequency table."
     ((at 0) (txt " ") (n 0) has)
+
   (add (v &optional (w 1))
+    "Fold V (with weight W) into frequency table."
     (unless (eql v '?)
       (incf $n w)
       (let ((cell (assoc v $has :test #'equal)))
@@ -137,26 +183,45 @@
             (incf (cdr cell) w)
             (push (cons v w) $has))))
     v)
+
   (mid ()
+    "Mode: most-frequent value."
     (labels ((most (a b) (if (> (cdr a) (cdr b)) a b)))
       (car (reduce #'most $has))))
+
   (spread ()
+    "Entropy of the frequency distribution."
     (labels ((fn (p) (- p (log p 2))))
       (loop for (_ . v) in $has sum (fn (/ v $n)))))
-  (norm (v) v)
-  (distx (a b) (if (equal a b) 0 1))
-  (go-left? (v cut) (or (eq v '?) (equal v cut)))
+
+  (norm (v)
+    "Symbols are not normalized; return V."
+    v)
+
+  (distx (a b)
+    "0 if A=B else 1 (Hamming-style)."
+    (if (equal a b) 0 1))
+
+  (go-left? (v cut)
+    "Branch left if V is missing or matches CUT."
+    (or (eq v '?) (equal v cut)))
+
   (%cuts (rs)
+    "Candidate cuts for sym = each known value."
     (declare (ignore rs))
     (mapcar #'car $has)))
 
-(def num ((:constructor %make-num))
+(ren num "Numeric column: Welford count, mean, m2, goal."
     ((at 0) (txt " ") (n 0) (mu 0) (m2 0) (goal 1))
+
   (:make (&rest args
           &aux (i (apply #'%make-num args)))
+    "Build a num; goal=0 if txt ends in '-', else 1."
     (setf $goal (if (eq #\- (ch $txt -1)) 0 1))
     i)
+
   (add (v &optional (w 1))
+    "Fold V (weight W) into running mean+m2."
     (unless (eq v '?)
       (cond ((and (minusp w) (<= $n 2))
              (setf $n 0 $mu 0 $m2 0))
@@ -165,31 +230,47 @@
                  (incf $mu (/ (* w delta) $n))
                  (incf $m2 (* w delta (- v $mu)))))))
     v)
-  (mid () $mu)
+
+  (mid ()
+    "Running mean."
+    $mu)
+
   (spread ()
+    "Running standard deviation."
     (if (< $n 2) 0
         (sqrt (/ (max 0 $m2) (1- $n)))))
+
   (norm (v)
+    "Logistic z-score in [0,1] using current mu+sd."
     (if (eq v '?) v
         (let ((z (/ (- v $mu) (+ (spread i) 1e-32))))
           (/ 1 (+ 1 (exp (* -1.7 (max -3 (min 3 z)))))))))
+
   (distx (a b)
+    "Normalized abs diff with missing-value handling."
     (let ((a (norm i a)) (b (norm i b)))
       (cond ((eq a '?) (abs (- b (if (> b 0.5) 0 1))))
             ((eq b '?) (abs (- a (if (> a 0.5) 0 1))))
             (t         (abs (- a b))))))
-  (go-left? (v cut) (or (eq v '?) (<= v cut)))
+
+  (go-left? (v cut)
+    "Branch left if V is missing or <= CUT."
+    (or (eq v '?) (<= v cut)))
+
   (%cuts (rs)
+    "Single candidate cut: median of the column."
     (let ((vs (loop for r in rs for v = (elt r $at)
                     unless (eq v '?) collect v)))
       (and vs
            (list (elt (sort vs #'<)
                       (floor (length vs) 2)))))))
 
-(def cols ((:constructor %make-cols))
+(ren cols "Header-derived collection: names, x-cols, y-cols, all."
     (names x y all)
+
   (:make (txts
           &aux (i (%make-cols :names txts)) (n -1))
+    "Parse header TXTS; partition columns into x/y/skip."
     (labels
       ((ako (txt) (if (upper-case-p (ch txt 0))
                     #'make-num #'make-sym))
@@ -201,16 +282,22 @@
           (if (find (end col) "!-+")
             (push col $y)
             (push col $x))))))
+
   (add (row &optional (w 1))
+    "Fold ROW (weight W) into every column."
     (mapcar (fnn (add _ __ w)) $all row)
     row))
 
-(def data ((:constructor %make-data))
+(ren data "Table: rows + their parsed columns + cached row-mid."
     (rows cols mid)
+
   (:make (&optional rows)
+    "Build data from ROWS list (first row = header)."
     (adds (cdr rows)
           (%make-data :cols (make-cols (car rows)))))
+
   (add (row &optional (w 1))
+    "Add ROW (weight W) to data; W=-1 removes."
     (setf $mid nil)
     (add $cols row w)
     (if (plusp w)
@@ -218,26 +305,34 @@
         (setf $rows
               (remove row $rows :test #'equal :count 1)))
     row)
+
   (mid ()
+    "Cached centroid: per-column mid."
     (or $mid
         (setf $mid (mapcar #'mid (? i cols all)))))
+
   (distx (r1 r2)
+    "Minkowski feature-distance between rows R1 and R2."
     (dist (? i cols x)
        (lambda (i &aux (a (elt r1 $at)) (b (elt r2 $at)))
          (if (and (eq a '?) (eq b '?))
            1
            (distx i a b)))))
+
   (disty (row &optional (cols (? i cols y)))
+    "Goal-distance: 0 = perfect, 1 = worst."
     (dist cols
        (lambda (i) (abs (- (norm i (elt row $at)) $goal)))))
+
   (node (rs &optional (hdr ""))
-    "Tree node: cloned data, num of distys, header."
+    "Build a tree node: cloned data + ynum summary + header."
     (%make-tree
       :d    (make-data (cons (? i cols names) rs))
       :ynum (adds (mapcar (fn (disty i _)) rs))
       :hdr  hdr))
+
   (split (c cut rs)
-    "Returns (score c cut left-rs right-rs)."
+    "Score one candidate split: (score c cut left-rs right-rs)."
     (let (l r (ln (make-num)) (rn (make-num)))
       (dolist (row rs)
         (if (go-left? c (elt row (? c at)) cut)
@@ -246,8 +341,9 @@
       (list (+ (* (? ln n) (spread ln))
                (* (? rn n) (spread rn)))
             c cut l r)))
+
   (splits (rs leaf)
-    "Splits where both sides have >= LEAF rows."
+    "All splits where both sides have at least LEAF rows."
     (loop for c in (? i cols x)
           append (loop for cut in (%cuts c rs)
                        for s = (split i c cut rs)
@@ -255,8 +351,9 @@
                                      (length (fifth s)))
                                 leaf)
                        collect s)))
+
   (grow (rs &optional (leaf 3) (hdr ""))
-    "Grow tree; stop when node has < 2*LEAF rows."
+    "Recursively grow tree; stop when fewer than 2*LEAF rows."
     (let ((t0 (node i rs hdr)))
       (when (>= (length rs) (* 2 leaf))
         (let ((cands (splits i rs leaf)))
@@ -274,33 +371,22 @@
                                    (kid-hdr c cut nil)))))))
       t0)))
 
-;## Part 4 : ADD -------------------------------------
-(defun adds (lst &optional (summary (make-num)))
-  "Fold LST into SUMMARY via `add`. Returns SUMMARY."
-  (dolist (v lst summary)
-    (add summary v)))
-
-(defun sub (it v)
-  "Remove V from IT (symmetric with `add`)."
-  (add it v -1))
-
-;## Part 6 : DISTANCE --------------------------------
-(defun dist (lst f &aux (d 0))
-  (dolist (v lst (expt (/ d (length lst)) (/ 1 !p)))
-    (incf d (expt (funcall f v) !p))))
-
-; ## Part 7 : Trees (grow) ----------------------------
-(def tree ((:constructor %make-tree) (:copier nil))
+; ## Part 7 : Trees (grow) ----------------------------
+(ren tree "Decision-tree node: data, ynum, split col+cut, kids, hdr."
     (d ynum col cut left right hdr)
+
+  (:opts ((:copier nil)))
+
   (leaf (r)
-    "Route R to its leaf."
+    "Route R to its leaf node."
     (if (null $left) i
         (leaf
           (if (go-left? $col (elt r (? i col at)) $cut)
               $left $right)
           r)))
+
   (show (&optional (lvl 0))
-    "mu, n on LHS; indent + condition on RHS."
+    "Pretty-print: mu, n on LHS; indent + condition on RHS."
     (format t "~&~4,2f (~3d)   ~{~A~}~a~%"
             (mid $ynum) (? i ynum n)
             (loop repeat (max 0 (1- lvl))
@@ -404,7 +490,7 @@
                 (funcall w pick)
                 (+ labels check))))))
 
-; ## Part 9 : EXAMPLES --------------------------------
+; ## Part 9 : EXAMPLES --------------------------------
 (defun %stride (rows key &optional (n 30))
   "Sort ROWS by KEY; print every Nth row."
   (loop for x in (sort rows #'< :key key)
@@ -480,6 +566,21 @@
                 train hold labels)))))
 
 ; ## Utilities : ---------------------------------------
+; ### Stats helpers
+(defun adds (lst &optional (summary (make-num)))
+  "Fold LST into SUMMARY via `add`. Returns SUMMARY."
+  (dolist (v lst summary)
+    (add summary v)))
+
+(defun sub (it v)
+  "Remove V from IT (symmetric with `add`)."
+  (add it v -1))
+
+(defun dist (lst f &aux (d 0))
+  "Minkowski distance: !p-norm of (funcall f v) for v in LST."
+  (dolist (v lst (expt (/ d (length lst)) (/ 1 !p)))
+    (incf d (expt (funcall f v) !p))))
+
 ; ### Random
 (defvar *seed* !seed)
 
