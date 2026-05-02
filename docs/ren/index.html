@@ -16,6 +16,7 @@
       <a href="#why">Why</a>
       <a href="#try">Try It</a>
       <a href="#macros">Macros</a>
+      <a href="#cookbook">Cookbook</a>
       <a href="#example">Example</a>
       <a href="https://github.com/timm/lisp">Source</a>
     </nav>
@@ -143,6 +144,101 @@ $ clisp fri2.lisp --tree</code></pre>
 
 (<span class="m">defread</span> !(s)
   `(second (assoc ',(read s t nil t) *the*)))</code></pre>
+    </article>
+  </div>
+</section>
+
+<section id="cookbook">
+  <div class="container">
+    <h2>Cookbook</h2>
+    <p>Five recipes lifted straight from <code>fri2.lisp</code> &mdash;
+       a 450-line active-learning system written in ren.</p>
+
+    <article>
+      <h3>1. Polymorphic stats with one symbol per slot</h3>
+      <p>The same <code>mid</code> generic returns the mode of a
+         symbolic column, the mean of a numeric one, or a row of
+         per-column mids for a whole dataset. Each method reads
+         only the slots it cares about &mdash; via <code class="m">$</code>.</p>
+<pre><code>(defmethod mid ((i sym))
+  (labels ((most (a b) (if (> (cdr a) (cdr b)) a b)))
+    (car (reduce #'most <span class="m">$has</span>))))
+
+(defmethod mid ((i num)) <span class="m">$mu</span>)
+
+(defmethod mid ((i data))
+  (or <span class="m">$mid</span>
+      (setf <span class="m">$mid</span> (mapcar #'mid (<span class="m">?</span> i cols all)))))</code></pre>
+      <p class="lead">No <code>with-slots</code>, no
+         <code>(slot-value self ...)</code> tower, no accessor
+         names to invent.</p>
+    </article>
+
+    <article>
+      <h3>2. A constructor that inspects itself</h3>
+      <p>Bind <code>i</code> in <code>&amp;aux</code>, and the body
+         of the constructor can use <code class="m">$</code> just
+         like a method. Here, a numeric column reads its own header
+         text to decide whether the goal is to minimize or
+         maximize.</p>
+<pre><code>(defun make-num (&amp;rest args
+                 &amp;aux (i (apply #'%make-num args)))
+  (setf <span class="m">$goal</span> (if (eq #\- (ch <span class="m">$txt</span> -1)) 0 1))
+  i)</code></pre>
+    </article>
+
+    <article>
+      <h3>3. Command-line flags meet config in one line</h3>
+      <p>Each entry in <code>*the*</code> carries its flag and doc
+         right next to its value. The CLI walks
+         <code>argv</code>, dispatches <code>--cmds</code> to
+         <code>eg-</code> functions, and uses <code class="m">aif</code>
+         to update any matching <code>-flag</code>.</p>
+<pre><code>(defparameter *the*
+  '((budget 50  "-b" "max labels")
+    (few    128 "-u" "max unlabelled pool")))
+
+(defun cli (lsts)
+  (loop for (flag arg) on (args) by #'cddr do
+    (unless (run flag (thing arg))
+      (<span class="m">aif</span> (find flag lsts :key #'third :test #'equalp)
+           (setf (second it) (thing arg))))))</code></pre>
+      <p class="lead">The <code>it</code> in
+         <code>(second it)</code> is the matched <code>*the*</code>
+         entry &mdash; bound only if <code>find</code> succeeded.</p>
+    </article>
+
+    <article>
+      <h3>4. A hot loop that reads structures and config</h3>
+      <p>The active-learning inner loop walks a pool, stops when
+         the label budget is hit, and asks each candidate whether
+         it sits closer to <em>best</em> than <em>rest</em>.
+         <code class="m">?</code> chains the slot lookup,
+         <code class="m">!</code> reads the budget &mdash; both
+         compile to ordinary Lisp.</p>
+<pre><code>(loop for r in (subseq pool 0
+                       (min <span class="m">!few</span> (length pool)))
+      while (< (<span class="m">?</span> ys n) <span class="m">!budget</span>) do
+      (when (closer? lab best rest r)
+        (add ys (disty lab r))
+        (add lab r) (add best r)
+        (rebalance best rest lab)))</code></pre>
+    </article>
+
+    <article>
+      <h3>5. Implicit <code>i</code> outside of methods</h3>
+      <p>The <code class="m">$</code> reader macro just expands to
+         <code>(slot-value i ...)</code> &mdash; it doesn't care
+         whether <code>i</code> came from a method dispatch or a
+         lambda parameter. <code>disty</code> exploits this to
+         compute Minkowski distance over goal columns:</p>
+<pre><code>(defun disty (data row &amp;optional (cols (<span class="m">?</span> data cols y)))
+  (dist cols
+    (lambda (i)
+      (abs (- (norm i (elt row <span class="m">$at</span>)) <span class="m">$goal</span>)))))</code></pre>
+      <p class="lead">Inside the lambda, <code>i</code> is each
+         column in turn &mdash; and <code>$at</code>,
+         <code>$goal</code> work without ceremony.</p>
     </article>
   </div>
 </section>
