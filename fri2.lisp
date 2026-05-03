@@ -324,56 +324,11 @@
     (dist cols
        (lambda (i) (abs (- (norm i (elt row $at)) $goal)))))
 
-  (node (rs &optional (hdr ""))
-    "Build a tree node: cloned data + ynum summary + header."
-    (%make-tree
-      :d    (make-data (cons (? i cols names) rs))
-      :ynum (adds (mapcar (fn (disty i _)) rs))
-      :hdr  hdr))
-
-  (split (c cut rs)
-    "Score one candidate split: (score c cut left-rs right-rs)."
-    (let (l r (ln (make-num)) (rn (make-num)))
-      (dolist (row rs)
-        (if (go-left? c (elt row (? c at)) cut)
-            (progn (push row l) (add ln (disty i row)))
-            (progn (push row r) (add rn (disty i row)))))
-      (list (+ (* (? ln n) (spread ln))
-               (* (? rn n) (spread rn)))
-            c cut l r)))
-
-  (splits (rs leaf)
-    "All splits where both sides have at least LEAF rows."
-    (loop for c in (? i cols x)
-          append (loop for cut in (%cuts c rs)
-                       for s = (split i c cut rs)
-                       when (>= (min (length (fourth s))
-                                     (length (fifth s)))
-                                leaf)
-                       collect s)))
-
-  (grow (rs &optional (leaf 3) (hdr ""))
-    "Recursively grow tree; stop when fewer than 2*LEAF rows."
-    (let ((t0 (node i rs hdr)))
-      (when (>= (length rs) (* 2 leaf))
-        (let ((cands (splits i rs leaf)))
-          (when cands
-            (let* ((best (extremum-by cands #'first #'<))
-                   (c (second best)) (cut (third best)))
-              (setf
-                (? t0 col) c
-                (? t0 cut) cut
-                (? t0 left)
-                     (grow i (fourth best) leaf
-                                  (kid-hdr c cut t))
-                (? t0 right)
-                      (grow i (fifth best) leaf
-                                   (kid-hdr c cut nil)))))))
-      t0)))
+  )
 
 ; ## Part 7 : Trees (grow) ----------------------------
 (ren tree "Decision-tree node: data, ynum, split col+cut, kids, hdr."
-    (d ynum col cut left right hdr)
+    (data ynum col cut left right hdr)
 
   (:opts ((:copier nil)))
 
@@ -395,6 +350,53 @@
     (when $left
       (show $left  (1+ lvl))
       (show $right (1+ lvl)))))
+
+(defun node (data rs &optional (hdr ""))
+  "Build a tree node: cloned sub-data + ynum summary + header."
+  (%make-tree
+    :data (make-data (cons (? data cols names) rs))
+    :ynum (adds (mapcar (fn (disty data _)) rs))
+    :hdr  hdr))
+
+(defun split (data c cut rs)
+  "Score one candidate split: (score c cut left-rs right-rs)."
+  (let (l r (ln (make-num)) (rn (make-num)))
+    (dolist (row rs)
+      (if (go-left? c (elt row (? c at)) cut)
+          (progn (push row l) (add ln (disty data row)))
+          (progn (push row r) (add rn (disty data row)))))
+    (list (+ (* (? ln n) (spread ln))
+             (* (? rn n) (spread rn)))
+          c cut l r)))
+
+(defun splits (data rs leaf)
+  "All splits where both sides have at least LEAF rows."
+  (loop for c in (? data cols x)
+        append (loop for cut in (%cuts c rs)
+                     for s = (split data c cut rs)
+                     when (>= (min (length (fourth s))
+                                   (length (fifth s)))
+                              leaf)
+                     collect s)))
+
+(defun grow (data rs &optional (leaf 3) (hdr ""))
+  "Recursively grow tree; stop when fewer than 2*LEAF rows."
+  (let ((t0 (node data rs hdr)))
+    (when (>= (length rs) (* 2 leaf))
+      (let ((cands (splits data rs leaf)))
+        (when cands
+          (let* ((best (extremum-by cands #'first #'<))
+                 (c (second best)) (cut (third best)))
+            (setf
+              (? t0 col) c
+              (? t0 cut) cut
+              (? t0 left)
+                   (grow data (fourth best) leaf
+                                (kid-hdr c cut t))
+              (? t0 right)
+                    (grow data (fifth best) leaf
+                                 (kid-hdr c cut nil)))))))
+    t0))
 
 (defun kid-hdr (c cut left?)
   "Display header for a child branch."
@@ -499,14 +501,20 @@
 (defun eg--all (&optional (arg !file))
   "Run every eg--* function except eg--all itself."
   (do-symbols (s *package*)
-    (unless (eq s 'eg--all) (run s arg))))
+    (let ((n (symbol-name s)))
+      (when (and (fboundp s)
+                 (not (eq s 'eg--all))
+                 (> (length n) 4)
+                 (string= n "EG--" :end1 4))
+        (run s arg)))))
 
 (defun eg-s (&optional (seed !seed))
   "Set seed (both *seed* and !seed)."
   (setf *seed* seed  !seed  seed))
 
-(defun eg--the (_)
+(defun eg--the (&optional _)
   "Print *the* (command-line defaults)."
+  (declare (ignore _))
   (print *the*))
 
 (defun eg--rows (&optional (file !file))
