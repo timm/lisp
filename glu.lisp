@@ -29,6 +29,15 @@
 ;
 ; LIST COMPREHENSION
 ;   (for/ EXPR for var in lst [if TEST] ...)
+;
+; SEQUENTIAL BINDINGS
+;   (let+ ((var val)        ; let
+;          ((a b) form)     ; multiple-value-bind (flat symbols)
+;          ((a (b c)) v)    ; destructuring-bind  (nested pattern)
+;          (name args body)) ; labels
+;     ...)
+;   Caveat: dbind on a flat-symbol pattern conflicts; use
+;   plain destructuring-bind in that case.
 
 ;## simplify debugging
 #+sbcl (declaim (sb-ext:muffle-conditions
@@ -145,3 +154,20 @@
                    ((eq (car cs) 'if)
                     `(if ,(cadr cs) ,(walk (cddr cs)) nil)))))
     (walk cs)))
+
+(defmacro let+ (((lhs &rest rhs) &rest rest) &body body)
+  "Sequential bindings; entry shape picks form:
+     (var val)         -> let
+     ((sym...) val)    -> multiple-value-bind
+     ((pat) val)       -> destructuring-bind  (pat has non-symbols)
+     (name args body)  -> labels"
+  (let ((tail (if rest `((let+ ,rest ,@body)) body)))
+    (cond
+      ((and (consp lhs) (every #'symbolp lhs))
+       `(multiple-value-bind ,lhs ,(car rhs) ,@tail))
+      ((consp lhs)
+       `(destructuring-bind ,lhs ,(car rhs) ,@tail))
+      ((cdr rhs)
+       `(labels ((,lhs ,@rhs)) ,@tail))
+      (t
+       `(let ((,lhs ,(car rhs))) ,@tail)))))

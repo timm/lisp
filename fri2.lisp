@@ -1,3 +1,4 @@
+#!/usr/bin/env -S sbcl --script
 ; vim: set ft=lisp ts=2 sw=2 et :
 
 
@@ -142,10 +143,10 @@
 
   (make (txts &aux (i (%make-cols :names txts)) (n -1))
     "Parse header TXTS; partition columns into x/y/skip."
-    (labels ((one (txt) (! (if (upper-case-p (ch txt 0))
-                             #'make-num #'make-sym)
-                          :txt txt :at (incf n)))
-              (end (col) (ch (? col txt) -1)))
+    (let+ ((one (txt) (! (if (upper-case-p (ch txt 0))
+                           #'make-num #'make-sym)
+                        :txt txt :at (incf n)))
+           (end (col) (ch (? col txt) -1)))
       (setf $all (mapcar #'one txts))
       (dolist (col $all i)
         (unless (eql (end col) #\X)
@@ -183,20 +184,21 @@
   (distx (r1 r2)
     (dist (? i cols x)
       (lambda (i &aux (a (elt r1 $at)) (b (elt r2 $at)))
-        (if (and (eq a '?) (eq b '?)) 1 (distx i a b)))))
+        (if (and (eq a '?) (eq b '?)) 1 (distx i a b))))))
 
-  (disty (row &optional (cols (? i cols y)))
-    "0 = perfect, 1 = worst."
-    (dist cols
-      (lambda (i) (abs (- (norm i (elt row $at)) $goal)))))
+(defun data-disty (i row &optional (cols (? i cols y)))
+  "0 = perfect, 1 = worst."
+  (dist cols
+    (lambda (i) (abs (- (norm i (elt row $at)) $goal)))))
 
-  (wins () "Closure: score row 0..100 vs this data; 100=best, 50=med."
-    (let* ((ys (mapcar (fn (disty i _)) $rows))
-            (ds (sort ys #'<))
-            (lo (first ds))
-            (md (elt ds (floor (length ds) 2))))
-      (fn (floor (* 100 (- 1 (/ (- (disty i _) lo)
-                               (+ (- md lo) 1e-32)))))))))
+(defun data-wins (i)
+  "Closure: score row 0..100 vs this data; 100=best, 50=med."
+  (let+ ((ys (mapcar (fn (data-disty i _)) $rows))
+         (ds (sort ys #'<))
+         (lo (first ds))
+         (md (elt ds (floor (length ds) 2))))
+    (fn (floor (* 100 (- 1 (/ (- (data-disty i _) lo)
+                              (+ (- md lo) 1e-32))))))))
 
 ; _|_  ._   _    _
 ;  |_  |   (/_  (/_
@@ -210,57 +212,57 @@
            &aux (i (%make-tree
                      :data (make-data
                              (cons (? data cols names) rs))
-                     :ynum (adds (mapcar (fn (disty data _)) rs))
+                     :ynum (adds (mapcar (fn (data-disty data _)) rs))
                      :hdr  hdr)))
     "Build node from RS; recurse on best split if big enough."
     (when (>= (length rs) (* 2 leaf))
-      (let ((cands (%splits data rs leaf)))
+      (let ((cands (tree-splits data rs leaf)))
         (when cands
-          (let* ((best (%extremum-by cands #'first #'<))
+          (let+ ((best (%extremum-by cands #'first #'<))
                   (c (second best)) (cut (third best)))
             (setf $col c $cut cut
               $left  (make-tree data (fourth best) leaf
-                       (%kid-hdr c cut t))
+                       (tree-kid-hdr c cut t))
               $right (make-tree data (fifth best) leaf
-                       (%kid-hdr c cut nil)))))))
-    i)
+                       (tree-kid-hdr c cut nil)))))))
+    i))
 
-  (leaf (r)
-    (if (null $left) i
-      (leaf (if (go-left? $col (elt r (? i col at)) $cut)
-              $left $right)
-        r)))
+(defun tree-leaf (i r)
+  (if (null (? i left)) i
+    (tree-leaf (if (go-left? (? i col) (elt r (? i col at)) (? i cut))
+                 (? i left) (? i right))
+      r)))
 
-  (show (&optional (lvl 0))
-    "Pretty-print: mu, n on LHS; indent + condition on RHS."
-    (format t "~&~4,2f (~3d)   ~{~A~}~a~%"
-      (mid $ynum) (? i ynum n)
-      (loop repeat (max 0 (1- lvl))
-        collect "|.. ")
-      $hdr)
-    (when $left
-      (show $left  (1+ lvl))
-      (show $right (1+ lvl)))))
+(defun tree-show (i &optional (lvl 0))
+  "Pretty-print: mu, n on LHS; indent + condition on RHS."
+  (format t "~&~4,2f (~3d)   ~{~A~}~a~%"
+    (mid (? i ynum)) (? i ynum n)
+    (loop repeat (max 0 (1- lvl))
+      collect "|.. ")
+    (? i hdr))
+  (when (? i left)
+    (tree-show (? i left)  (1+ lvl))
+    (tree-show (? i right) (1+ lvl))))
 
-(defun %kid-hdr (c cut left?)
+(defun tree-kid-hdr (c cut left?)
   (destructuring-bind (l r) (ops c)
     (format nil "~a ~a ~a" (? c txt) (if left? l r) cut)))
 
-(defun %split (data c cut rs)
+(defun tree-split (data c cut rs)
   "Returns (score c cut left-rs right-rs)."
   (let (l r (ln (make-num)) (rn (make-num)))
     (dolist (row rs)
       (if (go-left? c (elt row (? c at)) cut)
-          (progn (push row l) (add ln (disty data row)))
-          (progn (push row r) (add rn (disty data row)))))
+          (progn (push row l) (add ln (data-disty data row)))
+          (progn (push row r) (add rn (data-disty data row)))))
     (list (+ (* (? ln n) (spread ln)) (* (? rn n) (spread rn)))
           c cut l r)))
 
-(defun %splits (data rs leaf)
+(defun tree-splits (data rs leaf)
   "Splits where both sides have at least LEAF rows."
   (loop for c in (? data cols x)
     append (loop for cut in (%cuts c rs)
-             for s = (%split data c cut rs)
+             for s = (tree-split data c cut rs)
              when (>= (min (length (fourth s))
                         (length (fifth s))) leaf)
              collect s)))
@@ -280,68 +282,64 @@
                      :ys   (make-num)
                      :pool (shuffle (cdr rs)))))
     "Init from RS (first row = header). Warm-start 4 labels."
-    (warm-start i)
-    i)
+    (acquire-warm-start i)
+    i))
 
-  (warm-start (&aux (start 4))
-    "Label 4 rows; split by disty into best vs rest."
-    (dotimes (_ (min start (length $pool)))
-      (let ((r (pop $pool)))
-        (add $lab r) (add $ys (disty $lab r))))
-    (let* ((sorted (sortby (fn (disty $lab _)) (? $lab rows)))
-           (n (max 1 (floor (sqrt (length sorted))))))
-      (dolist (r (subseq sorted 0 n)) (add $best r))
-      (dolist (r (subseq sorted n))   (add $rest r))))
+(defun acquire-warm-start (i &aux (start 4))
+  "Label 4 rows; split by disty into best vs rest."
+  (dotimes (_ (min start (length $pool)))
+    (let ((r (pop $pool)))
+      (add $lab r) (add $ys (data-disty $lab r))))
+  (let+ ((sorted (sortby (fn (data-disty $lab _)) (? $lab rows)))
+         (n (max 1 (floor (sqrt (length sorted))))))
+    (dolist (r (subseq sorted 0 n)) (add $best r))
+    (dolist (r (subseq sorted n))   (add $rest r))))
 
-  (closer? (r)
-    (< (distx $lab r (mid $best)) (distx $lab r (mid $rest))))
+(defun acquire-closer? (i r)
+  (< (distx $lab r (mid $best)) (distx $lab r (mid $rest))))
 
-  (rebalance ()
-    "Cap best at sqrt(|lab|); worst row -> rest."
-    (when (> (length (? $best rows)) 
-             (sqrt (length (? $lab rows))))
-      (let ((bad (%extremum-by (? $best rows)
-                               (fn (disty $lab _)) #'>)))
-        (sub $best bad) (add $rest bad))))
+(defun acquire-rebalance (i)
+  "Cap best at sqrt(|lab|); worst row -> rest."
+  (when (> (length (? $best rows))
+           (sqrt (length (? $lab rows))))
+    (let ((bad (%extremum-by (? $best rows)
+                             (fn (data-disty $lab _)) #'>)))
+      (sub $best bad) (add $rest bad))))
 
-  (train ()
-    "Run loop; return best, lab, label-count."
-    (loop for r in (subseq $pool 0 (min @few (length $pool)))
-          while (< (? $ys n) @budget) do
-          (when (closer? i r)
-            (add $ys (disty $lab r))
-            (add $lab r) (add $best r)
-            (rebalance i)))
-    (values $best $lab (? $ys n))))
+(defun acquire-train (i)
+  "Run loop; return best, lab, label-count."
+  (loop for r in (subseq $pool 0 (min @few (length $pool)))
+        while (< (? $ys n) @budget) do
+        (when (acquire-closer? i r)
+          (add $ys (data-disty $lab r))
+          (add $lab r) (add $best r)
+          (acquire-rebalance i)))
+  (values $best $lab (? $ys n)))
 
 (defun %extremum-by (lst key cmp)
   "Argmin/argmax of LST under KEY, ordered by CMP."
-  (let* ((best (car lst)) (m (! key best)))
+  (let+ ((best (car lst)) (m (! key best)))
     (dolist (x (cdr lst) best)
       (let ((k (! key x)))
         (when (! cmp k m) (setf best x m k))))))
 
 (defun validate (rs god w &optional (check 5))
   "Run active; grow tree; rank holdout; pay CHECK."
-  (let* ((body (shuffle (cdr rs)))
-         (n (floor (length body) 2))
+  (let+ ((body  (shuffle (cdr rs)))
+         (n     (floor (length body) 2))
          (train (cons (car rs) (subseq body 0 n)))
-         (test  (subseq body n)))
-    (multiple-value-bind (best lab labels)
-        (train (make-acquire train))
-      (declare (ignore best))
-      (let* ((y-god (fn (disty god _)))
-             (train-best
-              (%extremum-by (? lab rows) y-god #'<))
-             (tr (make-tree lab (? lab rows)))
-             (ranked (sortby 
-                       (fn (mid (? (leaf tr _) ynum))) test))
-             (top  (subseq ranked 0
-                           (min check (length ranked))))
-             (pick (%extremum-by top y-god #'<)))
-        (values (! w train-best)
-                (! w pick)
-                (+ labels check))))))
+         (test  (subseq body n))
+         ((best lab labels) (acquire-train (make-acquire train)))
+         (y-god (fn (data-disty god _)))
+         (train-best (%extremum-by (? lab rows) y-god #'<))
+         (tr (make-tree lab (? lab rows)))
+         (ranked (sortby (fn (mid (? (tree-leaf tr _) ynum))) test))
+         (top  (subseq ranked 0 (min check (length ranked))))
+         (pick (%extremum-by top y-god #'<)))
+    (declare (ignore best))
+    (values (! w train-best)
+            (! w pick)
+            (+ labels check))))
 
 ;  _        _.  ._ _   ._   |   _    _ 
 ; (/_  ><  (_|  | | |  |_)  |  (/_  _> 
@@ -355,7 +353,7 @@
   "Define eg--NAME taking &optional file; bind rs+i (data)."
   `(defun ,name (&optional (file @file))
      ,doc
-     (let* ((rs (read-csv file)) (i (make-data rs)))
+     (let+ ((rs (read-csv file)) (i (make-data rs)))
        (declare (ignorable rs i))
        ,@body)))
 
@@ -374,7 +372,7 @@
 
 (defeg eg--rows  "Print CSV tail."  (print (subseq rs 380)))
 (defeg eg--data  "Show y-columns."  (print (? i cols y)))
-(defeg eg--ydata "Stride by disty." (%stride $rows (fn (disty i _))))
+(defeg eg--ydata "Stride by disty." (%stride $rows (fn (data-disty i _))))
 
 (defeg eg--xdata "Stride by distx from row 0."
   (let ((r0 (car $rows))) (%stride $rows (fn (distx i r0 _)))))
@@ -392,17 +390,16 @@
                 (? c txt) v (norm c v))))))
 
 (defeg eg--tree "Active-label, grow tree, show."
-  (multiple-value-bind (best lab labels) 
-    (train (make-acquire rs))
+  (let+ (((best lab labels) (acquire-train (make-acquire rs))))
     (declare (ignore best))
     (format t "~&;; labels used: ~d~%" labels)
-    (show (make-tree lab (? lab rows)))))
+    (tree-show (make-tree lab (? lab rows)))))
 
 (defeg eg--active "20 train/test runs."
-  (let* ((god (make-data rs)) (w (wins god)))
+  (let+ ((god (make-data rs))
+         (w   (data-wins god)))
     (loop repeat 20 do
-      (multiple-value-bind (train hold labels) 
-        (validate rs god w)
+      (let+ (((train hold labels) (validate rs god w)))
         (format t "~&~3d ~3d ~3d~%" train hold labels)))))
 
 ;      _|_  o  |   _ 
@@ -447,10 +444,10 @@
 ; ## strings
 (defun cells (s sep)
   "Split S on character SEP into substring list."
-  (loop for start = 0 then (1+ pos)
-    for pos = (position sep s :start start)
-    collect (subseq s start (or pos (length s)))
-    while pos))
+  (loop for start = 0 then (1+ end)
+    for end = (position sep s :start start)
+    collect (subseq s start end)
+    while end))
 
 (defun thing (str
               &aux (v (ignore-errors
@@ -471,7 +468,7 @@
                     
 (defun run (it &optional arg)
   "Dispatch --flag to EG-FLAG function."
-  (let* ((f (if (symbolp it) it
+  (let+ ((f (if (symbolp it) it
                 (intern (format nil
                                 "EG~:@(~a~)" it))))
          (n (symbol-name f)))
