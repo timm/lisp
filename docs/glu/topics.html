@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>glu &mdash; Manual</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <a href="index.html" class="logo">glu</a>
+    <nav class="top">
+      <a href="index.html">Home</a>
+      <a href="example.html">Example</a>
+      <a href="start.html">Install</a>
+      <a href="topics.html">Manual</a>
+      <a href="https://github.com/timm/lisp">Source</a>
+    </nav>
+  </div>
+</header>
+
+<div class="container">
+<div class="layout">
+
+<div class="content">
+
+<h1>Manual</h1>
+<p class="lead">Eleven forms. Each gets a section.</p>
+
+<section id="field">
+<h2>$field</h2>
+<p class="lead">Self slot access.</p>
+<p>Inside a method whose first parameter is named <code class="language-lisp">i</code>
+   &mdash; glu always names it that &mdash; <code class="language-lisp">$x</code>
+   expands to <code class="language-lisp">(slot-value i 'x)</code>. Read,
+   <code class="language-lisp">setf</code>, <code class="language-lisp">incf</code>, <code class="language-lisp">push</code> all
+   work.</p>
+<pre><code class="language-lisp">$mu          ; (slot-value i 'mu)
+(incf $n)   ; (incf (slot-value i 'n))
+(setf $has nil)</code></pre>
+</section>
+
+<section id="chain">
+<h2>(? x a b c)</h2>
+<p class="lead">Nested slot access.</p>
+<p>Chained <code class="language-lisp">slot-value</code>. <code class="language-lisp">setf</code>-able.
+   Replaces the noisy <code class="language-lisp">(slot-value (slot-value ...))</code>
+   tower.</p>
+<pre><code class="language-lisp">(? data cols y)
+; (slot-value (slot-value data 'cols) 'y)
+
+(setf (? tree left) new-left)</code></pre>
+</section>
+
+<section id="bang">
+<h2>(! f a b)</h2>
+<p class="lead">Funcall shortcut.</p>
+<p>Equivalent to <code class="language-lisp">(funcall f a b)</code>. Three chars
+   shorter, reads cleaner when functions ride in arguments.</p>
+<pre><code class="language-lisp">(! cmp a b)            ; (funcall cmp a b)
+(mapcar (fn (! key _)) lst)</code></pre>
+</section>
+
+<section id="fn">
+<h2>fn / fnn / fnnn</h2>
+<p class="lead">Lambda shortcuts.</p>
+<p>One-, two-, three-arg lambdas with implicit parameters
+   <code class="language-lisp">_</code>, <code class="language-lisp">__</code>, <code class="language-lisp">___</code>. Kills the
+   <code class="language-lisp">(lambda (x) ...)</code> overhead in higher-order calls.</p>
+<pre><code class="language-lisp">(mapcar (fn   (* _ _))     '(1 2 3))     ; (1 4 9)
+(mapcar (fnn  (+ _ __))    '(1 2) '(10 20)); (11 22)
+(sort lst #'&lt; :key (fn (slot-value _ 'at)))</code></pre>
+</section>
+
+<section id="aif">
+<h2>(aif test then else)</h2>
+<p class="lead">Anaphoric if.</p>
+<p>Binds the test result to <code class="language-lisp">it</code> in both branches.
+   From Paul Graham's <em>On Lisp</em>.</p>
+<pre><code class="language-lisp">(aif (find flag opts :key #'third :test #'equalp)
+     (setf (second it) (thing arg)))
+
+(aif (gethash key cache)
+     it
+     (setf (gethash key cache) (compute key)))</code></pre>
+</section>
+
+<section id="letp">
+<h2>(let+ ...)</h2>
+<p class="lead">Sequential bindings: let, dbind, mvb, labels.</p>
+<p>One construct, four forms. Entry shape picks: plain
+   <code class="language-lisp">(var val)</code> is <code class="language-lisp">let</code>; flat-symbol list
+   <code class="language-lisp">((a b c) form)</code> is <code class="language-lisp">multiple-value-bind</code>;
+   nested-pattern list is <code class="language-lisp">destructuring-bind</code>;
+   3+ elements <code class="language-lisp">(name args body...)</code> is
+   <code class="language-lisp">labels</code>.</p>
+<pre><code class="language-lisp">(let+ ((x        5)                       ; let
+       ((a b c)  (values 1 2 3))             ; mvb
+       (sq       (n) (* n n))                ; labels
+       (((l r) p) '((1 2) 3)))               ; dbind
+  (sq (+ x a)))</code></pre>
+<p>Replaces nested <code class="language-lisp">let* / multiple-value-bind /
+   destructuring-bind / labels</code> stairs with one flat
+   block. <code class="language-lisp">let*</code> becomes redundant.</p>
+</section>
+
+<section id="forp">
+<h2>(for/ expr for x in lst if test ...)</h2>
+<p class="lead">List comprehension.</p>
+<p>Reads like Python. Walks <code class="language-lisp">for</code> and <code class="language-lisp">if</code>
+   clauses, collecting <code class="language-lisp">expr</code> per surviving iteration.
+   Nil results are skipped &mdash; a guard expression doubles
+   as filter.</p>
+<pre><code class="language-lisp">(for/ (* x x) for x in '(1 2 3 4 5) if (oddp x))
+; (1 9 25)
+
+(for/ (list x y)
+       for x in '(1 2 3)
+       for y in '(a b)
+       if (oddp x))
+; ((1 A) (1 B) (3 A) (3 B))</code></pre>
+</section>
+
+<section id="glu">
+<h2>(glu name [doc] slots methods...)</h2>
+<p class="lead">Struct + methods, in one form.</p>
+<p>Bundles <code class="language-lisp">defstruct</code> with its
+   <code class="language-lisp">defmethod</code>s. First parameter of every method is
+   <code class="language-lisp">i</code>, so <code class="language-lisp">$slot</code> just works. Optional
+   doc string. The pseudo-method <code class="language-lisp">(make ARGS BODY)</code>
+   defines the public factory; <code class="language-lisp">(:opts ((opt ...)))</code>
+   adds defstruct options.</p>
+<pre><code class="language-lisp">(glu sym "Symbolic column."
+    ((n 0) has)
+
+  (add (v)
+    (incf $n)
+    (aif (assoc v $has)
+         (incf (cdr it))
+         (push (cons v 1) $has)))
+
+  (mid () (car (reduce (fnn (if (&gt; (cdr _) (cdr __)) _ __))
+                       $has))))</code></pre>
+<p><strong>Dispatch:</strong> same method name across two glu
+   forms? CL dispatches on the first arg's type.
+   <code class="language-lisp">(add s v)</code> hits <code class="language-lisp">sym</code>'s body or
+   <code class="language-lisp">num</code>'s depending on <code class="language-lisp">s</code>.</p>
+<p><strong>Single-impl methods?</strong> Don't put them in
+   <code class="language-lisp">glu</code>. Make them
+   <code class="language-lisp">(defun klass-name (i ...) ...)</code> next to the
+   glu. <code class="language-lisp">klass-</code> prefix names ownership; no global
+   generic-function pollution.</p>
+</section>
+
+<section id="glup">
+<h2>(glu+ name methods...)</h2>
+<p class="lead">Add methods to an existing glu later.</p>
+<p>Same method shape as <code class="language-lisp">glu</code>, no <code class="language-lisp">make</code>.
+   Useful when methods need types defined later in the file.</p>
+<pre><code class="language-lisp">(glu+ num
+  (twice () (* 2 $mu)))</code></pre>
+</section>
+
+<section id="new">
+<h2>(new cls k v ...)</h2>
+<p class="lead">Constructor sugar.</p>
+<p>Expands to <code class="language-lisp">(make-CLS k v ...)</code>. Saves the
+   <code class="language-lisp">make-</code> prefix at call sites.</p>
+<pre><code class="language-lisp">(new num :goal 0)   ; (make-num :goal 0)</code></pre>
+</section>
+
+<section id="defread">
+<h2>(defread c (s) body)</h2>
+<p class="lead">Define a reader macro on a single character.</p>
+<p>Installs <code class="language-lisp">body</code> as the reader macro for
+   character <code class="language-lisp">c</code>. The two project reader macros
+   &mdash; <code class="language-lisp">$</code> and <code class="language-lisp">@</code> &mdash; are built
+   with it.</p>
+<pre><code class="language-lisp">; @key reads as (second (assoc 'key *the*))
+(defread @(s)
+  `(second (assoc ',(read s t nil t) *the*)))
+
+@budget    ; (second (assoc 'budget *the*))</code></pre>
+</section>
+
+</div><!-- /content -->
+
+<aside class="toc">
+  <h4>Manual</h4>
+  <ul>
+    <li class="group">Read</li>
+    <li><a href="#field">$field</a></li>
+    <li><a href="#chain">(? x a b)</a></li>
+    <li class="group">Call</li>
+    <li><a href="#bang">(! f a)</a></li>
+    <li><a href="#fn">fn / fnn / fnnn</a></li>
+    <li class="group">Branch</li>
+    <li><a href="#aif">aif</a></li>
+    <li class="group">Bind</li>
+    <li><a href="#letp">let+</a></li>
+    <li><a href="#forp">for/</a></li>
+    <li class="group">Define</li>
+    <li><a href="#glu">glu</a></li>
+    <li><a href="#glup">glu+</a></li>
+    <li><a href="#new">new</a></li>
+    <li><a href="#defread">defread</a></li>
+  </ul>
+</aside>
+
+</div><!-- /layout -->
+</div><!-- /container -->
+
+<footer>
+  <div class="container">
+    <p>
+      &copy; 2026 Tim Menzies &middot;
+      <a href="https://github.com/timm/lisp/blob/main/LICENSE.md">MIT License</a> &middot;
+      <a href="https://github.com/timm/lisp">Source</a>
+    </p>
+    <p class="small">
+      Inspired by <a href="https://wren.io/">wren</a>,
+      <em>On Lisp</em>, and
+      <a href="https://en.wikipedia.org/wiki/Dieter_Rams">Dieter Rams</a>
+      ("less, but better").
+    </p>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" data-manual></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-lisp.min.js"></script>
+<script src="glu-prism.js"></script>
+</body>
+</html>
