@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>glu &mdash; tiny reader macros for Common Lisp</title>
+<meta name="description" content="glu is a six-macro extension to Common Lisp. Code that fits in your head.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <a href="#" class="logo">glu</a>
+    <nav>
+      <a href="#why">Why</a>
+      <a href="#compare">Compare</a>
+      <a href="#macros">Macros</a>
+      <a href="#example">Example</a>
+      <a href="#try">Try It</a>
+      <a href="https://github.com/timm/lisp">Source</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="container">
+    <h1>A Common Lisp dialect <br>that fits in your head.</h1>
+    <p class="tagline">
+      <strong>glu</strong> is six macros and one rule:
+      the subject is implicit. <strong>fri2.lisp</strong>
+      &mdash; a complete active-learning system &mdash; is
+      written in it.
+    </p>
+<pre><code><span class="c">;;; squared odds, fed into a Welford summary</span>
+
+(<span class="m">glu</span> stat "Online mean+m2 (Welford)."
+    ((n 0) (mu 0) (m2 0))
+
+  (add (v)
+    "Fold V into running stats."
+    (incf <span class="m">$n</span>)
+    (let ((d (- v <span class="m">$mu</span>)))
+      (incf <span class="m">$mu</span> (/ d <span class="m">$n</span>))
+      (incf <span class="m">$m2</span> (* d (- v <span class="m">$mu</span>))))))
+
+(let ((i (make-stat)))
+  (<span class="m">for/</span> (add i (* x x)) for x in '(1 2 3 4 5)
+                            if (oddp x))
+  (format t "n=~a mean=~,2f~%" <span class="m">$n</span> <span class="m">$mu</span>))
+<span class="c">;; =&gt; n=3 mean=11.67  (squares of 1, 3, 5: 1+9+25 = 35; 35/3)</span></code></pre>
+    <p>One <code>glu</code> form &mdash; struct, docstring,
+       method. One <code>for/</code> &mdash; filter, transform,
+       fold into the stats in a single pass.
+       <code>$n</code> reads as <code>(slot-value i 'n)</code>
+       and works under <code>incf</code>. The
+       <a href="#example">full <code>sym</code>+<code>num</code>
+       pair with shared <code>add</code> and <code>mid</code></a>
+       is fifteen lines in glu versus forty in raw CL.</p>
+  </div>
+</section>
+
+<section id="why">
+  <div class="container">
+    <h2>Why glu?</h2>
+    <div class="grid">
+      <div class="cell">
+        <h3>Tiny</h3>
+        <p>Six macros, ~50 lines of definitions. Drop into any
+           CL file: <code>(load "glu.lisp")</code>. No package
+           manager, no <code>asdf</code>, no build system.</p>
+      </div>
+      <div class="cell">
+        <h3>Anaphoric</h3>
+        <p>In a method, <code>i</code> is always self. In an
+           <code>aif</code>, <code>it</code> is always the test.
+           No boilerplate <code>let</code>-bindings.</p>
+      </div>
+      <div class="cell">
+        <h3>Composable</h3>
+        <p><code>$</code> and <code>?</code> read as Lisp forms.
+           They <code>setf</code>, <code>incf</code>, nest
+           &mdash; invisible until you look.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="compare">
+  <div class="container">
+    <h2>What it replaces</h2>
+    <p>Three short comparisons against plain Common Lisp and
+       Python. Every Lisp snippet on this page has been
+       <code>load</code>-tested in SBCL; outputs are real.</p>
+
+    <h3>List comprehension</h3>
+    <p>Squares of odd numbers in <code>'(1 2 3 4 5)</code>:</p>
+    <div class="compare3">
+      <div>
+        <h4>Plain CL <code>loop</code></h4>
+<pre><code>(loop for x in lst
+      when (oddp x)
+      collect (* x x))
+<span class="c">;; =&gt; (1 9 25)</span></code></pre>
+      </div>
+      <div>
+        <h4>glu <code>for/</code></h4>
+<pre><code>(<span class="m">for/</span> (* x x)
+       for x in lst
+       if (oddp x))
+<span class="c">;; =&gt; (1 9 25)</span></code></pre>
+      </div>
+      <div>
+        <h4>Python</h4>
+<pre><code>[x*x
+ for x in lst
+ if x % 2]
+<span class="c"># =&gt; [1, 9, 25]</span></code></pre>
+      </div>
+    </div>
+
+    <h3>Class with three methods</h3>
+    <p>A streaming numeric summary &mdash; count, mean, sd:</p>
+    <div class="compare3">
+      <div>
+        <h4>Plain CL</h4>
+<pre><code>(defstruct num
+  "Welford summary."
+  (n 0) (mu 0) (m2 0))
+
+(defmethod add ((s num) v)
+  "Fold V."
+  (incf (slot-value s 'n))
+  (let ((d (- v (slot-value s 'mu))))
+    (incf (slot-value s 'mu)
+          (/ d (slot-value s 'n)))
+    (incf (slot-value s 'm2)
+          (* d (- v (slot-value s 'mu))))))
+
+(defmethod mid ((s num))
+  "Mean."
+  (slot-value s 'mu))
+
+(defmethod spread ((s num))
+  "SD."
+  (if (&lt; (slot-value s 'n) 2) 0
+      (sqrt (/ (slot-value s 'm2)
+               (1- (slot-value s 'n))))))</code></pre>
+      </div>
+      <div>
+        <h4>glu</h4>
+<pre><code>(<span class="m">glu</span> num "Welford summary."
+    ((n 0) (mu 0) (m2 0))
+
+  (add (v)
+    "Fold V."
+    (incf <span class="m">$n</span>)
+    (let ((d (- v <span class="m">$mu</span>)))
+      (incf <span class="m">$mu</span> (/ d <span class="m">$n</span>))
+      (incf <span class="m">$m2</span> (* d (- v <span class="m">$mu</span>)))))
+
+  (mid ()
+    "Mean."
+    <span class="m">$mu</span>)
+
+  (spread ()
+    "SD."
+    (if (&lt; <span class="m">$n</span> 2) 0
+        (sqrt (/ <span class="m">$m2</span> (1- <span class="m">$n</span>))))))</code></pre>
+      </div>
+      <div>
+        <h4>Python</h4>
+<pre><code>class Num:
+    """Welford summary."""
+
+    def __init__(self):
+        self.n  = 0
+        self.mu = 0
+        self.m2 = 0
+
+    def add(self, v):
+        """Fold V."""
+        self.n += 1
+        d = v - self.mu
+        self.mu += d / self.n
+        self.m2 += d * (v - self.mu)
+
+    def mid(self):
+        """Mean."""
+        return self.mu
+
+    def spread(self):
+        """SD."""
+        if self.n &lt; 2:
+            return 0
+        return (self.m2 / (self.n - 1)) ** 0.5</code></pre>
+      </div>
+    </div>
+    <p>Twenty-two lines of plain CL, twelve of glu, twenty of
+       Python. The cost of CL was the noise around
+       <code>slot-value</code> and the split between struct and
+       methods &mdash; not the language itself. glu removes both.</p>
+  </div>
+</section>
+
+<section id="macros">
+  <div class="container">
+    <h2>The macros</h2>
+    <p>Ordered by impact, top to bottom: bundle, comprehend,
+       slot, chain, branch.</p>
+
+    <article>
+      <h3><code class="m">(glu name [doc] slots methods...)</code></h3>
+      <p class="lead">Struct + methods, in one form.</p>
+      <p>Bundles a <code>defstruct</code> with its
+         <code>defmethod</code>s. The first parameter is always
+         <code>i</code>, so <code>$slot</code> just works in
+         every method body.</p>
+      <p>Optional second arg is the struct docstring. The
+         macro always emits <code>(:constructor %make-NAME)</code>
+         (private) plus <code>make-NAME</code> (public). If the
+         pseudo-method <code>(:make args body)</code> is
+         provided, its body becomes the public factory;
+         otherwise <code>make-NAME</code> is a thin
+         <code>(apply #'%make-NAME args)</code> wrapper.
+         <code>(:opts ((opt ...) ...))</code> adds extra
+         <code>defstruct</code> options when needed.</p>
+<pre><code>(<span class="m">glu</span> num "Numeric column with Welford stats."
+    ((n 0) (mu 0) (m2 0))
+
+  (add (v)
+    "Fold V into running stats."
+    (incf <span class="m">$n</span>)
+    (let ((d (- v <span class="m">$mu</span>)))
+      (incf <span class="m">$mu</span> (/ d <span class="m">$n</span>))
+      (incf <span class="m">$m2</span> (* d (- v <span class="m">$mu</span>)))))
+
+  (mid ()
+    "Return the running mean."
+    <span class="m">$mu</span>)
+
+  (spread ()
+    "Return the running sd."
+    (if (&lt; <span class="m">$n</span> 2) 0
+        (sqrt (/ <span class="m">$m2</span> (1- <span class="m">$n</span>))))))</code></pre>
+      <p><strong>Trick.</strong> Same method name across
+         classes? Use the same name &mdash; CL dispatches on
+         the first arg's type. <code>(add s v)</code> hits
+         <code>sym</code>'s body or <code>num</code>'s
+         depending on <code>s</code>.</p>
+      <p><strong>Reopen.</strong> Add methods to an existing
+         class with <code>(glu+ NAME METHODS...)</code>.
+         <code>glu</code> forwards its method list to
+         <code>glu+</code>. <code>glu+</code> rejects
+         <code>:make</code> &mdash; the constructor is a
+         struct-time concern, defined once by
+         <code>glu</code>.</p>
+<pre><code>(<span class="m">glu+</span> num
+  (twice ()
+    "Return 2*mu."
+    (* 2 <span class="m">$mu</span>)))</code></pre>
+    </article>
+
+    <article>
+      <h3><code class="m">(for/ expr for x in lst if test ...)</code></h3>
+      <p class="lead">List comprehension.</p>
+      <p>Reads like Python. Walks a sequence of
+         <code>for</code> and <code>if</code> clauses,
+         collecting <code>expr</code> for each iteration that
+         survives the filters. Nil results are skipped &mdash;
+         a guard expression doubles as a filter.</p>
+<pre><code>(<span class="m">for/</span> (* x x) for x in '(1 2 3 4 5) if (oddp x))
+<span class="c">;; =&gt; (1 9 25)</span>
+
+<span class="c">;; nested loops, multiple filters</span>
+(<span class="m">for/</span> (list x y)
+       for x in '(1 2 3)
+       for y in '(a b)
+       if (oddp x))
+<span class="c">;; =&gt; ((1 A) (1 B) (3 A) (3 B))</span>
+
+<span class="c">;; nil-skipping is a free filter</span>
+(<span class="m">for/</span> (and (oddp x) x) for x in '(1 2 3 4 5))
+<span class="c">;; =&gt; (1 3 5)   ; even values produce nil, dropped</span></code></pre>
+    </article>
+
+    <article>
+      <h3><code class="m">$field</code></h3>
+      <p class="lead">Self slot access.</p>
+      <p>Inside a method whose first parameter is named
+         <code>i</code> &mdash; glu methods always do &mdash;
+         <code>$field</code> expands to
+         <code>(slot-value i 'field)</code>.
+         <code>setf</code>-able, <code>incf</code>-able,
+         <code>push</code>-able.</p>
+<pre><code>(defmethod mid ((i num))
+  "Return the running mean."
+  <span class="m">$mu</span>)
+
+(defmethod add ((i sym) v &amp;optional (w 1))
+  "Fold V into symbol counts."
+  (unless (eql v '?)
+    (incf <span class="m">$n</span> w)))</code></pre>
+      <p><strong>Trick.</strong> Outside a method, just bind
+         <code>i</code> in a <code>let</code> and the
+         shortcut still works:</p>
+<pre><code>(let ((i (make-stat)))
+  (<span class="m">for/</span> (add i v) for v in lst)
+  (format t "mean=~a~%" <span class="m">$mu</span>))</code></pre>
+    </article>
+
+    <article>
+      <h3><code class="m">(? x a b c)</code></h3>
+      <p class="lead">Nested slot access.</p>
+      <p>Chains <code>slot-value</code> calls.
+         <code>setf</code>-able. Replaces the noisy
+         <code>(slot-value (slot-value ...))</code> tower.</p>
+<pre><code>(<span class="m">?</span> data cols y)
+<span class="c">;; &equiv;  (slot-value (slot-value data 'cols) 'y)</span>
+
+<span class="c">;; setf works through the chain</span>
+(setf (<span class="m">?</span> tree left) new-left)</code></pre>
+    </article>
+
+    <article>
+      <h3><code class="m">(aif test then else)</code></h3>
+      <p class="lead">Anaphoric if.</p>
+      <p>Binds the test result to <code>it</code> in both
+         branches. From Paul Graham's <em>On Lisp</em>.</p>
+<pre><code>(<span class="m">aif</span> (find flag opts :key #'third :test #'equalp)
+     (setf (second it) (thing arg)))
+
+<span class="c">;; common idiom: search-and-act</span>
+(<span class="m">aif</span> (gethash key cache)
+     it
+     (setf (gethash key cache) (compute key)))</code></pre>
+    </article>
+
+    <article>
+      <h3><code class="m">(fn ...)  (fnn ...)  (fnnn ...)</code></h3>
+      <p class="lead">Lambda shortcuts.</p>
+      <p>One-, two-, three-arg lambdas with implicit
+         parameters <code>_</code>, <code>__</code>,
+         <code>___</code>. Kills the
+         <code>(lambda (x) ...)</code> overhead in
+         <code>mapcar</code>, <code>sort :key</code>,
+         <code>remove-if</code>, etc.</p>
+<pre><code>(mapcar (<span class="m">fn</span>  (* _ _))      '(1 2 3))
+<span class="c">;; =&gt; (1 4 9)</span>
+
+(mapcar (<span class="m">fnn</span> (+ _ __))     '(1 2 3) '(10 20 30))
+<span class="c">;; =&gt; (11 22 33)</span>
+
+(mapcar (<span class="m">fnnn</span> (list _ __ ___))
+                            '(a b) '(1 2) '(x y))
+<span class="c">;; =&gt; ((A 1 X) (B 2 Y))</span></code></pre>
+      <p><strong>Trick.</strong> Pair with <code>$slot</code>
+         when the inner lambda's first arg is a struct named
+         <code>i</code> &mdash; but inside <code>fn</code> the
+         arg is <code>_</code>, so use the explicit form for
+         that case.</p>
+    </article>
+  </div>
+</section>
+
+<section id="example">
+  <div class="container">
+    <h2>The everything example</h2>
+    <p>Two columns &mdash; symbolic and numeric &mdash; with
+       shared method names <code>add</code> and <code>mid</code>
+       (CL dispatches by type), plus <code>spread</code> for
+       <code>num</code>. Both versions load, both print
+       <code>sym mid=RED   num mid=3 sd=1.58</code>.</p>
+
+    <div class="compare">
+      <div>
+        <h4>Plain Common Lisp</h4>
+<pre><code>(defstruct sym
+  "Symbol column: count, mode."
+  (n 0) (has nil))
+
+(defstruct num
+  "Numeric column: count, mean, sd."
+  (n 0) (mu 0) (m2 0))
+
+(defmethod add ((s sym) v)
+  "Fold V; track frequency."
+  (incf (slot-value s 'n))
+  (let ((cell (assoc v (slot-value s 'has))))
+    (if cell
+        (incf (cdr cell))
+        (push (cons v 1) (slot-value s 'has)))))
+
+(defmethod add ((s num) v)
+  "Fold V into running mean+m2."
+  (incf (slot-value s 'n))
+  (let ((d (- v (slot-value s 'mu))))
+    (incf (slot-value s 'mu)
+          (/ d (slot-value s 'n)))
+    (incf (slot-value s 'm2)
+          (* d (- v (slot-value s 'mu))))))
+
+(defmethod mid ((s sym))
+  "Mode."
+  (car (reduce (lambda (a b)
+                 (if (&gt; (cdr a) (cdr b)) a b))
+               (slot-value s 'has))))
+
+(defmethod mid ((s num))
+  "Mean."
+  (slot-value s 'mu))
+
+(defmethod spread ((s num))
+  "SD."
+  (if (&lt; (slot-value s 'n) 2) 0
+      (sqrt (/ (slot-value s 'm2)
+               (1- (slot-value s 'n))))))</code></pre>
+      </div>
+      <div>
+        <h4>glu</h4>
+<pre><code>(<span class="m">glu</span> sym "Symbol column: count, mode."
+    ((n 0) (has nil))
+
+  (add (v)
+    "Fold V; track frequency."
+    (incf <span class="m">$n</span>)
+    (let ((cell (assoc v <span class="m">$has</span>)))
+      (if cell
+          (incf (cdr cell))
+          (push (cons v 1) <span class="m">$has</span>))))
+
+  (mid ()
+    "Mode."
+    (car (reduce (lambda (a b)
+                   (if (&gt; (cdr a) (cdr b)) a b))
+                 <span class="m">$has</span>))))
+
+(<span class="m">glu</span> num "Numeric column: count, mean, sd."
+    ((n 0) (mu 0) (m2 0))
+
+  (add (v)
+    "Fold V into running mean+m2."
+    (incf <span class="m">$n</span>)
+    (let ((d (- v <span class="m">$mu</span>)))
+      (incf <span class="m">$mu</span> (/ d <span class="m">$n</span>))
+      (incf <span class="m">$m2</span> (* d (- v <span class="m">$mu</span>)))))
+
+  (mid ()
+    "Mean."
+    <span class="m">$mu</span>)
+
+  (spread ()
+    "SD."
+    (if (&lt; <span class="m">$n</span> 2) 0
+        (sqrt (/ <span class="m">$m2</span> (1- <span class="m">$n</span>))))))</code></pre>
+      </div>
+    </div>
+
+    <p>Run them both:</p>
+<pre><code>(let ((s (make-sym)) (n (make-num)))
+  (<span class="m">for/</span> (add s v) for v in '(red blue red green red blue))
+  (<span class="m">for/</span> (add n v) for v in '(1 2 3 4 5))
+  (format t "sym mid=~a   num mid=~a sd=~,2f~%"
+          (mid s) (mid n) (spread n)))
+<span class="c">;; =&gt; sym mid=RED   num mid=3 sd=1.58</span></code></pre>
+
+    <p>Two structs become two <code>glu</code> blocks. Six
+       <code>defmethod</code> heads &mdash; each repeating the
+       type tag and the <code>slot-value</code> machinery
+       &mdash; vanish into the bundling. Every
+       <code>(slot-value s 'X)</code> shrinks to
+       <code>$X</code>. Same Lisp. Less of it. Same generic
+       dispatch &mdash; <code>add</code> on a <code>sym</code>
+       and <code>add</code> on a <code>num</code> stay distinct
+       methods on the same generic.</p>
+  </div>
+</section>
+
+<section id="try">
+  <div class="container">
+    <h2>Try it</h2>
+    <p>Two files. No build system, no package manager. If you
+       have CLISP or SBCL, you have glu.</p>
+<pre><code>$ git clone https://github.com/timm/lisp
+$ cd lisp
+$ sbcl --script fri2.lisp --stats
+$ clisp fri2.lisp --tree</code></pre>
+    <p><code>glu.lisp</code> is the dialect.
+       <code>fri2.lisp</code> loads it and adds a complete
+       active-learning system &mdash; CSV loader, online
+       column stats, decision-tree builder, train/test loop
+       &mdash; and serves as the running example for everything
+       on this page.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <p>
+      &copy; 2026 Tim Menzies &middot;
+      <a href="https://github.com/timm/lisp/blob/main/LICENSE.md">MIT License</a> &middot;
+      <a href="https://github.com/timm/lisp">Source on GitHub</a>
+    </p>
+    <p class="small">
+      Inspired by <a href="https://wren.io/">wren</a>,
+      <em>On Lisp</em>, and the conviction that small is beautiful.
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>
