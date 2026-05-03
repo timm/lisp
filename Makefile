@@ -25,12 +25,12 @@ push: ## commit with prompted msg and push
 $(A2PS_DIR)/def.ssh: $(ETC)/def.ssh ## install a2ps style
 	@cp $< $@
 
-Lines ?= 60
+Chars ?= 65
 ~/tmp/%.pdf: %.lisp Makefile $(A2PS_DIR)/def.ssh ## .lisp ==> .pdf
 	@mkdir -p ~/tmp
 	@echo "pdf-ing $@ ... "
 	@a2ps --pretty-print=def -Br --quiet --landscape   \
-	      --pro=color --chars-per-line=$(Lines)        \
+	      --pro=color --chars-per-line=$(Chars)        \
 	      --line-numbers=1 --borders=no --columns=3    \
 	      -M letter -o - $< | ps2pdf - $@
 	@open $@

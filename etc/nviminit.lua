@@ -43,3 +43,21 @@ vim.keymap.set("n", "<leader>s", ":set spell!<CR>", { silent = true })
 -- colors ------------------------------------------------------------
 vim.cmd.colorscheme("sorbet")
 
+-- lisp indent: body always 2 spaces past innermost open paren ------
+_G.LispIndent = function()
+  if vim.v.lnum <= 1 then return 0 end
+  vim.fn.cursor(vim.v.lnum, 1)
+  local skip = [[synIDattr(synID(line("."), col("."), 1), "name") =~? "string\|comment"]]
+  local pos = vim.fn.searchpairpos('(', '', ')', 'bnW', skip)
+  if pos[1] == 0 then return 0 end
+  return pos[2] + 1
+end
+
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "lisp",
+  callback = function()
+    vim.bo.lisp = false
+    vim.bo.indentexpr = "v:lua.LispIndent()"
+  end,
+})
+
