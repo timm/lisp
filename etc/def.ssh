@@ -12,7 +12,7 @@ requires a2ps 4.12i
 
 documentation is
   "Common Lisp plus the fri2.lisp custom macros: def,"
-  "defread, aif, fn/fnn/fnnn, for/, ?, msg, new."
+  "defread, if+, f+/ff+/fff+, for+, ?, msg, new+."
   ""
   "Highlights (def NAME ...) and (defread NAME ...)"
   "with NAME as a label, like (defun NAME ...)."
@@ -23,10 +23,10 @@ ancestors are
 end ancestors
 
 keywords in Keyword_strong are
-  def, defread, aif,
-  fn, fnn, fnnn,
-  "for/", "?",
-  msg, new, acc, gf
+  def, defread, "if+",
+  "f+", "ff+", "fff+",
+  "for+", "?",
+  msg, "new+", acc, gf
 end keywords
 
 # (def NAME ...) and (defread NAME ...): mark NAME as label

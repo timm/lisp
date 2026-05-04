@@ -10,10 +10,10 @@
 
   Prism.languages.insertBefore('lisp', 'keyword', {
 
-    // Project macros. Trailing (?=[\s()]) handles `glu+`, `let+`, `for/`
-    // where `+` and `/` are non-word characters and \b alone fails.
+    // Project macros. Trailing (?=[\s()]) handles `glu+`, `let+`, `for+`, `if+`, `new+`
+    // where `+` is a non-word character and \b alone fails.
     'glu-macro': {
-      pattern: /\b(?:glu\+?|let\+|for\/|aif|defread|new|fnn?n?)(?=[\s()])/,
+      pattern: /\b(?:glu\+?|let\+|for\+|if\+|new\+|defread|fnn?n?)(?=[\s()])/,
       alias: 'keyword'
     },
 

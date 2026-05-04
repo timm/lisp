@@ -24,166 +24,434 @@
 
 <div class="container">
 <div class="layout">
-
 <div class="content">
 
 <h1>Manual</h1>
 <p class="lead">Eleven forms. Each gets a section.</p>
 
+<!-- ===== READ ===== -->
+
 <section id="field">
-<h2>$field</h2>
-<p class="lead">Self slot access.</p>
-<p>Inside a method whose first parameter is named <code class="language-lisp">i</code>
-   &mdash; glu always names it that &mdash; <code class="language-lisp">$x</code>
-   expands to <code class="language-lisp">(slot-value i 'x)</code>. Read,
-   <code class="language-lisp">setf</code>, <code class="language-lisp">incf</code>, <code class="language-lisp">push</code> all
-   work.</p>
-<pre><code class="language-lisp">$mu          ; (slot-value i 'mu)
-(incf $n)   ; (incf (slot-value i 'n))
+  <h2>$field</h2>
+  <p class="lead">Self slot access.</p>
+  <p>Inside a method whose first parameter is named
+     <code class="language-lisp">i</code> &mdash; glu always names it that &mdash;
+     <code class="language-lisp">$x</code> expands to
+     <code class="language-lisp">(slot-value i 'x)</code>.
+     Read, <code class="language-lisp">setf</code>,
+     <code class="language-lisp">incf</code>,
+     <code class="language-lisp">push</code> all work.</p>
+  <div class="expand-pair">
+    <div>
+      <div class="label">Unexpanded</div>
+      <pre><code class="language-lisp">$mu
+(incf $n)
 (setf $has nil)</code></pre>
+    </div>
+    <div>
+      <div class="label">Expanded</div>
+      <pre><code class="language-lisp">(slot-value i 'mu)
+(incf (slot-value i 'n))
+(setf (slot-value i 'has) nil)</code></pre>
+    </div>
+  </div>
 </section>
 
 <section id="chain">
-<h2>(? x a b c)</h2>
-<p class="lead">Nested slot access.</p>
-<p>Chained <code class="language-lisp">slot-value</code>. <code class="language-lisp">setf</code>-able.
-   Replaces the noisy <code class="language-lisp">(slot-value (slot-value ...))</code>
-   tower.</p>
-<pre><code class="language-lisp">(? data cols y)
-; (slot-value (slot-value data 'cols) 'y)
+  <h2>(? x a b c)</h2>
+  <p class="lead">Nested slot access.</p>
+  <p>Chained <code class="language-lisp">slot-value</code>.
+     <code class="language-lisp">setf</code>-able.
+     Replaces the noisy
+     <code class="language-lisp">(slot-value (slot-value ...))</code> tower.</p>
+  <div class="expand-pair">
+    <div>
+      <div class="label">Unexpanded</div>
+      <pre><code class="language-lisp">(? data cols y)
 
 (setf (? tree left) new-left)</code></pre>
+    </div>
+    <div>
+      <div class="label">Expanded</div>
+      <pre><code class="language-lisp">(slot-value
+  (slot-value data 'cols) 'y)
+
+(setf (slot-value tree 'left)
+      new-left)</code></pre>
+    </div>
+  </div>
 </section>
 
+<!-- ===== CALL ===== -->
+
 <section id="bang">
-<h2>(! f a b)</h2>
-<p class="lead">Funcall shortcut.</p>
-<p>Equivalent to <code class="language-lisp">(funcall f a b)</code>. Three chars
-   shorter, reads cleaner when functions ride in arguments.</p>
-<pre><code class="language-lisp">(! cmp a b)            ; (funcall cmp a b)
+  <h2>(! f a b)</h2>
+  <p class="lead">Funcall shortcut.</p>
+  <p>Equivalent to <code class="language-lisp">(funcall f a b)</code>.
+     Three chars shorter, reads cleaner when functions ride
+     in arguments.</p>
+  <div class="expand-pair">
+    <div>
+      <div class="label">Unexpanded</div>
+      <pre><code class="language-lisp">(! cmp a b)
 (mapcar (fn (! key _)) lst)</code></pre>
+    </div>
+    <div>
+      <div class="label">Expanded</div>
+      <pre><code class="language-lisp">(funcall cmp a b)
+(mapcar (lambda (_)
+          (funcall key _))
+        lst)</code></pre>
+    </div>
+  </div>
 </section>
 
 <section id="fn">
-<h2>fn / fnn / fnnn</h2>
-<p class="lead">Lambda shortcuts.</p>
-<p>One-, two-, three-arg lambdas with implicit parameters
-   <code class="language-lisp">_</code>, <code class="language-lisp">__</code>, <code class="language-lisp">___</code>. Kills the
-   <code class="language-lisp">(lambda (x) ...)</code> overhead in higher-order calls.</p>
-<pre><code class="language-lisp">(mapcar (fn   (* _ _))     '(1 2 3))     ; (1 4 9)
-(mapcar (fnn  (+ _ __))    '(1 2) '(10 20)); (11 22)
-(sort lst #'&lt; :key (fn (slot-value _ 'at)))</code></pre>
+  <h2>fn / fnn / fnnn</h2>
+  <p class="lead">Lambda shortcuts.</p>
+  <p>One-, two-, three-arg lambdas with implicit parameters
+     <code class="language-lisp">_</code>, <code class="language-lisp">__</code>,
+     <code class="language-lisp">___</code>. Kills the
+     <code class="language-lisp">(lambda (x) ...)</code> overhead in
+     higher-order calls.</p>
+  <div class="expand-pair">
+    <div>
+      <div class="label">Unexpanded</div>
+      <pre><code class="language-lisp">(mapcar (fn (* _ _))
+        '(1 2 3))
+
+(mapcar (fnn (+ _ __))
+        '(1 2) '(10 20))
+
+(sort lst #'&lt;
+  :key (fn (? _ at)))</code></pre>
+    </div>
+    <div>
+      <div class="label">Expanded</div>
+      <pre><code class="language-lisp">(mapcar (lambda (_) (* _ _))
+        '(1 2 3))
+
+(mapcar (lambda (_ __)
+          (+ _ __))
+        '(1 2) '(10 20))
+
+(sort lst #'&lt;
+  :key (lambda (_)
+         (slot-value _ 'at)))</code></pre>
+    </div>
+  </div>
 </section>
 
-<section id="aif">
-<h2>(aif test then else)</h2>
-<p class="lead">Anaphoric if.</p>
-<p>Binds the test result to <code class="language-lisp">it</code> in both branches.
-   From Paul Graham's <em>On Lisp</em>.</p>
-<pre><code class="language-lisp">(aif (find flag opts :key #'third :test #'equalp)
-     (setf (second it) (thing arg)))
+<!-- ===== BRANCH ===== -->
 
-(aif (gethash key cache)
+<section id="ifp">
+  <h2>(if+ test then else)</h2>
+  <p class="lead">Anaphoric if.</p>
+  <p>Binds the test result to <code class="language-lisp">it</code>
+     in both branches.
+     From Paul Graham's <em>On Lisp</em>.</p>
+  <div class="expand-pair">
+    <div>
+      <div class="label">Unexpanded</div>
+      <pre><code class="language-lisp">(if+ (gethash key cache)
      it
-     (setf (gethash key cache) (compute key)))</code></pre>
+     (setf (gethash key cache)
+           (compute key)))</code></pre>
+    </div>
+    <div>
+      <div class="label">Expanded</div>
+      <pre><code class="language-lisp">(let ((it (gethash key cache)))
+  (if it
+    it
+    (setf (gethash key cache)
+          (compute key))))</code></pre>
+    </div>
+  </div>
 </section>
+
+<!-- ===== BIND ===== -->
 
 <section id="letp">
-<h2>(let+ ...)</h2>
-<p class="lead">Sequential bindings: let, dbind, mvb, labels.</p>
-<p>One construct, four forms. Entry shape picks: plain
-   <code class="language-lisp">(var val)</code> is <code class="language-lisp">let</code>; flat-symbol list
-   <code class="language-lisp">((a b c) form)</code> is <code class="language-lisp">multiple-value-bind</code>;
-   nested-pattern list is <code class="language-lisp">destructuring-bind</code>;
-   3+ elements <code class="language-lisp">(name args body...)</code> is
-   <code class="language-lisp">labels</code>.</p>
-<pre><code class="language-lisp">(let+ ((x        5)                       ; let
-       ((a b c)  (values 1 2 3))             ; mvb
-       (sq       (n) (* n n))                ; labels
-       (((l r) p) '((1 2) 3)))               ; dbind
+  <h2>(let+ ...)</h2>
+  <p class="lead">Sequential bindings: let, dbind, mvb, labels.</p>
+  <p>One construct, four forms. Entry shape picks: plain
+     <code class="language-lisp">(var val)</code> is
+     <code class="language-lisp">let</code>; flat-symbol list
+     <code class="language-lisp">((a b c) form)</code> is
+     <code class="language-lisp">multiple-value-bind</code>;
+     nested-pattern list is
+     <code class="language-lisp">destructuring-bind</code>;
+     3+ elements <code class="language-lisp">(name args body...)</code> is
+     <code class="language-lisp">labels</code>.</p>
+  <div class="expand-pair">
+    <div>
+      <div class="label">Unexpanded</div>
+      <pre><code class="language-lisp">(let+ ((x       5)
+       ((a b c) (values 1 2 3))
+       (sq      (n) (* n n))
+       (((l r) p) '((1 2) 3)))
   (sq (+ x a)))</code></pre>
-<p>Replaces nested <code class="language-lisp">let* / multiple-value-bind /
-   destructuring-bind / labels</code> stairs with one flat
-   block. <code class="language-lisp">let*</code> becomes redundant.</p>
+    </div>
+    <div>
+      <div class="label">Expanded</div>
+      <pre><code class="language-lisp">(let ((x 5))
+  (multiple-value-bind (a b c)
+      (values 1 2 3)
+    (labels ((sq (n) (* n n)))
+      (destructuring-bind
+          ((l r) p) '((1 2) 3)
+        (sq (+ x a))))))</code></pre>
+    </div>
+  </div>
+  <p>Replaces nested
+     <code class="language-lisp">let* / multiple-value-bind /
+     destructuring-bind / labels</code> stairs with one flat
+     block. <code class="language-lisp">let*</code> becomes redundant.</p>
 </section>
 
 <section id="forp">
-<h2>(for/ expr for x in lst if test ...)</h2>
-<p class="lead">List comprehension.</p>
-<p>Reads like Python. Walks <code class="language-lisp">for</code> and <code class="language-lisp">if</code>
-   clauses, collecting <code class="language-lisp">expr</code> per surviving iteration.
-   Nil results are skipped &mdash; a guard expression doubles
-   as filter.</p>
-<pre><code class="language-lisp">(for/ (* x x) for x in '(1 2 3 4 5) if (oddp x))
-; (1 9 25)
-
-(for/ (list x y)
-       for x in '(1 2 3)
-       for y in '(a b)
-       if (oddp x))
-; ((1 A) (1 B) (3 A) (3 B))</code></pre>
+  <h2>(for+ expr for x in lst if test ...)</h2>
+  <p class="lead">List comprehension.</p>
+  <p>Reads like Python. Walks
+     <code class="language-lisp">for</code> and
+     <code class="language-lisp">if</code> clauses, collecting
+     <code class="language-lisp">expr</code> per surviving iteration.
+     Nil results are skipped &mdash; a guard expression doubles
+     as filter.</p>
+  <div class="expand-pair">
+    <div>
+      <div class="label">Unexpanded</div>
+      <pre><code class="language-lisp">(for+ (* x x)
+  for x in '(1 2 3 4 5)
+  if (oddp x))</code></pre>
+    </div>
+    <div>
+      <div class="label">Expanded</div>
+      <pre><code class="language-lisp">(loop for x in '(1 2 3 4 5)
+  append
+  (if (oddp x)
+    (let ((v (* x x)))
+      (if v (list v) nil))
+    nil))</code></pre>
+    </div>
+  </div>
+  <div class="expand-pair">
+    <div>
+      <div class="label">Nested &mdash; unexpanded</div>
+      <pre><code class="language-lisp">(for+ (list x y)
+  for x in '(1 2 3)
+  for y in '(a b)
+  if (oddp x))</code></pre>
+    </div>
+    <div>
+      <div class="label">Nested &mdash; expanded</div>
+      <pre><code class="language-lisp">(loop for x in '(1 2 3)
+  append
+  (loop for y in '(a b)
+    append
+    (if (oddp x)
+      (let ((v (list x y)))
+        (if v (list v) nil))
+      nil)))</code></pre>
+    </div>
+  </div>
+  <h3>Source</h3>
+  <pre><code class="language-lisp">(defmacro for+ (expr &rest cs)
+  (labels ((walk (cs)
+             (cond ((null cs)
+                    `(let ((v ,expr)) (if v (list v) nil)))
+                   ((eq (car cs) 'for)
+                    `(loop for ,(cadr cs) in ,(cadddr cs)
+                           append ,(walk (cddddr cs))))
+                   ((eq (car cs) 'if)
+                    `(if ,(cadr cs) ,(walk (cddr cs)) nil)))))
+    (walk cs)))</code></pre>
 </section>
 
+<!-- ===== DEFINE ===== -->
+
 <section id="glu">
-<h2>(glu name [doc] slots methods...)</h2>
-<p class="lead">Struct + methods, in one form.</p>
-<p>Bundles <code class="language-lisp">defstruct</code> with its
-   <code class="language-lisp">defmethod</code>s. First parameter of every method is
-   <code class="language-lisp">i</code>, so <code class="language-lisp">$slot</code> just works. Optional
-   doc string. The pseudo-method <code class="language-lisp">(make ARGS BODY)</code>
-   defines the public factory; <code class="language-lisp">(:opts ((opt ...)))</code>
-   adds defstruct options.</p>
-<pre><code class="language-lisp">(glu sym "Symbolic column."
-    ((n 0) has)
+  <h2>(glu name [doc] slots methods...)</h2>
+  <p class="lead">Struct + methods, in one form.</p>
+  <p>Bundles <code class="language-lisp">defstruct</code> with its
+     <code class="language-lisp">defmethod</code>s. First parameter of every
+     method is <code class="language-lisp">i</code>, so
+     <code class="language-lisp">$slot</code> just works. Optional doc string.
+     <code class="language-lisp">(:opts ((opt ...)))</code> adds defstruct
+     options.</p>
+  <p><strong>make works like Python's
+     <code>__init__</code>:</strong> the body configures the
+     instance; it never returns it. Glu builds
+     <code class="language-lisp">i</code>, runs your body, then returns
+     <code class="language-lisp">i</code> for you.
+     <code class="language-lisp">(make () BODY)</code> forwards keyword
+     args to <code class="language-lisp">%make-NAME</code> and binds
+     <code class="language-lisp">i</code> automatically.
+     <code class="language-lisp">(make (ARGS) BODY)</code> gives custom
+     args; bind <code class="language-lisp">i</code> yourself via
+     <code class="language-lisp">&amp;aux</code>.</p>
+  <p><strong>Dispatch:</strong> same method name across two glu
+     forms? CL dispatches on the first arg's type.
+     <code class="language-lisp">(add s v)</code> hits
+     <code class="language-lisp">sym</code>'s body or
+     <code class="language-lisp">num</code>'s depending on
+     <code class="language-lisp">s</code>.</p>
+  <p><strong>Single-impl methods?</strong> Don't put them in
+     <code class="language-lisp">glu</code>. Make them
+     <code class="language-lisp">(defun klass-name (i ...) ...)</code> next
+     to the glu. <code class="language-lisp">klass-</code> prefix names
+     ownership; no global generic-function pollution.</p>
+  <h3>Expansion</h3>
+  <div class="expand-pair">
+    <div>
+      <div class="label">Unexpanded</div>
+      <pre><code class="language-lisp">(glu sym "Symbolic column."
+  ((n 0) has)
 
-  (add (v)
-    (incf $n)
-    (aif (assoc v $has)
-         (incf (cdr it))
-         (push (cons v 1) $has)))
+  (mid ()
+    (car $has)))</code></pre>
+    </div>
+    <div>
+      <div class="label">Expanded</div>
+      <pre><code class="language-lisp">(progn
+  (defstruct (%make-sym)
+    "Symbolic column."
+    (n 0) has)
+  (defun make-sym (&rest args)
+    (apply #'%make-sym args))
+  (defmethod mid ((i sym))
+    (car (slot-value i 'has)))
+  'sym)</code></pre>
+    </div>
+  </div>
+  <div class="expand-pair">
+    <div>
+      <div class="label">Post-init make &mdash; unexpanded</div>
+      <pre><code class="language-lisp">(glu num "Numeric."
+  ((n 0) (mu 0))
 
-  (mid () (car (reduce (fnn (if (&gt; (cdr _) (cdr __)) _ __))
-                       $has))))</code></pre>
-<p><strong>Dispatch:</strong> same method name across two glu
-   forms? CL dispatches on the first arg's type.
-   <code class="language-lisp">(add s v)</code> hits <code class="language-lisp">sym</code>'s body or
-   <code class="language-lisp">num</code>'s depending on <code class="language-lisp">s</code>.</p>
-<p><strong>Single-impl methods?</strong> Don't put them in
-   <code class="language-lisp">glu</code>. Make them
-   <code class="language-lisp">(defun klass-name (i ...) ...)</code> next to the
-   glu. <code class="language-lisp">klass-</code> prefix names ownership; no global
-   generic-function pollution.</p>
+  (make ()
+    (setf $goal 1)))</code></pre>
+    </div>
+    <div>
+      <div class="label">Post-init make &mdash; expanded</div>
+      <pre><code class="language-lisp">(progn
+  (defstruct (%make-num)
+    "Numeric."
+    (n 0) (mu 0))
+  (defun make-num (&rest args)
+    (let ((i (apply #'%make-num args)))
+      (setf (slot-value i 'goal) 1)
+      i))
+  'num)</code></pre>
+    </div>
+  </div>
+  <h3>Source</h3>
+  <pre><code class="language-lisp">(defmacro glu (name &rest rest)
+  (let* ((doc       (when (stringp (car rest)) (pop rest)))
+         (slots     (pop rest))
+         (methods   rest)
+         (extra     (find :opts methods :key #'car))
+         (methods   (remove :opts methods :key #'car))
+         (make-spec (find 'make methods :key #'car))
+         (methods   (remove 'make methods :key #'car))
+         (priv      (intern (format nil "%MAKE-~A" name)))
+         (pub       (intern (format nil  "MAKE-~A" name)))
+         (make-defun
+           (cond
+             ((null make-spec)
+              `(defun ,pub (&rest args)
+                 (apply #',priv args)))
+             ((null (cadr make-spec))
+              `(defun ,pub (&rest args)
+                 (let ((i (apply #',priv args)))
+                   ,@(cddr make-spec) i)))
+             (t
+              `(defun ,pub ,(cadr make-spec)
+                 ,@(cddr make-spec) i))))
+         (opts (cons `(:constructor ,priv)
+                     (and extra (cadr extra)))))
+    `(progn
+       (defstruct (,name ,@opts)
+         ,@(when doc (list doc))
+         ,@slots)
+       ,make-defun
+       (glu+ ,name ,@methods)
+       ',name)))</code></pre>
 </section>
 
 <section id="glup">
-<h2>(glu+ name methods...)</h2>
-<p class="lead">Add methods to an existing glu later.</p>
-<p>Same method shape as <code class="language-lisp">glu</code>, no <code class="language-lisp">make</code>.
-   Useful when methods need types defined later in the file.</p>
-<pre><code class="language-lisp">(glu+ num
+  <h2>(glu+ name methods...)</h2>
+  <p class="lead">Add methods to an existing glu later.</p>
+  <p>Same method shape as <code class="language-lisp">glu</code>, no
+     <code class="language-lisp">make</code>.
+     Useful when methods need types defined later in the
+     file.</p>
+  <div class="expand-pair">
+    <div>
+      <div class="label">Unexpanded</div>
+      <pre><code class="language-lisp">(glu+ num
   (twice () (* 2 $mu)))</code></pre>
+    </div>
+    <div>
+      <div class="label">Expanded</div>
+      <pre><code class="language-lisp">(progn
+  (defmethod twice ((i num))
+    (* 2 (slot-value i 'mu)))
+  'num)</code></pre>
+    </div>
+  </div>
 </section>
 
-<section id="new">
-<h2>(new cls k v ...)</h2>
-<p class="lead">Constructor sugar.</p>
-<p>Expands to <code class="language-lisp">(make-CLS k v ...)</code>. Saves the
-   <code class="language-lisp">make-</code> prefix at call sites.</p>
-<pre><code class="language-lisp">(new num :goal 0)   ; (make-num :goal 0)</code></pre>
+<section id="newp">
+  <h2>(new+ cls k v ...)</h2>
+  <p class="lead">Constructor sugar.</p>
+  <p>Expands to <code class="language-lisp">(make-CLS k v ...)</code>.
+     Saves the <code class="language-lisp">make-</code> prefix at call
+     sites.</p>
+  <div class="expand-pair">
+    <div>
+      <div class="label">Unexpanded</div>
+      <pre><code class="language-lisp">(new+ num :goal 0)</code></pre>
+    </div>
+    <div>
+      <div class="label">Expanded</div>
+      <pre><code class="language-lisp">(make-num :goal 0)</code></pre>
+    </div>
+  </div>
 </section>
 
 <section id="defread">
-<h2>(defread c (s) body)</h2>
-<p class="lead">Define a reader macro on a single character.</p>
-<p>Installs <code class="language-lisp">body</code> as the reader macro for
-   character <code class="language-lisp">c</code>. The two project reader macros
-   &mdash; <code class="language-lisp">$</code> and <code class="language-lisp">@</code> &mdash; are built
-   with it.</p>
-<pre><code class="language-lisp">; @key reads as (second (assoc 'key *the*))
-(defread @(s)
-  `(second (assoc ',(read s t nil t) *the*)))
+  <h2>(defread c (s) body)</h2>
+  <p class="lead">Define a reader macro on a single character.</p>
+  <p>Installs <code class="language-lisp">body</code> as the reader macro
+     for character <code class="language-lisp">c</code>. The two project
+     reader macros &mdash; <code class="language-lisp">$</code> and
+     <code class="language-lisp">@</code> &mdash; are built with it.</p>
+  <div class="expand-pair">
+    <div>
+      <div class="label">Unexpanded</div>
+      <pre><code class="language-lisp">(defread @(s)
+  `(second
+     (assoc ',(read s t nil t)
+            *the*)))
 
-@budget    ; (second (assoc 'budget *the*))</code></pre>
+@budget</code></pre>
+    </div>
+    <div>
+      <div class="label">Expanded</div>
+      <pre><code class="language-lisp">(set-macro-character
+  #\@
+  (lambda (s c)
+    (declare (ignore c))
+    `(second
+       (assoc ',(read s t nil t)
+              *the*)))
+  t)
+
+(second (assoc 'budget *the*))</code></pre>
+    </div>
+  </div>
 </section>
 
 </div><!-- /content -->
@@ -198,14 +466,14 @@
     <li><a href="#bang">(! f a)</a></li>
     <li><a href="#fn">fn / fnn / fnnn</a></li>
     <li class="group">Branch</li>
-    <li><a href="#aif">aif</a></li>
+    <li><a href="#ifp">if+</a></li>
     <li class="group">Bind</li>
     <li><a href="#letp">let+</a></li>
-    <li><a href="#forp">for/</a></li>
+    <li><a href="#forp">for+</a></li>
     <li class="group">Define</li>
     <li><a href="#glu">glu</a></li>
     <li><a href="#glup">glu+</a></li>
-    <li><a href="#new">new</a></li>
+    <li><a href="#newp">new+</a></li>
     <li><a href="#defread">defread</a></li>
   </ul>
 </aside>

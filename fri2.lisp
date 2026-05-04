@@ -35,14 +35,8 @@
 ;
 ; NAMING: r/rs=row(s), d=data, c=column, i=self,
 ;         ys=Num of distys.
-;
-; CONFIG READER MACRO
-;   @key    -> (second (assoc 'key *the*))
-;
-; glu.lisp supplies the rest: $field, (? x ...), aif,
-; (! f a b), fn/fnn/fnnn, glu, glu+, new, for/.
 
-(load "glu")
+(load "plus")
 
 (defparameter *the*
  '((p      2            "-p"  "minkowski exponent")
@@ -51,16 +45,13 @@
    (budget 50           "-b"  "max labels")
    (few    128          "-u"  "max unlabelled pool")))
 
-;## Config reader macro
-(defread @(s) `(second (assoc ',(read s t nil t) *the*)))
+(setf *seed* @seed)
 
-(defvar *seed* @seed)
-
-;  _      ._ _
+;  _      ._ _
 ; _>  \/  | | |
 ;     /
 
-(glu sym "Symbolic column: count + frequency table."
+(plus sym "Symbolic column: count + frequency table."
   ((at 0) (txt " ") (n 0) has)
 
   (add (v &optional (w 1))
@@ -74,7 +65,7 @@
     v)
 
   (mid () "Mode."
-    (car (reduce (fnn (if (> (cdr _) (cdr __)) _ __)) $has)))
+    (car (reduce (ff+ (if (> (cdr _) (cdr __)) _ __)) $has)))
 
   (spread () "Entropy."
     (loop for (_ . v) in $has
@@ -89,14 +80,12 @@
 ; ._        ._ _
 ; | |  |_|  | | |
 
-(glu num "Numeric column: Welford count, mean, m2, goal."
+(plus num "Numeric column: Welford count, mean, m2, goal."
   ((at 0) (txt " ") (n 0) (mu 0) (m2 0) (goal 1))
 
-  (make (&rest args
-           &aux (i (apply #'%make-num args)))
+  (make ()
     "Build a num; goal=0 if txt ends in '-', else 1."
-    (setf $goal (if (eq #\- (ch $txt -1)) 0 1))
-    i)
+    (setf $goal (if (eq #\- (ch $txt -1)) 0 1)))
 
   (add (v &optional (w 1))
     "Fold V (weight W) into running mean+m2."
@@ -116,7 +105,7 @@
 
   (norm (v) (if (eq v '?) v
               (let ((z (/ (- v $mu) (+ (spread i) 1e-32))))
-                (/ 1 
+                (/ 1
                   (+ 1 (exp (* -1.7 (max -3 (min 3 z)))))))))
 
   (distx (a b)
@@ -135,10 +124,10 @@
 
   (ops () '("<=" ">")))
 
-;  _   _   |   _
+;  _   _   |   _
 ; (_  (_)  |  _>
 
-(glu cols "Header-derived collection: names, x-cols, y-cols, all."
+(plus cols "Header-derived collection: names, x-cols, y-cols, all."
   (names x y all)
 
   (make (txts &aux (i (%make-cols :names txts)) (n -1))
@@ -148,26 +137,25 @@
                         :txt txt :at (incf n)))
            (end (col) (ch (? col txt) -1)))
       (setf $all (mapcar #'one txts))
-      (dolist (col $all i)
+      (dolist (col $all)
         (unless (eql (end col) #\X)
           (if (find (end col) "!-+")
             (push col $y)
             (push col $x))))))
 
   (add (row &optional (w 1))
-    (mapcar (fnn (add _ __ w)) $all row)
+    (mapcar (ff+ (add _ __ w)) $all row)
     row))
 
 ;  _|   _.  _|_   _.
 ; (_|  (_|   |_  (_|
 
-(glu data "Table: rows + their parsed columns + cached row-mid."
+(plus data "Table: rows + their parsed columns + cached row-mid."
   (rows cols mid)
 
-  (make (&optional rows)
+  (make (&optional rows &aux (i (%make-data :cols (make-cols (car rows)))))
     "First row = header."
-    (adds (cdr rows)
-      (%make-data :cols (make-cols (car rows)))))
+    (adds (cdr rows) i))
 
   (add (row &optional (w 1))
     "W=-1 removes ROW."
@@ -193,17 +181,17 @@
 
 (defun data-wins (i)
   "Closure: score row 0..100 vs this data; 100=best, 50=med."
-  (let+ ((ys (mapcar (fn (data-disty i _)) $rows))
+  (let+ ((ys (mapcar (f+ (data-disty i _)) $rows))
          (ds (sort ys #'<))
          (lo (first ds))
          (md (elt ds (floor (length ds) 2))))
-    (fn (floor (* 100 (- 1 (/ (- (data-disty i _) lo)
+    (f+ (floor (* 100 (- 1 (/ (- (data-disty i _) lo)
                               (+ (- md lo) 1e-32))))))))
 
-; _|_  ._   _    _
+; _|_  ._   _    _
 ;  |_  |   (/_  (/_
 
-(glu tree "Decision tree: built recursively by make-tree."
+(plus tree "Decision tree: built recursively by make-tree."
   (data ynum col cut left right hdr)
 
   (:opts ((:copier nil)))
@@ -212,7 +200,7 @@
            &aux (i (%make-tree
                      :data (make-data
                              (cons (? data cols names) rs))
-                     :ynum (adds (mapcar (fn (data-disty data _)) rs))
+                     :ynum (adds (mapcar (f+ (data-disty data _)) rs))
                      :hdr  hdr)))
     "Build node from RS; recurse on best split if big enough."
     (when (>= (length rs) (* 2 leaf))
@@ -224,8 +212,7 @@
               $left  (make-tree data (fourth best) leaf
                        (tree-kid-hdr c cut t))
               $right (make-tree data (fifth best) leaf
-                       (tree-kid-hdr c cut nil)))))))
-    i))
+                       (tree-kid-hdr c cut nil)))))))))
 
 (defun tree-leaf (i r)
   (if (null (? i left)) i
@@ -267,11 +254,11 @@
                         (length (fifth s))) leaf)
              collect s)))
 
-;  _.   _   _.       o  ._   _
+;  _.   _   _.       o  ._   _
 ; (_|  (_  (_|  |_|  |  |   (/_
 ;            |
 
-(glu acquire "Active learner: lab, best, rest, ys, pool."
+(plus acquire "Active learner: lab, best, rest, ys, pool."
     (lab best rest ys pool)
 
   (make (rs &aux (hd (list (car rs)))
@@ -282,15 +269,14 @@
                      :ys   (make-num)
                      :pool (shuffle (cdr rs)))))
     "Init from RS (first row = header). Warm-start 4 labels."
-    (acquire-warm-start i)
-    i))
+    (acquire-warm-start i)))
 
 (defun acquire-warm-start (i &aux (start 4))
   "Label 4 rows; split by disty into best vs rest."
   (dotimes (_ (min start (length $pool)))
     (let ((r (pop $pool)))
       (add $lab r) (add $ys (data-disty $lab r))))
-  (let+ ((sorted (sortby (fn (data-disty $lab _)) (? $lab rows)))
+  (let+ ((sorted (sortby (f+ (data-disty $lab _)) (? $lab rows)))
          (n (max 1 (floor (sqrt (length sorted))))))
     (dolist (r (subseq sorted 0 n)) (add $best r))
     (dolist (r (subseq sorted n))   (add $rest r))))
@@ -303,7 +289,7 @@
   (when (> (length (? $best rows))
            (sqrt (length (? $lab rows))))
     (let ((bad (%extremum-by (? $best rows)
-                             (fn (data-disty $lab _)) #'>)))
+                             (f+ (data-disty $lab _)) #'>)))
       (sub $best bad) (add $rest bad))))
 
 (defun acquire-train (i)
@@ -316,13 +302,6 @@
           (acquire-rebalance i)))
   (values $best $lab (? $ys n)))
 
-(defun %extremum-by (lst key cmp)
-  "Argmin/argmax of LST under KEY, ordered by CMP."
-  (let+ ((best (car lst)) (m (! key best)))
-    (dolist (x (cdr lst) best)
-      (let ((k (! key x)))
-        (when (! cmp k m) (setf best x m k))))))
-
 (defun validate (rs god w &optional (check 5))
   "Run active; grow tree; rank holdout; pay CHECK."
   (let+ ((body  (shuffle (cdr rs)))
@@ -330,10 +309,10 @@
          (train (cons (car rs) (subseq body 0 n)))
          (test  (subseq body n))
          ((best lab labels) (acquire-train (make-acquire train)))
-         (y-god (fn (data-disty god _)))
+         (y-god (f+ (data-disty god _)))
          (train-best (%extremum-by (? lab rows) y-god #'<))
          (tr (make-tree lab (? lab rows)))
-         (ranked (sortby (fn (mid (? (tree-leaf tr _) ynum))) test))
+         (ranked (sortby (f+ (mid (? (tree-leaf tr _) ynum))) test))
          (top  (subseq ranked 0 (min check (length ranked))))
          (pick (%extremum-by top y-god #'<)))
     (declare (ignore best))
@@ -341,41 +320,18 @@
             (! w pick)
             (+ labels check))))
 
-;  _        _.  ._ _   ._   |   _    _ 
-; (/_  ><  (_|  | | |  |_)  |  (/_  _> 
-;                      |               
-
-(defun %stride (rows key &optional (n 30))
-  (loop for x in (sort rows #'< :key key)
-        by (fn (nthcdr n _)) do (print x)))
-
-(defmacro defeg (name doc &body body)
-  "Define eg--NAME taking &optional file; bind rs+i (data)."
-  `(defun ,name (&optional (file @file))
-     ,doc
-     (let+ ((rs (read-csv file)) (i (make-data rs)))
-       (declare (ignorable rs i))
-       ,@body)))
-
-(defun eg--all (&optional (arg @file))
-  (do-symbols (s *package*)
-    (let ((n (symbol-name s)))
-      (when (and (fboundp s) (not (eq s 'eg--all))
-                 (> (length n) 4) (string= n "EG--" :end1 4))
-        (run s arg)))))
-
-(defun eg-s (&optional (seed @seed))
-  "Set seed."
-  (setf *seed* seed  @seed  seed))
+;  _        _.  ._ _   ._   |   _    _
+; (/_  ><  (_|  | | |  |_)  |  (/_  _>
+;                      |
 
 (defun eg--the (&optional _) (declare (ignore _)) (print *the*))
 
 (defeg eg--rows  "Print CSV tail."  (print (subseq rs 380)))
 (defeg eg--data  "Show y-columns."  (print (? i cols y)))
-(defeg eg--ydata "Stride by disty." (%stride $rows (fn (data-disty i _))))
+(defeg eg--ydata "Stride by disty." (%stride $rows (f+ (data-disty i _))))
 
 (defeg eg--xdata "Stride by distx from row 0."
-  (let ((r0 (car $rows))) (%stride $rows (fn (distx i r0 _)))))
+  (let ((r0 (car $rows))) (%stride $rows (f+ (distx i r0 _)))))
 
 (defeg eg--stats "Print mid, spread per column."
   (dolist (c (? i cols all))
@@ -401,95 +357,5 @@
     (loop repeat 20 do
       (let+ (((train hold labels) (validate rs god w)))
         (format t "~&~3d ~3d ~3d~%" train hold labels)))))
-
-;      _|_  o  |   _ 
-; |_|   |_  |  |  _> 
-                    
-; ### Stats helpers
-(defun adds (lst &optional (summary (make-num)))
-  "Fold LST into SUMMARY via `add`."
-  (dolist (v lst summary) (add summary v)))
-
-(defun sub (it v) (add it v -1))
-
-(defun dist (lst f &aux (d 0))
-  "Minkowski @p-norm of (! f v) for v in LST."
-  (dolist (v lst (expt (/ d (length lst)) (/ 1 @p)))
-    (incf d (expt (! f v) @p))))
-
-(defun sortby (key lst) (sort (copy-list lst) #'< :key key))
-
-; ### Random
-(defun rand (&optional (n 1))
-  "Reproducible float in [0,n). Advances *seed*."
-  (setf *seed* (mod (* 16807.0d0 *seed*) 2147483647.0d0))
-  (* n (- 1.0d0 (/ *seed* 2147483647.0d0))))
-
-(defun rint (&optional (n 100) &aux (base 1E10))
-  "Reproducible integer in [0,n)."
-  (floor (* n (/ (rand base) base))))
-
-; ## lists
-(defun shuffle (lst &aux (v (coerce lst 'vector)))
-  "Fisher-Yates shuffle of LST. Seeded via *seed*."
-  (loop for i from (1- (length v)) downto 1 do
-    (rotatef (aref v i) (aref v (rint (1+ i)))))
-  (coerce v 'list))
-
-; ## characters
-(defun ch (s n)
-  "Char at N of S. Negative N counts from end."
-  (char s (if (minusp n) (+ (length s) n) n)))
-
-; ## strings
-(defun cells (s sep)
-  "Split S on character SEP into substring list."
-  (loop for start = 0 then (1+ end)
-    for end = (position sep s :start start)
-    collect (subseq s start end)
-    while end))
-
-(defun thing (str
-              &aux (v (ignore-errors
-                        (read-from-string str))))
-  "Coerce STR to number; '? for \"?\"; else string."
-  (cond ((numberp v) v)
-        ((string= str "?") '?)
-        (t str)))
-
-(defun read-csv (file)
-  "Read FILE as CSV; coerce cells via `thing`."
-  (with-open-file (s file)
-    (loop for line = (read-line s nil) while line
-      collect (mapcar #'thing (cells line #\,)))))
-
-; ._ _    _.  o  ._  
-; | | |  (_|  |  | | 
-                    
-(defun run (it &optional arg)
-  "Dispatch --flag to EG-FLAG function."
-  (let+ ((f (if (symbolp it) it
-                (intern (format nil
-                                "EG~:@(~a~)" it))))
-         (n (symbol-name f)))
-    (when (and (fboundp f)
-               (> (length n) 3)
-               (string= n "EG-" :end1 3))
-      (setf *seed* @seed)
-      (if arg (! f arg) (! f))
-      t)))
-
-(defun args ()
-  "Argv as list of strings (SBCL/CLISP portable)."
-  #+sbcl (cdr sb-ext:*posix-argv*)
-  #+clisp ext:*args*)
-
-(defun cli (lsts)
-  "Walk argv (flag arg) pairs: dispatch or update."
-  (loop for (flag arg) on (args) by #'cddr do
-    (unless (run flag (thing arg))
-      (aif (find flag lsts
-                 :key #'third :test #'equalp)
-           (setf (second it) (thing arg))))))
 
 (cli *the*)

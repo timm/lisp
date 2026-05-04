@@ -52,7 +52,7 @@ ezr.lisp: multi-objective explanation
   (dolist (txt names)
     (let* ((zz   (chr txt -1))
            (what (if (upper-case-p (chr txt 0))  #'make-num #'make-sym))
-           (col  (new (funcall what :txt txt :at (length $all)))))
+           (col  (new+(funcall what :txt txt :at (length $all)))))
       (push col $all)
       (unless (eql zz  #\X)
         (if (eql zz #\!) (setf $klass col))
@@ -63,7 +63,7 @@ ezr.lisp: multi-objective explanation
 ;-----------------------------------------------------------------------
 (defun adds (lst &optional i)
   (dolist (x lst i)
-    (setf i (or i (new (make-num))))
+    (setf i (or i (new+(make-num))))
     (add i x)))
 
 (defun sub (i v &optional zap)  (add i v -1 zap))
@@ -96,7 +96,7 @@ ezr.lisp: multi-objective explanation
       (setf $sd (if (< $n 2) 0 (sqrt (/ (max 0 $m2) (1- $n))))))))
 
 (defun _data+  (i v inc zap)
-  (cond ((not $cols) (setf $cols (new (make-cols) :names row)))
+  (cond ((not $cols) (setf $cols (new+(make-cols) :names row)))
         ((> inc 0) (push row $rows)
                    (add $cols row inc))
         (t         (if zap (setf $rows (remove row $rows :test #'equal)))
@@ -178,10 +178,10 @@ ezr.lisp: multi-objective explanation
     (assert (near 1.38 (div i)))))
 
 (defun eg--mids(_) 
-  (print (mid (new (make-data) :inits (? file)))))
+  (print (mid (new+(make-data) :inits (? file)))))
 
 (defun eg--divs(_) 
-  (print (div (new (make-data) :inits (? file)))))
+  (print (div (new+(make-data) :inits (? file)))))
 
 ;;----------------------------------------------------------------------
 ;; ## Main

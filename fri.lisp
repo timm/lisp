@@ -61,7 +61,7 @@
       (setf $sd (if (< $n 2) 0 (sqrt (/ (max 0 $m2) (1- $n))))))))
 
 (defun _data+  (i v inc zap)
-  (cond ((not $cols) (setf $cols (new (make-cols) :names row)))
+  (cond ((not $cols) (setf $cols (new+(make-cols) :names row)))
         ((> inc 0) (push row $rows)
                    (add $cols row inc))
         (t         (if zap (setf $rows (remove row $rows :test #'equal)))

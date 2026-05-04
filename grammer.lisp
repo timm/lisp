@@ -1,4 +1,4 @@
-(load "glu")
+(load "plus")
 
 (defparameter *grammar3*
   '((Sentence -> (NP VP))
@@ -36,7 +36,7 @@
 (defun pick (xs) (nth (random (length xs)) xs))
 
 (defun gen (s g)
-  (aif (for/ r for r in g if (eq (car r) s))
+  (if+ (for+ r for r in g if (eq (car r) s))
        (let+ ((rhs (third (pick it))))
          (if (listp rhs)
              (loop for x in rhs append (gen x g))
@@ -62,33 +62,32 @@
 ;;;   or   : pick 1+ children
 ;;; Bare atoms = leaves (keys into payload hashtable).
 
-(glu leaf
+(plus leaf
   "Per-feature metadata. cost/defect/fam ~ random 0..4.
    ben fixed at 1. bit in {nil, 0, 1}."
   (cost defect fam ben bit)
   (make ()
-    (%make-leaf :cost   (random 5)
-                :defect (random 5)
-                :fam    (random 5)
-                :ben    1
-                :bit    nil)))
+    (setf $cost   (random 5)
+          $defect (random 5)
+          $fam    (random 5)
+          $ben    1
+          $bit    nil)))
 
 (defun atoms-of (sx)
   "All bare atoms inside SX (skips first atom of each list = op)."
   (cond ((atom sx) (list sx))
         (t (loop for k in (cdr sx) append (atoms-of k)))))
 
-(glu fmtree
+(plus fmtree
   "Stochastic feature tree. ROOT = nested sexpr.
    PAY = hashtable atom -> leaf struct."
   (root pay)
-  (make (root)
-    (let ((p (make-hash-table)))
-      (dolist (a (atoms-of root))
-        (setf (gethash a p) (make-leaf)))
-      (%make-fmtree :root root :pay p))))
+  (make (root &aux (i (%make-fmtree :root root)))
+    (setf $pay (make-hash-table))
+    (dolist (a (atoms-of root))
+      (setf (gethash a $pay) (make-leaf)))))
 
-(glu+ fmtree
+(plus+ fmtree
   (show ()
     (format t "fmtree: ~a~%" $root)
     (maphash (lambda (k v)

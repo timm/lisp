@@ -59,7 +59,7 @@
 (defmethod new ((self cols) &aux (at -1))
   (labels
     ((what  (s) (if (upper-case-p (chr s 0)) #'make-num #'make-sym))
-     (one   (s) (new (funcall (what s) :txt s :at (incf at))))
+     (one   (s) (new+(funcall (what s) :txt s :at (incf at))))
      (skipc (c) (chrs (slot-value c 'txt) -1 #\- #\+ #\! #\X))
      (goalc (c) (chrs (slot-value c 'txt) -1 #\- #\+ #\!)))
     (setf (cols-all self)   (mapcar          #'one   (cols-names self))
@@ -98,7 +98,7 @@
   (if (data-cols d)
     (progn (mapc (lambda (c v) (add c v)) (cols-all (data-cols d)) row)
            (push row (data-rows d)))
-    (setf (data-cols d) (new (make-cols :names row))))
+    (setf (data-cols d) (new+(make-cols :names row))))
   d)
 
 (defun clone (d &optional rows)

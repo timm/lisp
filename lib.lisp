@@ -26,7 +26,7 @@
   (if at `(? (slot-value ,x ',(car at)) ,@(cdr at))
          x))
 
-(defmacro aif (test then &optional else)
+(defmacro if+ (test then &optional else)
   "Anaphoric if: bind `it` to TEST in THEN/ELSE."
   `(let ((it ,test)) (if it ,then ,else)))
 
@@ -101,6 +101,6 @@
   "Walk argv (flag arg) pairs: dispatch or update."
   (loop for (flag arg) on (args) by #'cddr do
     (unless (run flag (thing arg))
-      (aif (find flag lsts
+      (if+ (find flag lsts
                  :key #'third :test #'equalp)
            (setf (second it) (thing arg))))))

@@ -32,7 +32,7 @@
 (defmethod new ((self cols) &aux (at -1))
   (labels 
     ((what  (s) (if (upper-case-p (chr s 0)) #'make-num #'make-sym))
-     (one   (s) (new (funcall (what s) :txt s :at (incf at))))
+     (one   (s) (new+(funcall (what s) :txt s :at (incf at))))
      (skipc (c) (chrs (o c txt) -1 #\- #\+ #\X))
      (goalc (c) (chrs (o c txt) -1 #\- #\+)))
     (setf $all (mapcar        #'one   $names)
@@ -84,7 +84,7 @@
     (loop (funcall fun (things (or (read-line s nil) (return)))))))
 
 ;;;; main ------------------------------------------------------------
-(print (new (make-num :txt "asdas-")))
-(print (new (make-cols :names  '("asdas-" "age" "Aasda"))))
+(print (new+(make-num :txt "asdas-")))
+(print (new+(make-cols :names  '("asdas-" "age" "Aasda"))))
 
 ;(mapcsv #'print (? file))
