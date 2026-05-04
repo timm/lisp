@@ -26,10 +26,10 @@ $(A2PS_DIR)/def.ssh: $(ETC)/def.ssh ## install a2ps style
 	@cp $< $@
 
 Chars ?= 65
-~/tmp/%.pdf: %.lisp Makefile $(A2PS_DIR)/def.ssh ## .lisp ==> .pdf
+~/tmp/%.pdf: %.lisp Makefile $(GIT_ROOT)/etc/def.ssh ## .lisp ==> .pdf
 	@mkdir -p ~/tmp
 	@echo "pdf-ing $@ ... "
-	@a2ps --pretty-print=def -Br --quiet --landscape   \
+	@a2ps --pretty-print=$(GIT_ROOT)/etc/def.ssh -Br --quiet --landscape   \
 	      --pro=color --chars-per-line=$(Chars)        \
 	      --line-numbers=1 --borders=no --columns=3    \
 	      -M letter -o - $< | ps2pdf - $@
