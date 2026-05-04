@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>plus &mdash; Install</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <a href="index.html" class="logo">(plus)</a>
+    <nav class="top">
+      <a href="index.html">Home</a>
+      <a href="example.html">Example</a>
+      <a href="start.html">Install</a>
+      <a href="topics.html">Manual</a>
+      <a href="https://github.com/timm/lisp">Source</a>
+    </nav>
+  </div>
+</header>
+
+<div class="container page">
+  <h1>Install</h1>
+
+  <p>Two files. No build system, no package manager. Any CL with
+     <code class="language-lisp">defstruct</code> and <code class="language-lisp">defmethod</code> &mdash;
+     SBCL, CLISP, ECL, CCL &mdash; will run it.</p>
+
+  <h2>Get the code</h2>
+<pre><code class="language-lisp">$ git clone https://github.com/timm/lisp
+$ cd lisp</code></pre>
+
+  <h2>Run the example program</h2>
+  <p><code class="language-lisp">fri2.lisp</code> is a complete active-learning system
+     in ~250 lines, written in plus. It loads
+     <code class="language-lisp">plus.lisp</code> and runs from any CL.</p>
+<pre><code class="language-lisp">$ sbcl --script fri2.lisp --stats
+$ clisp fri2.lisp --tree
+$ ./fri2.lisp --active            ; via shebang</code></pre>
+
+  <h2>Use plus in your own file</h2>
+<pre><code class="language-lisp">(load "plus")
+
+(plus stat "Online mean."
+    ((n 0) (mu 0))
+  (add (v)
+    (incf $n)
+    (incf $mu (/ (- v $mu) $n))))
+
+(let ((s (make-stat)))
+  (dolist (v '(1 2 3 4 5)) (add s v))
+  (format t "mean=~a~%" (? s mu)))
+; mean=3</code></pre>
+
+  <h2>Next</h2>
+  <p>
+    Walk through every macro on the
+    <a href="topics.html">Manual</a> page, or see a longer
+    side-by-side comparison on the
+    <a href="example.html">Example</a> page.
+  </p>
+</div>
+
+<footer>
+  <div class="container">
+    <p>
+      &copy; 2026 Tim Menzies &middot;
+      <a href="https://github.com/timm/lisp/blob/main/LICENSE.md">MIT License</a> &middot;
+      <a href="https://github.com/timm/lisp">Source</a>
+    </p>
+    <p class="small">
+      Inspired by <a href="https://wren.io/">wren</a>,
+      <em>On Lisp</em>, and
+      <a href="https://en.wikipedia.org/wiki/Dieter_Rams">Dieter Rams</a>
+      ("less, but better").
+    </p>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" data-manual></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-lisp.min.js"></script>
+<script src="plus-prism.js"></script>
+</body>
+</html>

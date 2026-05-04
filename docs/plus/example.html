@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>plus &mdash; Example</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <a href="index.html" class="logo">(plus)</a>
+    <nav class="top">
+      <a href="index.html">Home</a>
+      <a href="example.html">Example</a>
+      <a href="start.html">Install</a>
+      <a href="topics.html">Manual</a>
+      <a href="https://github.com/timm/lisp">Source</a>
+    </nav>
+  </div>
+</header>
+
+<div class="container page">
+  <h1>Example: nasty &rarr; nice</h1>
+
+  <p>A 3D vector class with eight operators plus a small driver.
+     The plain CL side uses idiomatic
+     <code class="language-lisp">defstruct</code> accessors
+     (<code class="language-lisp">(vec3-x v)</code>, not the verbose
+     <code class="language-lisp">(slot-value v 'x)</code>). plus still wins
+     because <code class="language-lisp">$x</code> beats <code class="language-lisp">(vec3-x v)</code>,
+     <code class="language-lisp">(? b x)</code> beats <code class="language-lisp">(vec3-x b)</code>, and
+     repeated <code class="language-lisp">defmethod</code> heads fold into one
+     <code class="language-lisp">plus</code> form. Counts below are characters with
+     whitespace stripped.</p>
+
+  <div class="compare">
+    <div>
+      <h4>Plain Common Lisp &mdash; 1331 chars, 53 lines</h4>
+<pre><code class="language-lisp">(defparameter *config* '((scale-by 2)))
+
+(defstruct vec3
+  "3D vector."
+  (x 0.0) (y 0.0) (z 0.0))
+
+(defmethod vadd ((a vec3) (b vec3))
+  (make-vec3 :x (+ (vec3-x a) (vec3-x b))
+             :y (+ (vec3-y a) (vec3-y b))
+             :z (+ (vec3-z a) (vec3-z b))))
+
+(defmethod vsub ((a vec3) (b vec3))
+  (make-vec3 :x (- (vec3-x a) (vec3-x b))
+             :y (- (vec3-y a) (vec3-y b))
+             :z (- (vec3-z a) (vec3-z b))))
+
+(defmethod dot ((a vec3) (b vec3))
+  (+ (* (vec3-x a) (vec3-x b))
+     (* (vec3-y a) (vec3-y b))
+     (* (vec3-z a) (vec3-z b))))
+
+(defmethod cross ((a vec3) (b vec3))
+  (make-vec3
+    :x (- (* (vec3-y a) (vec3-z b)) (* (vec3-z a) (vec3-y b)))
+    :y (- (* (vec3-z a) (vec3-x b)) (* (vec3-x a) (vec3-z b)))
+    :z (- (* (vec3-x a) (vec3-y b)) (* (vec3-y a) (vec3-x b)))))
+
+(defmethod scale ((v vec3) k)
+  (make-vec3 :x (* (vec3-x v) k)
+             :y (* (vec3-y v) k)
+             :z (* (vec3-z v) k)))
+
+(defmethod neg ((v vec3))
+  (make-vec3 :x (- (vec3-x v))
+             :y (- (vec3-y v))
+             :z (- (vec3-z v))))
+
+(defmethod len2 ((v vec3))
+  (+ (* (vec3-x v) (vec3-x v))
+     (* (vec3-y v) (vec3-y v))
+     (* (vec3-z v) (vec3-z v))))
+
+(defmethod show ((v vec3))
+  (format nil "&lt;~,2f ~,2f ~,2f&gt;"
+          (vec3-x v) (vec3-y v) (vec3-z v)))
+
+(defmethod lerp ((a vec3) (b vec3) k)
+  (vadd (scale a (- 1 k)) (scale b k)))
+
+(defmethod vmap ((v vec3) f)
+  (make-vec3 :x (funcall f (vec3-x v))
+             :y (funcall f (vec3-y v))
+             :z (funcall f (vec3-z v))))
+
+(let* ((a (make-vec3 :x 1 :y 0 :z 0))
+       (b (make-vec3 :x 0 :y 1 :z 0))
+       (k (second (assoc 'scale-by *config*)))
+       (vs (sort (list a b (cross a b) (lerp a b 0.5))
+                 (lambda (x y) (&lt; (len2 x) (len2 y))))))
+  (loop for v in vs
+        when (let ((n (len2 v))) (and n (&gt; n 0)))
+        do (format t "~a~%"
+                   (funcall #'show
+                            (vmap (scale v k)
+                                  (lambda (n) (- n)))))))</code></pre>
+    </div>
+    <div>
+      <h4>plus &mdash; 813 chars, 25 lines (40% smaller)</h4>
+<pre><code class="language-lisp">(defparameter *config* '((scale-by 2)))
+(defread @(s) `(second (assoc ',(read s t nil t) *config*)))
+
+(plus vec3 "3D vector." ((x 0.0) (y 0.0) (z 0.0))
+  (vadd (b) (new+ vec3 :x (+ $x (? b x)) :y (+ $y (? b y)) :z (+ $z (? b z))))
+  (vsub (b) (new+ vec3 :x (- $x (? b x)) :y (- $y (? b y)) :z (- $z (? b z))))
+  (dot  (b) (+ (* $x (? b x)) (* $y (? b y)) (* $z (? b z))))
+  (cross (b)
+    (new+ vec3 :x (- (* $y (? b z)) (* $z (? b y)))
+              :y (- (* $z (? b x)) (* $x (? b z)))
+              :z (- (* $x (? b y)) (* $y (? b x)))))
+  (scale (k) (new+ vec3 :x (* $x k) :y (* $y k) :z (* $z k)))
+  (neg   ()  (new+ vec3 :x (- $x) :y (- $y) :z (- $z)))
+  (len2  ()  (+ (* $x $x) (* $y $y) (* $z $z)))
+  (show  ()  (format nil "&lt;~,2f ~,2f ~,2f&gt;" $x $y $z)))
+
+(plus+ vec3
+  (lerp (b k) (vadd (scale i (- 1 k)) (scale b k)))
+  (vmap (f)   (new+ vec3 :x (! f $x) :y (! f $y) :z (! f $z))))
+
+(let+ ((a  (new+ vec3 :x 1 :y 0 :z 0))
+       (b  (new+ vec3 :x 0 :y 1 :z 0))
+       (vs (sort (list a b (cross a b) (lerp a b 0.5))
+                 (ff+ (&lt; (len2 _) (len2 __))))))
+  (for+ (format t "~a~%" (! #'show (vmap (scale v @scale-by)
+                                         (f+ (- _)))))
+        for v in vs
+        if (if+ (len2 v) (&gt; it 0))))</code></pre>
+    </div>
+  </div>
+
+  <p>Every macro, one program.
+     <code class="language-lisp">defread</code> installs the
+     <code class="language-lisp">@key</code> reader.
+     <code class="language-lisp">plus</code> bundles the struct plus eight
+     methods. <code class="language-lisp">plus+</code> bolts <code class="language-lisp">lerp</code> and
+     <code class="language-lisp">vmap</code> on later. <code class="language-lisp">$x</code> reads
+     self-slots; <code class="language-lisp">(? b x)</code> reads other-slots.
+     <code class="language-lisp">new+</code> is sugar for <code class="language-lisp">make-vec3</code>.
+     <code class="language-lisp">let+</code> sequences the bindings.
+     <code class="language-lisp">f+</code> trims the negate lambda inside
+     <code class="language-lisp">vmap</code>; <code class="language-lisp">ff+</code> trims the sort
+     comparator (<code class="language-lisp">fff+</code> works the same way with
+     three implicit args <code class="language-lisp">_ __ ___</code>).
+     <code class="language-lisp">for+</code> walks the sorted vectors;
+     <code class="language-lisp">if+</code> filters non-zero;
+     <code class="language-lisp">!</code> funcalls <code class="language-lisp">show</code>.</p>
+</div>
+
+<footer>
+  <div class="container">
+    <p>
+      &copy; 2026 Tim Menzies &middot;
+      <a href="https://github.com/timm/lisp/blob/main/LICENSE.md">MIT License</a> &middot;
+      <a href="https://github.com/timm/lisp">Source</a>
+    </p>
+    <p class="small">
+      Inspired by <a href="https://wren.io/">wren</a>,
+      <em>On Lisp</em>, and
+      <a href="https://en.wikipedia.org/wiki/Dieter_Rams">Dieter Rams</a>
+      ("less, but better").
+    </p>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" data-manual></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-lisp.min.js"></script>
+<script src="plus-prism.js"></script>
+</body>
+</html>

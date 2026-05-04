@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>plus &mdash; tiny Common Lisp dialect</title>
+<meta name="description" content="plus is a small set of Common Lisp macros. Code that fits in your head.">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <a href="index.html" class="logo">(plus)</a>
+    <nav class="top">
+      <a href="index.html">Home</a>
+      <a href="example.html">Example</a>
+      <a href="start.html">Install</a>
+      <a href="topics.html">Manual</a>
+      <a href="https://github.com/timm/lisp">Source</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="container">
+    <h1>A Common Lisp dialect <br>that fits in your head.</h1>
+    <p class="tagline">
+      <strong>plus</strong> is a handful of macros and one rule:
+      the subject is implicit. Drop <code class="language-lisp">plus.lisp</code> into
+      any CL file and you have it. Same dispatch, half the
+      characters.
+    </p>
+
+    <div class="compare">
+      <div>
+        <h4>Plain Common Lisp</h4>
+<pre><code class="language-lisp">(defstruct num
+  "Welford summary."
+  (n 0) (mu 0) (m2 0))
+
+(defmethod add ((s num) v)
+  (incf (slot-value s 'n))
+  (let ((d (- v (slot-value s 'mu))))
+    (incf (slot-value s 'mu)
+          (/ d (slot-value s 'n)))
+    (incf (slot-value s 'm2)
+          (* d (- v (slot-value s 'mu))))))
+
+(defmethod mid ((s num))
+  (slot-value s 'mu))
+
+(defmethod spread ((s num))
+  (if (&lt; (slot-value s 'n) 2) 0
+      (sqrt (/ (slot-value s 'm2)
+               (1- (slot-value s 'n))))))</code></pre>
+      </div>
+      <div>
+        <h4>plus</h4>
+<pre><code class="language-lisp">(plus num "Welford summary."
+    ((n 0) (mu 0) (m2 0))
+
+  (add (v)
+    (incf $n)
+    (let ((d (- v $mu)))
+      (incf $mu (/ d $n))
+      (incf $m2 (* d (- v $mu)))))
+
+  (mid    () $mu)
+  (spread () (if (&lt; $n 2) 0
+               (sqrt (/ $m2 (1- $n))))))</code></pre>
+      </div>
+    </div>
+
+    <p>One <code class="language-lisp">plus</code> form replaces a <code class="language-lisp">defstruct</code>
+       plus three <code class="language-lisp">defmethod</code>s. Every
+       <code class="language-lisp">(slot-value s 'X)</code> shrinks to <code class="language-lisp">$X</code>.
+       <a href="topics.html">Read the macros</a> or
+       <a href="example.html">see a bigger example</a>.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <p>
+      &copy; 2026 Tim Menzies &middot;
+      <a href="https://github.com/timm/lisp/blob/main/LICENSE.md">MIT License</a> &middot;
+      <a href="https://github.com/timm/lisp">Source</a>
+    </p>
+    <p class="small">
+      Inspired by <a href="https://wren.io/">wren</a>,
+      <em>On Lisp</em>, and
+      <a href="https://en.wikipedia.org/wiki/Dieter_Rams">Dieter Rams</a>
+      ("less, but better").
+    </p>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" data-manual></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-lisp.min.js"></script>
+<script src="plus-prism.js"></script>
+</body>
+</html>
