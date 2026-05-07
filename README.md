@@ -16,15 +16,18 @@
   <img src="https://img.shields.io/badge/%C2%A92025-MIT-28a745.svg?logo=opensourceinitiative&logoColor=white" alt="License">
 </a>
 
+![](docs/lisp.png)
 
-Minimal, extensible Common Lisp script for explainable multi-objective reasoning. 
-It supports incremental data analysis using symbolic and numeric columns, 
-and allows structured row-wise updates with explainable decision logic.
+Minimal, extensible Common Lisp script for explainable multi-objective
+reasoning. Supports incremental data analysis using symbolic and numeric
+columns, with structured row-wise updates and explainable decision logic.
 
 ## Features
 
-- Defines data structures (`data`, `cols`, `num`, `sym`) for symbolic/numeric analytics.
-- Handles column initialization based on header conventions (`!`, `-`, `+`, etc.).
+- Defines data structures (`data`, `cols`, `num`, `sym`)
+  for symbolic/numeric analytics.
+- Handles column initialization based on header conventions
+  (`!`, `-`, `+`, etc.).
 - Supports adding and removing rows with weight adjustments.
 - Provides extensible methods (`add`, `more`) for custom learning workflows.
 
@@ -37,7 +40,7 @@ sbcl --script ezr.lisp
 ```
 Help:
 
-```
+```text
 ezr.lisp: multi-objective explanation
 (c) 2025, Tim Menzies <timm@ieee.org>, MIT license
 
@@ -47,3 +50,13 @@ Options:
    -s  seed=1234567891     random number
    -f  file=../../moot/optimize/misc/auto93.csv data file
 ```
+
+
+```lisp
+(defmacro ? (x &rest at)
+  "Nested slot access: (? x a b)
+   = (slot-value (slot-value x 'a) 'b)."
+  (if at `(? (slot-value ,x ',(car at)) ,@(cdr at))
+         x))
+```
+

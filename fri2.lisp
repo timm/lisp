@@ -1,40 +1,81 @@
 #!/usr/bin/env -S sbcl --script
 ; vim: set ft=lisp ts=2 sw=2 et :
 
+#|
+# fri.lisp
 
-; fri.lisp -- data-lite active learning, one file.
-; (c) 2026 Tim Menzies, timm@ieee.org, MIT license.
-;
-; USAGE
-;   clisp fri.lisp --cmd [arg]  [-flag value]...
-;   sbcl --script fri.lisp --cmd [arg] [-flag value]...
-;
-; CMDS  (--all runs every --xxx command)
-;   --the     print config *the*
-;   --rows    read CSV, print some rows
-;   --data    build Data, show y-columns
-;   --stats   print mid, spread per column
-;   --norm    show raw vs normalized y of row 0
-;   --ydata   sort rows by goal-distance; stride-print
-;   --xdata   sort rows by feature-distance from row 0
-;   --tree    active-label, grow tree, pretty-print it
-;   --active  20 train/test splits; train hold labels
-;
-; OPTIONS
-;   -p N   Minkowski distance exponent     default 2
-;   -f F   CSV file                        auto93.csv
-;   -s N   random seed                     default 1
-;   -b N   label budget                    default 50
-;   -u N   unlabelled pool cap             default 128
-;
-; CSV INPUT. Header row names columns; suffix sets role.
-;   [A-Z]*   numeric            [a-z]*   symbolic
-;   [A-Z]*-  minimize (y)       [A-Z]*+  maximize (y)
-;   *!       class column (y)   *X       skip column
-;   ?        missing value
-;
-; NAMING: r/rs=row(s), d=data, c=column, i=self,
-;         ys=Num of distys.
+Data-lite active learning, one file.
+
+(c) 2026 Tim Menzies, timm@ieee.org, MIT license.
+|#
+
+#|
+## Usage
+
+```
+clisp fri.lisp --cmd [arg]  [-flag value]...
+sbcl --script fri.lisp --cmd [arg] [-flag value]...
+```
+|#
+
+#|
+## Commands
+
+`--all` runs every `--xxx` command.
+
+| cmd | does |
+|-----|------|
+| `--the` | print config `*the*` |
+| `--rows` | read CSV, print some rows |
+| `--data` | build Data, show y-columns |
+| `--stats` | print mid, spread per column |
+| `--norm` | show raw vs normalized y of row 0 |
+| `--ydata` | sort rows by goal-distance; stride-print |
+| `--xdata` | sort rows by feature-distance from row 0 |
+| `--tree` | active-label, grow tree, pretty-print it |
+| `--active` | 20 train/test splits; train hold rnd labels |
+| `--check` | prudence-check distance, norm, stat invariants |
+|#
+
+#|
+## Options
+
+| flag | meaning | default |
+|------|---------|---------|
+| `-p N` | Minkowski distance exponent | 2 |
+| `-f F` | CSV file | auto93.csv |
+| `-s N` | random seed | 1 |
+| `-b N` | label budget | 50 |
+| `-u N` | unlabelled pool cap | 128 |
+|#
+
+#|
+## CSV input
+
+Header row names columns; suffix sets role.
+
+| pattern | meaning |
+|---------|---------|
+| `[A-Z]*` | numeric |
+| `[a-z]*` | symbolic |
+| `[A-Z]*-` | minimize (y) |
+| `[A-Z]*+` | maximize (y) |
+| `*!` | class column (y) |
+| `*X` | skip column |
+| `?` | missing value |
+|#
+
+#|
+## Naming
+
+| short | long |
+|-------|------|
+| `r` / `rs` | row(s) |
+| `d` | data |
+| `c` | column |
+| `i` | self |
+| `ys` | Num of distys |
+|#
 
 (load "plus")
 
@@ -47,9 +88,18 @@
 
 (setf *seed* @seed)
 
-;  _      ._ _
-; _>  \/  | | |
-;     /
+#|
+## Sym
+
+Symbolic column. Counts plus a frequency table.
+
+| op | meaning |
+|----|---------|
+| `mid` | mode (most common value) |
+| `spread` | entropy |
+| `distx` | 0 if equal, else 1 |
+| `%cuts` | one cut per known symbol |
+|#
 
 (plus sym "Symbolic column: count + frequency table."
   ((at 0) (txt " ") (n 0) has)
@@ -77,8 +127,21 @@
   (%cuts   (rs)    (declare (ignore rs)) (mapcar #'car $has))
   (ops     ()      '("==" "!=")))
 
-; ._        ._ _
-; | |  |_|  | | |
+#|
+## Num
+
+Numeric column. Welford running mean + m2.
+
+| op | meaning |
+|----|---------|
+| `mid` | mean |
+| `spread` | sample standard deviation |
+| `norm` | logistic squashed z-score, in [0,1] |
+| `distx` | normalized abs diff with `?` handling |
+| `%cuts` | median as the single cut |
+
+`goal` is 0 if `txt` ends in `-`, else 1.
+|#
 
 (plus num "Numeric column: Welford count, mean, m2, goal."
   ((at 0) (txt " ") (n 0) (mu 0) (m2 0) (goal 1))
@@ -124,8 +187,14 @@
 
   (ops () '("<=" ">")))
 
-;  _   _   |   _
-; (_  (_)  |  _>
+#|
+## Cols
+
+Header-derived collection. Splits parsed columns into x, y, all.
+
+Column suffix decides role: ends in `!`, `-`, or `+` then it is a
+y-column; ends in `X` then it is skipped; else it is an x-column.
+|#
 
 (plus cols "Header-derived collection: names, x-cols, y-cols, all."
   (names x y all)
@@ -147,8 +216,20 @@
     (mapcar (ff+ (add _ __ w)) $all row)
     row))
 
-;  _|   _.  _|_   _.
-; (_|  (_|   |_  (_|
+#|
+## Data
+
+Table: rows + their parsed columns + cached row-mid.
+
+| op | meaning |
+|----|---------|
+| `make` | first row is header, rest are data |
+| `add` | fold row in (`w=-1` removes it) |
+| `mid` | per-column mid, cached |
+| `distx` | Minkowski distance over x-columns |
+| `data-disty` | distance from row to goals (0 best, 1 worst) |
+| `data-wins` | closure scoring rows 0..100, 100=best |
+|#
 
 (plus data "Table: rows + their parsed columns + cached row-mid."
   (rows cols mid)
@@ -188,8 +269,15 @@
     (f+ (floor (* 100 (- 1 (/ (- (data-disty i _) lo)
                               (+ (- md lo) 1e-32))))))))
 
-; _|_  ._   _    _
-;  |_  |   (/_  (/_
+#|
+## Tree
+
+Decision tree built recursively by `make-tree`.
+
+Each node holds a column + cut. `tree-splits` enumerates candidate
+splits; the one minimizing weighted spread of `disty` wins. Leaves
+hold a `Num` of distys for ranking.
+|#
 
 (plus tree "Decision tree: built recursively by make-tree."
   (data ynum col cut left right hdr)
@@ -254,9 +342,15 @@
                         (length (fifth s))) leaf)
              collect s)))
 
-;  _.   _   _.       o  ._   _
-; (_|  (_  (_|  |_|  |  |   (/_
-;            |
+#|
+## Acquire
+
+Active learner. Fields: `lab`, `best`, `rest`, `ys`, `pool`.
+
+Warm-start: label 4 rows, split into best + rest by `disty`.
+Then loop: pick rows closer to `best` mid than `rest` mid, label,
+add to lab + best, rebalance so `|best| <= sqrt(|lab|)`.
+|#
 
 (plus acquire "Active learner: lab, best, rest, ys, pool."
     (lab best rest ys pool)
@@ -303,7 +397,7 @@
   (values $best $lab (? $ys n)))
 
 (defun validate (rs god w &optional (check 5))
-  "Run active; grow tree; rank holdout; pay CHECK."
+  "Active + tree-rank holdout vs random baseline. Pay CHECK on each."
   (let+ ((body  (shuffle (cdr rs)))
          (n     (floor (length body) 2))
          (train (cons (car rs) (subseq body 0 n)))
@@ -314,15 +408,22 @@
          (tr (make-tree lab (? lab rows)))
          (ranked (sortby (f+ (mid (? (tree-leaf tr _) ynum))) test))
          (top  (subseq ranked 0 (min check (length ranked))))
-         (pick (%extremum-by top y-god #'<)))
+         (pick (%extremum-by top y-god #'<))
+         (rnd-rows (subseq (shuffle test) 0 (min check (length test))))
+         (rnd  (%extremum-by rnd-rows y-god #'<)))
     (declare (ignore best))
     (values (! w train-best)
             (! w pick)
+            (! w rnd)
             (+ labels check))))
 
-;  _        _.  ._ _   ._   |   _    _
-; (/_  ><  (_|  | | |  |_)  |  (/_  _>
-;                      |
+#|
+## Examples
+
+CLI entry points. Each `defeg` registers a `--name` command.
+`eg--check` runs invariants on distance, norm, and stats; exits
+non-zero on failure.
+|#
 
 (defun eg--the (&optional _) (declare (ignore _)) (print *the*))
 
@@ -351,11 +452,62 @@
     (format t "~&;; labels used: ~d~%" labels)
     (tree-show (make-tree lab (? lab rows)))))
 
-(defeg eg--active "20 train/test runs."
+(defeg eg--active "20 train/test runs. Cols: train hold rnd labels."
   (let+ ((god (make-data rs))
-         (w   (data-wins god)))
+         (w   (data-wins god))
+         (tr  (make-num)) (ho (make-num)) (rn (make-num)))
     (loop repeat 20 do
-      (let+ (((train hold labels) (validate rs god w)))
-        (format t "~&~3d ~3d ~3d~%" train hold labels)))))
+      (let+ (((train hold rnd labels) (validate rs god w)))
+        (add tr train) (add ho hold) (add rn rnd)
+        (format t "~&~3d ~3d ~3d ~3d~%" train hold rnd labels)))
+    (format t "~&;; mean   train=~4,1f hold=~4,1f rnd=~4,1f~%"
+            (mid tr) (mid ho) (mid rn))
+    (format t "~&;; spread train=~4,1f hold=~4,1f rnd=~4,1f~%"
+            (spread tr) (spread ho) (spread rn))))
+
+(defeg eg--check "Invariant prudence tests."
+  (let+ ((r0 (car (? i rows)))
+         (r1 (cadr (? i rows)))
+         (fails 0)
+         (ok (lambda (cond label)
+               (format t "~&~a ~a~%" (if cond "PASS" "FAIL") label)
+               (unless cond (incf fails)))))
+    (dolist (c (? i cols all))
+      (when (typep c 'num)
+        (let ((v (norm c (elt r0 (? c at)))))
+          (! ok (or (eq v '?) (and (<= 0 v) (<= v 1)))
+                (format nil "norm ~a in [0,1]" (? c txt))))))
+    (! ok (= (distx i r0 r1) (distx i r1 r0))   "distx symmetric")
+    (! ok (zerop (distx i r0 r0))               "distx self=0")
+    (let ((rs (? i rows)) (n (length (? i rows))) (bad 0))
+      (loop repeat 20 do
+        (let* ((a (elt rs (rint n)))
+               (b (elt rs (rint n)))
+               (c (elt rs (rint n)))
+               (ab (distx i a b))
+               (bc (distx i b c))
+               (ac (distx i a c)))
+          (when (> ac (+ ab bc 1e-9)) (incf bad))))
+      (! ok (zerop bad)
+            (format nil "triangle inequality (20 triples, ~d viol)" bad)))
+    (let ((d (data-disty i r0)))
+      (! ok (and (<= 0 d) (<= d 1))             "disty in [0,1]"))
+    (! ok (= (length (shuffle (? i rows)))
+             (length (? i rows)))               "shuffle preserves length")
+    (let ((s (make-sym :txt "t")))
+      (dolist (v '(a b a c a b)) (add s v))
+      (! ok (eq 'a (mid s))                     "sym mid = mode"))
+    (let ((nm (make-num :txt "t")))
+      (dolist (v '(1 2 3 4 5)) (add nm v))
+      (! ok (< (abs (- (spread nm) (sqrt 5/2))) 1e-6)
+            "num spread = sample sd"))
+    (let ((nm (make-num :txt "t")))
+      (dolist (v '(? 1 ? 2 ? 3)) (add nm v))
+      (! ok (= (? nm n) 3)                      "num skips '?"))
+    (let ((nm (make-num :txt "t")))
+      (add nm 5)
+      (! ok (eq '? (norm nm '?))                "norm '? -> '?"))
+    (format t "~&;; failures: ~d~%" fails)
+    (when (plusp fails) (sb-ext:exit :code 1))))
 
 (cli *the*)
