@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>litpage</title>
+  <link rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <link rel="stylesheet"
+    href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.10.0/build/styles/github.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.10.0/build/highlight.min.js"></script>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font: 16px/1.5 -apple-system, system-ui, sans-serif;
+           max-width: 50rem; margin: 2rem auto; padding: 0 1rem; }
+    #slide img { max-width: 100%; }
+    #slide pre { padding: .8rem; border-radius: 6px;
+                 overflow-x: auto; background: #f6f8fa; }
+    #slide code { font: 14px/1.4 ui-monospace, Menlo, monospace; }
+    @media (prefers-color-scheme: dark) {
+      #slide pre { background: #161b22; }
+    }
+    #slide :not(pre) > code { background: rgba(127,127,127,.2);
+                              padding: .1em .3em; border-radius: 3px; }
+    #slide blockquote { border-left: 3px solid #888; margin: 1em 0;
+                        padding: 0 1em; color: #777; }
+    #slide table { border-collapse: collapse; }
+    #slide th, #slide td { border: 1px solid #888; padding: .3em .6em; }
+    #nav { position: fixed; bottom: 1rem; right: 1rem;
+           font: 12px ui-monospace, monospace; opacity: .6; }
+    #err { color: #c33; font: 14px ui-monospace, monospace;
+           white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <div id="slide"></div>
+  <div id="nav"></div>
+  <script>
+    const COMMENT = {        // block-comment regex per extension
+      lisp:  /#\|([\s\S]*?)\|#/g,
+      py:    /"""([\s\S]*?)"""/g,
+      lua:   /--\[\[([\s\S]*?)--?\]\]/g,
+      jl:    /#=([\s\S]*?)=#/g,
+      hs:    /\{-([\s\S]*?)-\}/g,
+      ml:    /\(\*([\s\S]*?)\*\)/g,
+      'c-style': /\/\*\*?([\s\S]*?)\*\//g,
+    };
+    ['cl', 'el', 'scm'].forEach(k => COMMENT[k] = COMMENT.lisp);
+    'js,ts,jsx,tsx,c,h,cpp,hpp,java,go,rs,cs,kt,swift,css,php,dart'
+      .split(',').forEach(k => COMMENT[k] = COMMENT['c-style']);
+
+    const $ = id => document.getElementById(id);
+    const params = new URLSearchParams(location.search);
+    const src = params.get('src') || 'README.md';
+    const ext = src.split('.').pop().toLowerCase();
+    let slides = [], i = 0;
+
+    marked.setOptions({
+      highlight: (code, lang) => {
+        try { return hljs.highlight(code, { language: lang || 'plaintext',
+                                            ignoreIllegals: true }).value; }
+        catch { return code; }
+      },
+      breaks: false, gfm: true,
+    });
+
+    fetch(src).then(r => {
+      if (!r.ok) throw new Error(`${r.status} ${r.statusText}: ${src}`);
+      return r.text();
+    }).then(text => {
+      const re = COMMENT[ext];
+      const blocks = re
+        ? [...text.matchAll(re)].map(m => m[1].replace(/^[ \t]*[*;-]+ ?/gm, '').trim())
+        : [text];                            // .md and unknown: whole file
+      slides = blocks.flatMap(b => b.split(/\n[ \t]*---[ \t]*\n/));
+      slides = slides.map(s => s.trim()).filter(Boolean);
+      i = Math.max(0, Math.min(+params.get('p') || 0, slides.length - 1));
+      render();
+    }).catch(e => {
+      $('slide').innerHTML = `<div id="err">${e.message}\n\n` +
+        `Usage: litpage.html?src=FILE[&p=N]\n` +
+        `Serve dir with: python3 -m http.server</div>`;
+    });
+
+    function render() {
+      $('slide').innerHTML = marked.parse(slides[i] || '');
+      renderMathInElement($('slide'), {
+        delimiters: [
+          { left: '$$', right: '$$', display: true  },
+          { left: '$',  right: '$',  display: false },
+          { left: '\\[', right: '\\]', display: true  },
+          { left: '\\(', right: '\\)', display: false },
+        ],
+        throwOnError: false,
+      });
+      $('nav').textContent = `${i + 1} / ${slides.length}   ` +
+        `${src}   ←/→ space  j/k  g/G`;
+      const u = new URL(location);
+      u.searchParams.set('p', i);
+      history.replaceState(null, '', u);
+    }
+
+    addEventListener('keydown', e => {
+      const n = slides.length;
+      const k = e.key;
+      if (k === 'ArrowRight' || k === 'PageDown' || k === ' ' || k === 'l' || k === 'j')
+        i = Math.min(i + 1, n - 1);
+      else if (k === 'ArrowLeft' || k === 'PageUp' || k === 'h' || k === 'k')
+        i = Math.max(i - 1, 0);
+      else if (k === 'g') i = 0;
+      else if (k === 'G') i = n - 1;
+      else return;
+      e.preventDefault();
+      render();
+    });
+  </script>
+</body>
+</html>
