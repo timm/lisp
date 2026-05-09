@@ -25,6 +25,31 @@ push: ## commit with prompted msg and push
 $(A2PS_DIR)/def.ssh: $(ETC)/def.ssh ## install a2ps style
 	@cp $< $@
 
+## ezr-plus.lisp examples
+EZR   := sbcl --script ezr-plus.lisp
+DATA  ?= auto93.csv
+CLASS ?= $(HOME)/gits/timm/moot/classify/heart.c.csv
+
+tree: ## decision/regression tree on $$DATA
+	@$(EZR) -f $(DATA) --tree
+
+nb: ## naive Bayes on $$CLASS
+	@$(EZR) -f $(CLASS) --nb
+
+soybean diabetes: ## naive Bayes per-class metrics
+	@$(EZR) -f $(HOME)/gits/timm/moot/classify/$@.csv --nb
+
+acquire: ## active learning on $$DATA
+	@$(EZR) -f $(DATA) --acquire
+
+the: ## print options
+	@$(EZR) --the
+
+all: ## run every main example
+	@for t in tree nb soybean diabetes acquire; do \
+	   echo; echo "=== $$t ==="; $(MAKE) -s $$t; \
+	 done
+
 Chars ?= 65
 ~/tmp/%.pdf: %.lisp Makefile $(GIT_ROOT)/etc/def.ssh ## .lisp ==> .pdf
 	@mkdir -p ~/tmp
