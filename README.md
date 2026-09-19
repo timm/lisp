@@ -1,62 +1,17 @@
-<img src="docs/lisp.png" width="200">
+# lisp
 
-<a href="https://timm.github.io/lisp/ezr.html">
-  <img src="https://img.shields.io/badge/docs-view%20online-9cf.svg?logo=read-the-docs&logoColor=white" alt="Docs">
-</a>
-<a href="https://en.wikipedia.org/wiki/Explainable_artificial_intelligence">
-  <img src="https://img.shields.io/badge/for-AI%2C%20XAI-007acc.svg?logo=openai&logoColor=white" alt="For AI, XAI">
-</a>
-<a href="https://gigamonkeys.com/book/introduction-why-lisp">
-  <img src="https://img.shields.io/badge/uses-Lisp-6e4c13.svg?logo=common-lisp&logoColor=white" alt="Language">
-</a>
-<a href="https://github.com/timm/slip">
-  <img src="https://img.shields.io/badge/src-code-fd6e00.svg?logo=github&logoColor=white" alt="Source Code">
-</a>
-<a href="https://github.com/timm/lisp/blob/main/LICENSE.md">
-  <img src="https://img.shields.io/badge/%C2%A92025-MIT-28a745.svg?logo=opensourceinitiative&logoColor=white" alt="License">
-</a>
-
-![](docs/lisp.png)
-
-Minimal, extensible Common Lisp script for explainable multi-objective
-reasoning. Supports incremental data analysis using symbolic and numeric
-columns, with structured row-wise updates and explainable decision logic.
-
-## Features
-
-- Defines data structures (`data`, `cols`, `num`, `sym`)
-  for symbolic/numeric analytics.
-- Handles column initialization based on header conventions
-  (`!`, `-`, `+`, etc.).
-- Supports adding and removing rows with weight adjustments.
-- Provides extensible methods (`add`, `more`) for custom learning workflows.
-
-## Usage
-
-Run with SBCL or CLISP:
-
-```bash
-sbcl --script ezr.lisp
-```
-Help:
-
-```text
-ezr.lisp: multi-objective explanation
-(c) 2025, Tim Menzies <timm@ieee.org>, MIT license
-
-Options:
-   -k  k=2                 kth value
-   -g  goal=one            start-up action
-   -s  seed=1234567891     random number
-   -f  file=../../moot/optimize/misc/auto93.csv data file
-```
-
+`lib.lisp`: cool Common Lisp tricks in one file.
+Reader macros (`$slot`, `@option`), anaphora (`if+`), short lambdas
+(`fn`, `->`), `glu` (defstruct + methods), `for+` comprehensions,
+`let+` bindings, seeded random, CSV reading, and a tiny CLI
+that dispatches `--foo` to `eg--foo`.
 
 ```lisp
-(defmacro ? (x &rest at)
-  "Nested slot access: (? x a b)
-   = (slot-value (slot-value x 'a) 'b)."
-  (if at `(? (slot-value ,x ',(car at)) ,@(cdr at))
-         x))
+(load "lib")
+(defun eg--hello (&optional _) (print (for+ (* x x) for x in '(1 2 3))))
+(cli *the*)          ; sbcl --script app.lisp -s 7 --hello 0
 ```
 
+`make` lists targets; `make sh`, `make pull`, `make push MSG=...`.
+
+MIT license. (c) 2026 Tim Menzies, timm@ieee.org
