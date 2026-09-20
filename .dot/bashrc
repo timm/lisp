@@ -1,0 +1,38 @@
+# tuned interactive bash; enter via `make sh`, which sets
+#   here = repo root   dot = dir of the shared files   BANNER = art (shown if exists)
+here="${here:-$PWD}"; dot="${dot:-$here/.dot}"
+me=$(basename "$here" | tr a-z A-Z)
+bold=$(tput bold); col1=$(tput setaf 6); col2=$(tput setaf 3); col0=$(tput sgr0)
+meme="${bold}${col1}$me${col0}"
+
+hi() {
+  if [ -f "$BANNER" ]; then bash "$dot/banner.sh" "$BANNER"
+  else clear; echo -n "$bold$col1"; figlet -W -f slant "$me" 2>/dev/null || echo "$me"; echo -n "$col0"; fi
+  echo -n "$col2"; aliases; echo -n "$col0"; }
+
+aliases() {
+  echo "Short cuts:"
+  alias | sed 's/alias /  /'
+  echo ""; }
+
+there() { cd "$1"; basename "$(pwd)"; }
+
+alias ..='cd ..'
+alias ...='cd ../../../'
+alias h="history"
+alias ls="ls -G"
+alias py="python3 -B "
+alias vi="nvim --clean -u $dot/init.lua"
+alias emacs="emacs -q -l $dot/init.el"
+alias tmux="tmux -f $dot/tmux.rc"
+alias mace="make -C .."
+
+export BASH_SILENCE_DEPRECATION_WARNING=1
+export PATH="$here:/opt/homebrew/bin:$PATH"
+export MOOT="${MOOT:-$HOME/gits/moot}"
+export EDITOR=nvim
+
+PROMPT_COMMAND='echo -ne "${meme}!$(git branch 2>/dev/null | grep '\''^*'\'' | colrm 1 2) ";PS1="$(there ..)/$(there .):\!\[\e[m\] \$ "'
+hi
+# per-repo extras, if any (kept out of .dot/ since that dir is mirrored)
+[ -f "$here/bashrc.local" ] && . "$here/bashrc.local"

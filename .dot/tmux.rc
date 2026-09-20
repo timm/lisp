@@ -1,0 +1,35 @@
+# core
+set -s escape-time 0
+set -g mouse on
+set -g default-terminal "tmux-256color"
+set -as terminal-features ",*:RGB"      # truecolor passthrough (catppuccin in micro/nvim)
+set -g default-command 'bash -l'
+
+# prefix: C-Space (leader)
+set -g prefix C-Space
+unbind C-b
+bind C-Space send-prefix
+
+# splits keep cwd; | vertical, - horizontal
+bind | split-window -h -c "#{pane_current_path}"
+bind - split-window -v -c "#{pane_current_path}"
+
+# copy-mode vi -> macOS clipboard
+setw -g mode-keys vi
+bind-key -T copy-mode-vi v send -X begin-selection
+bind-key -T copy-mode-vi y send -X copy-pipe-and-cancel 'pbcopy'
+# mouse drag -> copy to clipboard, no auto-jump to bottom
+bind-key -T copy-mode-vi MouseDragEnd1Pane send -X copy-pipe-and-cancel 'pbcopy'
+
+# sessions: C make new, S pick
+bind C command-prompt -p "session:" "new-session -s '%%'"
+bind S choose-tree -Zs
+
+# status line at top, one muted accent (steel blue) so it reads but doesn't shout
+set -g status-position top
+set -g status-style "bg=default,fg=colour245"
+set -g window-status-current-style "fg=colour110,bold"
+set -g window-status-style "fg=colour245"
+
+# per-repo overrides (sourced last so they win). silent if missing.
+source-file -q tmux.local.conf
