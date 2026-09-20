@@ -4,9 +4,9 @@
 ; (c) 2026 Tim Menzies, timm@ieee.org, MIT license.
 ;
 ; READER MACROS & ANAPHORA
-;   $k      -> (at i 'k)   ; i = self
+;   $k      -> (slot-value i 'k)   ; i = self
 ;   @key    -> (second (assoc 'key *the*))
-;   (? x a b) -> (at (at x 'a) 'b); at = get by type (hash, list, vector, symbol, slot)
+;   (? x a b) -> (slot-value (slot-value x 'a) 'b)
 ;   (aif t x y)  binds `it` to t's value in x/y
 ;   (! f a b)    -> (funcall f a b)
 ;
@@ -42,39 +42,24 @@
                (sb-ext:exit :code 1)))
 
 ;; -- Macros ---------------------------------------------------
-;; (at x k): one-step lookup, method picked by type. setf-able.
-(defmethod at (x k)                  (slot-value x k))
-(defmethod at ((x hash-table) k)     (gethash k x))
-(defmethod at ((x cons) (k integer)) (nth k x))
-(defmethod at ((x vector) k)         (aref x k))
-(defmethod at ((x symbol) k)         (get x k))
-(defmethod at ((x cons) k)
-  (if (consp (car x))
-    (cdr (assoc k x :test #'equal))
-    (getf x k)))
+(defmacro aif (x y &optional n) `(let ((it ,x)) (if it ,y ,n)))
 
-(defmethod (setf at) (v x k)           (setf (slot-value x k) v))
-(defmethod (setf at) (v (x hash-table) k) (setf (gethash k x) v))
-(defmethod (setf at) (v (x cons) (k integer)) (setf (nth k x) v))
-(defmethod (setf at) (v (x vector) k)        (setf (aref x k) v))
-(defmethod (setf at) (v (x symbol) k)         (setf (get x k) v))
-(defmethod (setf at) (v (x cons) k)
-  (if (consp (car x))
-    (setf (cdr (assoc k x :test #'equal)) v)
-    (setf (getf x k) v)))
+(defmacro ! (f &rest args) `(funcall ,f ,@args))
 
-(defmacro ? (x &rest ks)
-  "(? x a 0 :k) == (at (at (at x 'a) 0) :k). Bare symbols quoted. setf-able."
-  (reduce (lambda (acc k) `(at ,acc ,(if (symbolp k) `',k k)))
-          ks :initial-value x))
-
-(set-macro-character #\$ (lambda (s c) (declare (ignore c))
-                           `(at i ',(read s t nil t))))
-
-(defmacro aif (test then &optional else)
-  `(let ((it ,test)) (if it ,then ,else)))
+(defmacro ? (x k &rest ks)
+  (if ks `(? (slot-value ,x ',k) ,@ks) `(slot-value ,x ',k)))
 
 (defmacro -> (&body b) `(lambda (%1 &optional %2 %3 %4 %5) ,@b))
+
+(set-macro-character #\$ (lambda (s c) (declare (ignore c))
+                           `(slot-value i ',(read s t nil t))))
+
+(defmacro has (x lst)
+  `(cdr (or (assoc ,x ,lst :test #'equal)
+            (car (setf ,lst (cons (cons ,x 0) ,lst))))))
+
+(defvar *the*)
+(defvar *seed* 1)
 
 (defun cli (&optional (x *the*))
   "update that option's default. --foo val: run eg--foo."
@@ -89,14 +74,10 @@
      (defstruct (opts (:predicate nil))
        (%meta (copy-tree ',specs))
        ,@(loop for (k v) in specs collect `(,k (copy-tree ',v))))
-     (setf *the* (make-opts))))
+     (defparameter *the* (make-opts))))
 
 (defun opts-reset (&optional (x *the*))
-  (loop for (k v) in (? x %meta) do (setf (at x k) (copy-tree v))))
-
-(defmacro has (x lst)
-  `(cdr (or (assoc ,x ,lst :test #'equal)
-            (car (setf ,lst (cons (cons ,x 0) ,lst))))))
+  (loop for (k v) in (? x %meta) do (setf (slot-value x k) (copy-tree v))))
 
 (defmacro do-hash ((k v hash &optional result) &body body)
   "Loop over HASH binding K,V; return RESULT."
@@ -183,14 +164,12 @@
 
 ; ### Structs / objects
 #+sbcl
-(defun slot-names (x)
-  "Slot names of instance or struct X."
-  (mapcar #'sb-mop:slot-definition-name (sb-mop:class-slots (class-of x))))
+(defun slot-names (x) (mapcar #'sb-mop:slot-definition-name 
+                              (sb-mop:class-slots (class-of x))))
 
 #+clisp
-(defun slot-names (x)
-  "Slot names of instance or struct X."
-  (mapcar #'clos:slot-definition-name (clos:class-slots (class-of x))))
+(defun slot-names (x) (mapcar #'clos:slot-definition-name 
+                              (clos:class-slots (class-of x))))
 
 ; ### Characters
 (defun ch (s n)
@@ -251,7 +230,8 @@
     (when (and (fboundp f)
                (> (length n) 3)
                (string= n "EG-" :end1 3))
-      (setf *seed* @seed)
+      (opts-reset)
+      (setf *seed* (? *the* seed))
       (if arg (! f arg) (! f))
       t)))
 
@@ -263,25 +243,12 @@
                  (> (length n) 4) (string= n "EG--" :end1 4))
         (run s arg)))))
 
-(defun eg-s (&optional (seed @seed))
+(defun eg-s (&optional (seed (? *the* seed)))
   "Set seed."
-  (setf (second (assoc 'seed *the*)) seed
+  (setf (? *the* seed) seed
         *seed* seed))
 
 (defun args ()
   "Argv as list of strings (SBCL/CLISP portable)."
   #+sbcl (cdr sb-ext:*posix-argv*)
   #+clisp ext:*args*)
-
-(defun cli (lsts)
-  (loop for (flag arg) on (args) by #'cddr do
-    (unless (run flag (thing arg))
-      (if+ (find flag lsts
-                 :key #'third :test #'equalp)
-           (setf (second it) (thing arg))))))
-
-(defun slot-names (x)
-  (let ((mop (or (find-package :sb-mop) (find-package :clos))))
-    (mapcar (find-symbol "SLOT-DEFINITION-NAME" mop)
-            (funcall (find-symbol "CLASS-SLOTS" mop) 
-                     (class-of x))))
