@@ -14,12 +14,12 @@
   '((seed "-s" "random number seed" 1234567891)
     (p    "-p" "distance coeffecient" 2)))
 
-(setf *the* (defaults))
+(setf *settings* (defaults))
 
 ;;; ---- examples ----------------------------------------------
 (defun eg--the ()
   "Show options."
-  (dolist (o *the*)
+  (dolist (o *settings*)
     (destructuring-bind (key flag doc val) o
       (format t "~&  ~8a ~(~a~)=~a~28t~a~%"
               flag key val doc)))
@@ -53,4 +53,4 @@
   (dolist (f '(eg--the eg--rand eg--macros) fails)
     (setf fails (run f fails))))
 
-(cli)
+(cli (defaults))
