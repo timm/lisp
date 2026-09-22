@@ -23,12 +23,12 @@
     (destructuring-bind (key flag doc val) o
       (format t "~&  ~8a ~(~a~)=~a~28t~a~%"
               flag key val doc)))
-  (assert (numberp (! seed))))
+  (assert (numberp (?? seed))))
 
 (defun eg--rand ()
   "Random numbers are reproducible per test."
   (let ((a (rint 100)) (b (rint 100)))
-    (kv :rints (list a b) :seed (! seed))
+    (kv :rints (list a b) :seed (?? seed))
     (assert (and (<= 0 a 99) (<= 0 b 99) (/= a b)))))
 
 (defun eg--macros ()
