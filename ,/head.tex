@@ -1,0 +1,38 @@
+% head.tex -- styling for lisp ==> markdown ==> pdf.
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{inconsolata}
+
+% ACM's template wants a conference and a copyright block. We have
+% neither, so turn them off and keep the two-column body.
+\settopmatter{printacmref=false,printccs=false,printfolios=true}
+\renewcommand\footnotetextcopyrightpermission[1]{}
+\pagestyle{plain}
+\setcopyright{none}
+
+\definecolor{kw}  {HTML}{0033B3}
+\definecolor{cmt} {HTML}{6E7781}
+\definecolor{str} {HTML}{067D17}
+\definecolor{bg}  {HTML}{F7F7F4}
+\definecolor{rule}{HTML}{D0D0CC}
+
+\lstset{
+  language=Lisp,
+  basicstyle=\ttfamily\scriptsize,
+  keywordstyle=\color{kw}\bfseries,
+  commentstyle=\color{cmt}\itshape,
+  stringstyle=\color{str},
+  backgroundcolor=\color{bg},
+  frame=leftline, framesep=5pt, framerule=1.2pt,
+  rulecolor=\color{rule},
+  xleftmargin=7pt, aboveskip=6pt, belowskip=4pt,
+  columns=fullflexible, keepspaces=true,
+  breaklines=true, breakatwhitespace=true,
+  breakindent=1em,
+  postbreak=\mbox{\textcolor{rule}{$\hookrightarrow$}\space},
+  showstringspaces=false, tabsize=2,
+  morekeywords={defun,defmacro,defvar,defparameter,defstruct,
+    lambda,let,let*,loop,dolist,dotimes,when,unless,cond,case,
+    setf,setq,incf,decf,push,pop,if,progn,handler-case,labels,
+    flet,return-from,declare,ignore,optional,aux,key,rest,body}
+}

@@ -1,0 +1,109 @@
+% acm.tex -- pandoc template: two-column ACM look, lstlistings code.
+\documentclass[sigconf,nonacm,10pt]{acmart}
+
+% acmart's math fonts define \Bbbk; amssymb wants to define it again.
+\let\Bbbk\relax
+\usepackage{amsmath,amssymb}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage[most]{tcolorbox}
+\usepackage{fontawesome5}
+\usepackage[normalem]{ulem}
+\usepackage{graphicx}
+\usepackage{hyperref}
+
+% No conference, no copyright strip, no CCS concepts.
+\settopmatter{printacmref=false,printccs=false,printfolios=true}
+\renewcommand\footnotetextcopyrightpermission[1]{}
+\pagestyle{plain}
+
+% Tighter than ACM's default, so listings breathe.
+\setlength{\parskip}{2pt plus 1pt}
+\setlength{\parindent}{0pt}
+
+\definecolor{kw}  {HTML}{0033B3}
+\definecolor{cmt} {HTML}{6E7781}
+\definecolor{str} {HTML}{067D17}
+\definecolor{bg}  {HTML}{F7F7F4}
+\definecolor{rule}{HTML}{CFCFC9}
+
+\lstset{
+  language=Lisp,
+  basicstyle=\ttfamily\scriptsize,
+  keywordstyle=\color{kw}\bfseries,
+  commentstyle=\color{cmt}\itshape,
+  stringstyle=\color{str},
+  aboveskip=0pt, belowskip=0pt,
+  columns=fullflexible, keepspaces=true,
+  breaklines=true, breakatwhitespace=true, breakindent=1em,
+  postbreak=\mbox{\textcolor{rule}{$$\hookrightarrow$$}\space},
+  showstringspaces=false, tabsize=2, upquote=true,
+  morekeywords={defun,defmacro,defvar,defparameter,defstruct,
+    lambda,let,let*,loop,dolist,dotimes,when,unless,cond,case,
+    setf,setq,incf,decf,push,pop,progn,handler-case,labels,flet,
+    declare,multiple-value-bind,with-open-file,return-from}}
+
+% Wrap every lstlisting in a tcolorbox: one solid panel, so no
+% white stripes between lines (which is what backgroundcolor gives).
+% Tip badges. One icon + colour per category; unknown categories
+% fall back to the last pair. See etc/code.lua.
+\definecolor{tipink}{HTML}{1F4E9C}
+\newcommand\tipfor[3]{%
+  \expandafter\def\csname tip@i@#1\endcsname{#2}%
+  \expandafter\def\csname tip@c@#1\endcsname{#3}}
+\tipfor{installs}{\faBoxOpen}{B4620A}
+\tipfor{doco}    {\faBookOpen}{0A6B4B}
+\tipfor{edit}    {\faKeyboard}{6B3FA0}
+\tipfor{lisp}    {\faCode}    {1F4E9C}
+\tipfor{scripting}{\faTerminal}{9C1F4E}
+% Colour alone carries the category -- quieter than an icon per
+% tip. Flip \tipiconsfalse to \tipiconstrue to put the icons back.
+\newif\iftipicons \tipiconsfalse
+\newcommand\tip[2]{%
+  \ifcsname tip@i@#1\endcsname
+    \definecolor{tipink}{HTML}{\csname tip@c@#1\endcsname}%
+    \iftipicons\textcolor{tipink}{\csname tip@i@#1\endcsname}\,\fi
+  \else \iftipicons\textcolor{tipink}{\faLightbulb}\,\fi\fi
+  \textcolor{tipink}{\textbf{TIP#2}}%
+  \,\textcolor{tipink}{\footnotesize\textsc{(#1)}}}
+
+% Two listing environments (see etc/code.lua).
+% lispcode = real code: coloured, on a gray panel.
+\lstnewenvironment{lispcode}{}{}
+% egcode = examples quoted inside the prose: plain black, no panel,
+% so they never read as "here is the source".
+\lstnewenvironment{egcode}
+  {\lstset{basicstyle=\ttfamily\scriptsize\color{black!85},
+            keywordstyle=\ttfamily, commentstyle=\ttfamily,
+            stringstyle=\ttfamily, xleftmargin=10pt,
+            aboveskip=4pt, belowskip=3pt}}{}
+
+\tcolorboxenvironment{lispcode}{
+  colback=bg, colframe=rule, sharp corners,
+  boxrule=0pt, leftrule=1.2pt,
+  left=6pt, right=2pt, top=3pt, bottom=3pt,
+  boxsep=0pt, breakable,
+  before skip=5pt, after skip=4pt}
+
+% Inline `code` in a proportional-ish mono, slightly smaller.
+\let\oldtexttt\texttt
+\renewcommand{\texttt}[1]{{\small\oldtexttt{#1}}}
+
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+% pandoc wraps verbatim in \passthrough when highlighting is on.
+\providecommand{\passthrough}[1]{#1}
+\providecommand{\pandocbounded}[1]{#1}
+
+\title{$title$}
+$if(author)$
+\author{$author$}
+$if(url)$\affiliation{\institution{$url$}\country{}}$endif$
+$if(email)$\email{$email$}$endif$
+$endif$
+\date{$date$}
+
+\begin{document}
+$if(title)$\maketitle$endif$
+$body$
+\end{document}
