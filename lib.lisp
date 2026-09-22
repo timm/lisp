@@ -13,7 +13,8 @@
 ;; ## Preliminaries
 
 ;; TIP1 (installs): I recommend SBCL (for execution); rlwrap (for
-;; debugging), nvim (for editting), pycco (for doc).
+;; debugging), nvim (for editting), pycco (for doc), gawk (for
+;; a little hacking).
 
 ;; TIP2 (doco): to allow for listing in a technical document,
 ;; code should be 65 chars wide (max).

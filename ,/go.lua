@@ -18,7 +18,7 @@ vim.opt.softtabstop = 2
 vim.opt.textwidth   = 65     -- TIP2: 65 chars, max
 vim.opt.colorcolumn = "66"   -- ... and show where that is
 
-vim.opt.number         = true   -- absolute number on the cursor line
+vim.opt.number         = true   -- absolute number of cursor line
 vim.opt.relativenumber = true   -- ... offsets elsewhere, so 12dd
                                 -- and 7j need no counting
 
@@ -31,11 +31,10 @@ vim.api.nvim_create_autocmd("FileType", {
   callback = function()
     -- loop bodies indent +2 instead of lining up under `for`
     vim.opt_local.lispwords:append(
-      { "loop", "format", "error", "labels", "aif", "handler-case" })
+      {"loop","format","error","labels","aif","handler-case"})
   end })
 
--- <space>r runs the file, <space>q reflows the comment under the
+-- <space>q reflows the comment under the
 -- cursor to 65 columns (what ,/lisp2md.awk assumes).
 vim.g.mapleader = " "
-vim.keymap.set("n", "<leader>r", ":w<CR>:!sbcl --script %<CR>")
 vim.keymap.set("n", "<leader>q", "gqap")
