@@ -8,10 +8,10 @@ Here=$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)
 # aliases
 ls()   { command ls --color "$@"; }
 grep() { command grep --color=auto "$@"; }
-vi()   { command nvim --clean -u "$Here/.nvim.lua" "$@"; }
+vi()   { $EDITOR "$@"; }   # $EDITOR set below
 
 # environment
-export EDITOR="$(command -v nvim)"
+export EDITOR="nvim --clean -u $Here/.nvim.lua"
 export BASH_SILENCE_DEPRECATION_WARNING=1
 export HISTSIZE=10000
 export HISTFILESIZE=20000
@@ -19,11 +19,16 @@ export HISTCONTROL=ignoredups:erasedups
 export PATH="$PATH:$HOME/.local/bin"
 
 # git helpers
-top()    { git rev-parse --show-toplevel 2>/dev/null; }
-pull()   { make -C "$(top)" pull; }
-push()   { make -C "$(top)" push MSG="${*:-saving}"; }
 branch() { git branch --show-current 2>/dev/null; }
 dirty()  { [ -n "$(git status -s 2>/dev/null)" ] && echo "*"; }
+pull()   { git pull -q; }
+push()   { local msg
+           read -rp "Reason? " msg
+           git add -A
+           git diff-index --quiet HEAD -- \
+             || git commit -qm "${msg:-saving}"
+           git push -q -u origin HEAD
+           git status -sb; }
 
 # Leave these as raw escape codes
 bold=$(tput bold)    ; plain=$(tput sgr0)
