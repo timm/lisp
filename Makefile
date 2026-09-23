@@ -18,6 +18,20 @@ Chars ?= 65
 	      -M letter -o - $< | ps2pdf - $@
 	@open $@
 
+.PHONY: weave todo
+
+# x.md is both input and output here, so mtime can never decide.
+weave: $(ETC)/weave.awk ## weave x.lisp code into x.md, in place
+	@for f in *.lisp; do m=$${f%.lisp}.md; touch $$m;      \
+	   gawk -v jekyll=1 -f $(ETC)/weave.awk $$f $$m > $$m.tmp \
+	     && mv $$m.tmp $$m || { rm -f $$m.tmp; exit 1; };     \
+	 done
+
+todo: ## list forms in a .lisp that its .md never mentions
+	@for f in *.lisp; do \
+	   gawk -v strict=1 -f $(ETC)/weave.awk $$f $${f%.lisp}.md >/dev/null; \
+	 done
+
 ENGINE ?= tectonic
 DOCDEPS = $(ETC)/lisp2md.awk $(ETC)/acm.tex $(ETC)/code.lua Makefile
 PANDOC  = pandoc -f markdown --syntax-highlighting=idiomatic \

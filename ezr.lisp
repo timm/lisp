@@ -7,6 +7,10 @@
 ; -s 42 sets an option; --foo runs (eg--foo) with fresh
 ; options and a fresh seed. Exit code = failure count.
 
+; `load` has no idea what a "#!" line is, so teach it to skip one.
+(set-dispatch-macro-character #\# #\!
+  (lambda (s c n) (declare (ignore c n)) (read-line s) (values)))
+
 (load (merge-pathnames "lib.lisp" *load-truename*))
 
 ;;; ---- options -----------------------------------------------

@@ -1,103 +1,164 @@
--- Neovim config (nvim >= 0.12, vim.pack). launch: nvim --clean -u this
--- keys: <space>f files  <space>g grep  <space>b buffers  <space>t todos
---       <space>e files-float  -  sidebar  <tab>/<s-tab> buffers
---       <space>? keymap help  ]h/[h hunks  <space>hs stage  <space>hr reset
-local o, map, au = vim.o, vim.keymap.set, vim.api.nvim_create_autocmd
+-- Neovim config: catppuccin-mocha + nvim-tree (launch: nvim --clean -u this)
 vim.g.mapleader = " "
-o.termguicolors, o.number, o.cursorline, o.signcolumn = true, true, true, "yes"
-o.expandtab, o.shiftwidth, o.tabstop, o.softtabstop = true, 2, 2, 2
-o.ignorecase, o.smartcase, o.clipboard = true, true, "unnamedplus"
-o.splitbelow, o.splitright, o.scrolloff, o.undofile = true, true, 6, true
-o.autoread, o.updatetime, o.timeoutlen = true, 250, 400
+vim.o.termguicolors = true
+vim.o.number = true
+vim.o.cursorline = true
+vim.o.expandtab = true
+vim.o.shiftwidth, vim.o.tabstop, vim.o.softtabstop = 2, 2, 2
+vim.o.ignorecase, vim.o.smartcase = true, true
+vim.o.clipboard = "unnamedplus"
+vim.o.autoread = true                                 -- reload disk changes
+vim.o.updatetime = 250                                -- CursorHold fires faster
 
 -- autoread needs a poll: re-check on idle / buffer-enter / focus.
-au({ "FocusGained", "BufEnter", "CursorHold", "CursorHoldI" }, {
-  callback = function()
-    if vim.fn.mode() ~= "c" and vim.fn.getcmdwintype() == "" then vim.cmd("checktime") end
-  end })
-au("TextYankPost", { callback = function() vim.hl.on_yank() end })
+vim.api.nvim_create_autocmd(
+  { "FocusGained", "BufEnter", "CursorHold", "CursorHoldI" },
+  { callback = function()
+      if vim.fn.mode() ~= "c" and vim.fn.getcmdwintype() == "" then
+        vim.cmd("checktime")
+      end
+    end })
 
--- plugins. --clean drops site from packpath/rtp; re-add it.
-local site = vim.fn.stdpath("data") .. "/site"
-vim.opt.packpath:prepend(site)
-vim.opt.runtimepath:prepend(site)
-vim.g.loaded_netrw, vim.g.loaded_netrwPlugin = 1, 1   -- oil replaces netrw
+-- plugins via vim.pack (nvim 0.12). --clean drops site from packpath; re-add it.
+vim.g.loaded_netrw, vim.g.loaded_netrwPlugin = 1, 1   -- nvim-tree replaces netrw
+vim.opt.packpath:prepend(vim.fn.stdpath("data") .. "/site")
 vim.pack.add({
   "https://github.com/catppuccin/nvim",
-  "https://github.com/nvim-lua/plenary.nvim",         -- for todo-comments
-  "https://github.com/echasnovski/mini.nvim",
-  "https://github.com/nvim-treesitter/nvim-treesitter",
-  "https://github.com/nvim-treesitter/nvim-treesitter-context",
-  "https://github.com/HiPhish/rainbow-delimiters.nvim",
-  "https://github.com/stevearc/oil.nvim",
-  "https://github.com/lewis6991/gitsigns.nvim",
-  "https://github.com/folke/which-key.nvim",
-  "https://github.com/julienvincent/nvim-paredit",
-  "https://github.com/folke/todo-comments.nvim",
+  "https://github.com/nvim-tree/nvim-web-devicons",
+  "https://github.com/nvim-tree/nvim-tree.lua",
 })
 vim.cmd.colorscheme("catppuccin-mocha")
 
--- mini: icons, fuzzy pick, statusline, tabline, pairs, surround, comment
-for _, m in ipairs({ "icons", "pick", "statusline", "tabline", "pairs", "surround", "comment" }) do
-  require("mini." .. m).setup()
-end
-map("n", "<leader>f", "<cmd>Pick files<CR>")
-map("n", "<leader>g", "<cmd>Pick grep_live<CR>")
-map("n", "<leader>b", "<cmd>Pick buffers<CR>")
-map("n", "<tab>", "<cmd>bnext<CR>")
-map("n", "<s-tab>", "<cmd>bprev<CR>")
-
--- treesitter: parsers auto-installed (needs tree-sitter cli + cc)
-local langs = { "lua", "python", "commonlisp", "markdown", "bash", "make", "json" }
-require("nvim-treesitter").install(langs)
-au("FileType", { callback = function(a)
-  pcall(vim.treesitter.start, a.buf)
-  vim.bo[a.buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
-end })
-require("treesitter-context").setup({ max_lines = 3 })
-
--- files: oil edits dirs as buffers
-require("oil").setup({ view_options = { show_hidden = true },
-  keymaps = {                                          -- in oil: - parent, q close
-    q = function() vim.api.nvim_win_close(0, true) end,
-    ["<CR>"] = function()                              -- dir: enter; file: open in other window
-      local oil, e = require("oil"), require("oil").get_cursor_entry()
-      if not e then return elseif e.type == "directory" then return oil.select() end
-      local path, win = oil.get_current_dir() .. e.name, nil
-      for _, w in ipairs(vim.api.nvim_list_wins()) do
-        if vim.bo[vim.api.nvim_win_get_buf(w)].filetype ~= "oil" then win = w break end end
-      if win then vim.api.nvim_set_current_win(win) else vim.cmd("botright vsplit") end
-      vim.cmd.edit(vim.fn.fnameescape(path))
-    end } })
-map("n", "-", function()                              -- toggle left sidebar
-  for _, w in ipairs(vim.api.nvim_list_wins()) do
-    if vim.bo[vim.api.nvim_win_get_buf(w)].filetype == "oil" then
-      return vim.api.nvim_win_close(w, true) end end
-  vim.cmd("topleft 30vsplit | Oil")
-end)
-map("n", "<leader>e", function() require("oil").toggle_float() end)
-
--- git gutter
-require("gitsigns").setup({ on_attach = function(b)
-  local gs = require("gitsigns")
-  map("n", "]h", function() gs.nav_hunk("next") end, { buffer = b })
-  map("n", "[h", function() gs.nav_hunk("prev") end, { buffer = b })
-  map("n", "<leader>hs", gs.stage_hunk, { buffer = b })
-  map("n", "<leader>hr", gs.reset_hunk, { buffer = b })
-  map("n", "<leader>hp", gs.preview_hunk, { buffer = b })
-end })
-
-require("which-key").setup({ preset = "helix" })
-map("n", "<leader>?", function() require("which-key").show({ global = false }) end)
-require("todo-comments").setup()
-map("n", "<leader>t", "<cmd>TodoQuickFix<CR>")
-
--- lisp: vim indenting + this repo's kit words; paredit slurp/barf/raise
-au("FileType", { pattern = "lisp", callback = function()
-  vim.opt_local.lisp = true
-  vim.opt_local.lispwords:append({ "fn", "let+", "defmethod", "loop" })
-end })
-require("nvim-paredit").setup()
+-- file manager: 25% sidebar, nerd-font icons
+require("nvim-tree").setup({
+  view     = { width = "25%" },
+  renderer = { group_empty = true, highlight_git = true },
+  filters  = { dotfiles = false },
+})
+vim.keymap.set("n", "<leader>e", "<cmd>NvimTreeToggle<CR>")  -- toggle sidebar
 
 -- per-repo overrides (loaded last so they win). silent if missing.
+-- lisp: vim-style lisp indenting, plus this repo's kit words
+-- (fn let+ ...) indented as special forms
+vim.api.nvim_create_autocmd("FileType", { pattern = "lisp",
+  callback = function()
+    vim.opt_local.lisp = true
+    vim.opt_local.lispwords:append({ "fn", "let+", "defmethod", "loop" })
+  end })
+
 pcall(dofile, vim.fn.getcwd() .. "/init.local.lua")
+
+-- vim.o.termguicolors = true
+-- vim.o.expandtab = true
+-- vim.o.tabstop = 2
+-- vim.o.shiftwidth = 2
+-- vim.o.softtabstop = 2
+-- vim.o.ignorecase = true
+-- vim.o.smartcase = true
+--
+-- vim.g.maplocalleader = "\\"
+--
+-- vim.o.relativenumber = true
+-- vim.o.cursorline = true
+-- vim.o.mouse = "a"
+-- vim.o.termguicolors = true
+-- vim.o.expandtab = true
+-- vim.o.tabstop = 2
+-- vim.o.shiftwidth = 2
+-- vim.o.softtabstop = 2
+-- vim.o.ignorecase = true
+-- vim.o.smartcase = true
+-- vim.o.scrolloff = 8
+-- vim.o.signcolumn = "yes"
+-- vim.o.splitbelow = true
+-- vim.o.splitright = true
+-- vim.o.wrap = true
+-- vim.o.linebreak = true
+-- vim.o.fillchars = "vert:\u{2502},eob:\u{00b7}"
+-- vim.o.winborder = "rounded"
+-- vim.o.splitkeep = "screen"
+-- vim.o.smoothscroll = true
+-- vim.o.undofile = true
+-- vim.o.timeout = false
+-- vim.o.sidescrolloff = 7
+-- vim.o.sidescroll = 1
+-- vim.o.autoindent = true
+-- vim.opt.wildignore:append({
+--   "*/node_modules/*","*/tmp/*","*/target/*","*/build/*",
+-- })
+--
+-- local map = vim.keymap.set
+-- map("n", "x", '"_x')              -- x/X to black hole
+-- map("n", "X", '"_X')
+-- map("n", "<c-j>", ":m .+1<CR>==") -- move line down
+-- map("n", "<c-k>", ":m .-2<CR>==") -- move line up
+-- map("t", "<Esc>", [[<C-\><C-n>]]) -- escape terminal
+-- map("n", "<leader><tab>", "<c-^>")
+-- map("n", "<leader>w", "<c-w>")
+--
+-- vim.filetype.add({ extension = { mal = "lisp" } })
+--
+-- vim.api.nvim_create_autocmd("BufReadPost", {  -- restore cursor pos
+--   callback = function()
+--     local m = vim.api.nvim_buf_get_mark(0, '"')
+--     if m[1] > 1 and m[1] <= vim.api.nvim_buf_line_count(0) then
+--       vim.api.nvim_win_set_cursor(0, m)
+--     end
+--   end,
+-- })
+--
+-- vim.opt.packpath:prepend(vim.fn.stdpath("data") .. "/site")
+-- vim.pack.add({
+--   "https://github.com/catppuccin/nvim",
+--   "https://github.com/nvim-lualine/lualine.nvim",
+--   "https://github.com/zaldih/themery.nvim",
+--   "https://github.com/folke/tokyonight.nvim",
+--   "https://github.com/rebelot/kanagawa.nvim",
+--   "https://github.com/rose-pine/neovim",
+--   "https://github.com/EdenEast/nightfox.nvim",
+-- })
+-- vim.cmd.colorscheme("catppuccin-mocha")
+-- vim.cmd("hi! WinSeparator guifg=#7aa2f7 guibg=NONE")
+-- vim.cmd("hi! VertSplit    guifg=#7aa2f7 guibg=NONE")
+-- require("lualine").setup({ options = { theme = "auto" } })
+-- require("themery").setup({
+--   themes = {
+--     "catppuccin-mocha","catppuccin-latte",
+--     "tokyonight-storm","tokyonight-day",
+--     "kanagawa-wave","kanagawa-dragon",
+--     "rose-pine","rose-pine-dawn",
+--     "nightfox","duskfox","carbonfox",
+--   },
+--   livePreview = true,
+-- })
+--
+-- vim.api.nvim_create_autocmd("TextYankPost", {
+--   callback = function() vim.hl.on_yank() end,
+-- })
+--
+-- vim.diagnostic.config({
+--   virtual_text     = false,
+--   signs            = true,
+--   underline        = true,
+--   update_in_insert = false,
+--   severity_sort    = true,
+--   float            = { border = "rounded" },
+-- })
+--
+-- if vim.fn.executable("pyright-langserver") == 1 then
+--   vim.lsp.config("pyright", {
+--     cmd          = {"pyright-langserver", "--stdio"},
+--     filetypes    = {"python"},
+--     root_markers = {"pyproject.toml", ".git"},
+--   })
+--   vim.lsp.enable("pyright")
+--   vim.api.nvim_create_autocmd("LspAttach", {
+--     callback = function(a)
+--       local b = { buffer = a.buf, silent = true }
+--       vim.keymap.set("n", "K",         vim.lsp.buf.hover,         b)
+--       vim.keymap.set("n", "gd",        vim.lsp.buf.definition,    b)
+--       vim.keymap.set("n", "gr",        vim.lsp.buf.references,    b)
+--       vim.keymap.set("n", "<leader>e", vim.diagnostic.open_float, b)
+--     end,
+--   })
+-- end
