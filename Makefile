@@ -29,7 +29,7 @@ usage: ## show these targets
 # x.md is both input and output here, so mtime can never decide.
 weave: $(ETC)/weave.awk ## weave x.lisp code into x.md, in place
 	@for f in *.lisp; do m=$${f%.lisp}.md; touch $$m;      \
-	   gawk -v jekyll=1 -f $(ETC)/weave.awk $$f $$m > $$m.tmp \
+	   gawk -f $(ETC)/weave.awk $$f $$m > $$m.tmp \
 	     && mv $$m.tmp $$m || { rm -f $$m.tmp; exit 1; };     \
 	 done
 

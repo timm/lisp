@@ -26,12 +26,14 @@
 
 (defmacro aif (test then &optional else)
   "Anaphoric if: THEN and ELSE read TEST's value as `it`; e.g.
-   (aif (parse thing) (print it))"
+ 
+       (aif (parse thing) (print it))"
   `(let ((it ,test)) (if it ,then ,else)))
 
 (defmacro ? (x k &rest ks)
   "Dive through nested structs; e.g.
-   (? x a b) ==> (slot-value (slot-value x 'a) 'b)"
+ 
+       (? x a b) ==> (slot-value (slot-value x 'a) 'b)"
   (if ks `(? (slot-value ,x ',k) ,@ks)
          `(slot-value ,x ',k)))
 
@@ -45,18 +47,20 @@
 
 (defmacro has (x lst)
   "Count X in alist LST, starting the count at zero if new; e.g.
-   (let (seen)
-     (mapc (lambda (x) (incf (has x seen))) '(a a b b b))
-     seen) ==> ((b . 3) (a . 2))"
+ 
+       (let (seen)
+         (mapc (lambda (x) (incf (has x seen))) '(a a b b b))
+         seen) ==> ((b . 3) (a . 2))"
   `(cdr (or (assoc ,x ,lst :test #'equal)
             (car (setf ,lst (cons (cons ,x 0) ,lst))))))
 
 (defmacro -> (&body b)
   "A short lambda whose args arrive as %1 to %5; e.g.
-   (let (seen)
-     (->> (incf (has %1 seen)) '(a a b b b))
-     seen) ==> ((b . 3) (a . 2))
-
+ 
+       (let (seen)
+         (->> (incf (has %1 seen)) '(a a b b b))
+         seen) ==> ((b . 3) (a . 2))
+ 
    That is the `has` example above, now a one-liner."
   `(lambda (%1 &optional %2 %3 %4 %5)
      (declare (ignorable %2 %3 %4 %5))

@@ -10,51 +10,46 @@ title: lib.lisp
 Here is a file of useful LISP scripting tricks. It is the toolkit
 underneath [`ezr.lisp`](ezr.lisp), which does active learning for
 explainable multi-objective optimization. So you can read this as
-a tutorial on either 
-scripting or LISP or XAI (but note that  each is needed
-to get to the next).
+a tutorial on either scripting or LISP or XAI (but note that
+each is needed to get to the next).
 
 What follows is a journey through one small file, stopping
 wherever there is something worth knowing. The code is real --
 every fenced block below is pulled straight out of `lib.lisp` by
-`make weave`, so all the code here is up to date with the
-live version.
+`make weave`, so all the code here is up to date with the live
+version.
 
 ## Getting set up
 
-<span class="tip installs">TIP 1</span>:  I use
-SBCL to execute, rlwrap to debug, nvim to edit,
-pandoc to document, gawk for the little bits of glue. Common
-alternatives are CLISP (instead of SBCL), vscode (instead of
-nvim), and any number of documentation and test tools. But
-be aware that 
-the doc/test tools here are
-so simple (yet useful) that, for myself, I
-cannot justify anything
-more complex. 
-Also, CLISP is much slower than SBCL; and I find that
-vscode has
-incomplete LISP support. As
+<span class="tip installs">TIP 1</span>:  I use SBCL to execute,
+rlwrap to debug, nvim to edit, pandoc to document, and gawk for the
+little bits of glue. Common alternatives are CLISP (instead of
+SBCL), vscode (instead of nvim), and any number of documentation
+and test tools. But be aware that the doc/test tools here are so
+simple (yet useful) that, for myself, I cannot justify anything
+more complex. Also, CLISP is much slower than SBCL; and I find
+that vscode has incomplete LISP support. As
 
+<span class="tip doco">TIP 2</span>: keep code 65 characters
+wide, max. That is what fits a two-column listing in a technical
+paper, and it is the reason nothing in this file has a long name.
+So all the code here can be easily documented. 
 
-<span class="tip doco">TIP 2</span>: keep code 65 characters wide, max. That is what fits
-a two-column listing in a technical paper, and it is the reason
-nothing in this file has a long name. So all the code
-here can be easily documented. 
-
-<span class="tip scripting">TIP 3</span>: my whole workflow is what I call TUI21 -- two screens left and right where the right
-hand side runs an AI (e.g. claude code) and the left 
-splits vertically into editor (nvim)
-and Unix-like command prompt (e.g. bash).
+<span class="tip scripting">TIP 3</span>: my whole workflow is
+what I call TUI21 -- two screens left and right where the right
+hand side runs an AI (e.g. claude code) and the left splits
+vertically into editor (nvim) and Unix-like command prompt (e.g.
+bash).
 
 ![TUI21: nvim and a shell on the left, an AI on the right](,/img/tui21.png)
 
-<span class="tip scripting">TIP 4</span>: TUI21 is an instance of a general principle. Do
-things that port to many languages. There is always a next
-language, and when you move to it the only things you carry are
-the ones that were never language-specific in the first place --
-your editor, your shell, your habit of shipping examples that
-double as tests. Everything in this file is chosen that way.
+<span class="tip scripting">TIP 4</span>: TUI21 is an instance of
+a general principle. Do things that port to many languages. There
+is always a next language, and when you move to it the only
+things you carry are the ones that were never language-specific
+in the first place -- your editor, your shell, your habit of
+shipping examples that double as tests. Everything in this file
+is chosen that way.
 
 ## Making it run
 
@@ -169,18 +164,16 @@ and the number that earn their keep is small. Here are the ones
 that did.
 
 Anaphoric if: THEN and ELSE read TEST's value as `it`; e.g.
-```txt
-(aif (parse thing) (print it))
-```
+ 
+    (aif (parse thing) (print it))
 ```lisp
 (defmacro aif (test then &optional else)
   `(let ((it ,test)) (if it ,then ,else)))
 ```
 
 Dive through nested structs; e.g.
-```txt
-(? x a b) ==> (slot-value (slot-value x 'a) 'b)
-```
+ 
+    (? x a b) ==> (slot-value (slot-value x 'a) 'b)
 ```lisp
 (defmacro ? (x k &rest ks)
   (if ks `(? (slot-value ,x ',k) ,@ks)
@@ -198,11 +191,10 @@ documented in a comment.
 ```
 
 Count X in alist LST, starting the count at zero if new; e.g.
-```txt
-(let (seen)
-  (mapc (lambda (x) (incf (has x seen))) '(a a b b b))
-  seen) ==> ((b . 3) (a . 2))
-```
+ 
+    (let (seen)
+      (mapc (lambda (x) (incf (has x seen))) '(a a b b b))
+      seen) ==> ((b . 3) (a . 2))
 ```lisp
 (defmacro has (x lst)
   `(cdr (or (assoc ,x ,lst :test #'equal)
@@ -213,11 +205,11 @@ The arrow macro is the one I reach for most. With it, that
 counting example collapses to a single line.
 
 A short lambda whose args arrive as %1 to %5; e.g.
-```txt
-(let (seen)
-  (->> (incf (has %1 seen)) '(a a b b b))
-  seen) ==> ((b . 3) (a . 2))
-```
+ 
+    (let (seen)
+      (->> (incf (has %1 seen)) '(a a b b b))
+      seen) ==> ((b . 3) (a . 2))
+ 
 That is the `has` example above, now a one-liner.
 ```lisp
 (defmacro -> (&body b)
@@ -378,3 +370,4 @@ Split S on SEP, coercing each cell with `thing`.
   (cons (thing (subseq s lo hi))
         (if hi (csv-cells s sep (1+ hi)))))
 ```
+
