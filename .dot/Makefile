@@ -55,6 +55,13 @@ sh: ## bash tuned by .dot/bashrc; shows $(BANNER) if it exists
 status: ## short git status
 	@git -C $(TOP) status -sb
 
+~/tmp/%.pdf: %.py ## .py ==> .pdf (make ~/tmp/x.pdf)
+	@mkdir -p ~/tmp
+	@echo "pdf-ing $@ ..."
+	@a2ps -Br --chars-per-line=80 --file-align=fill --line-numbers=1 \
+	  --borders=no --pro=color --columns=3 -M letter -o - $< | ps2pdf - $@
+	@open $@
+
 ## ------------------------------------------------ siblings
 walks: ## run RULE=x in every ~/gh/*/.git (make walks RULE=demo)
 	@for r in $(REPOS); do echo "== $$r"; \

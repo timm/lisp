@@ -10,28 +10,44 @@ title: lib.lisp
 Here is a file of useful LISP scripting tricks. It is the toolkit
 underneath [`ezr.lisp`](ezr.lisp), which does active learning for
 explainable multi-objective optimization. So you can read this as
-a tutorial on either XAI or LISP, and I would rather you read it
-as both: the second is how you get to the first.
+a tutorial on either 
+scripting or LISP or XAI (but note that  each is needed
+to get to the next).
 
 What follows is a journey through one small file, stopping
 wherever there is something worth knowing. The code is real --
 every fenced block below is pulled straight out of `lib.lisp` by
-`make weave`, so nothing here can quietly drift out of date.
+`make weave`, so all the code here is up to date with the
+live version.
 
 ## Getting set up
 
-<span class="tip installs">TIP 1</span>: SBCL to execute, rlwrap to debug, nvim to edit,
-pandoc to document, gawk for the little bits of glue.
+<span class="tip installs">TIP 1</span>:  I use
+SBCL to execute, rlwrap to debug, nvim to edit,
+pandoc to document, gawk for the little bits of glue. Common
+alternatives are CLISP (instead of SBCL), vscode (instead of
+nvim), and any number of documentation and test tools. But
+be aware that 
+the doc/test tools here are
+so simple (yet useful) that, for myself, I
+cannot justify anything
+more complex. 
+Also, CLISP is much slower than SBCL; and I find that
+vscode has
+incomplete LISP support 
+
 
 <span class="tip doco">TIP 2</span>: keep code 65 characters wide, max. That is what fits
-a three-column listing in a technical paper, and it is the reason
-nothing in this file has a long name. A width limit is a design
-constraint disguised as a formatting rule: it argues, constantly,
-for shorter functions and better names.
+a two-column listing in a technical paper, and it is the reason
+nothing in this file has a long name. So all the code
+here can be easily documented. 
 
-<span class="tip scripting">TIP 3</span>: the whole workflow is what I call TUI21 -- a
-terminal, split. Editor and command line on the left, an LLM on
-the right (Claude Code, Codex). Two panes, no mouse, no IDE.
+<span class="tip scripting">TIP 3</span>: my whole workflow is what I call TUI21 -- two screens left and right where the right
+hand side runs an AI (e.g. claude code) and the left 
+splits vertically into editor (nvim)
+and Unix-like command prompt (e.g. bash).
+
+![TUI21: nvim and a shell on the left, an AI on the right](,/img/tui21.png)
 
 <span class="tip scripting">TIP 4</span>: TUI21 is an instance of a general principle. Do
 things that port to many languages. There is always a next
