@@ -7,56 +7,119 @@ title: lib.lisp
 
 *Tim Menzies &middot; <timm@ieee.org> &middot; <http://timm.fyi> &middot; Sept'26*
 
-A file of useful LISP scripting tips. The code it explains is
-[`lib.lisp`](lib.lisp), and the two are kept in step by `make
-weave`: every fenced block below is pulled from that file's
-docstrings, so the documentation cannot drift from the code.
+Here is a file of useful LISP scripting tricks. It is the toolkit
+underneath [`ezr.lisp`](ezr.lisp), which does active learning for
+explainable multi-objective optimization. So you can read this as
+a tutorial on either XAI or LISP, and I would rather you read it
+as both: the second is how you get to the first.
 
-## Preliminaries
+What follows is a journey through one small file, stopping
+wherever there is something worth knowing. The code is real --
+every fenced block below is pulled straight out of `lib.lisp` by
+`make weave`, so nothing here can quietly drift out of date.
 
-**Installs.** SBCL to execute, rlwrap to debug, nvim to edit,
+## Getting set up
+
+<span class="tip installs">TIP 1</span>: SBCL to execute, rlwrap to debug, nvim to edit,
 pandoc to document, gawk for the little bits of glue.
 
-**Width.** Code is 65 characters wide, max. That is what fits a
-three-column listing, and it is why nothing here has long names.
+<span class="tip doco">TIP 2</span>: keep code 65 characters wide, max. That is what fits
+a three-column listing in a technical paper, and it is the reason
+nothing in this file has a long name. A width limit is a design
+constraint disguised as a formatting rule: it argues, constantly,
+for shorter functions and better names.
 
-**Hash-bang.** A script can know how to run itself. Mark it
-executable with `chmod +x lib.lisp`, then name the interpreter on
+<span class="tip scripting">TIP 3</span>: the whole workflow is what I call TUI21 -- a
+terminal, split. Editor and command line on the left, an LLM on
+the right (Claude Code, Codex). Two panes, no mouse, no IDE.
+
+<span class="tip scripting">TIP 4</span>: TUI21 is an instance of a general principle. Do
+things that port to many languages. There is always a next
+language, and when you move to it the only things you carry are
+the ones that were never language-specific in the first place --
+your editor, your shell, your habit of shipping examples that
+double as tests. Everything in this file is chosen that way.
+
+## Making it run
+
+<span class="tip scripting">TIP 5</span>: hash-bang scripts are clever enough to run
+themselves. First mark the file executable, which on Linux and
+Mac is just `chmod +x lib.lisp`. Then name the interpreter on
 line one:
 
-```
+```txt
 #!/usr/bin/env sbcl --script
 ```
 
-After that, `./lib.lisp` just works. One catch: `load` is not a
-shell, so it does not know what `#!` means. Any file that loads a
-hash-bang script has to teach its reader to skip the line first,
-which is what `ezr.lisp` does before it pulls in `lib.lisp`:
+After that, `./lib.lisp` works. One catch, and it cost me an
+afternoon: `load` is not a shell, so it has no idea what `#!`
+means and dies reading line 1. Any file that loads a hash-bang
+script has to teach its reader to skip that line first, which is
+what `ezr.lisp` does before it pulls in `lib.lisp`:
 
 ```lisp
 (set-dispatch-macro-character #\# #\!
   (lambda (s c n) (declare (ignore c n)) (read-line s) (values)))
 ```
 
-**Editing.** `nvim --clean` is a sane IDE with bracket matching
-and nothing else. Teach it the indentation rules on lines 1 and 2:
+<span class="tip lisp">TIP 6</span>: SBCL is faster, but CLISP is what is already
+installed at many sites, so I try to code for both. LISP makes
+that cheap with conditional read-time forms -- watch for `#+sbcl`
+and `#+clisp` below.
 
+<span class="tip lisp">TIP 7</span>: the SBCL interactive command line is broken in a
+small maddening way; you cannot up-arrow to your last command.
+Fix it by never running it bare:
+
+```txt
+rlwrap sbcl
 ```
+
+## Editing it
+
+<span class="tip edit">TIP 8</span>: `nvim --clean` gives you a sane IDE -- bracket
+matching, nothing else, no plugins to break. Add indent control
+on the first lines of the file so the editor knows the dialect:
+
+```txt
 ;;<!-- vim: set ft=lisp ts=2 et sw=2 : -->
 ;;<!-- vim: set lispwords+=loop,format,error,labels,aif : -->
 ```
 
-**Two lisps.** SBCL is faster, but CLISP is what many sites
-already have, so this code targets both. The `#+sbcl` and
-`#+clisp` forms pick the right branch at read time.
+`lispwords` is the one that matters. Without it, nvim lines the
+body of a `loop` up under the word `loop`, which is right for a
+function call and wrong for everything on that list.
 
-**The command line.** SBCL's REPL cannot even up-arrow to the
-last command. Run it as `rlwrap sbcl` and that stops being true.
+## Documenting it
 
-## Script header
+<span class="tip doco">TIP 9</span>: this file used to be documented by writing markdown
+in comments and running `pycco -l scheme -d ~/tmp lib.lisp`. That
+works, and for a single file it is hard to beat for effort spent.
+But it has a ceiling: prose and code must interleave in one
+stream, in one order, so a tutorial that wants to wander cannot.
 
-SBCL is very loud about crashes. Two lines calm it down, and they
-have to come after the handler they install:
+So now the prose lives here, in `lib.md`, and the code stays in
+`lib.lisp` with its docstrings. `make weave` pulls each form and
+its docstring into this file. A line naming a form, or a fenced
+block naming one, is a directive:
+
+```txt
+(defun shuffle
+```
+
+and weave replaces it with the docstring as prose and the code as
+a fence. Rename a function without updating the prose and the
+build fails, which is the entire point -- documentation that can
+rot silently is worse than none.
+
+<span class="tip doco">TIP 10</span>: keep docstrings in markdown, and end a line with
+`e.g.` to turn the lines below it into an example block. That way
+the same text reads well at the REPL and renders well on a page.
+
+## The script header
+
+<span class="tip lisp">TIP 11</span>: SBCL is very loud about crashes. Two lines calm it
+down, and they must come after the handler they install:
 
 ```lisp
 #+sbcl (declaim (sb-ext:muffle-conditions warning style-warning))
@@ -82,9 +145,12 @@ Exit, reporting FAILS. Zero exits quietly, with status zero.
 
 ## Macros
 
-Macros go near the top of the file, so that everything below can
-use them. Use them sparingly, though: they make code harder to
-read, and the ones worth the cost are few.
+<span class="tip lisp">TIP 12</span>: write macros near the top of the file, so everything
+below can use their expansions.
+
+<span class="tip lisp">TIP 13</span>: use macros sparingly. They make code harder to read,
+and the number that earn their keep is small. Here are the ones
+that did.
 
 Anaphoric if: THEN and ELSE read TEST's value as `it`; e.g.
 ```txt
@@ -127,8 +193,8 @@ Count X in alist LST, starting the count at zero if new; e.g.
             (car (setf ,lst (cons (cons ,x 0) ,lst))))))
 ```
 
-The arrow macro is the one that earns its keep most often. With
-it, that counting example above collapses to a single line.
+The arrow macro is the one I reach for most. With it, that
+counting example collapses to a single line.
 
 A short lambda whose args arrive as %1 to %5; e.g.
 ```txt
@@ -150,13 +216,15 @@ Mapcar BODY, as a short lambda, over LISTS.
   `(mapcar (-> ,body) ,@lists))
 ```
 
-## Settings and examples
+## Settings
 
-Avoid magic numbers buried in the code. Anything that steers
-behaviour belongs in `*settings*`, where the command line can
-reach it. Each setting is four things:
+<span class="tip scripting">TIP 14</span>: avoid magic numbers buried in the code. Anything
+that steers behaviour belongs in one place the command line can
+reach. Each setting is four things:
 
-    (name flag documentation default)
+```txt
+(name flag documentation default)
+```
 
 so a program's options are just a list:
 
@@ -177,11 +245,14 @@ The current value of setting X, e.g. `(my seed)`.
   `(fourth (assoc ',x *settings*)))
 ```
 
-Code should ship with demos that show it off and shout when
-something breaks. Here every demo is a function named `eg--`
-something, and `cli` finds them by name, so `--rand` runs
-`eg--rand`. Each runs on a fresh seed, and the process exit
-status is the number that failed.
+## Examples that are also tests
+
+<span class="tip scripting">TIP 15</span>: ship demos that show the code off and shout when
+it breaks. Here every demo is a function named `eg--` something,
+and `cli` finds them by name, so `--rand` runs `eg--rand`. Each
+starts from a fresh seed, and the process exit status is the
+number that failed -- which means `make` and CI can read it
+without parsing a word of output.
 
 Update settings B4 from the command line, then halt.
 `-s 42` sets one option and `--foo` runs `(eg--foo)`.
@@ -233,6 +304,11 @@ Coerce STR to a number, a boolean, `?`, or leave it alone.
 ```
 
 ## Random numbers
+
+<span class="tip lisp">TIP 16</span>: if you want reproducible runs you cannot use the
+built-in generator, because its stream differs across
+implementations. A dozen lines buys you the same numbers
+everywhere, forever.
 
 State of the random number generator.
 ```lisp
@@ -286,4 +362,3 @@ Split S on SEP, coercing each cell with `thing`.
   (cons (thing (subseq s lo hi))
         (if hi (csv-cells s sep (1+ hi)))))
 ```
-

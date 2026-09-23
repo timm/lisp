@@ -80,7 +80,7 @@ $0 ~ /^\([^ \t)]+[ \t]+[^ \t)]+[ \t]*$/ && (formkey($0) in Form) {
   next
 }
 
-{ Buf[++Nbuf] = $0 }
+{ Buf[++Nbuf] = tips($0) }
 
 END {
   spill()
@@ -169,7 +169,7 @@ function nogap(s) {
 function fence(   open, first, line) {
   open = $0
   if ((getline first) <= 0) { spill(); print open; return }
-  if (formkey(first) in Form) {
+  if (open ~ /^```lisp/ && (formkey(first) in Form)) {
     Nbuf = 0
     emit(first)
     while ((getline line) > 0) if (line ~ /^```/) break
@@ -180,6 +180,31 @@ function fence(   open, first, line) {
   if (first !~ /^```/)
     while ((getline line) > 0) { Buf[++Nbuf] = line
                                  if (line ~ /^```/) break }
+}
+
+# Number the tips in the order they are read. You write only the
+# category, so inserting a tip renumbers the rest for free:
+#
+#     TIP (lisp): macros go near the top of the file.
+#
+# becomes a badge that both toolchains understand -- pandoc reads
+# it back as a Span, which etc/code.lua turns into an icon, and
+# kramdown passes the HTML straight through to GitHub Pages:
+#
+#     <span class="tip lisp">TIP 7</span>: macros go near ...
+#
+# Scanning left to right (never re-scanning what we just wrote)
+# is what keeps a second run from renumbering into nonsense.
+function tips(s,   hit, cat, out) {
+  while (match(s, /<span class="tip [a-zA-Z]+">TIP [0-9]+<\/span>|TIP[0-9]*[ \t]*\([a-zA-Z]+\)/)) {
+    cat = hit = substr(s, RSTART, RLENGTH)
+    if (hit ~ /^</) { sub(/^<span class="tip /, "", cat); sub(/">.*$/, "", cat) }
+    else            { sub(/^TIP[0-9]*[ \t]*\(/, "", cat); sub(/\)$/, "", cat) }
+    out = out substr(s, 1, RSTART - 1) \
+          "<span class=\"tip " tolower(cat) "\">TIP " ++Tip "</span>"
+    s = substr(s, RSTART + RLENGTH)
+  }
+  return out s
 }
 
 function spill(   i) {
