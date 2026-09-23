@@ -34,7 +34,7 @@ cannot justify anything
 more complex. 
 Also, CLISP is much slower than SBCL; and I find that
 vscode has
-incomplete LISP support 
+incomplete LISP support. As
 
 
 <span class="tip doco">TIP 2</span>: keep code 65 characters wide, max. That is what fits

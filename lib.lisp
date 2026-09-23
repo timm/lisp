@@ -1,8 +1,4 @@
 #!/usr/bin/env sbcl --script
-;;<!-- vim: set ft=lisp ts=2 et sw=2 : -->
-;;<!-- vim: set lispwords+=loop,format,error,labels,aif : -->
-;;<!-- vim: set lispwords+=handler-case : -->
-
 ;; -- Tim Menzies<br>timm@ieee.org<br>http://timm.fyi<br>Sept'26
 
 ;; The prose that explains this file lives in lib.md.

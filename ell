@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+# ell -- my shell.  Just run:  ./ell
+[ "$0" = "${BASH_SOURCE[0]}" ] && exec bash --init-file "$0" -i
+
+# Here = the dir holding this file (not the dir you cd to)
+Here=$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)
+
+# aliases
+ls()   { command ls --color "$@"; }
+grep() { command grep --color=auto "$@"; }
+vi()   { command nvim --clean -u "$Here/.nvim.lua" "$@"; }
+
+# environment
+export EDITOR="$(command -v nvim)"
+export BASH_SILENCE_DEPRECATION_WARNING=1
+export HISTSIZE=10000
+export HISTFILESIZE=20000
+export HISTCONTROL=ignoredups:erasedups
+export PATH="$PATH:$HOME/.local/bin"
+
+# git helpers
+top()    { git rev-parse --show-toplevel 2>/dev/null; }
+pull()   { make -C "$(top)" pull; }
+push()   { make -C "$(top)" push MSG="${*:-saving}"; }
+branch() { git branch --show-current 2>/dev/null; }
+dirty()  { [ -n "$(git status -s 2>/dev/null)" ] && echo "*"; }
+
+# Leave these as raw escape codes
+bold=$(tput bold)    ; plain=$(tput sgr0)
+cyan=$(tput setaf 6) ; yellow=$(tput setaf 3)
+
+# 🧩 parent/dir  branch*  ▶      \[ \] marks zero-width text,
+# so bash still counts the line length right.
+prompt_above='$(basename "$(dirname "$PWD")")'
+prompt_here='/$(basename "$PWD")'
+prompt_branch='$(branch)$(dirty)'
+prompt_fmt='🧩\[${bold}${cyan}\]'"$prompt_above$prompt_here"
+prompt_fmt+='\[${plain}\] \[${yellow}\]'"$prompt_branch"
+prompt_fmt+='\[${plain}\] ▶ '
+PROMPT_COMMAND='PS1="'"$prompt_fmt"'"'
+
+printf '%s' "$yellow"; cat <<'GHOST'
+
+ .-.
+(o o) 
+| O \  there is no escape ...
+ \   \   ... from sh ell!
+  `~~~' 
+
+GHOST
+printf '%s' "$plain"
