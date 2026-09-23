@@ -87,7 +87,7 @@ use them. Use them sparingly, though: they make code harder to
 read, and the ones worth the cost are few.
 
 Anaphoric if: THEN and ELSE read TEST's value as `it`; e.g.
-```lisp
+```txt
 (aif (parse thing) (print it))
 ```
 ```lisp
@@ -96,7 +96,7 @@ Anaphoric if: THEN and ELSE read TEST's value as `it`; e.g.
 ```
 
 Dive through nested structs; e.g.
-```lisp
+```txt
 (? x a b) ==> (slot-value (slot-value x 'a) 'b)
 ```
 ```lisp
@@ -116,7 +116,7 @@ documented in a comment.
 ```
 
 Count X in alist LST, starting the count at zero if new; e.g.
-```lisp
+```txt
 (let (seen)
   (mapc (lambda (x) (incf (has x seen))) '(a a b b b))
   seen) ==> ((b . 3) (a . 2))
@@ -131,7 +131,7 @@ The arrow macro is the one that earns its keep most often. With
 it, that counting example above collapses to a single line.
 
 A short lambda whose args arrive as %1 to %5; e.g.
-```lisp
+```txt
 (let (seen)
   (->> (incf (has %1 seen)) '(a a b b b))
   seen) ==> ((b . 3) (a . 2))

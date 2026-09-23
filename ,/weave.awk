@@ -267,8 +267,8 @@ function examples(doc,   a, n, i, out, incode) {
     }
     out = out a[i] "\n"
     if (!incode && a[i] ~ /[eE]\.?[gG]\.:?[ \t]*$/) {
-      out = out Fence "lisp\n"
-      incode = 1
+      out = out Fence "txt\n"      # "txt", not "lisp": these are
+      incode = 1                   # sketches, with "==>" and all
     }
   }
   if (incode) out = out Fence "\n"
