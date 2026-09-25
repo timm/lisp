@@ -22,13 +22,13 @@ version.
 ## Getting set up
 
 <span class="tip installs">TIP 1</span>:  I use SBCL to execute,
-rlwrap to debug, nvim to edit, pandoc to document, and gawk for the
-little bits of glue. Common alternatives are CLISP (instead of
-SBCL), vscode (instead of nvim), and any number of documentation
-and test tools. But be aware that the doc/test tools here are so
-simple (yet useful) that, for myself, I cannot justify anything
-more complex. Also, CLISP is much slower than SBCL; and I find
-that vscode has incomplete LISP support. As
+rlwrap to debug, nvim to edit, pandoc to document, and gawk for
+the little bits of glue. Common alternatives are CLISP (instead
+of SBCL), vscode (instead of nvim), and any number of
+documentation and test tools. But be aware that the doc/test
+tools here are so simple (yet useful) that, for myself, I cannot
+justify anything more complex. Also, CLISP is much slower than
+SBCL; and I find that vscode has incomplete LISP support. As
 
 <span class="tip doco">TIP 2</span>: keep code 65 characters
 wide, max. That is what fits a two-column listing in a technical
@@ -53,10 +53,10 @@ is chosen that way.
 
 ## Making it run
 
-<span class="tip scripting">TIP 5</span>: hash-bang scripts are clever enough to run
-themselves. First mark the file executable, which on Linux and
-Mac is just `chmod +x lib.lisp`. Then name the interpreter on
-line one:
+<span class="tip scripting">TIP 5</span>: hash-bang scripts are
+clever enough to run themselves. First mark the file executable,
+which on Linux and Mac is just `chmod +x lib.lisp`. Then name the
+interpreter on line one:
 
 ```txt
 #!/usr/bin/env sbcl --script
@@ -73,14 +73,14 @@ what `ezr.lisp` does before it pulls in `lib.lisp`:
   (lambda (s c n) (declare (ignore c n)) (read-line s) (values)))
 ```
 
-<span class="tip lisp">TIP 6</span>: SBCL is faster, but CLISP is what is already
-installed at many sites, so I try to code for both. LISP makes
-that cheap with conditional read-time forms -- watch for `#+sbcl`
-and `#+clisp` below.
+<span class="tip lisp">TIP 6</span>: SBCL is faster, but CLISP is
+what is already installed at many sites, so I try to code for
+both. LISP makes that cheap with conditional read-time forms --
+watch for `#+sbcl` and `#+clisp` below.
 
-<span class="tip lisp">TIP 7</span>: the SBCL interactive command line is broken in a
-small maddening way; you cannot up-arrow to your last command.
-Fix it by never running it bare:
+<span class="tip lisp">TIP 7</span>: the SBCL interactive command
+line is broken in a small maddening way; you cannot up-arrow to
+your last command. Fix it by never running it bare:
 
 ```txt
 rlwrap sbcl

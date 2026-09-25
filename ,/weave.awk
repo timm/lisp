@@ -34,33 +34,60 @@
 
 BEGIN { RS = ""; ORS = "\n\n" }
 
-NR == FNR {                                 # pass 1: index the lisp
-  n = split($0, L, "\n"); doc = ""
-  for (i = 1; L[i] ~ /^;/; i++)             # ";;" atop the para is
-    if (L[i] ~ /^;;([^;]|$)/)               # doc; ";" and ";;;" are
-      { s = L[i]; sub(/^;; ?/, "", s); doc = doc s "\n" }   # not
-  if ((key = formkey(L[i])) == "") next     # headers, banners, etc
+# pass 1 reads the .lisp itself, a line at a time, starting a
+# new form at any column-0 "(", ";" or "#".  Blank lines no
+# longer split a form, so a docstring may hold a real empty
+# line -- no more invisible one-space lines in the source.
+NR == FNR && FNR == 1 {
+  RS = "\n"                 # getline obeys RS; "" would eat
+  buf = ""                  # the blank lines we came to keep
+  while ((getline line < FILENAME) > 0)
+  {                         # a ";;" block belongs to the form
+    if (line ~ /^[(;#]/ &&  # under it, so only break once the
+        buf ~ /(^|\n)[(#]/)  # buffer holds a header already
+      { form(buf); buf = "" }
+    buf = buf line "\n"
+  }
+  form(buf)
+  close(FILENAME)
+  RS = ""                   # pass 2 wants paragraphs again
+  nextfile
+}
+
+# One top-level form: remember its doc and its code, by key.
+# The ";;" lines atop it are its doc; ";" and ";;;" are not.
+function form(para,   n, L, doc, i, s, key, hdr, ds, de, tail,
+                      code) {
+  sub(/\n+$/, "", para)
+  if (para == "") return
+  n = split(para, L, "\n"); doc = ""
+  for (i = 1; L[i] ~ /^;/; i++)
+    if (L[i] ~ /^;;([^;]|$)/)
+      { s = L[i]; sub(/^;; ?/, "", s); doc = doc s "\n" }
+  if ((key = formkey(L[i])) == "") return   # headers, banners
   hdr = i
-  for (ds = hdr + 1; ds <= hdr + 3 && L[ds] ~ /^[ \t]*[^ \t"]/; ds++) ;
-  if (L[ds] ~ /^[ \t]*"/) {                 # docstring: lines ds..de
+  for (ds = hdr + 1;
+       ds <= hdr + 3 && L[ds] ~ /^[ \t]*[^ \t"]/; ds++) ;
+  if (L[ds] ~ /^[ \t]*"/) {        # docstring: lines ds..de
     for (de = ds; de < n && L[de] !~ /"[ \t)]*$/; de++) ;
     tail = L[de]; sub(/^.*"/, "", tail); gsub(/[ \t]/, "", tail)
-    L[hdr] = L[hdr] tail                    # re-close (defvar x 1 "d")
+    L[hdr] = L[hdr] tail       # re-close (defvar x 1 "d")
     for (i = ds; i <= de; i++) {
-      s = substr(L[i], 4)                   # strip the alignment
+      s = substr(L[i], 4)              # strip the alignment
       if (i == ds) sub(/^[ \t]*"/, "", s)
       if (i == de) sub(/"[ \t)]*$/, "", s)
-      doc = doc (s == "" ? " " : s) "\n"    # no "^$" inside a region
+      # the .md region is one paragraph, so a blank line in
+      # it has to be a line holding one space
+      doc = doc (s == "" ? " " : s) "\n"
     }
   } else ds = de = 0
   code = ""
   for (i = hdr; i <= n; i++)
     if (i < ds || i > de) code = code L[i] "\n"
   Rep[key] = doc "```lisp\n" code "```"
-  next
 }
 
-{                                           # pass 2: rewrite the md
+{                                  # pass 2: rewrite the md
   if (match($0, /(^|\n)```lisp\n/) &&
       (key = formkey(substr($0, RSTART + RLENGTH))) in Rep) {
     Used[key] = 1
@@ -72,8 +99,9 @@ NR == FNR {                                 # pass 1: index the lisp
 END {
   if (strict)
     for (k in Rep)
-      if (!(k in Used) && k ~ /^(def|set)/)
-        { print "weave: never woven: (" k > "/dev/stderr"; Bad = 1 }
+      if (!(k in Used) && k ~ /^(def|set)/) {
+        print "weave: never woven: (" k > "/dev/stderr"
+        Bad = 1 }
   exit Bad
 }
 

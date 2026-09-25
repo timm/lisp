@@ -5,22 +5,33 @@
 # Here = the dir holding this file (not the dir you cd to)
 Here=$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)
 
-# aliases
-ls()   { command ls --color "$@"; }
-grep() { command grep --color=auto "$@"; }
-vi()   { $EDITOR "$@"; }   # $EDITOR set below
-
-# environment
 export EDITOR="nvim --clean -u $Here/.nvim.lua"
 export BASH_SILENCE_DEPRECATION_WARNING=1
 export HISTSIZE=10000
 export HISTFILESIZE=20000
 export HISTCONTROL=ignoredups:erasedups
 export PATH="$PATH:$HOME/.local/bin"
+export LESS=-R                 # let git colors through
 
-# git helpers
+# histappend matters: without it, exiting a shell OVERWRITES
+# .bash_history, so a second shell eats the first one's.
+shopt -s histappend autocd cdspell dirspell globstar checkwinsize
+
+# up-arrow walks only the lines starting with what you typed
+bind '"\e[A": history-search-backward'
+bind '"\e[B": history-search-forward'
+
+ls()     { command ls --color "$@"; }
+grep()   { command grep --color=auto "$@"; }
+vi()     { $EDITOR "$@"; }   # $EDITOR set above
+lisp()   { local f=${1%.lisp}; shift
+           sbcl --script "$f.lisp" "$@"; }
+check()  { sbcl --script "$Here/,/check.lisp" \
+                  "${1%.lisp}.lisp"; }
 branch() { git branch --show-current 2>/dev/null; }
 dirty()  { [ -n "$(git status -s 2>/dev/null)" ] && echo "*"; }
+root()   { cd "$(git rev-parse --show-toplevel 2>/dev/null)"; }
+usage()  { grep -oE '^[a-z]+\(\)' "$Here/ell" | tr -d '()'; }
 pull()   { git pull -q; }
 push()   { local msg
            read -rp "Reason? " msg
@@ -39,7 +50,7 @@ cyan=$(tput setaf 6) ; yellow=$(tput setaf 3)
 prompt_above='$(basename "$(dirname "$PWD")")'
 prompt_here='/$(basename "$PWD")'
 prompt_branch='$(branch)$(dirty)'
-prompt_fmt='🧩\[${bold}${cyan}\]'"$prompt_above$prompt_here"
+prompt_fmt='🧩 \[${bold}${cyan}\]'"$prompt_above$prompt_here"
 prompt_fmt+='\[${plain}\] \[${yellow}\]'"$prompt_branch"
 prompt_fmt+='\[${plain}\] ▶ '
 PROMPT_COMMAND='PS1="'"$prompt_fmt"'"'
