@@ -21,6 +21,7 @@
               "~/gits/moot/optimize/misc/auto93.csv")))
 
 (setf *settings* (defaults))
+
 ;;;; structs
 (defstruct num (at 0) (txt "") (n 0) (mu 0) (m2 0) (goal 1))
 (defstruct sym (at 0) (txt "") (n 0) seen)
@@ -176,10 +177,10 @@
          (half (floor (length rows) 2))
          (was  nil))
     (loop for r in rows for k from 1 do
-      (setf i (add i r))
+      (add i r)
       (if (= k half) (print (setf was (mids i)))))
     (dolist (r (reverse (nthcdr half rows)))
-      (setf i (sub i r)))          ; newest first: cheap
+      (sub i r))          ; newest first: cheap
     (->> (assert (same %1 %2)) (print (mids i)) was)))
 
 (defun eg--all (&aux (fails 0) egs)

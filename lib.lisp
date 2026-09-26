@@ -34,6 +34,13 @@
    (aif (parse thing) (print it))"
   `(let ((it ,test)) (if it ,then ,else)))
 
+(defmacro acond (&rest clauses)
+  "Cond, but each test's value is `it` inside its body."
+  (if clauses
+    (let ((c (car clauses)))
+      `(aif ,(car c) (progn ,@(cdr c))
+            (acond ,@(cdr clauses))))))
+
 (defmacro ? (x k &rest ks)
   "Dive through nested structs; e.g.:
    (? x a b) ==> (slot-value (slot-value x 'a) 'b)"
@@ -84,12 +91,12 @@
   resets to MAKER's defaults.  Halts, with the number of
   failed examples as the exit status."
   (loop for flag = (pop av) while flag do
-    (aif (find flag *settings* :key #'second :test #'equal)
-      (setf (fourth it) (thing (pop av)))
-      (aif (cli-eg flag)
-        (setf bad (cli-run it bad)
-              *settings* (funcall maker))  
-        (format t "?? ~a~%" flag))))
+    (acond ((find flag *settings* :key #'second :test #'equal)
+            (setf (fourth it) (thing (pop av))))
+           ((cli-eg flag)
+            (setf bad (cli-run it bad)
+                  *settings* (funcall maker)))   ; fresh
+           (t (format t "?? ~a~%" flag))))
   (halt bad))
 
 (defun cli-args ()
