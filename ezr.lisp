@@ -12,12 +12,14 @@
   (load "lib"))
 
 (defun defaults ()
-  "My settings, as (name flag doc value).  Built with
-   `list`: `cli` mutates this, and a quoted literal is
-   the same object on every call (and read-only at that)."
-  (list (list 'seed "-s" "random seed" 1234567891)
-        (list 'p    "-p" "distance exponent" 2)
-        (list 'file "-f" "data set file"
+  "Settings: (name flag doc value).  `list`: cli mutates."
+  (list (list 'seed   "-s" "random seed" 1234567891)
+        (list 'p      "-p" "distance exponent" 2)
+        (list 'budget "-b" "labelling budget" 50)
+        (list 'check  "-c" "top picks to label" 5)
+        (list 'start  "-S" "goods: random labels first" 4)
+        (list 'few    "-F" "goods: max rows to consider" 256)
+        (list 'file   "-f" "data set file"
               "~/gits/moot/optimize/misc/auto93.csv")))
 
 (setf *settings* (defaults))
@@ -41,23 +43,25 @@
   (if (upper-case-p (chars txt 0)) (num txt at) (sym txt at)))
 
 (defun cols (names &aux (i (make-cols :names names)))
-  "Header NAMES, a vector.  A name's last letter is magic:
-   + or - is a goal, ! is the klass (a goal too), and X is
-   summarized like the rest but kept out of x and y."
+  "Header NAMES.  Last letter: + - goal, ! klass, X skip."
   (setf $all (loop for txt across names for at from 0
                    collect (col txt at)))
   (dolist (col $all i)
     (case (chars (? col txt) -1)
       (#\X)                         ; summarized, not modelled
-      ((#\+ #\-) (push col $y))
-      (#\!       (setf $klass col) (push col $y))
-      (t         (push col $x)))))
+      ((#\+ #\-) (addend col $y))
+      (#\!       (setf $klass col) (addend col $y))
+      (t         (addend col $x)))))
 
 (defmethod clone ((i tbl)) (tbl (list (? i cols names))))
 (defmethod clone ((i num)) (num $txt $at))
 (defmethod clone ((i sym)) (sym $txt $at))
 
 ;;;; -----------------------------------------------------------
+(defun subs (lst &optional (i (num)))
+  "Take every item of LST back out of I."
+  (dolist (x lst i) (setf i (sub i x))))
+
 (defun adds (lst &optional (i (num)))
   "Add every item of LST to I, keeping what `add` returns."
   (dolist (x lst i) (setf i (add i x))))
@@ -98,8 +102,8 @@
 
 ;;;; -----------------------------------------------------------
 (defmethod mids ((i tbl))
-  "Every column's mid, cached until the next `add`."
-  (or $mids (setf $mids (->> (mid %1) (cols-all $cols)))))
+  "Every column's mid, in header order.  Cached till `add`."
+  (or $mids (setf $mids (map 'vector #'mid (? $cols all)))))
 
 (defmethod mid ((i num)) "Central tendency: the mean." $mu)
 
@@ -115,6 +119,133 @@
   "Diversity: entropy, in bits."
   (- (loop for (nil . n) in $seen
            sum (* (/ n $n) (log (/ n $n) 2)))))
+
+(defmethod norm ((i sym) x) "Nothing to scale." x)
+
+(defmethod norm ((i num) x)
+  "X to 0..1, via 1/(1+exp(-1.702 z)): no lo/hi needed."
+  (let ((sd (div i)))
+    (if (zerop sd) 0.5 
+      (/ 1 (+ 1 (exp (* -1.7 (/ (- x $mu) sd))))))))
+
+;;;; -----------------------------------------------------------
+(defmethod dist ((i sym) a b)
+  "0 if the same, else 1.  An unknown is never the same."
+  (if (and (eql a '?) (eql b '?)) 1 (if (equal a b) 0 1)))
+
+(defmethod dist ((i num) a b)
+  "Gap between norms; an unknown goes to the far pole."
+  (if (and (eql a '?) (eql b '?))
+    1
+    (let ((x (if (eql a '?) nil (norm i a)))
+          (y (if (eql b '?) nil (norm i b))))
+      (if (null x) (setf x (if (> y 0.5) 0 1)))
+      (if (null y) (setf y (if (> x 0.5) 0 1)))
+      (abs (- x y)))))
+
+(defun xdist (i row1 row2 &aux (d 0) (n 0) (p (my p)))
+  "Minkowski gap between two rows, over the x columns."
+  (dolist (col (? i cols x))
+    (incf n)
+    (incf d (expt (dist col (elt row1 (? col at))
+                            (elt row2 (? col at)))
+                  p)))
+  (expt (/ d n) (/ 1 p)))
+
+(defun ydist (i row &aux (d 0) (n 0) (p (my p)))
+  "How far ROW's goals sit from the best they could be."
+  (dolist (col (? i cols y))
+    (when (num-p col)
+      (incf n)
+      (incf d (expt (abs (- (norm col (elt row (? col at)))
+                            (? col goal)))
+                    p))))
+  (expt (/ d n) (/ 1 p)))
+
+;;;; -----------------------------------------------------------
+(defun good (i best rest row)
+  "Score ROW: near BEST's middle, far from REST's."
+  (- (xdist i row (mids rest)) (xdist i row (mids best))))
+
+(defun good-enough (both best rest row lab)
+  "Label ROW; keep BEST near sqrt(n), worst goes to REST."
+  (let ((r (funcall lab row)))
+    (add both r)
+    (add best r)
+    (when (> (tbl-n best) (sqrt (+ 1 (tbl-n best) (tbl-n rest))))
+      (let ((w (reduce 
+                 (-> (if (> (ydist both %1) (ydist both %2))
+                             %1 %2))
+                 (tbl-rows best))))
+        (sub best w)
+        (add rest w)))))
+
+(defun goods (i &key (lab (-> %1)) (score #'good)
+                (start (my start)) (few (my few))
+                (budget (- (my budget) (my check))))
+  "Label by SCORE till budget gone.  Best rows first."
+  (let* ((rows (shuffle (tbl-rows i)))
+         (todo (subseq rows 0 (min few (length rows))))
+         (best (clone i))
+         (rest (clone i))
+         (both (clone i)))
+    (dotimes (_ start)
+      (good-enough both best rest (pop todo) lab))
+    (loop while (and todo (< (tbl-n both) budget))
+      do (setf todo
+           (sort todo #'>
+             :key (-> (funcall score i best rest %1))))
+      (good-enough both best rest (pop todo) lab))
+    (sort (tbl-rows both) #'< :key (-> (ydist both %1)))))
+
+;;;; -----------------------------------------------------------
+(defun cut (enough &aux sharp)
+  "Closure: feed it (l r col v); no args = the sharpest.
+   Cuts leaving under ENOUGH rows either side are ignored."
+  (labels
+    ((xpect (a b)                    ; diversity, by size
+       (/ (+ (* (div a) (? a n)) (* (div b) (? b n)))
+          (+ (? a n) (? b n) 1d-32))))
+    (lambda (&optional l r col v &aux s)
+      (when (and l (>= (min (? l n) (? r n)) enough))
+        (setf s (xpect l r))
+        (if (or (null sharp) (< s (first sharp)))
+          (setf sharp (list s col v))))
+      sharp)))
+
+(defmethod chop ((col num) xy keep &aux (lhs (num)) rhs)
+  "One sweep: RHS shrinks as LHS grows.  Offer each edge."
+  (setf xy  (sort xy #'< :key #'car)
+        rhs (adds (mapcar #'cdr xy) (num)))
+  (loop for (a b) on xy do
+    (add lhs (cdr a))
+    (setf rhs (sub rhs (cdr a)))
+    (if (and b (/= (car a) (car b)))
+      (funcall keep lhs rhs col (car a)))))
+
+(defmethod chop ((col sym) xy keep &aux (all (num))
+                 (bins (make-hash-table :test #'equal)))
+  "One pass to bin the ys, then one cut per symbol."
+  (dolist (p xy)
+    (add all (cdr p))
+    (push (cdr p) (gethash (car p) bins)))
+  (maphash
+    (-> (funcall keep (adds %2 (num))          ; this symbol
+                      (subs %2 (copy-num all)) ; all others
+                      col %1))
+    bins))
+
+(defun cuts (i &optional (rows (? i rows))
+                         (y (-> (ydist i %1))))
+  "Sharpest (score col v) split of ROWS, over the x cols."
+  (let ((keep (cut (sqrt (length rows))))
+        (ys   (->> (funcall y %1) rows)))       ; y once, not
+    (dolist (col (? i cols x) (funcall keep))   ; once per col
+      (chop col
+            (loop for r in rows for v in ys
+                  unless (eql '? (elt r (? col at)))
+                  collect (cons (elt r (? col at)) v))
+            keep))))
 
 (defun same (x y &optional (eps 1e-5))
   "Do X and Y match?  Numbers, within a relative EPS."
@@ -182,6 +313,20 @@
     (dolist (r (reverse (nthcdr half rows)))
       (sub i r))          ; newest first: cheap
     (->> (assert (same %1 %2)) (print (mids i)) was)))
+
+(defun eg--acq ()
+  "Goods spends its budget, and beats a random draw."
+  (let* ((i    (tbl (csv (my file))))
+         (rows (tbl-rows i))
+         (got  (goods i))
+         (any  (loop repeat (length got)
+                     minimize
+                     (ydist i (nth (rand-int (length rows))
+                                   rows)))))
+    (kv :labelled (length got) :goods (ydist i (first got))
+        :random any)
+    (assert (= (length got) (- (my budget) (my check))))
+    (assert (<= (ydist i (first got)) any))))
 
 (defun eg--all (&aux (fails 0) egs)
   (do-symbols (s *package*)

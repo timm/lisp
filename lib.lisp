@@ -64,9 +64,14 @@
   `(cdr (or (assoc ,x ,lst :test #'equal)
             (car (setf ,lst (cons (cons ,x 0) ,lst))))))
 
+(defmacro addend (x lst)
+  "Like `push`, but onto the END of LST; e.g.
+     (let (l) (addend 1 l) (addend 2 l) l) ==> (1 2)"
+  `(setf ,lst (nconc ,lst (list ,x))))
+
 (defmacro -> (&body b)
   "A short lambda whose args arrive as %1 to %5. 
-  This makes (e.g.) the last example a one liner:
+  This makes, say, the last example a one liner. e.g.
   (let (seen)
     (->> (incf (has %1 seen)) '(a a b b b))
     seen) ==> ((b . 3) (a . 2))"
@@ -75,8 +80,7 @@
      ,@b))
 
 (defmacro ->> (body &rest lists)
-  "Map BODY, as a short lambda, over LISTS.  `map`, not
-   `mapcar`: vectors are sequences too."
+  "Map BODY, as a short lambda, over LISTS (any sequence)."
   `(map 'list (-> ,body) ,@lists))
 
 ;;;; settings 

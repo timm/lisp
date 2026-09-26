@@ -7,6 +7,7 @@ vim.opt.textwidth      = 65     -- linewidth
 vim.opt.colorcolumn    = "66"   -- ... and show where that is
 vim.opt.number         = true   -- absolute on the cursor line
 vim.opt.relativenumber = true   -- ... offsets elsewhere 
+vim.opt.clipboard      = "unnamedplus"  -- y/p = system
 vim.opt.list           = true   -- show hard breaks (eol spaces)
 vim.opt.listchars = { trail = "·", tab = "» ", nbsp = "+" }
 vim.opt.termguicolors  = true   -- 24-bit colour
@@ -14,4 +15,4 @@ vim.g.mapleader        = " "
 vim.keymap.set("n", "<leader>q", "gqap")  -- <space>q reformats
 vim.opt.lispwords:append{      -- bodies indent +2, instead
   "loop","format","error",     -- of lining up under the head
-  "aif","has","kv","my","?","->","->>"}
+  "aif","has","kv","my","?","->","->>","setf","sort"}
