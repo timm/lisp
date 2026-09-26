@@ -20,6 +20,7 @@
         (list 'file "-f" "data set file"
               "~/gits/moot/optimize/misc/auto93.csv")))
 
+(setf *settings* (defaults))
 ;;;; structs
 (defstruct num (at 0) (txt "") (n 0) (mu 0) (m2 0) (goal 1))
 (defstruct sym (at 0) (txt "") (n 0) seen)

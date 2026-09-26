@@ -83,13 +83,12 @@
   `-s 42` sets an option, `--foo` runs `(eg--foo)` then
   resets to MAKER's defaults.  Halts, with the number of
   failed examples as the exit status."
-  (setf *settings* (funcall maker))
   (loop for flag = (pop av) while flag do
     (aif (find flag *settings* :key #'second :test #'equal)
       (setf (fourth it) (thing (pop av)))
       (aif (cli-eg flag)
-        (progn (setf bad (cli-run it bad))
-               (setf *settings* (funcall maker)))  ; fresh
+        (setf bad (cli-run it bad)
+              *settings* (funcall maker))  
         (format t "?? ~a~%" flag))))
   (halt bad))
 
