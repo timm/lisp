@@ -12,5 +12,6 @@ vim.opt.termguicolors  = true   -- 24-bit colour
 vim.cmd.colorscheme("lunaperche")  -- comments high contrast
 vim.g.mapleader        = " "
 vim.keymap.set("n", "<leader>q", "gqap")  -- <space>q reformats
-vim.opt.lispwords:append(       -- bodies indent +2, instead
-  {"loop","format","error","labels","aif","handler-case"})
+vim.opt.lispwords:append{      -- bodies indent +2, instead
+  "loop","format","error",     -- of lining up under the head
+  "aif","has","kv","my","?","->","->>"}

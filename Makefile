@@ -4,14 +4,18 @@ ETC      := $(GIT_ROOT)/,
 A2PS_DIR := $(shell a2ps --list=defaults 2>/dev/null \
               | awk '/library path/{getline; print $$1; exit}')
 
+# a2ps splits option values on commas, and our etc dir IS
+# a comma, so it can never be named in a path.  Install the
+# sheet by name instead, then ask for it as "def".
 $(A2PS_DIR)/def.ssh: $(ETC)/def.ssh ## install a2ps style
+	@mkdir -p $(dir $@)
 	@cp $< $@
 
 Chars ?= 65
-~/tmp/%.pdf: %.lisp Makefile $(ETC)/def.ssh ## .lisp ==> .pdf
+~/tmp/%.pdf: %.lisp Makefile $(A2PS_DIR)/def.ssh ## .lisp ==> .pdf
 	@mkdir -p ~/tmp
 	@echo "pdf-ing $@ ... "
-	@a2ps --pretty-print=$(ETC)/def.ssh -Br --quiet --landscape   \
+	@a2ps --pretty-print=def -Br --quiet --landscape          \
 	      --pro=color --chars-per-line=$(Chars)        \
 	      --line-numbers=1 --borders=no --columns=3    \
 	      -M letter -o - $< | ps2pdf - $@

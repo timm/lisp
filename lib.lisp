@@ -4,8 +4,7 @@
 ;; `make weave` pulls these docstrings over there.
 
 (defvar *settings* nil
-  "Everything that tunes behaviour, as (name flag doc value).
-   A program using this library sets it, via `cli`.")
+  "What tunes me, as (name flag doc value).  `cli` sets it.")
 
 ;;;; script header 
 
@@ -69,8 +68,9 @@
      ,@b))
 
 (defmacro ->> (body &rest lists)
-  "Mapcar BODY, as a short lambda, over LISTS."
-  `(mapcar (-> ,body) ,@lists))
+  "Map BODY, as a short lambda, over LISTS.  `map`, not
+   `mapcar`: vectors are sequences too."
+  `(map 'list (-> ,body) ,@lists))
 
 ;;;; settings 
 
@@ -78,16 +78,18 @@
   "The current value of setting X, e.g. `(my seed)`."
   `(fourth (assoc ',x *settings*)))
 
-(defun cli (b4 &aux (av (cli-args)) (bad 0))
-  "Update settings B4 from the command line, then halt.
-  `-s 42` sets one option and `--foo` runs `(eg--foo)`.
-  Exit status is the number of examples that failed."
-  (setf *settings* b4)
+(defun cli (maker &aux (av (cli-args)) (bad 0))
+  "Run MAKER's settings against the command line; e.g.
+  `-s 42` sets an option, `--foo` runs `(eg--foo)` then
+  resets to MAKER's defaults.  Halts, with the number of
+  failed examples as the exit status."
+  (setf *settings* (funcall maker))
   (loop for flag = (pop av) while flag do
-    (aif (find flag b4 :key #'second :test #'equal)
+    (aif (find flag *settings* :key #'second :test #'equal)
       (setf (fourth it) (thing (pop av)))
       (aif (cli-eg flag)
-        (setf bad (cli-run it bad))
+        (progn (setf bad (cli-run it bad))
+               (setf *settings* (funcall maker)))  ; fresh
         (format t "?? ~a~%" flag))))
   (halt bad))
 
@@ -116,8 +118,7 @@
 ;;;; randoms 
 
 (defun rand (&optional (n 1))
-  "A random float in [0,N), from our own generator.
-   Rolling our own keeps the stream identical across platforms."
+  "A random float in [0,N), from our own generator."
   (setf *rand-seed* (mod (* 16807 *rand-seed*) 2147483647))
   (* n (- 1.0d0 (/ *rand-seed* 2147483647.0d0))))
 
@@ -126,8 +127,7 @@
   (floor (* n (rand))))
 
 (defun shuffle (lst &aux (v (coerce lst 'vector)))
-  "A new list holding LST's items in random order.
-   Copies to a vector first, for fast random access."
+  "A new list holding LST's items in random order."
   (loop for i from (1- (length v)) downto 1 do
     (rotatef (aref v i) (aref v (rand-int (1+ i)))))
   (coerce v 'list))
@@ -140,10 +140,12 @@
     (format t "~&~(~a~)~10t~s~%" k v)))
 
 (defun csv (file)
-  "The rows of FILE, each one a list of coerced cells."
+  "The rows of FILE, each one a vector of coerced cells."
   (with-open-file (s (truename file))
     (loop for line = (read-line s nil) while line
-      collect (csv-cells (string-right-trim '(#\Return) line)))))
+      collect (coerce (csv-cells
+                        (string-right-trim '(#\Return) line))
+                      'vector))))
 
 (defun csv-cells (s &optional (sep #\,) (lo 0)
                   (hi (position sep s :start lo)))

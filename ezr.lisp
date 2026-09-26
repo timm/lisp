@@ -12,7 +12,9 @@
   (load "lib"))
 
 (defun defaults ()
-  "My settings, as (name flag doc value)."
+  "My settings, as (name flag doc value).  Built with
+   `list`: `cli` mutates this, and a quoted literal is
+   the same object on every call (and read-only at that)."
   (list (list 'seed "-s" "random seed" 1234567891)
         (list 'p    "-p" "distance exponent" 2)
         (list 'file "-f" "data set file"
@@ -21,7 +23,7 @@
 ;;;; structs
 (defstruct num (at 0) (txt "") (n 0) (mu 0) (m2 0) (goal 1))
 (defstruct sym (at 0) (txt "") (n 0) seen)
-(defstruct tbl rows cols mids)
+(defstruct tbl (n 0) rows cols mids)
 (defstruct cols names x y klass all)
 
 (defun num (&optional txt at)
@@ -30,50 +32,72 @@
 
 (defun sym (&optional txt at) (make-sym :txt txt :at at))
 
+(defun tbl (rows)
+  (adds (cdr rows) (make-tbl :cols (cols (car rows)))))
+
 (defun col (txt at)
   (if (upper-case-p (chars txt 0)) (num txt at) (sym txt at)))
 
-(defun cols (names &aux (i (make-cols :names names)) (at -1))
-  (dolist (col (setf $all (->> (col %1 (incf at)) names)) i)
-    (if (member (chars (? col txt) -1) '(#\+ #\-))
-      (push col $y)
-      (push col $x))
-    (if (eql #\! (chars (? col txt) -1)) (setf $klass col))))
+(defun cols (names &aux (i (make-cols :names names)))
+  "Header NAMES, a vector.  A name's last letter is magic:
+   + or - is a goal, ! is the klass (a goal too), and X is
+   summarized like the rest but kept out of x and y."
+  (setf $all (loop for txt across names for at from 0
+                   collect (col txt at)))
+  (dolist (col $all i)
+    (case (chars (? col txt) -1)
+      (#\X)                         ; summarized, not modelled
+      ((#\+ #\-) (push col $y))
+      (#\!       (setf $klass col) (push col $y))
+      (t         (push col $x)))))
 
-(defmethod add ((i sym) x)
+(defmethod clone ((i tbl)) (tbl (list (? i cols names))))
+(defmethod clone ((i num)) (num $txt $at))
+(defmethod clone ((i sym)) (sym $txt $at))
+
+;;;; -----------------------------------------------------------
+(defun adds (lst &optional (i (num)))
+  "Add every item of LST to I, keeping what `add` returns."
+  (dolist (x lst i) (setf i (add i x))))
+
+(defun sub (i x) "Take X back out of I." (add i x :inc -1))
+
+(defun add (i x &key (inc 1))
+  "Add X to I; a negative INC takes it away again."
+  (unless (eql x '?)
+    (incf $n inc)
+    (if (< $n 1)
+      (setf i (clone i)) ; start over 
+      (_add i x inc)))
+  i)
+
+(defmethod _add ((i sym) x inc)
   "Count X."
-  (incf $n)
-  (incf (has x $seen))
-  x)
+  (incf (has x $seen) inc))
 
-(defmethod add ((i num) x)
-  "Welford: one pass, updating N, MU and M2 together, so
-   `sd` needs no second visit to the data."
-  (incf $n)
+(defmethod _add ((i num) x inc)
+  "Welford, forwards or backwards; see `div`."
   (let ((d (- x $mu)))
-    (incf $mu (/ d $n))
-    (incf $m2 (* d (- x $mu))))
-  x)
+    (incf $mu (* inc (/ d $n)))
+    (incf $m2 (* inc (* d (- x $mu))))))
 
-(defmethod add ((i cols) (row cons))
-  (add i (coerce row 'vector)))
+(defmethod _add ((i cols) row inc)
+  "Show each cell of ROW to the column that owns it."
+  (setf $all (loop for col in $all
+               collect (add col (elt row (? col at)) :inc inc))))
 
-(defmethod add ((i cols) row)
-  "Show each cell of ROW to the column that owns it.
-   `?` means unknown, so it is shown to no one."
-  (dolist (col $all row)
-    (let ((x (elt row (? col at))))
-      (unless (eql x '?) (add col x)))))
-
-(defmethod add ((i tbl) (row cons))
-  "Coerce here too, so what I store is a vector."
-  (add i (coerce row 'vector)))
-
-(defmethod add ((i tbl) row)
+(defmethod _add ((i tbl) row inc)
   "Keep ROW, and summarize it in my cols."
-  (push row $rows)
-  (add $cols row)
-  row)
+  (setf $mids nil)             ; my summary just went stale
+  (_add $cols row inc)   ; _add: cols keeps no count
+  (if (plusp inc)
+    (push row $rows)
+    (setf $rows (delete row $rows :test #'eq :count 1))))
+
+;;;; -----------------------------------------------------------
+(defmethod mids ((i tbl))
+  "Every column's mid, cached until the next `add`."
+  (or $mids (setf $mids (->> (mid %1) (cols-all $cols)))))
 
 (defmethod mid ((i num)) "Central tendency: the mean." $mu)
 
@@ -90,20 +114,16 @@
   (- (loop for (nil . n) in $seen
            sum (* (/ n $n) (log (/ n $n) 2)))))
 
-(defun near (x y &optional (eps 0.01))
-  "True if X and Y agree to within EPS."
-  (< (abs (- x y)) eps))
+(defun same (x y &optional (eps 1e-5))
+  "Do X and Y match?  Numbers, within a relative EPS."
+  (if (numberp x)
+    (< (abs (- x y)) (* eps (max 1 (abs y))))
+    (equal x y)))
 
 (defun gauss (m sd)
   "One sample from a normal curve, via Box-Muller."
   (+ m (* sd (sqrt (* -2 (log (rand 1.0))))
             (cos (* 2 pi (rand 1.0))))))
-
-(defun tbl (rows)
-  (adds (cdr rows) (make-tbl :cols (cols (car rows)))))
-
-(defun adds (lst &optional (i (num)))
-  (dolist (x lst i) (add i x)))
 
 ;;;; egs
 
@@ -136,7 +156,7 @@
 
 (defun eg--stats ()
   "Mid and div, per column."
-  (dolist (c (reverse (? (? (tbl (csv (my file))) cols) all)))
+  (dolist (c (? (? (tbl (csv (my file))) cols) all))
     (format t "~&  ~10a mid=~9,2f div=~8,3f~%"
             (? c txt) (float (mid c)) (float (div c)))))
 
@@ -145,8 +165,21 @@
   (let ((n (num)))
     (dotimes (i 1000) (add n (gauss 10 2)))
     (kv :mid (mid n) :div (div n))
-    (assert (near (mid n) 10 0.5))
-    (assert (near (div n) 2  0.5))))
+    (assert (same (mid n) 10 0.05))
+    (assert (same (div n) 2  0.25))))
+
+(defun eg--sub ()
+  "Mids noted halfway, then halfway back, must agree."
+  (let* ((rows (csv (my file)))
+         (i    (tbl (list (pop rows))))  ; header off the front
+         (half (floor (length rows) 2))
+         (was  nil))
+    (loop for r in rows for k from 1 do
+      (setf i (add i r))
+      (if (= k half) (print (setf was (mids i)))))
+    (dolist (r (reverse (nthcdr half rows)))
+      (setf i (sub i r)))          ; newest first: cheap
+    (->> (assert (same %1 %2)) (print (mids i)) was)))
 
 (defun eg--all (&aux (fails 0) egs)
   (do-symbols (s *package*)
@@ -158,4 +191,4 @@
 
 ;;;; main file
 
-(cli (defaults))
+(cli #'defaults)
