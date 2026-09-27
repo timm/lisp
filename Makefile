@@ -12,23 +12,36 @@ $(A2PS_DIR)/def.ssh: $(ETC)/def.ssh ## install a2ps style
 	@cp $< $@
 
 Chars ?= 65
+Font  ?= 4.5
 ~/tmp/%.pdf: %.lisp Makefile $(A2PS_DIR)/def.ssh ## .lisp ==> .pdf
 	@mkdir -p ~/tmp
 	@echo "pdf-ing $@ ... "
 	@a2ps --pretty-print=def -Br --quiet --landscape          \
 	      --pro=color --chars-per-line=$(Chars)        \
+	      --font-size=$(Font)                          \
 	      --line-numbers=1 --borders=no --columns=3    \
 	      -M letter -o - $< | ps2pdf - $@
 	@open $@
 
 .DEFAULT_GOAL := usage
-.PHONY: usage weave todo
+MOOT ?= $(HOME)/gits/moot
+Reps ?= 20
+
+.PHONY: usage weave todo test
 
 usage: ## show these targets
 	@gawk 'BEGIN {FS=":.*## "; print "\ntargets:"} \
 	       /^[a-zA-Z0-9_.%\/~-]+:.*## /  \
 	         {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}' \
 	  $(MAKEFILE_LIST)
+
+test: ## mean win of 20 holdouts, per moot data set
+	@mkdir -p ~/tmp
+	@ls $(MOOT)/optimize/*/*.csv \
+	 | xargs -P 8 -I{} sbcl --script ezr.lisp -R $(Reps) -f {} --holdout \
+	   2> ~/tmp/$@.err \
+	 | sort -n | tee ~/tmp/$@.out | fmt -60
+	@echo "--- crashes: $$(grep -c . ~/tmp/$@.err) (see ~/tmp/$@.err)"
 
 # x.md is both input and output here, so mtime can never decide.
 weave: $(ETC)/weave.awk ## weave x.lisp code into x.md, in place

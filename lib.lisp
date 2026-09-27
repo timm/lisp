@@ -24,6 +24,7 @@
     (format t "~&ERROR: ~a failure~:p~%" fails)
     #+clisp (ext:exit fails) #+sbcl (sb-ext:exit :code fails)))
 
+(declaim (optimize (speed 3) (safety 1)))
 #+sbcl (declaim (sb-ext:muffle-conditions warning style-warning))
 #+sbcl (setf sb-ext:*invoke-debugger-hook* #'brief-error)
 
