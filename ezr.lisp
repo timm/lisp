@@ -21,7 +21,7 @@
 (setf *settings* (defaults))
 
 ;;;; structs
-(defstruct num (at 0) (txt "") (n 0) (goal 1)
+(defstruct num (at 0) (txt "") (n 0) (goal 1) sd
   (mu 0d0 :type double-float) (m2 0d0 :type double-float))
 (defstruct sym (at 0) (txt "") (n 0) seen)
 (defstruct tbl (n 0) rows cols mids)
@@ -56,12 +56,14 @@
 
 ;;;; -----------------------------------------------------------
 (defun subs (lst &optional (i (num)))
-  "Take every item of LST back out of I."
-  (dolist (x lst i) (setf i (sub i x))))
+  "Take every item of LST back out of I (any sequence)."
+  (map nil (-> (setf i (sub i %1))) lst)
+  i)
 
 (defun adds (lst &optional (i (num)))
-  "Add every item of LST to I, keeping what `add` returns."
-  (dolist (x lst i) (setf i (add i x))))
+  "Add every item of LST to I (any sequence)."
+  (map nil (-> (setf i (add i %1))) lst)
+  i)
 
 (defun sub (i x) "Take X back out of I." (add i x :inc -1))
 
@@ -82,7 +84,9 @@
   "Welford, forwards or backwards; see `div`."
   (let* ((x (float x 1d0)) (d (- x $mu)))
     (incf $mu (* inc (/ d $n)))
-    (setf $m2 (max 0d0 (+ $m2 (* inc (* d (- x $mu))))))))
+    (setf $m2 (max 0d0 (+ $m2 (* inc (* d (- x $mu)))))
+          $sd (if (< $n 2) 0d0
+                (sqrt (/ $m2 (1- $n)))))))
 
 (defmethod _add ((i cols) row inc)
   "Show each cell of ROW to the column that owns it."
@@ -110,8 +114,8 @@
   (car (reduce (-> (if (> (cdr %1) (cdr %2)) %1 %2)) $seen)))
 
 (defmethod div ((i num))
-  "Diversity: standard deviation, out of Welford's M2."
-  (if (< $n 2) 0 (sqrt (/ (max 0d0 $m2) (1- $n)))))
+  "Diversity: standard deviation, kept fresh by `_add`."
+  (or $sd 0d0))
 
 (defmethod div ((i sym))
   "Diversity: entropy, in bits."
@@ -158,6 +162,46 @@
                             (? col goal)))
                     p))))
   (expt (/ d n) (/ 1d0 p)))
+
+;;;; -----------------------------------------------------------
+(defun mean (xs) "Mean of XS." (mid (adds xs (num))))
+
+(defun cohen (xs ys &optional (d 0.35) (eps 0))
+  "Are the means within D pooled standard deviations?"
+  (let* ((a (adds xs (num))) (b (adds ys (num)))
+         (pool (/ (+ (* (1- (? a n)) (expt (div a) 2))
+                     (* (1- (? b n)) (expt (div b) 2)))
+                  (- (+ (? a n) (? b n)) 2))))
+    (<= (abs (- (mid a) (mid b)))
+        (max eps (* d (sqrt pool))))))
+
+(defun cliffs (xs ys &optional (d 0.197))
+  "Sorted in.  Is the rank imbalance small enough?"
+  (let ((gt 0) (lt 0) (j 0) (k 0)
+        (n (length xs)) (m (length ys)))
+    (loop for x across xs do
+      (loop while (and (< j m) (< (aref ys j) x))
+        do (incf j) (setf k j))
+      (loop while (and (< k m) (<= (aref ys k) x)) do (incf k))
+      (incf gt j)
+      (incf lt (- m k)))
+    (<= (/ (abs (- gt lt)) (* n m)) d)))
+
+(defun ks (xs ys &optional (a 1.36))
+  "Sorted in.  95% Kolmogorov-Smirnov."
+  (let ((n (length xs)) (m (length ys)) (i 0) (j 0) (d 0))
+    (loop while (and (< i n) (< j m)) do
+      (let ((v (min (aref xs i) (aref ys j))))
+        (loop while (and (< i n) (<= (aref xs i) v)) do (incf i))
+        (loop while (and (< j m) (<= (aref ys j) v)) do (incf j))
+        (setf d (max d (abs (- (/ i n) (/ j m)))))))
+    (<= d (* a (sqrt (/ (+ n m) (* n m)))))))
+
+(defun same (xs ys &optional (eps 0))
+  "Indistinguishable by all three tests."
+  (let ((xs (sort (coerce xs 'vector) #'<))
+        (ys (sort (coerce ys 'vector) #'<)))
+    (and (cliffs xs ys) (ks xs ys) (cohen xs ys 0.35 eps))))
 
 ;;;; -----------------------------------------------------------
 (defun good (i best rest row)
@@ -253,9 +297,9 @@
 (defun split (col v rows)
   "ROWS in two: those this cut selects, and the others."
   (loop for r in rows
-        if (selects col v r) collect r into yes
-        else collect r into no
-        finally (return (values yes no))))
+    if (selects col v r) collect r into yes
+    else collect r into no
+    finally (return (values yes no))))
 
 (defun grow (i rows &optional (y (-> (ydist i %1))) &aux
              (z  (and (> (length rows) (my leaf))
@@ -302,13 +346,19 @@
            (min 100 (* 100 (- 1 (/ (- (ydist i %1) lo)
                                    (+ 1d-32 (- b4 lo)))))))))
 
-(defun holdout (i &aux (rows (shuffle (? i rows))))
+(defun grabs (i &aux (rows (shuffle (? i rows))))
+  "Budget-less-check rows, taken at random.  The straw man."
+  (subseq rows 0 (min (length rows)
+                      (- (my budget) (my check)))))
+
+(defun holdout (i &key (pick #'goods) &aux
+                (rows (shuffle (? i rows))))
   "Train on half; of CHECK guesses on the rest, pick best."
   (let* ((n     (floor (length rows) 2))
          (train (subseq rows 0 (min n (my few))))
          (test  (subseq rows n))
          (tr    (adds train (clone i)))
-         (lab   (adds (goods tr) (clone i)))  ; what we bought
+         (lab   (adds (funcall pick tr) (clone i)))
          (tt    (grow lab (? lab rows)))
          (top   (subseq (sort test #'<
                           :key (-> (? (leaf tt %1) mu)))
@@ -316,26 +366,27 @@
     (first (sort top #'< :key (-> (ydist tr %1))))))
 
 (defun show (i z &optional pre (edge "")
-             (ls (sort (leaves z) #'< :key (-> (? %1 mu)))))
+               (ls (sort (leaves z) #'< :key (-> (? %1 mu)))))
   "Tree left; y mids, d2h, n right.  Tick best, cross worst."
   (unless pre
     (format t "~&  ~34a~{~7@a~}~7@a~5@a~%" ""
-            (mapcar (-> (? %1 txt)) (? i cols y)) "d2h" "n"))
+      (mapcar (-> (? %1 txt)) (? i cols y)) "d2h" "n"))
   (format t "~&~a ~34a~{~7d~}~7d~5d~%"
-          (cond ((eq z (first ls))      (code-char 10003))
-                ((eq z (car (last ls))) (code-char 10007))
-                (t #\Space))
-          (concatenate 'string (or pre "") edge)
-          (mapcar #'round (? z ys))
-          (round (* 100 (? z mu))) (length (? z rows)))
+    (cond ((eq z (first ls))      (code-char 10003))
+          ((eq z (car (last ls))) (code-char 10007))
+          (t #\Space))
+    (concatenate 'string (or pre "") edge)
+    (mapcar #'round (? z ys))
+    (round (* 100 (? z mu))) (length (? z rows)))
   (loop for k in (? z kids)
-        for op in (if (num-p (? z col)) '("<=" ">") '("=" "!="))
-        do (show i k (if pre (concatenate 'string pre "|  ") "")
-                 (format nil "~a ~a ~a" (? (? z col) txt) op
-                         (? z v))
-                 ls)))
-;;;; -----------------------------------------------------------
-(defun same (x y &optional (eps 1e-5))
+    for op in (if (num-p (? z col)) '("<=" ">") '("=" "!="))
+    do (show i k (if pre (concatenate 'string pre "|  ") "")
+             (format nil "~a ~a ~a" (? (? z col) txt) op
+               (? z v))
+             ls)))
+
+;;;; -----------------------------------------------------------
+(defun similar (x y &optional (eps 1e-5))
   "Do X and Y match?  Numbers, within a relative EPS."
   (if (numberp x)
     (< (abs (- x y)) (* eps (max 1 (abs y))))
@@ -346,7 +397,7 @@
   (+ m (* sd (sqrt (* -2 (log (rand 1.0))))
             (cos (* 2 pi (rand 1.0))))))
 
-;;;; -----------------------------------------------------------
+;;;; -----------------------------------------------------------
 (defun eg--the ()
   (dolist (o *settings*)
     (destructuring-bind (key flag doc val) o
@@ -378,15 +429,15 @@
   "Mid and div, per column."
   (dolist (c (? (? (tbl (csv (my file))) cols) all))
     (format t "~&  ~10a mid=~9,2f div=~8,3f~%"
-            (? c txt) (float (mid c)) (float (div c)))))
+      (? c txt) (float (mid c)) (float (div c)))))
 
 (defun eg--gauss ()
   "Sampling a normal curve reproduces its mid and div."
   (let ((n (num)))
     (dotimes (i 1000) (add n (gauss 10 2)))
     (kv :mid (mid n) :div (div n))
-    (assert (same (mid n) 10 0.05))
-    (assert (same (div n) 2  0.25))))
+    (assert (similar (mid n) 10 0.05))
+    (assert (similar (div n) 2  0.25))))
 
 (defun eg--sub ()
   "Mids noted halfway, then halfway back, must agree."
@@ -399,7 +450,7 @@
       (if (= k half) (print (setf was (mids i)))))
     (dolist (r (reverse (nthcdr half rows)))
       (sub i r))          ; newest first: cheap
-    (->> (assert (same %1 %2)) (print (mids i)) was)))
+    (->> (assert (similar %1 %2)) (print (mids i)) was)))
 
 (defun eg--acq ()
   "Goods spends its budget, and beats a random draw."
@@ -454,6 +505,29 @@
     (format t "~&~4d ~a~%" mu (file-namestring (my file)))
     (assert (> mu 0))))
 
+(defun eg--same ()
+  "The stats tell noise from signal."
+  (let ((x (loop repeat 40 collect (gauss 10 1)))
+        (y (loop repeat 40 collect (gauss 10 1)))
+        (z (loop repeat 40 collect (gauss 11 1))))
+    (kv :same (same x y) :differ (not (same x z)))
+    (assert (same x y))
+    (assert (not (same x z)))
+    (assert (same x x))))
+
+(defun eg--vs ()
+  "Goods versus random picks, same budget. If 'same', delta=0."
+  (let* ((i (tbl (csv (my file))))
+         (w (wins i))
+         (a (loop repeat (my repeats)
+              collect (funcall w (holdout i :pick #'goods))))
+         (b (loop repeat (my repeats)
+              collect (funcall w (holdout i :pick #'grabs)))))
+    (format t "~&~4d ~4d ~4d ~a~%"
+      (round (mean a)) (round (mean b))
+      (if (same a b) 0 (round (- (mean a) (mean b))))
+      (file-namestring (my file)))))
+
 (defun eg--all (&aux (fails 0) egs)
   (do-symbols (s *package*)
     (if (and (fboundp s) (eql 0 (search "EG--" (symbol-name s)))
@@ -464,6 +538,6 @@
   (assert (zerop fails))
   fails)
 
-;;;; main file
-
+;;;; -----------------------------------------------------------
+;;;; main
 (cli #'defaults)

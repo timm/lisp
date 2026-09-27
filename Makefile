@@ -27,7 +27,7 @@ Font  ?= 4.5
 MOOT ?= $(HOME)/gits/moot
 Reps ?= 20
 
-.PHONY: usage weave todo test
+.PHONY: usage weave todo test vs
 
 usage: ## show these targets
 	@gawk 'BEGIN {FS=":.*## "; print "\ntargets:"} \
@@ -39,6 +39,14 @@ test: ## mean win of 20 holdouts, per moot data set
 	@mkdir -p ~/tmp
 	@ls $(MOOT)/optimize/*/*.csv \
 	 | xargs -P 8 -I{} sbcl --script ezr.lisp -R $(Reps) -f {} --holdout \
+	   2> ~/tmp/$@.err \
+	 | sort -n | tee ~/tmp/$@.out | fmt -60
+	@echo "--- crashes: $$(grep -c . ~/tmp/$@.err) (see ~/tmp/$@.err)"
+
+vs: ## goods vs random picks, per moot data set
+	@mkdir -p ~/tmp
+	@ls $(MOOT)/optimize/*/*.csv \
+	 | xargs -P 8 -I{} sbcl --script ezr.lisp -R $(Reps) -f {} --vs \
 	   2> ~/tmp/$@.err \
 	 | sort -n | tee ~/tmp/$@.out | fmt -60
 	@echo "--- crashes: $$(grep -c . ~/tmp/$@.err) (see ~/tmp/$@.err)"
