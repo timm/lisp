@@ -144,24 +144,24 @@
       (if (null y) (setf y (if (> x 0.5) 0 1)))
       (abs (- x y)))))
 
-(defun xdist (i row1 row2 &aux (d 0) (n 1d-32) (p (my p)))
-  "Minkowski gap between two rows, over the x columns."
-  (dolist (col (? i cols x))
-    (incf n)
-    (incf d (expt (dist col (svref row1 (? col at))
-                            (svref row2 (? col at)))
-                  p)))
+(defun minkowski (seq f &aux (d 0) (n 1d-32) (p (my p)))
+  "Sum F over SEQ, p-norm style.  A nil from F is skipped."
+  (map nil (-> (let ((v (funcall f %1)))
+                 (when v (incf n) (incf d (expt v p)))))
+       seq)
   (expt (/ d n) (/ 1d0 p)))
 
-(defun ydist (i row &aux (d 0) (n 1d-32) (p (my p)))
+(defun distx (i row1 row2)
+  "Minkowski gap between two rows, over the x columns."
+  (minkowski (? i cols x) (-> (dist %1 (svref row1 (? %1 at))
+                                    (svref row2 (? %1 at))))))
+
+(defun disty (i row)
   "How far ROW's goals sit from the best they could be."
-  (dolist (col (? i cols y))
-    (when (num-p col)
-      (incf n)
-      (incf d (expt (abs (- (norm col (svref row (? col at)))
-                            (? col goal)))
-                    p))))
-  (expt (/ d n) (/ 1d0 p)))
+  (minkowski (? i cols y)
+             (-> (when (num-p %1)
+                   (abs (- (norm %1 (svref row (? %1 at)))
+                           (? %1 goal)))))))
 
 ;;;; -----------------------------------------------------------
 (defun mean (xs) "Mean of XS." (mid (adds xs (num))))
@@ -206,7 +206,7 @@
 ;;;; -----------------------------------------------------------
 (defun good (i best rest row)
   "Score ROW: near BEST's middle, far from REST's."
-  (- (xdist i row (mids rest)) (xdist i row (mids best))))
+  (- (distx i row (mids rest)) (distx i row (mids best))))
 
 (defun good-enough (both best rest row lab)
   "Label ROW; keep BEST near sqrt(n), worst goes to REST."
@@ -215,7 +215,7 @@
     (add best r)
     (when (> (tbl-n best) (sqrt (+ 1 (tbl-n best) (tbl-n rest))))
       (let ((w (reduce 
-                 (-> (if (> (ydist both %1) (ydist both %2))
+                 (-> (if (> (disty both %1) (disty both %2))
                              %1 %2))
                  (tbl-rows best))))
         (sub best w)
@@ -237,7 +237,7 @@
            (sort todo #'>
              :key (-> (funcall score i best rest %1))))
       (good-enough both best rest (pop todo) lab))
-    (sort (tbl-rows both) #'< :key (-> (ydist both %1)))))
+    (sort (tbl-rows both) #'< :key (-> (disty both %1)))))
 
 ;;;; -----------------------------------------------------------
 (defun cuts-keeper (enough &aux sharp)
@@ -255,7 +255,7 @@
       sharp)))
 
 (defun cuts (i &optional (rows (? i rows))
-                   (y (-> (ydist i %1))))
+                   (y (-> (disty i %1))))
   "Sharpest (score col v) split of ROWS, over the x cols."
   (let ((keep (cuts-keeper (sqrt (length rows))))
         (ys   (->> (funcall y %1) rows)))       ; y once, not
@@ -301,7 +301,7 @@
     else collect r into no
     finally (return (values yes no))))
 
-(defun grow (i rows &optional (y (-> (ydist i %1))) &aux
+(defun grow (i rows &optional (y (-> (disty i %1))) &aux
              (z  (and (> (length rows) (my leaf))
                       (cuts i rows y)))
              (me (make-node :rows rows :mu (ymu i rows)
@@ -320,7 +320,7 @@
 
 (defun ymu (i rows)
   "Mean d2h of ROWS."
-  (mid (adds (->> (ydist i %1) rows) (num))))
+  (mid (adds (->> (disty i %1) rows) (num))))
 
 (defun ymids (i rows)
   "Mid of each y column, over ROWS."
@@ -338,12 +338,12 @@
     z))
 
 (defun wins (i &aux
-             (ys (sort (->> (ydist i %1) (? i rows)) #'<))
+             (ys (sort (->> (disty i %1) (? i rows)) #'<))
              (lo (first ys))
              (b4 (mid (adds ys (num)))))
   "A scorer: 100 at the best row, 0 at the mean row."
   (-> (max -100
-           (min 100 (* 100 (- 1 (/ (- (ydist i %1) lo)
+           (min 100 (* 100 (- 1 (/ (- (disty i %1) lo)
                                    (+ 1d-32 (- b4 lo)))))))))
 
 (defun grabs (i &aux (rows (shuffle (? i rows))))
@@ -363,7 +363,7 @@
          (top   (subseq (sort test #'<
                           :key (-> (? (leaf tt %1) mu)))
                         0 (my check))))
-    (first (sort top #'< :key (-> (ydist tr %1))))))
+    (first (sort top #'< :key (-> (disty tr %1))))))
 
 (defun show (i z &optional pre (edge "")
                (ls (sort (leaves z) #'< :key (-> (? %1 mu)))))
@@ -459,18 +459,18 @@
          (got  (goods i))
          (any  (loop repeat (length got)
                      minimize
-                     (ydist i (nth (rand-int (length rows))
+                     (disty i (nth (rand-int (length rows))
                                    rows)))))
-    (kv :labelled (length got) :goods (ydist i (first got))
+    (kv :labelled (length got) :goods (disty i (first got))
         :random any)
     (assert (= (length got) (- (my budget) (my check))))
-    (assert (<= (ydist i (first got)) any))))
+    (assert (<= (disty i (first got)) any))))
 
 (defun eg--cuts ()
   "The sharpest cut lowers diversity below the whole."
   (let* ((i    (tbl (csv (my file))))
          (rows (tbl-rows i))
-         (all  (adds (->> (ydist i %1) rows) (num))))
+         (all  (adds (->> (disty i %1) rows) (num))))
     (destructuring-bind (s c v) (cuts i)
       (multiple-value-bind (yes no) (split c v rows)
         (kv :col (? c txt) :at v :was (div all) :now s)
