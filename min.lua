@@ -6,7 +6,7 @@
 -- vim: set ts=2 sw=2 sts=2 et cc=75 :
 local _ENV = setmetatable({}, {__index = _G})
 if setfenv then setfenv(1, _ENV) end   -- lua 5.1, luajit
-local floor, exp, sqrt = math.floor, math.exp, math.sqrt
+local floor, exp, sqrt, log = math.floor, math.exp, math.sqrt, math.log
 
 the = {Seed = 1234567891, Budget = 50, Check = 5,
        Bins = 5, M = 2, P = 2, file = nil}
@@ -57,8 +57,12 @@ function add(c, v,   d)            -- counts for syms, Welford for nums
     c.mu = c.mu + d / c.n
     c.m2 = c.m2 + d * (v - c.mu) end end
 
-function div(c)                    -- sd, or 0 for a sym or a thin col
-  if not c.num or c.n < 2 then return 0 end
+function div(c,   e)               -- sd for nums, entropy for syms
+  if not c.num then
+    e = 0
+    for _, n in pairs(c.has or {}) do e = e - n / c.n * log(n / c.n, 2) end
+    return e end
+  if c.n < 2 then return 0 end
   return sqrt(c.m2 / (c.n - 1)) end
 
 function norm(c, v,   z)           -- logistic cdf; syms pass through
