@@ -41,6 +41,7 @@ function csv(file,   t, s) t = {}  -- rows; first one is the names
 
 -- ---- columns ---------------------------------------------------------
 function col(txt, at)              -- ! + - : goals.  X: skip.  A-Z: num
+  txt, at = txt or "N", at or 0    -- no args: an anonymous num
   return {txt = txt, at = at, n = 0, mu = 0, m2 = 0, has = nil,
           w = txt:find"%-$" and 0 or 1,
           num = txt:find"^%u" ~= nil} end
@@ -108,7 +109,7 @@ function ydist(i, r,   n, d, v)    -- goals to heaven; 0 is best
 
 -- ---- rmeans ----------------------------------------------------------
 function nums(lst, f,   c)         -- lst, summarized in one num
-  c = col("N", 1)
+  c = col()
   for _, x in ipairs(lst) do add(c, f(x)) end
   return c end
 
@@ -116,7 +117,7 @@ function arm(c, rows, y, all,   a, b)
   a = {bins = {}, w = 0}
   for _, r in ipairs(rows) do
     b = bin(c, r[c.at])
-    a.bins[b] = a.bins[b] or col("N", 1)
+    a.bins[b] = a.bins[b] or col()
     add(a.bins[b], y(r)) end
   a.w = vcut(a, all)
   return a end
