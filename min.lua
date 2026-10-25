@@ -201,6 +201,7 @@ function go.help() print(help) end
 function go.secs() secs(the.file) end
 
 for k, v in help:gmatch"\n%s+(%a+)=(%S+)" do the[k] = thing(v) end
-knobs()
-go[the.go]()
+if (arg and arg[0] or ""):find"min%.lua$" then  -- run, not required
+  knobs()
+  go[the.go]() end
 return _ENV
