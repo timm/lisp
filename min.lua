@@ -15,7 +15,7 @@ the = {Seed = 1234567891, Budget = 50, Check = 5,
 function knobs(   k, v)            -- awk-ish operands: Name=value, file
   for _, s in ipairs(arg) do
     k, v = s:match"^(%a%w*)=(.*)$"
-    if k then the[k] = tonumber(v) or v else the.file = s end end end
+    if k then the[k] = thing(v) else the.file = s end end end
 
 function rint(n)                   -- 1..n, repeatable from the.Seed
   the.Seed = (16807 * the.Seed) % 2147483647
