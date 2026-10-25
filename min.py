@@ -18,7 +18,7 @@ One file, four layers.  Each calls the layers above it and
 knows nothing of the ones below:
 
       core     columns, tables, bins.  Calls nothing.
-      rmeans   one arm per column: its bins, and its weight.
+      rmeans   one cut per column: its bins, and its weight.
       rig      split, train, guess, rank the unseen rows.
       stats    cohen, cliffs, ks.  A leaf: nothing calls it.
 
@@ -27,7 +27,7 @@ knows nothing of the ones below:
 # pylint: disable=invalid-name,ungrouped-imports
 # pylint: disable=no-member,assigning-non-slot  # `type()` structs
 from typing import Any
-import os, re, sys, random, traceback # pylint: disable=C0410
+import os, re, sys, traceback          # pylint: disable=C0410
 from math import exp, log2, sqrt
 from collections.abc import Callable, Iterable, Iterator
 
@@ -84,10 +84,10 @@ NUM  = struct("NUM",  txt=" ", at=0, n=0, mu=0, m2=0, sd=0, goal=1)
 SYM  = struct("SYM",  txt=" ", at=0, n=0, has=dict)
 COLS = struct("COLS", names=list, all=dict, x=list, y=list)
 TBL  = struct("TBL",  rows=list, cols=COLS)
-ARM  = struct("ARM",  bins=dict, w=0)          # one column's bins
-MODEL= struct("MODEL", all=NUM, arms=dict, cols=list)
+CUT  = struct("CUT",  bins=dict, w=0)          # one column's bins
+MODEL= struct("MODEL", all=NUM, cuts=dict, cols=list)
 
-Num, Sym, Arm, Model = NUM, SYM, ARM, MODEL    # Tbl, Cols: below
+Num, Sym, Cut, Model = NUM, SYM, CUT, MODEL    # Tbl, Cols: below
 COL = NUM | SYM
 
 #-- columns ------------------------------------------------
@@ -162,9 +162,9 @@ def ydist(tbl: TBL, row: ROW) -> float:
   return (sum(y**the.P for y in ys) / len(ys)) ** (1/the.P)
 
 #-- rmeans -------------------------------------------------
-def arm(col: COL, rows: ROWS, y: Callable, all1: NUM) -> ARM:
+def cut(col: COL, rows: ROWS, y: Callable, all1: NUM) -> CUT:
   "COL's y per bin over ROWS, and the variance those bins cut."
-  a = Arm()
+  a = Cut()
   for r in rows:
     b = bin(col, r[col.at])
     add(a.bins.setdefault(b, Num()), y(r))
@@ -172,39 +172,47 @@ def arm(col: COL, rows: ROWS, y: Callable, all1: NUM) -> ARM:
   return a
 
 def train(tbl: TBL, rows: ROWS, y: Callable = None) -> MODEL:
-  "rmeans: one arm per x column, over a clone of ROWS."
+  "rmeans: one cut per x column, over a clone of ROWS."
   y   = y or (lambda r: ydist(tbl, r))
   i   = clone(tbl, rows)
   all1= adds(y(r) for r in i.rows)
   return Model(all=all1, cols=i.cols.x,
-               arms={c.at: arm(c, i.rows, y, all1) for c in i.cols.x})
+               cuts={c.at: cut(c, i.rows, y, all1) for c in i.cols.x})
 
-def vcut(a: ARM, all1: NUM) -> float:
+def vcut(a: CUT, all1: NUM) -> float:
   "How much variance A's bins cut from ALL1."
   return max(0, div(all1)**2
              - sum(v.n/all1.n * div(v)**2 for v in a.bins.values()))
 
-def est(v: NUM, all1: NUM) -> float:
-  "V's mean, pulled to ALL1's by an m-estimate."
-  return (v.n*v.mu + the.M*all1.mu) / (v.n + the.M)
-
 def hit(m: MODEL, col: COL, row: ROW) -> tuple:
-  "The num ROW's COL cell falls in, and COL's arm -- or None."
-  a = m.arms.get(col.at)
+  "The num ROW's COL cell falls in, and COL's cut -- or None."
+  a = m.cuts.get(col.at)
   return (a.bins.get(bin(col, row[col.at])), a) if a else (None, None)
 
 def guess(m: MODEL, row: ROW) -> float:
-  "rmeans guess of ROW's y: its bins' means, weighed by variance."
-  s = w = 0
+  "rmeans guess: ROW's bin means, m-estimated, weighed by variance."
+  s = w = 0; mu = m.all.mu
   for col in m.cols:
     v, a = hit(m, col, row)
-    if v and a.w > 0: s += a.w * est(v, m.all); w += a.w
-  return s/w if w > 0 else m.all.mu
+    if v and a.w > 0:
+      s += a.w * (v.n*v.mu + the.M*mu) / (v.n + the.M); w += a.w
+  return s/w if w > 0 else mu
 
 #-- rig ----------------------------------------------------
+def rint(n: int) -> int:
+  "1..N, from the.Seed; the same stream in lua, lisp and here."
+  the.Seed = (16807 * the.Seed) % 2147483647
+  return 1 + int(n * the.Seed / 2147483647)
+
+def shuffle(t: ROWS) -> ROWS:
+  "T, in place, Fisher-Yates, so every port sees one order."
+  for i in range(len(t), 1, -1):
+    j = rint(i); t[i-1], t[j-1] = t[j-1], t[i-1]
+  return t
+
 def split(tbl: TBL, at: float = .8) -> tuple[ROWS, ROWS]:
   "TBL's rows, shuffled, cut AT."
-  rows = random.sample(tbl.rows, len(tbl.rows))
+  rows = shuffle(tbl.rows[:])
   n    = int(at * len(rows))
   return rows[:n], rows[n:]
 
@@ -271,18 +279,18 @@ def eg_train():
   tr, _ = split(t)
   m = train(t, tr[:the.Budget - the.Check])
   for c in m.cols:
-    a = m.arms[c.at]
+    a = m.cuts[c.at]
     for b, v in sorted(a.bins.items(), key=lambda z: str(z[0])):
+      e = (v.n*v.mu + the.M*m.all.mu) / (v.n + the.M)
       print(f"  {c.txt:12} bin {str(b):8} n={v.n:3}"
-            f" y={say(v.mu,3)} est={say(est(v,m.all),3)}"
-            f" w={say(a.w,4)}")
+            f" y={say(v.mu,3)} est={say(e,3)} w={say(a.w,4)}")
 
 def eg_secs():
   "Train on the budget, then rank every test row.  3 seeds."
   import time
   t = Tbl(the.File); tot = 0
   for s in range(3):
-    random.seed(the.Seed + s)
+    the.Seed = 1234567891 + s
     tr, te = split(t)
     tr2 = clone(t, tr); y = lambda r: ydist(tr2, r)
     t0  = time.time()
@@ -297,7 +305,7 @@ def eg_rank():
   t = Tbl(the.File)
   out = []
   for s in range(the.Repeats):
-    random.seed(the.Seed + s)
+    the.Seed = 1234567891 + s
     tr, te = split(t)
     tr2= clone(t, tr)                          # train rows only
     y  = lambda r: ydist(tr2, r)
@@ -312,7 +320,6 @@ the      = Settings()
 def run(f: Callable) -> int:
   "Run F. Demos may poke `the`, so always put it back."
   b4 = {k: getattr(the,k) for k in the.__slots__}
-  random.seed(the.Seed)
   try:                   f()
   except Exception as e: traceback.print_exception(e); return 1
   finally:               [setattr(the,k,v) for k,v in b4.items()]

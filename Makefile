@@ -27,29 +27,64 @@ Font  ?= 4.5
 MOOT ?= $(HOME)/gits/moot
 Reps ?= 20
 
-.PHONY: usage weave todo test vs
+# ---- the cache -------------------------------------------------
+# A split is a seed, not a file, so nothing here copies rows: the
+# cache holds only scores.  The two freshness rules are split by
+# what each tool is good at.  Timestamps are make's job, so "an
+# input moved, the old scores are void" lives here, as a rule that
+# DELETES them.  "This learner has no scores yet" is an existence
+# test, so it lives in min-eg.lua and in lgbm.py, each of which
+# skips any file already written.  Make invalidates; lua rebuilds.
+CACHE ?= $(HOME)/tmp/cache
+P     ?= 8
+# -S 8192: BSD xargs assembles at most 255 bytes per -I line, and
+# silently drops the rest of the work when a path makes it longer.
+CLAS   = $(wildcard $(MOOT)/classify/*.csv)
+OPT    = $(wildcard $(MOOT)/optimize/*/*.csv)
+REG    = $(wildcard $(MOOT)/regression/*.csv)
+# One stamp per language, so editing lua never voids the hour of
+# LightGBM runs, and editing python never voids the lua ones.
+SETS   = $(CLAS) $(OPT) $(REG)
+VOID   = $(patsubst $(MOOT)/%.csv,$(CACHE)/%/.lua,$(SETS)) \
+         $(patsubst $(MOOT)/%.csv,$(CACHE)/%/.py,$(SETS))
 
-usage: ## show these targets
-	@gawk 'BEGIN {FS=":.*## "; print "\ntargets:"} \
-	       /^[a-zA-Z0-9_.%\/~-]+:.*## /  \
-	         {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}' \
-	  $(MAKEFILE_LIST)
+$(CACHE)/%/.lua: $(MOOT)/%.csv min.lua min-eg.lua
+	@mkdir -p $(dir $@)
+	@rm -f $(dir $@)nb.csv $(dir $@)rmeans.csv $(dir $@)rmeansall.csv
+	@touch $@
 
-test: ## mean win of 20 holdouts, per moot data set
-	@mkdir -p ~/tmp
-	@ls $(MOOT)/optimize/*/*.csv \
-	 | xargs -P 8 -I{} sbcl --script ezr.lisp -R $(Reps) -f {} --holdout \
-	   2> ~/tmp/$@.err \
-	 | sort -n | tee ~/tmp/$@.out | fmt -60
-	@echo "--- crashes: $$(grep -c . ~/tmp/$@.err) (see ~/tmp/$@.err)"
+$(CACHE)/%/.py: $(MOOT)/%.csv min.py $(ETC)/lgbm.py
+	@mkdir -p $(dir $@)
+	@rm -f $(dir $@)lgbm.csv
+	@touch $@
 
-vs: ## goods vs random picks, per moot data set
-	@mkdir -p ~/tmp
-	@ls $(MOOT)/optimize/*/*.csv \
-	 | xargs -P 8 -I{} sbcl --script ezr.lisp -R $(Reps) -f {} --vs \
-	   2> ~/tmp/$@.err \
-	 | sort -n | tee ~/tmp/$@.out | fmt -60
-	@echo "--- crashes: $$(grep -c . ~/tmp/$@.err) (see ~/tmp/$@.err)"
+cache: $(VOID) ## drop any scores whose csv or code has moved
+
+nb: cache ## naive Bayes, every classify set, 20 seeds
+	@echo "$@ ..."
+	@ls $(MOOT)/classify/*.csv \
+	 | xargs -P $(P) -S 8192 -I{} luajit min-eg.lua go=$@ file={} > /dev/null
+
+rmeans: cache ## rmeans, every optimize and regression set
+	@echo "$@ ..."
+	@ls $(MOOT)/optimize/*/*.csv $(MOOT)/regression/*.csv \
+	 | xargs -P $(P) -S 8192 -I{} luajit min-eg.lua go=$@ file={} > /dev/null
+
+lgbm: cache ## LightGBM, those same seeds, those same scores
+	@echo "$@ ..."
+	@ls $(MOOT)/classify/*.csv $(MOOT)/optimize/*/*.csv \
+	    $(MOOT)/regression/*.csv \
+	 | xargs -P $(P) -S 8192 -I{} python3 $(ETC)/lgbm.py {} > /dev/null
+
+rmeansall: cache ## rmeans again, reading every training row
+	@echo "$@ ..."
+	@ls $(MOOT)/optimize/*/*.csv $(MOOT)/regression/*.csv \
+	 | xargs -P $(P) -S 8192 -I{} luajit min-eg.lua go=$@ file={} > /dev/null
+
+results: nb rmeans rmeansall lgbm ## every learner, every set, once
+
+fresh: ## forget every score
+	@rm -rf $(CACHE)
 
 # x.md is both input and output here, so mtime can never decide.
 weave: $(ETC)/weave.awk ## weave x.lisp code into x.md, in place

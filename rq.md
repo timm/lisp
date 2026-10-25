@@ -126,30 +126,124 @@ distance to heaven over all goals.
   mean can push a bad row to the top.  Sharper estimates, no
   safety net.
 
+## Is there anything to tune?
+
+![m-estimate sweep](docs/hpo.png)
+
+The estimator has one free parameter: `m`, the prior weight that
+pulls a bin mean toward the grand mean.  A sweep over
+m = 0, 1, 2, 4 across the 125 `moot/optimize` sets, at label
+budgets of 25, 50, 100, 200 and 400, medians of 20 seeds
+(`luajit hpo.lua file=...`).  The score is the RQ3 score: where
+the best of the top five guesses really ranks, as a percent of
+the test rows.
+
+| labels | sets | m=0 | m=1 | m=2 | m=4 |
+|---|---|---|---|---|---|
+| 25 | 125 | 3.91 | 3.92 | 3.92 | 3.60 |
+| 50 | 125 | 2.83 | 2.90 | 2.68 | 3.00 |
+| 100 | 123 | 2.62 | 2.90 | 2.87 | 2.87 |
+| 200 | 112 | 2.23 | 1.94 | 1.91 | 2.02 |
+| 400 | 108 | 1.40 | 1.34 | 1.20 | 1.30 |
+
+A budget is only run where the training split holds that many
+rows, hence the falling set counts.
+
+- **Nothing to tune.**  At every budget, each of m = 0, 1, 4 is
+  indistinguishable from the default m = 2: Cohen's d, Cliff's
+  delta and the KS test all agree, all five times.  Counting
+  which m wins each (set, budget) pair gives 358 / 353 / 355 /
+  365 -- a four-way tie.  Paired against m = 2, the median
+  difference is exactly zero for all three rivals, and the mean
+  differences are under 0.03 points.
+- **Per data set, the same story.**  The figure sweeps `m` at
+  fifty labels, one point per set, with the sets sorted by the
+  default m = 2 so that baseline runs as a smooth curve and any
+  rival that strayed would show up as a spike.  On **107 of
+  125** sets (the gray bands) all four values of `m` are
+  indistinguishable over 20 seeds; the median spread between
+  the best and the worst `m` is 0.44 points, and only a handful
+  of sets on the right reach one point or more.
+- **The knob is smaller than the noise.**  The four curves lie
+  within 0.4 points of each other; the spread *between* data
+  sets at the same budget is ten times wider -- at 25 labels the
+  middle half of the sets runs 1.5% to 7.4%.  Hyper-parameter
+  optimisation here would be fitting seed noise.
+- **Labels are the knob that matters.**  Going 25 -> 400 labels
+  moves the median from 3.9% to 1.2%, and the useful part of
+  that move is early: 25 -> 50 buys more than 200 -> 400.
+  Deleting the m-estimate altogether (m = 0) costs nothing
+  measurable, so the shrinkage earns its place as insurance on
+  thin bins rather than as a tuned quantity.
+
+The second knob is `bins`, how many slices a numeric column is
+cut into.  Same rig, `m` held at 2:
+
+![bins sweep](docs/bins.png)
+
+| labels | sets | bins=3 | bins=5 | bins=7 | bins=9 | bins=11 |
+|---|---|---|---|---|---|---|
+| 25 | 125 | 4.16 | 3.92 | 3.77 | 4.35 | 3.85 |
+| 50 | 125 | 3.24 | 2.68 | 2.98 | 2.93 | 3.12 |
+| 100 | 123 | 2.62 | 2.87 | 2.90 | 2.90 | 3.08 |
+| 200 | 112 | 2.12 | 1.91 | 1.79 | 1.47 | 1.64 |
+| 400 | 108 | 1.30 | 1.20 | 1.06 | 1.27 | 1.19 |
+
+- **`bins` bites harder than `m`, and still does not pick a
+  winner.**  Every setting is indistinguishable from the default
+  `bins=5` at every budget, the paired median difference is
+  again exactly zero, and the win counts (303 / 304 / 314 / 322 /
+  327) spread over five choices the way chance would.  No
+  setting is best at more than two of the five budgets.
+- **The disagreement is per data set, not per setting.**  At
+  fifty labels only **69 of 125** sets tie across all five
+  values of `bins`, against 107 for `m`, and the median
+  best-worst spread is 1.53 points against 0.44.  Sorting the
+  sets by `bins=5` turns that baseline into a smooth curve and
+  the rivals into scatter around it -- scatter in both
+  directions, with no setting riding above or below for long.
+  Each set has a bin count it happens to like; nothing says in
+  advance which, and the sets that care sit at the right of the
+  figure, where every setting already scores badly.
+
 ## What it costs
 
 ![seconds](docs/secs.png)
 
-Train on the budget, then score every test row -- what the
+The same estimator, five ways: `min.py` under CPython and pypy,
+`min.lua` under Lua and LuaJIT, `min.lisp` under SBCL.  Each
+trains on the budget then scores every test row -- what the
 protocol actually costs -- against LightGBM fitting all training
-rows and predicting the test (one model per goal).  124 optimize
-sets, mean of 3 seeds, model only, no parsing.
+rows and predicting the test (one model per goal column).  124
+optimize sets, mean of 3 seeds, model only, no parsing.
 
-| data | rows | rmeans 45+5 | LightGBM | speedup |
-|---|---|---|---|---|
-| javagc | 166975 | 0.5893 | 1.914 | 3x |
-| Scrum100k | 100000 | 0.7987 | 5.829 | 7x |
-| *... median ...* | | | | **249x** |
-| auto93 | 398 | 0.0007 | 1.535 | 2193x |
-| SS-A | 1343 | 0.0008 | 2.314 | 2892x |
+| data | rows | cpython | pypy | lua | luajit | sbcl | lgbm |
+|---|---|---|---|---|---|---|---|
+| player_statistics_cleane | 81 | 0.0033 | 0.0167 | 0.0008 | 0.0010 | 0.0019 | 0.09 |
+| nasa93dem | 93 | 0.0029 | 0.0169 | 0.0015 | 0.0008 | 0.0021 | 0.36 |
+| FM-500-100-0.50-SAT-1 | 10000 | 0.3195 | 0.0754 | 0.1007 | 0.0176 | 0.4648 | 3.96 |
+| xomo_osp2 | 10000 | 0.0409 | 0.0239 | 0.0179 | 0.0019 | 0.0636 | 6.12 |
+| Scrum100k | 100000 | 0.5768 | 0.0645 | 0.1506 | 0.0160 | 0.7987 | 5.83 |
+| javagc | 166975 | 0.5841 | 0.0575 | 0.2015 | 0.0209 | 0.5893 | 1.91 |
+| **total, 124 sets** | | **5.80** | **2.73** | **1.91** | **0.36** | **7.90** | **372** |
+| **median speedup** | | **346x** | **163x** | **1,030x** | **2,430x** | **249x** | 1x |
 
-Median **249x**, range 3x to 2892x, and the curve never reaches
-parity.  That is two cost models meeting: `rmeans` is linear in
-rows (0.0007s at 398 rows, 0.59s at 166,975) while LightGBM pays
-a near-fixed one to six seconds to build 100 trees per goal
-whatever the data size.  The advantage is largest exactly where
-configuration optimisation lives -- a few hundred rows -- and
-narrows, without closing, as data grows.
+- **Every runtime beats LightGBM by two to three orders of
+  magnitude**, and no curve ever reaches parity.  The slowest of
+  the five still has a median 163x.
+- **LuaJIT wins outright**: 0.36s to LightGBM's 372s over the
+  whole corpus, a median 2,430x.  Plain Lua is second (1,030x),
+  and beats both Pythons.
+- **pypy has a floor.**  Its JIT needs about 13ms of warmup,
+  which is longer than most of these runs take, so it is the
+  *slowest* arm by median despite winning on the widest tables.
+- **SBCL's total is dragged by wide tables.**  Two 500- and
+  1,044-column SAT sets cost it 1.46s of its 7.90s: `guess`
+  walks the columns with a hash lookup each, and that constant
+  shows when there are a thousand of them.
+- The spread between runtimes (0.36s to 7.90s) is smaller than
+  the gap to LightGBM (372s).  Which language you pick matters
+  far less than which algorithm.
 
 ## The estimator, in full
 
