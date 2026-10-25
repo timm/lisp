@@ -158,9 +158,9 @@ Four steps, no iteration.
 *1. Bin.*  A numeric column is cut on the logistic norm of its
 z-score, clipped at three standard deviations, into $B=5$ bins:
 
-$$z=\operatorname{clip}\!\left(\frac{v-\mu_c}{\sigma_c},-3,3\right),
-\qquad \Phi(z)=\frac{1}{1+e^{-1.7z}},\qquad
-b_c(v)=\min\!\big(B,\;1+\lfloor B\,\Phi(z)\rfloor\big)$$
+$$z = \max(-3, \min(3, (v - \mu_c) / \sigma_c)), \qquad
+\Phi(z) = \frac{1}{1 + e^{-1.7 z}}, \qquad
+b_c(v) = \min(B, 1 + \lfloor B \Phi(z) \rfloor)$$
 
 A symbolic column is its own bin: $b_c(v)=v$.  $\mu_c,\sigma_c$
 come from the **training** rows only.
@@ -173,16 +173,15 @@ $\sigma$.
 *3. Shrink.*  A bin's mean is pulled toward the grand mean by an
 m-estimate ($m=2$), so a thin bin cannot invent a prediction:
 
-$$\hat y_{cb}=\frac{n_{cb}\,\bar y_{cb}+m\,\bar y}{n_{cb}+m}$$
+$$\hat y_{cb} = \frac{n_{cb} \bar y_{cb} + m \bar y}{n_{cb} + m}$$
 
 *4. Weight and average.*  Each column is worth how much variance
 its bins remove -- CART's split criterion, k-way -- and the
 guess is the weighted mean of its bins' shrunken means:
 
-$$w_c=\max\!\left(0,\;\sigma^{2}-\sum_b
-\frac{n_{cb}}{n}\,\sigma_{cb}^{2}\right),
-\qquad
-\hat y(r)=\frac{\sum_c w_c\,\hat y_{c,b_c(r)}}{\sum_c w_c}$$
+$$w_c = \max\left(0, \sigma^2 - \sum_b
+\frac{n_{cb}}{n} \sigma_{cb}^2\right), \qquad
+\hat y(r) = \frac{\sum_c w_c \hat y_{c, b_c(r)}}{\sum_c w_c}$$
 
 with $\bar y$ returned when no column has both a known bin and
 $w_c>0$.
@@ -226,8 +225,8 @@ bin 4, 8 and 9 in bin 5.  Then:
 
 A new row `Age=8, job=b` lands in `Age` bin 5 and `job` bin b:
 
-$$\hat y=\frac{107.77\times 25.25+108.10\times 26.20}
-{107.77+108.10}=25.73$$
+$$\hat y = \frac{107.77 \times 25.25 + 108.10 \times 26.20}
+{107.77 + 108.10} = 25.73$$
 
 against a true neighbourhood of 29-31.  The m-estimate is
 deliberately pulling toward 20.5, and with three rows per bin it
