@@ -1,198 +1,215 @@
-#!/usr/bin/env sbcl --script
-#+sbcl (declaim (sb-ext:muffle-conditions cl:style-warning))
+;; tree.lisp -- regression trees, in as little code as I can manage.
+;; (c) 2026 Tim Menzies, timm@ieee.org, MIT license.
+;;
+;; Stands alone: no lib.lisp, no structs, no CLOS, no macros.
+;;
+;; A missing value is nil, not `?`, so every test for one is
+;; just a test for truth.
+;;
+;; In: a csv whose header names the columns.  An upper case first
+;; letter means numeric.  A last letter of `+` or `-` marks a goal
+;; to maximize or minimize, `X` marks a column to ignore.
+;;
+;; Out: the tree, as nested lists.  Every node carries the test
+;; that reached it, so printing is a four line walk and `write`
+;; is all the model persistence anyone needs.
+;;
+;;   node = (test n d2h mids . kids)
+;;   test = (at name op v)        ; nil at the root
+;;
+;; Whoever calls `grow` decides which rows were worth labelling.
+;; Growing on a random sample needs no code here beyond a shuffle.
 
-(defvar *the* '(seed 42 
-                file "auto93.csv" 
-                bins 7 
-                Budget 50
-                leaf 4 
-                p 2 
-                Show 30 
-                Check 5))
+(defparameter *leaf* 4 "Stop splitting at this many rows.")
+(defparameter *p*    2 "Distance exponent.")
+(defparameter *cuts* 8 "Splits to try, per numeric column.")
 
-;;;; macros ----------------------------------------------------------
-(defmacro ? (x) `(getf *the* ',x))
+;;;; -----------------------------------------------------------
+;;;; csv
 
-;;;; structs ---------------------------------------------------------
-(defstruct sym (n 0) (at 0) (txt " ") (has (make-hash-table :test #'equal)))
-(defstruct num (n 0) (at 0) (txt " ") (mu 0) (m2 0) (goal 1))
-(defstruct cols x y all names)
-(defstruct data rows cols)
-(defstruct node col cut lo hi y)
+(defun thing (s)
+  "Coerce S to a number, or `?`, or leave it a string."
+  (let* ((*read-eval* nil)
+         (v (handler-case (read-from-string s nil "") (error () ""))))
+    (if (numberp v) v (if (string= s "?") nil s))))
 
-;;;; lib -------------------------------------------------------------
-(defun chr (s i &aux (s1 (string s)))
-  (char s1 (if (minusp i) (+ (length s1) i) i)))
+(defun cells (s &optional (lo 0) (hi (position #\, s :start lo)))
+  "Split S on commas, coercing each cell."
+  (cons (thing (subseq s lo hi)) (if hi (cells s (1+ hi)))))
 
-(defun chrs (s i &rest lst)
-  (member (chr s i) lst :test #'equal))
+(defun csv (file)
+  "FILE as a list of lists: the header, then the rows."
+  (with-open-file (s (truename file))
+    (loop for line = (read-line s nil) while line
+          collect (cells (string-right-trim '(#\Return) line)))))
 
-(defun thing (s &aux (s1 (string-trim '(#\Space #\Tab) s)))
-  (let ((x (let ((*read-eval* nil)) (read-from-string s1 nil ""))))
-    (if (or (numberp x) (member x '(t nil ?))) x s1)))
+;;;; -----------------------------------------------------------
+;;;; columns
 
-(defun things (s &optional (sep #\,) (here 0))
-  (let ((there (position sep s :start here)))
-    (cons (thing (subseq s here there))
-          (if there (things s sep (1+ there))))))
+(defun lastc (name) "NAME's last character." (char name (1- (length name))))
 
-(defun mapcsv (fun file)
-  (with-open-file (s file)
-    (loop (funcall fun (things (or (read-line s nil) (return)))))))
+(defun x-cols (names)
+  "The (at name numeric?) of every column we may split on."
+  (loop for name in names for at from 0
+        unless (find (lastc name) "+-!X")
+        collect (list at name (upper-case-p (char name 0)))))
 
-(defun shuffle (lst &aux (a (coerce lst 'vector)))
-  (loop for i from (1- (length a)) downto 1
-        do (rotatef (aref a i) (aref a (random (1+ i)))))
-  (coerce a 'list))
+(defun y-cols (names)
+  "The (at name heaven) of every goal column."
+  (loop for name in names for at from 0
+        when (find (lastc name) "+-")
+        collect (list at name (if (eql #\+ (lastc name)) 1 0))))
 
-(defun bars (n)
-  (with-output-to-string (s) (dotimes (_ n) (write-string "|.. " s))))
+(defun cells-at (at rows)
+  "Column AT of ROWS, with the unknowns dropped."
+  (loop for r in rows for x = (nth at r) when x collect x))
 
-;;;; create ----------------------------------------------------------
-(defmethod new (x) x)
+;;;; -----------------------------------------------------------
+;;;; one number per row
 
-(defmethod new ((self num))
-  (when (eql #\- (chr (num-txt self) -1))
-    (setf (num-goal self) 0))
-  self)
+(defun mu-sd (xs)
+  "Mean and sample sd of XS, in one pass.  No Welford, no take-backs."
+  (let ((n 0) (sum 0d0) (sum2 0d0))
+    (dolist (x xs) (incf n) (incf sum x) (incf sum2 (* x x)))
+    (values (/ sum (max 1 n))
+            (if (< n 2) 0d0
+              (sqrt (max 0d0 (/ (- sum2 (/ (* sum sum) n)) (1- n))))))))
 
-(defmethod new ((self cols) &aux (at -1))
-  (labels
-    ((what  (s) (if (upper-case-p (chr s 0)) #'make-num #'make-sym))
-     (one   (s) (new+(funcall (what s) :txt s :at (incf at))))
-     (skipc (c) (chrs (slot-value c 'txt) -1 #\- #\+ #\! #\X))
-     (goalc (c) (chrs (slot-value c 'txt) -1 #\- #\+ #\!)))
-    (setf (cols-all self)   (mapcar          #'one   (cols-names self))
-          (cols-x self)     (remove-if       #'skipc (cols-all self))
-          (cols-y self)     (remove-if-not   #'goalc (cols-all self)))
-    self))
+(defun norm (x mu sd)
+  "X to 0..1, via 1/(1+exp(-1.7 z)); z clamped to +-3."
+  (let ((z (max -3 (min 3 (/ (- x mu) (+ 1d-32 sd))))))
+    (/ 1 (+ 1 (exp (* -1.7 z))))))
 
-;;;; update ----------------------------------------------------------
-(defun add (col v &optional (inc 1))
-  (unless (eq v '?)
-    (incf (slot-value col 'n) inc)
-    (_add col v inc))
-  v)
+(defun d2h (cols stats row)
+  "Root mean square gap from ROW's goals to their heaven."
+  (let ((d 0d0) (n 1d-32))
+    (loop for (at nil heaven) in cols for (mu sd) in stats
+          for x = (nth at row) when x do
+      (incf n)
+      (incf d (expt (abs (- (norm x mu sd) heaven)) *p*)))
+    (expt (/ d n) (/ 1d0 *p*))))
 
-(defmethod _add ((self sym) v inc)
-  (incf (gethash v (sym-has self) 0) inc))
+(defun d2hs (cols rows)
+  "Every row's distance to heaven, in row order.  Zero is best."
+  (let ((stats (loop for (at) in cols
+                     collect (multiple-value-list
+                               (mu-sd (cells-at at rows))))))
+    (loop for r in rows collect (d2h cols stats r))))
 
-(defmethod _add ((self num) v inc)
-  (let ((d (- v (num-mu self))))
-    (incf (num-mu self) (* inc (/ d (num-n self))))
-    (incf (num-m2 self) (* inc d (- v (num-mu self))))))
+(defun mean (xs)
+  "Mean of XS, as a float, so printed trees stay readable."
+  (float (/ (reduce #'+ xs) (max 1 (length xs))) 1d0))
 
-(defun adds (lst &optional (col (make-num)))
-  (dolist (x lst col) (add col x)))
+(defun mids (cols rows)
+  "The mean of each goal column, over ROWS."
+  (loop for (at) in cols collect (mean (cells-at at rows))))
 
-;;;; data ------------------------------------------------------------
-(defun data (&optional src)
-  (let ((d (make-data)))
-    (etypecase src
-      (string (mapcsv (lambda (row) (data+ d row)) src))
-      (list   (dolist (row src) (data+ d row)))
-      (null   d))
-    d))
+;;;; -----------------------------------------------------------
+;;;; cuts
 
-(defun data+ (d row)
-  (if (data-cols d)
-    (progn (mapc (lambda (c v) (add c v)) (cols-all (data-cols d)) row)
-           (push row (data-rows d)))
-    (setf (data-cols d) (new+(make-cols :names row))))
-  d)
 
-(defun clone (d &optional rows)
-  (data (cons (cols-names (data-cols d)) rows)))
+(defun score (a b)
+  "Spread either side of a cut, weighted by how many fell there."
+  (/ (+ (* (length a) (nth-value 1 (mu-sd a)))
+        (* (length b) (nth-value 1 (mu-sd b))))
+     (+ (length a) (length b) 1d-32)))
 
-;;;; query -----------------------------------------------------------
-(defun div (num)
-  (if (< (num-n num) 2) 0
-      (sqrt (/ (max 0 (num-m2 num)) (1- (num-n num))))))
+(defun candidates (at numeric? rows)
+  "What to try: one cut per symbol, or *cuts* numbers by rank."
+  (if (not numeric?)
+    (loop for x in (remove-duplicates (cells-at at rows)
+                                 :test #'equal :from-end t)
+          collect (list x '=))
+    (let* ((xs (coerce (sort (cells-at at rows) #'<) 'vector))
+           (n  (length xs))
+           (k  (max 1 (floor n *cuts*))))   ; by rank: these are dense
+      (loop for i from (1- k) below (1- n) by k
+            collect (list (aref xs i) '<=)))))
 
-(defun z (num v)
-  (max -3 (min 3 (/ (- v (num-mu num)) (+ (div num) 1e-32)))))
+(defun sharpest (cols rows ys)
+  "The (at name op v) whose two sides have the tightest ys."
+  (let (out (least 1d30))
+    (dolist (c cols out)
+      (destructuring-bind (at name numeric?) c
+        (loop for (v op) in (candidates at numeric? rows) do
+          (let ((test (list at name op v)) a b)
+            (loop for r in rows for y in ys    ; one pass per cut,
+              do (if (selects test r)          ; so no take-backs
+                   (push y a)
+                   (push y b)))
+            (when (and (>= (length a) *leaf*) (>= (length b) *leaf*))
+              (let ((s (score a b)))
+                (when (< s least) (setf out test least s))))))))))
+;;;; -----------------------------------------------------------
+;;;; tree
 
-(defun norm (num v)
-  (/ 1.0 (1+ (exp (* -1.7 (z num v))))))
+(defun selects (test row &aux (x (nth (first test) row))
+                             (v (fourth test)))
+  "Does ROW pass TEST?  A missing value passes anything."
+  (or (null x)
+      (case (third test)
+        (<= (<= x v)) (> (> x v)) (= (equal x v))
+        (t (not (equal x v))))))
 
-(defun disty (d row)
-  (minkowski (mapcar (lambda (y)
-                       (- (norm y (elt row (num-at y))) (num-goal y)))
-                     (cols-y (data-cols d)))))
+(defun flip (test)
+  "TEST's complement, for the other branch."
+  (list (first test) (second test)
+        (if (eq (third test) '<=) '> '/=) (fourth test)))
 
-(defun minkowski (items &aux (n 0) (d 0))
-  (dolist (x items (if (zerop n) 0 (expt (/ d n) (/ 1.0 (? p)))))
-    (incf n)
-    (incf d (expt x (? p)))))
+(defun grow (cols ys-cols rows ys &optional test)
+  "A node for ROWS, plus two below it if a cut is worth making."
+  (let ((z (and (> (length rows) *leaf*) (sharpest cols rows ys)))
+        kids)
+    (when z
+      (let ((yes z) rs1 ys1 rs2 ys2)
+        (loop for r in rows for y in ys do
+          (cond ((selects yes r) (push r rs1) (push y ys1))
+                (t               (push r rs2) (push y ys2))))
+        (when (and rs1 rs2)
+          (setf kids (list (grow cols ys-cols rs1 ys1 yes)
+                           (grow cols ys-cols rs2 ys2 (flip yes)))))))
+    (list* test (length rows) (mean ys) (mids ys-cols rows) kids)))
 
-;;;; tree ------------------------------------------------------------
-(defun selects (rows at fn &aux lo hi)
-  (dolist (r rows)
-    (let ((v (elt r at)))
-      (unless (eq v '?) (if (funcall fn v) (push r lo) (push r hi)))))
-  (if (and (>= (length lo) (? leaf)) (>= (length hi) (? leaf)))
-    (values lo hi) (values nil nil)))
+(defun kids   (z) "Z's children, if any."    (cddddr z))
+(defun leaves (z) "Every childless node under Z."
+  (if (kids z) (mapcan #'leaves (kids z)) (list z)))
 
-(defun splits (col rows &aux (at (slot-value col 'at)))
-  (if (sym-p col)
-    (loop for v in (remove-duplicates
-                     (remove '? (mapcar (lambda (r) (elt r at)) rows)))
-          nconc (multiple-value-bind (lo hi) (selects rows at (lambda (x) (equal x v)))
-                  (when lo (list (list v lo hi)))))
-    (let ((vals (sort (remove '? (mapcar (lambda (r) (elt r at)) rows)) #'<)))
-      (when (>= (length vals) 2)
-        (let ((med (elt vals (floor (length vals) 2))))
-          (multiple-value-bind (lo hi) (selects rows at (lambda (x) (<= x med)))
-            (when lo (list (list med lo hi)))))))))
+(defun leaf (z row)
+  "Walk ROW down to its leaf.  Each kid knows its own test."
+  (if (kids z)
+    (leaf (if (selects (first (first (kids z))) row)
+            (first (kids z))
+            (second (kids z)))
+          row)
+    z))
 
-(defun w* (d rows)
-  (* (length rows) (div (adds (mapcar (lambda (r) (disty d r)) rows)))))
+;;;; -----------------------------------------------------------
+;;;; show.  Or skip it: `(write z)` is the tree, verbatim.
 
-(defun tree (d rows)
-  (if (< (length rows) (* 2 (? leaf)))
-    (make-node :y (adds (mapcar (lambda (r) (disty d r)) rows)))
-    (let ((best nil) (bscore most-positive-double-float))
-      (dolist (col (cols-x (data-cols d)))
-        (dolist (split (splits col rows))
-          (destructuring-bind (cut lo hi) split
-            (let ((s (+ (w* d lo) (w* d hi))))
-              (when (< s bscore)
-                (setf bscore s best (list col cut lo hi)))))))
-      (if best
-        (destructuring-bind (col cut lo hi) best
-          (make-node :col col :cut cut
-                     :lo (tree d lo) :hi (tree d hi)))
-        (make-node :y (adds (mapcar (lambda (r) (disty d r)) rows)))))))
+(defun show (names z &optional (pre ""))
+  "Tree on the left; goal mids, d2h and n on the right."
+  (when (string= pre "")
+    (format t "~&~34a~{~9@a~}~9@a~7@a~%" ""
+      (loop for (nil name) in (y-cols names) collect name) "d2h" "n"))
+  (destructuring-bind (test n mu mids . kids) z
+    (format t "~&~34a~{~9,2f~}~9,2f~7d~%"
+      (concatenate 'string pre
+        (if test
+          (format nil "~a ~a ~a" (second test) (third test)
+            (if (floatp (fourth test))
+              (format nil "~,2f" (fourth test))
+              (fourth test)))
+          ""))
+      mids mu n)
+    (dolist (k kids)
+      (show names k (concatenate 'string pre "|  ")))))
 
-(defun tree-leaf (nd row)
-  (let ((col (node-col nd)))
-    (if (null col) nd
-      (let ((v (elt row (slot-value col 'at))))
-        (tree-leaf
-          (if (eq v '?) (node-lo nd)
-            (if (if (sym-p col) (equal v (node-cut nd)) (<= v (node-cut nd)))
-              (node-lo nd) (node-hi nd)))
-          row)))))
+;;;; -----------------------------------------------------------
+;;;; main
 
-(defun tree-show (nd &optional (lvl 0) (pre ""))
-  (let ((s (if (string= pre "") ""
-               (concatenate 'string (bars (1- lvl)) pre))))
-    (if (node-col nd)
-      (let* ((col (node-col nd))
-             (txt (slot-value col 'txt))
-             (sym? (sym-p col)))
-        (when (string/= pre "") (format t "~a~%" s))
-        (tree-show (node-lo nd) (1+ lvl)
-           (format nil "~a ~a ~a" txt (if sym? "==" "<=") (node-cut nd)))
-        (tree-show (node-hi nd) (1+ lvl)
-           (format nil "~a ~a ~a" txt (if sym? "!=" ">") (node-cut nd))))
-      (format t "~va ~6,2f (~d)~%" (? Show) s
-              (num-mu (node-y nd)) (num-n (node-y nd))))))
-
-;;;; main ------------------------------------------------------------
-(setf *random-state* (sb-ext:seed-random-state (? seed)))
-
-(let* ((d  (data (? file)))
-       (rs (shuffle (data-rows d)))
-       (d1 (clone d (subseq rs 0 (min (? Budget) (length rs))))))
-  (tree-show (tree d1 (data-rows d1))))
+(defun tree (file &aux (data (csv file)) (names (car data))
+                       (rows (cdr data)) (cols (y-cols names)))
+  "Read FILE, score its rows, grow a tree over all of them."
+  (let ((z (grow (x-cols names) cols rows (d2hs cols rows))))
+    (show names z)
+    z))

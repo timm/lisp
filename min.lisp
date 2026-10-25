@@ -1,205 +1,236 @@
-;!/usr/bin/env sbcl --script
-;; <!-- vim: set lispwords+=has,loop,format ts=2 sw=2 sts=2 et : -->
-#+sbcl (declaim (sb-ext:muffle-conditions cl:style-warning))
+;;; vim: set ts=2 sw=2 sts=2 et lisp cc=75 lispwords+=loop,aif,defm :
+#+sbcl (declaim (sb-ext:muffle-conditions warning))
+#+sbcl (setf sb-ext:*invoke-debugger-hook* (lambda (c h)
+  (format *error-output* "~&~a~%" c) (sb-ext:exit :code 1 :abort t)))
 
-(defvar *help* "
-ezr.lisp: multi-objective explanation
-(c) 2025, Tim Menzies <timm@ieee.org>, MIT license")
+;;;; config --------------------------------------------------------------
+(defstruct opts
+  (seed 1234567891) (p 2) (budget 50) (goods t) (file "auto93.csv"))
 
-(defvar *options* '(
-  (k     "-k"  "kth value"        2)
-  (goal  "-g"  "start-up action"  "one")
-  (seed  "-s"  "random number"    1234567891)
-  (file  "-f"  "data file"        "../moot/optimize/misc/auto93.csv")))
+(defparameter *the* (make-opts))
 
-;------------------------------------------------------------------------
-(defstruct cols x y all names klass)
-(defstruct data (n 0) rows cols)
-(defstruct sym (n 0) (at 0) (txt " ") has)
-(defstruct num (n 0) (at 0) (txt " ") 
-               (mu 0) (m2 0) (sd 0) (lo 1e32) (hi -1e32) (goal 1))
+;;;; macros --------------------------------------------------------------
+(defmacro ? (x k &rest ks)
+  (if ks `(? (slot-value ,x ',k) ,@ks) `(slot-value ,x ',k)))
 
-;------------------------------------------------------------------------
-(defmacro ? (x) `(fourth (assoc ',x *options*)))
+(defmacro @ (k &rest ks) `(? *the* ,k ,@ks))
 
-(defmacro => (arg &rest src) 
-  `(lambda ,(if (listp arg) arg (list arg)) ,@src))
+(defmacro want (place) `(or ,place (setf ,place (num))))
 
-(defmacro run (&body src)
-  #-sbcl `(progn ,@src)
-  #+sbcl `(handler-case (progn ,@src) 
-            (error (e) (format t "❌ bad: ~A~%" e))))
+(defmacro aset (place new) `(let ((it ,place)) (setf ,place ,new)))
 
-(set-macro-character #\$
-  (=> (stream char) `(slot-value i ',(read stream t nil t))))
+(defmacro aif (test ok &optional no) `(let ((it ,test)) (if it ,ok ,no)))
 
-;------------------------------------------------------------------------
-(defmethod new ((i sym) &key inits (at 0) (txt " "))
-  (setf $at at $txt txt)
-  (adds inits i))
+(set-macro-character #\$ (lambda (s c) (declare (ignore c))
+                           `(slot-value self ',(read s t nil t))) t)
 
-(defmethod new ((i num) &key inits (at 0) (txt " "))
-  (setf $at at $txt txt $goal (if (chrp txt -1 #\-)  0 1))
-  (adds inits i))
+(defmacro defm (name args &body body &aux doc)
+  (if (stringp (car body)) (setf doc (list (pop body))))
+  `(defun ,name ,args ,@doc
+     (let ((self ,(if (consp (car args)) (caar args) (car args))))
+       (declare (ignorable self))
+       ,@body)))
 
-(defmethod new ((i data) &key inits)
-  (if (stringp inits) 
-    (mapcsv (=> x (add i x)) inits)
-    (adds inits i))
-  i)
+;;;; main structs --------------------------------------------------------
+(defstruct num (n 0) (at 0) (txt "") (mu 0.0) (m2 0.0) (w 1))
+(defstruct sym (n 0) (at 0) (txt "") (has (o)))
+(defstruct tbl rows cols x y names)
 
-(defmethod new ((i cols) &key names)
-  (dolist (txt names)
-    (let* ((zz   (chr txt -1))
-           (what (if (upper-case-p (chr txt 0))  #'make-num #'make-sym))
-           (col  (new+(funcall what :txt txt :at (length $all)))))
-      (push col $all)
-      (unless (eql zz  #\X)
-        (if (eql zz #\!) (setf $klass col))
-        (if (member zz '(#\! #\- #\+)) (push col $y) (push col $x)))))
-  (setf $names names $x (reverse $x) $y (reverse $y) $all (reverse $all))
-  i)
+;;;; constructorr --------------------------------------------------------
+(defun sym (&optional (txt "") (at 0)) (make-sym :at at :txt txt))
+(defun num (&optional (txt "") (at 0))
+  (make-num :at at :txt txt :w (if (eql #\- (at txt -1)) 0 1)))
 
-;-----------------------------------------------------------------------
-(defun adds (lst &optional i)
-  (dolist (x lst i)
-    (setf i (or i (new+(make-num))))
-    (add i x)))
+(defun col (&optional (txt "") (at 0))
+  (if (upper-case-p (at txt 0)) (num txt at) (sym txt at)))
 
-(defun sub (i v &optional zap)  (add i v -1 zap))
+(defun tbl (&optional (src (@ file)) &aux (self (make-tbl)))
+  (dolist (r (if (stringp src) (csv src) src) self) (row self r)))
 
-(defun add (i v &optional (inc 1) zap) 
-  (unless (eql v "?")
-    (incf $n inc)
-    (typecase i 
-      (sym  (_sym+  i v inc)) 
-      (num  (_num+  i v inc)) 
-      (cols (_cols+ i v inc))
-      (data (_data+ i v inc zap)) ))
-  v)
+(defm add (col x &aux d) 
+  (unless (eql x '?)
+    (incf $n)
+    (if (sym-p col)
+      (incf (gethash x $has 0))
+      (setf d   (- x $mu)
+            $mu (+ $mu (/ d $n))
+            $m2 (+ $m2 (* d (- x $mu)))))))
 
-(defun _sym+ (i v inc) 
-  (incf (cdr (or (assoc v $has :test #'equal)
-                 (car (setf $has (cons (cons v 0) $has))))) inc))
+(defm head (tbl names &aux (cols (loop for txt in (coerce names 'list)
+                                       for n from 0 collect (col txt n))))
+  (setf $names names)
+  (dolist (c cols cols)
+    (case (at (? c txt) -1)
+      (#\X)                              ; summarized, not modelled
+      ((#\+ #\- #\!) (push c $y))
+      (t             (push c $x)))))
 
-(defun _cols+ (i v inc) 
-  (mapcar (=> (x col) (add col x inc)) row $all))
+(defm row (tbl r) 
+  (if $cols
+    (push (dolist (c $cols r) (add c (elt r (? c at)))) $rows)
+    (setf $cols (head tbl r))))
 
-(defun _num+ (i v inc) 
-  (setf $lo (min v $lo)
-        $hi (max v $hi))
-  (if (and (< inc 0) (< $n 2))
-    (setf $mu 0 $m2 0 $sd 0 $n 0)
-    (let* ((d (- v $mu)))
-      (incf $mu (* inc (/ d $n)))
-      (incf $m2 (* inc (* d (- v $mu))))
-      (setf $sd (if (< $n 2) 0 (sqrt (/ (max 0 $m2) (1- $n))))))))
+(defm clone (tbl &optional rows) (tbl (cons $names rows)))
 
-(defun _data+  (i v inc zap)
-  (cond ((not $cols) (setf $cols (new+(make-cols) :names row)))
-        ((> inc 0) (push row $rows)
-                   (add $cols row inc))
-        (t         (if zap (setf $rows (remove row $rows :test #'equal)))
-                   (sub $cols v))))
+;;;; query --------------------------------------------------------------
+(defm div (col) 
+  (if (sym-p col)
+    (loop for v being the hash-values of $has
+          sum (* (- (/ v $n)) (log (/ v $n) 2)))
+    (if (< $n 2) 0.0 (sqrt (/ $m2 (1- $n))))))
 
-;;-----------------------------------------------------------------------
-(defmethod mid ((i data)) 
-  (mapcar #'mid (cols-all $cols)))
+(defm norm (col x) 
+  (if (or (eql x '?) (sym-p col)) x
+    (let ((z (max -3.0 (min 3.0 (/ (- x $mu) (+ (div col) 1e-32))))))
+      (/ 1 (+ 1 (exp (* -1.7 z)))))))
 
-(defmethod mid ((i num)) $mu)
-(defmethod mid ((i sym))
-  (car (reduce (=> (a b) (if (> (cdr a) (cdr b)) a b)) $has)))
+(defm bin (col x &optional (b 5)) 
+  (if (or (eql x '?) (sym-p col)) x
+    (min b (1+ (floor (* b (norm col x)))))))
 
-(defmethod div ((i data)) 
-  (mapcar #'div (cols-all $cols)))
+(defm ydist (tbl r &aux (n 0) (d 0)) 
+  (dolist (c $y)
+    (incf n)
+    (incf d (expt (abs (- (norm c (elt r (? c at))) (? c w))) (@ p))))
+  (expt (/ d n) (/ 1 (@ p))))
 
-(defmethod div ((i num)) $sd)
-(defmethod div ((i sym))
-  (- (loop :for (_ . n) :in $has :sum  (* (/ n $n) (log (/ n $n) 2)))))
+(defm split (tbl &optional (k (@ budget))) 
+  (let* ((rows (shuffle $rows)) (n (min k (length rows))))
+    (values (subseq rows 0 n) (subseq rows n))))
 
-;;-----------------------------------------------------------------------
-;; ## Functions
-(defun args () (cdr #+clisp ext:*args* #+sbcl sb-ext:*posix-argv*))
+;;;; inference: rmeans -------------------------------------------------
+(defstruct arm bins w)                 ; one column: its bins, its weight
+(defstruct model all arms cols)        ; grand num, arms, x cols
 
-(defun chr (s n) (char (string s) (if (minusp n) (+ (length s) n) n)))
+(defm arm! (col rows y all &aux (a (make-arm :bins (o))))
+  (dolist (r rows)
+    (add (want (gethash (bin col (elt r $at)) (? a bins)))
+         (funcall y r)))
+  (setf (? a w) (vcut a all))
+  a)
 
-(defun chrp (s b c) (char= (chr s n) c))
+(defm train (tbl rows &optional (y (lambda (r) (ydist tbl r)))
+            &aux (arms (o)))
+  (let* ((i   (clone tbl rows))
+         (all (nums (mapcar y (? i rows)))))
+    (dolist (c (? i x) (make-model :all all :arms arms
+                                   :cols (? i x)))
+      (setf (gethash (? c at) arms) (arm! c (? i rows) y all)))))
 
-(defun near (x y &optional (eps 0.01)) (< (abs (- x y)) eps))
+(defm vcut (arm all) 
+  (max 0 (- (expt (div all) 2)
+            (loop for v being the hash-values of $bins
+                  sum (* (/ (? v n) (? all n)) (expt (div v) 2))))))
 
-(defvar *seed* 1234567891)
+(defm est (num all &optional (m 2)) 
+  (/ (+ (* $n $mu) (* m (? all mu))) (+ $n m)))
 
-(defun rand (&optional (n 1)) 
-  (setf *seed* (mod (* 16807.0d0 *seed*) 2147483647.0d0))
-  (* n (- 1.0d0 (/ *seed* 2147483647.0d0))))
+(defun hit (m col r &aux (a (gethash (? col at) (? m arms))))
+  (if a (values (gethash (bin col (elt r (? col at))) (? a bins)) a)))
 
-(defun rint (&optional (n 100) &aux (base 1E10)) 
-  (floor (* n (/ (rand base) base))))
+(defm bins (m r) 
+  (loop for c in $cols for v = (hit m c r) when v collect v))
 
-(defun gauss (m sd)
-  (+ m (* sd (sqrt (* -2 (log (rand 1.0)))) (cos (* 2 pi (rand 1.0))))))
+(defm guess (m r &aux (s 0) (w 0)) 
+  (dolist (c $cols)
+    (multiple-value-bind (v a) (hit m c r)
+      (when (and v (plusp (? a w)))
+        (incf s (* (? a w) (est v $all)))
+        (incf w (? a w)))))
+  (if (plusp w) (/ s w) (? $all mu)))
 
-(defun s->atom (s &aux (s1 (string-trim '(#\Space #\Tab) s))) 
-  (let ((x (let ((*read-eval* nil)) (read-from-string s1 ""))))
-    (if (or (numberp x) (member x '(t nil ?))) x s1)))
+;;;; stats -------------------------------------------------------------
+(defun nums (lst &aux (col (num))) (dolist (x lst col) (add col x)))
 
-(defun mapcsv (fun file)
-  (with-open-file (s (or file *standard-input*))
-    (loop (funcall fun (s->list (or (read-line s nil nil) 
-                                    (return)))))))
+(defun cohen (xs ys &aux (a (nums xs)) (b (nums ys))
+                         (n (? a n)) (m (? b n)))
+  (/ (abs (- (? a mu) (? b mu)))
+     (+ 1e-32 (sqrt (/ (+ (* (1- n) (expt (div a) 2))
+                          (* (1- m) (expt (div b) 2)))
+                       (- (+ n m) 2))))))
 
-;;--------------------------------------------------------------------
-(defun eg-h (_) 
-  (format t "~a~%~%Options:~%" *help*)
-  (loop :for (key flag help default) :in *options* :do
-    (format t "~26a ~a~%"
-      (format nil "   ~a  ~(~a~)=~a" flag key default) help)))
+(defun cliffs (xs ys &aux (b (coerce ys 'vector)) (m (length b))
+                          (gt 0) (lt 0) (j 0) (k 0))
+  (dolist (x xs (/ (abs (- gt lt)) (* (length xs) m)))
+    (loop while (and (< j m) (< (aref b j) x)) do (setf k (incf j)))
+    (loop while (and (< k m) (= (aref b k) x)) do (incf k))
+    (incf gt j)
+    (incf lt (- m k))))
 
-(defun eg--csv (_) (mapcsv #'print (? file)))
-(defun eg--the (_) (print *options*))
-(defun eg--rand(_)
-  (setf *seed* (? seed)) 
-  (let ((a (rand)) (b (rand  10)))
-    (print b)
-    (setf *seed* (? seed)) 
-    (let ((c (rand))) (assert (and (eql a c) (not (eql a b)))))))
+(defun ks (xs ys &aux (a (coerce xs 'vector)) (b (coerce ys 'vector))
+                      (n (length a)) (m (length b))
+                      (p 0) (q 0) (d 0) v)
+  (loop while (and (< p n) (< q m)) do
+    (setf v (min (aref a p) (aref b q)))
+    (loop while (and (< p n) (= (aref a p) v)) do (incf p))
+    (loop while (and (< q m) (= (aref b q) v)) do (incf q))
+    (setf d (max d (abs (- (/ p n) (/ q m))))))
+  (/ d (sqrt (/ (+ n m) (* n m)))))
 
-(defun eg--gauss(_)
-  (let ((i (adds (loop repeat 1000 collect (gauss 10 1)))))
-    (assert (and (near 10 $mu 0.02) (near 1 $sd)))))
+(defun same (xs ys &aux (a (sort (copy-list xs) #'<))
+                        (b (sort (copy-list ys) #'<)))
+  (and (<= (cohen  a b) 0.350)          ; `and` is lazy, so the
+       (<= (cliffs a b) 0.195)          ; cheap tests run first
+       (<= (ks     a b) 1.360)))
 
-(defun eg--thing (_)
-  (loop :for (s isa) :in '(("10.1" 10.1) ("3" 3) ("abc" "abc"))
-    :do (format t "~a ~a ~a~%" s (thing s) 
-          (assert (equal (type-of isa) (type-of (thing s)))))))
+;;;; misc -----------------------------------------------------------
+(defun at (s i &aux (n (length s))) (when (plusp n) (elt s (mod i n))))
 
-(defun eg--sym (_) 
-  (let ((i (adds '(a a a a b b c) (make-sym))))
-    (assert (near 1.38 (div i)))))
+(defun o (&rest kvs)
+  (let ((h (make-hash-table :test #'equal))) 
+    (loop for (k v) on kvs by #'cddr do (setf (gethash k h) v))
+    h))
 
-(defun eg--mids(_) 
-  (print (mid (new+(make-data) :inits (? file)))))
+(defun thing (str &aux (*read-eval* nil)
+                   (s (string-trim '(#\Space #\Tab #\Return) str))
+                   (v (ignore-errors (read-from-string s nil :none))))
+  (if (or (numberp v) (eql v '?)) v s))
 
-(defun eg--divs(_) 
-  (print (div (new+(make-data) :inits (? file)))))
+(defun cells (s &optional (lo 0))
+  (let ((hi (position #\, s :start lo)))
+    (cons (thing (subseq s lo hi)) (if hi (cells s (1+ hi))))))
 
-;;----------------------------------------------------------------------
-;; ## Main
-(defun cli (options &aux it)
-  (loop :for (key flag help b4) :in options :collect
-    (list key flag help 
-          (if (setf it (member flag (args) :test #'string=))
-            (cond ((eq b4 t) nil)
-                  ((eq b4 nil) t)
-                  (t (s->atom (second it))))
-            b4))))
+(defun csv (file) 
+  (with-open-file (s (truename file))
+    (loop for line = (read-line s nil) while line
+      collect (coerce (cells line) 'vector))))
 
-;;----------------------------------------------------------------------
-(setf *seed* (? seed))
-(when (equal *load-truename* (truename *load-pathname*))
-  (setf *options* (cli *options*))
-  (loop :for (flag arg) :on (args) :by #'cdr :do
-    (let ((com (intern (format nil "EG~:@(~a~)" flag))))
-      (when (fboundp com)
-        (setf *seed* (? seed))
-        (run (funcall com (if arg (thing arg))))))))
+;;;; rand --------------------------------------------------------------
+(defparameter *seed* 1234567891 "State of the one random stream.")
+
+(defun srand (&optional (n (@ seed))) (setf *seed* n))
+
+(defun rint (&optional (n 1)) 
+  (setf *seed* (mod (* 16807 *seed*) 2147483647))
+  (1+ (floor (* n (/ *seed* 2147483647.0)))))
+
+(defun shuffle (lst &aux (v (coerce lst 'vector)) j) 
+  (loop for i from (1- (length v)) downto 1
+        do (setf j (1- (rint (1+ i)))) (rotatef (aref v i) (aref v j)))
+  (coerce v 'list))
+
+;;;; system --------------------------------------------------------------
+(defun cli-args () #+clisp ext:*args* #+sbcl (cdr sb-ext:*posix-argv*))
+
+(defun run (f &aux (b4 (copy-opts *the*)) (bad 0)) 
+  (srand)
+  (handler-case (funcall f)
+    (error (c) (format t "~&FAIL ~a: ~a~%" f c) (setf bad 1)))
+  (setf *the* b4)
+  bad)
+
+(defun cli (&optional (av (cli-args)) (bad 0))
+  "-x runs eg-x, -k v sets k; leaves with the failure count."
+  (loop for s = (pop av) while s
+        for k = (string-upcase (string-left-trim "-" s))
+        for sym = (find-symbol k) do
+    (aif (find-symbol (format nil "EG-~a" k))
+      (incf bad (run it))
+      (if (and sym (slot-exists-p *the* sym))
+        (aset (slot-value *the* sym)
+              (if (member it '(t nil)) (not it) (thing (pop av))))
+        (format t "?? ~a~%" s))))
+  (halt bad))
+
+(defun halt (&optional (n 0)) 
+  #+sbcl (sb-ext:exit :code n :abort t) #+clisp (ext:quit n))

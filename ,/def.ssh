@@ -1,0 +1,46 @@
+## def.ssh -- a2ps style for this repo's lisp
+##
+## Use:  a2ps -E def min.lisp -o out.ps
+##
+## Inherits from Common Lisp (clisp.ssh) and adds the
+## custom macros from fri2.lisp and min.lisp.
+
+style def is
+written by "Tim Menzies <timm@ieee.org>"
+version is 0.1
+requires a2ps 4.12i
+
+documentation is
+  "Common Lisp plus this repo's macros: def, defm, defread,"
+  "if+, f+/ff+/fff+, for+, ?, @, want, aif, msg, new+."
+  ""
+  "Highlights (def NAME ...), (defm NAME ...) and"
+  "(defread NAME ...) as labels, like (defun NAME ...)."
+end documentation
+
+ancestors are
+  clisp
+end ancestors
+
+keywords in Keyword_strong are
+  def, defm, defread, "if+",
+  "f+", "ff+", "fff+",
+  "for+", "?", "@", want, aif,
+  msg, "new+", acc, gf
+end keywords
+
+# (def NAME ...), (defm NAME ...), (defread NAME ...): NAME is a label
+sequences are
+  (/\\(/
+   /(def|defm|defread)/
+   /([ \t]+)/
+    "(" Plain, \1 Keyword_strong, \2 Plain) Label_strong /[)[:space:]]/ Plain
+end sequences
+
+# !key  and  $field  reader-macro shortcuts
+operators are
+  /![A-Za-z][A-Za-z0-9_-]*/ Label_strong,
+  /\$[A-Za-z][A-Za-z0-9_-]*/ Label_strong
+end operators
+
+end style

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ; vim: set ft=lisp ts=2 sw=2 et lispwords+=loop :
 ;## simplify debugging
 #+sbcl (declaim (sb-ext:muffle-conditions
@@ -6,35 +7,53 @@
              (lambda (c h) (declare (ignore h))
                (format *error-output* "~&[ERROR] ~a~%" c)
                (sb-ext:exit :code 1)))
+=======
+;; -- Tim Menzies<br>timm@ieee.org<br>http://timm.fyi<br>Sept'26
+>>>>>>> fee70bad289a8718f339ee38522af1b5b64b02f0
 
-;## Macros
-(defmacro defread (name (stream) &body body)
-  "Install BODY as reader-macro for char NAME."
-  `(set-macro-character
-     ,(character (symbol-name name))
-     (lambda (,stream c) (declare (ignore c)) ,@body)
-     t))
+;; The prose that explains this file lives in lib.md.
+;; `make weave` pulls these docstrings over there.
 
-(defread !(s)
-  `(second (assoc ',(read s t nil t) *the*)))
+(defvar *settings* nil
+  "What tunes me, as (name flag doc value).  `cli` sets it.")
 
-(defread $(s)
-  `(slot-value i ',(read s t nil t)))
+;;;; script header 
 
-(defmacro ? (x &rest at)
-  "Nested slot access: (? x a b)
-   = (slot-value (slot-value x 'a) 'b)."
-  (if at `(? (slot-value ,x ',(car at)) ,@(cdr at))
-         x))
+(defvar *rand-seed* 1234567891
+  "State of the random number generator.")
 
-(defmacro if+ (test then &optional else)
-  "Anaphoric if: bind `it` to TEST in THEN/ELSE."
+(defun oops (c &optional who)
+  "One line for condition C, blamed on WHO."
+  (format *error-output* "~&!! ~@[~(~a~): ~]~a~%" who
+    (substitute #\Space #\Newline (princ-to-string c))))
+
+(defun brief-error (c h) (declare (ignore h)) (oops c) (halt 1))
+
+(defun halt (&optional (fails 0))
+  "Exit, reporting FAILS. Zero exits quietly, with status zero."
+  (when (> fails 0)
+    (format t "~&ERROR: ~a failure~:p~%" fails)
+    #+clisp (ext:exit fails) #+sbcl (sb-ext:exit :code fails)))
+
+(declaim (optimize (speed 3) (safety 1)))
+#+sbcl (declaim (sb-ext:muffle-conditions warning style-warning))
+#+sbcl (setf sb-ext:*invoke-debugger-hook* #'brief-error)
+
+;;;; macros 
+
+(defmacro aif (test then &optional else)
+  "Anaphoric if: THEN and ELSE read TEST's value as `it`; e.g.:
+   (aif (parse thing) (print it))"
   `(let ((it ,test)) (if it ,then ,else)))
 
-; ## utilities
-; ### Random
-(defvar *seed* !seed)
+(defmacro acond (&rest clauses)
+  "Cond, but each test's value is `it` inside its body."
+  (if clauses
+    (let ((c (car clauses)))
+      `(aif ,(car c) (progn ,@(cdr c))
+            (acond ,@(cdr clauses))))))
 
+<<<<<<< HEAD
 (defun rand (&optional (n 1))
   "Reproducible float in [0,n). Advances *seed*.
    Integer arithmetic, so SBCL and CLISP agree."
@@ -44,27 +63,47 @@
 (defun rint (&optional (n 100))
   "Reproducible integer in [0,n)."
   (floor (* n (rand))))
+=======
+(defmacro ? (x k &rest ks)
+  "Dive through nested structs; e.g.:
+   (? x a b) ==> (slot-value (slot-value x 'a) 'b)"
+  (if ks `(? (slot-value ,x ',k) ,@ks)
+         `(slot-value ,x ',k)))
 
-; ## lists
-(defun shuffle (lst &aux (v (coerce lst 'vector)))
-  "Fisher-Yates shuffle of LST. Seeded via *seed*."
-  (loop for i from (1- (length v)) downto 1 do
-    (rotatef (aref v i) (aref v (rint (1+ i)))))
-  (coerce v 'list))
+;; Dollar prefix reads a slot of the current struct, which must
+;; be named `i`; e.g. `$x` ==> `(slot-value i 'x)`. Reader
+;; macros have nowhere to hang a docstring, so this one is
+;; documented in a comment.
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (set-macro-character #\$
+    (lambda (s c) (declare (ignore c))
+      `(slot-value i ',(read s t nil t)))))
+>>>>>>> fee70bad289a8718f339ee38522af1b5b64b02f0
 
-; ## characters
-(defun ch (s n)
-  "Char at N of S. Negative N counts from end."
-  (char s (if (minusp n) (+ (length s) n) n)))
+(defmacro has (x lst)
+  "Count X in alist LST, starting the count at zero if new; e.g.:
+   (let (seen)
+     (mapc (lambda (x) (incf (has x seen))) '(a a b b b))
+     seen) ==> ((b . 3) (a . 2))"
+  `(cdr (or (assoc ,x ,lst :test #'equal)
+            (car (setf ,lst (cons (cons ,x 0) ,lst))))))
 
-; ## strings
-(defun split (s sep)
-  "Split S on character SEP into substring list."
-  (loop for start = 0 then (1+ pos)
-    for pos = (position sep s :start start)
-    collect (subseq s start (or pos (length s)))
-    while pos))
+(defmacro addend (x lst)
+  "Like `push`, but onto the END of LST; e.g.
+     (let (l) (addend 1 l) (addend 2 l) l) ==> (1 2)"
+  `(setf ,lst (nconc ,lst (list ,x))))
 
+(defmacro -> (&body b)
+  "A short lambda whose args arrive as %1 to %5. 
+  This makes, say, the last example a one liner. e.g.
+  (let (seen)
+    (->> (incf (has %1 seen)) '(a a b b b))
+    seen) ==> ((b . 3) (a . 2))"
+  `(lambda (%1 &optional %2 %3 %4 %5)
+     (declare (ignorable %2 %3 %4 %5))
+     ,@b))
+
+<<<<<<< HEAD
 (defun thing (str &aux v pos)
   "Coerce STR to number; '? for \"?\"; else string.
    Trims blanks/CR. Reader runs with *read-eval* nil."
@@ -100,27 +139,38 @@
   (with-open-file (s file)
     (loop for line = (read-line s nil) while line
       collect (mapcar #'thing (cells line)))))
+=======
+(defmacro ->> (body &rest lists)
+  "Map BODY, as a short lambda, over LISTS (any sequence)."
+  `(map 'list (-> ,body) ,@lists))
 
-; ## Tests
-(defun run (it &optional arg)
-  "Dispatch --flag to EG-FLAG function."
-  (let* ((f (if (symbolp it) it
-                (intern (format nil
-                                "EG~:@(~a~)" it))))
-         (n (symbol-name f)))
-    (when (and (fboundp f)
-               (> (length n) 3)
-               (string= n "EG-" :end1 3))
-      (setf *seed* !seed)
-      (if arg (funcall f arg) (funcall f))
-      t)))
+;;;; settings 
+>>>>>>> fee70bad289a8718f339ee38522af1b5b64b02f0
 
-; ## os
-(defun args ()
-  "Argv as list of strings (SBCL/CLISP portable)."
-  #+sbcl (cdr sb-ext:*posix-argv*)
+(defmacro my (x)
+  "The current value of setting X, e.g. `(my seed)`."
+  `(fourth (assoc ',x *settings*)))
+
+(defun cli (maker &aux (av (cli-args)) (bad 0))
+  "Run MAKER's settings against the command line; e.g.
+  `-s 42` sets an option, `--foo` runs `(eg--foo)` then
+  resets to MAKER's defaults.  Halts, with the number of
+  failed examples as the exit status."
+  (loop for flag = (pop av) while flag do
+    (acond ((find flag *settings* :key #'second :test #'equal)
+            (setf (fourth it) (thing (pop av))))
+           ((cli-eg flag)
+            (setf bad (cli-run it bad)
+                  *settings* (funcall maker)))   ; fresh
+           (t (format t "?? ~a~%" flag))))
+  (halt bad))
+
+(defun cli-args ()
+  "The strings after the program name on the command line."
+  #+sbcl  (cdr sb-ext:*posix-argv*)
   #+clisp ext:*args*)
 
+<<<<<<< HEAD
 (defun cli (lsts &aux (av (args)))
   "Walk argv. Setting flags eat a value, eg- flags do not."
   (loop for flag = (pop av) while flag do
@@ -131,3 +181,65 @@
                                            flag)))))
             ((run flag))
             (t (format t "?? ~a~%" flag))))))
+=======
+(defun cli-eg (flag)
+  "The example function named by FLAG, if one is defined."
+  (aif (intern (format nil "EG~:@(~a~)" flag))
+    (and (fboundp it) it)))
+
+(defun cli-run (f &optional (fails 0))
+  "Call F on a fresh seed; return FAILS, +1 if F blew up."
+  (setf *rand-seed* (my seed))
+  (handler-case (progn (funcall f) fails)
+    (error (c) (oops c f) (1+ fails))))
+
+(defun thing (str &aux (*read-eval* nil))
+  "Coerce STR to a number, a boolean, `?`, or leave it alone."
+  (let ((v (handler-case (read-from-string str nil :none)
+             (error () :none))))
+    (if (or (numberp v) (member v '(t nil ?))) v str)))
+
+;;;; randoms 
+
+(defun rand (&optional (n 1))
+  "A random float in [0,N), from our own generator."
+  (setf *rand-seed* (mod (* 16807 *rand-seed*) 2147483647))
+  (* n (- 1.0d0 (/ *rand-seed* 2147483647.0d0))))
+
+(defun rand-int (&optional (n 100))
+  "A random integer in [0,N)."
+  (floor (* n (rand))))
+
+(defun shuffle (lst &aux (v (coerce lst 'vector)))
+  "A new list holding LST's items in random order."
+  (loop for i from (1- (length v)) downto 1 do
+    (rotatef (aref v i) (aref v (rand-int (1+ i)))))
+  (coerce v 'list))
+
+;;;; misc 
+
+(defun kv (&rest kvs)
+  "Print KVS as key/value pairs, one pair per line."
+  (loop for (k v) on kvs by #'cddr do
+    (format t "~&~(~a~)~10t~s~%" k v)))
+
+(defun csv (file)
+  "The rows of FILE, each one a vector of coerced cells."
+  (with-open-file (s (truename file))
+    (loop for line = (read-line s nil) while line
+      collect (coerce (csv-cells
+                        (string-right-trim '(#\Return) line))
+                      'vector))))
+
+(defun csv-cells (s &optional (sep #\,) (lo 0)
+                  (hi (position sep s :start lo)))
+  "Split S on SEP, coercing each cell with `thing`."
+  (cons (thing (subseq s lo hi))
+        (if hi (csv-cells s sep (1+ hi)))))
+
+(defun chars (s &optional (n 0))
+  "Char N of S; a negative N counts back from the end; e.g.:
+   (chars \"lisp\" 0) ==> #\\l
+   (chars \"lisp\" -1) ==> #\\p"
+   (if (plusp (length s)) (char s (mod n (length s)))))
+>>>>>>> fee70bad289a8718f339ee38522af1b5b64b02f0
