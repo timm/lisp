@@ -42,12 +42,12 @@
     (let ((ys (train a train)))
       (dolist (r (? a rows)) (add all (ydist a r)))
       (dolist (r test)
-        (add e1 (abs (- (guess a ys r) (ydist a r))))      ; the bins
+        (add e1 (abs (- (guess ys r) (ydist a r))))      ; the bins
         (add e2 (abs (- (? all mu)    (ydist a r)))))      ; the mean
       (format t "~&test ~a rows: bins err=~,3f  mean-guess err=~,3f~%"
               (? e1 n) (? e1 mu) (? e2 mu))
       (format t "one row -> ~a nums~%"
-              (length (bins a ys (first test)))))))
+              (length (bins ys (first test)))))))
 
 (defun eg-crash () (error "deliberate ~a" 'boom))
-(halt (cli))
+(cli)
