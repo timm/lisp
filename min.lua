@@ -33,11 +33,10 @@ function cells(s,   t) t = {}
   for v in (s .. ","):gmatch"(.-)," do t[#t + 1] = thing(v) end
   return t end
 
-function csv(file,   t, s) t = {}  -- rows, with names set aside
+function csv(file,   t, s) t = {}  -- rows; first one is the names
   for line in io.lines(file) do
     s = line:match"^%s*(.-)%s*$"
-    if s ~= "" and s:sub(1, 1) ~= "#" then
-      t[t.names and #t + 1 or "names"] = cells(s) end end
+    if s ~= "" and s:sub(1, 1) ~= "#" then t[#t + 1] = cells(s) end end
   return t end
 
 -- ---- columns ---------------------------------------------------------
@@ -73,15 +72,14 @@ function bin(c, v,   b)            -- 1..the.Bins; a sym is its own bin
   return b > the.Bins and the.Bins or b end
 
 -- ---- tables ----------------------------------------------------------
-function tbl(src,   i)             -- a file name, or rows of a table
-  i = {rows = {}, cols = {}, x = {}, y = {}, names = nil}
-  src = type(src) == "string" and csv(src) or src
-  head(i, src.names)
-  for _, r in ipairs(src) do row(i, r) end
+function tbl(src,   i)             -- a file name, or names then rows
+  i = {rows = {}}
+  for _, r in ipairs(type(src) == "string" and csv(src) or src) do
+    row(i, r) end
   return i end
 
 function head(i, names,   c)
-  i.names = names
+  i.names, i.cols, i.x, i.y = names, {}, {}, {}
   for at, txt in ipairs(names) do
     c = col(txt, at)
     i.cols[#i.cols + 1] = c
@@ -89,14 +87,15 @@ function head(i, names,   c)
     elseif txt:find"[-+!]$" then i.y[#i.y + 1] = c
     else                         i.x[#i.x + 1] = c end end end
 
-function row(i, r)
+function row(i, r)                 -- first row is the names
+  if not i.cols then return head(i, r) end
   i.rows[#i.rows + 1] = r
   for _, c in ipairs(i.cols) do add(c, r[c.at]) end
   return r end
 
 function clone(i, rows,   out)     -- same header, fresh summaries
-  out = {names = i.names}
-  for j, r in ipairs(rows or {}) do out[j] = r end
+  out = {i.names}
+  for _, r in ipairs(rows or {}) do out[#out + 1] = r end
   return tbl(out) end
 
 function ydist(i, r,   n, d, v)    -- goals to heaven; 0 is best
