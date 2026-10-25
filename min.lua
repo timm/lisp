@@ -60,8 +60,8 @@ function add(c, v,   d)            -- counts for syms, Welford for nums
 function div(c,   e)               -- sd for nums, entropy for syms
   if not c.num then
     e = 0
-    for _, n in pairs(c.has or {}) do e = e - n / c.n * log(n / c.n, 2) end
-    return e end
+    for _, n in pairs(c.has or {}) do e = e - n / c.n * log(n / c.n) end
+    return e / log(2) end
   if c.n < 2 then return 0 end
   return sqrt(c.m2 / (c.n - 1)) end
 
