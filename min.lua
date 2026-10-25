@@ -1,25 +1,37 @@
 #!/usr/bin/env lua
--- min.lua: a good guess from a few dozen labels.
--- Range means, shrunk to the grand mean, weighed by variance.
--- (c) 2026 Tim Menzies <timm@ieee.org> MIT license.
--- usage: lua min.lua [Seed=1 Budget=50 Check=5 Bins=5 M=2 P=2] f.csv
 -- vim: set ts=2 sw=2 sts=2 et cc=75 :
 local _ENV = setmetatable({}, {__index = _G})
 if setfenv then setfenv(1, _ENV) end   -- lua 5.1, luajit
 local floor, exp, sqrt, log = math.floor, math.exp, math.sqrt, math.log
 
-the = {Seed = 1234567891, Budget = 50, Check = 5,
-       Bins = 5, M = 2, P = 2, file = nil}
+local help = [[
+min.lua: a good guess from a few dozen labels.
+Range means, shrunk to the grand mean, weighed by variance.
+(c) 2026 Tim Menzies <timm@ieee.org> MIT license.
+
+usage: lua min.lua [name=value ...] [file.csv]
+
+flags:
+  bins=5           numeric columns get this many bins
+  budget=50        labels, all in
+  check=5          of those, saved for the test rows
+  m=2              m-estimate: prior weight for a thin bin
+  p=2              minkowski coefficient
+  seed=1234567891  random number seed
+  file=~/gits/moot/optimize/misc/auto93.csv
+  go=help          start-up action: help, secs]]
+
+the = {}                           -- filled from help, at start up
 
 -- ---- general ---------------------------------------------------------
-function knobs(   k, v)            -- awk-ish operands: Name=value, file
+function knobs(   k, v)            -- awk-ish operands: name=value, file
   for _, s in ipairs(arg) do
     k, v = s:match"^(%a%w*)=(.*)$"
     if k then the[k] = thing(v) else the.file = s end end end
 
-function rint(n)                   -- 1..n, repeatable from the.Seed
-  the.Seed = (16807 * the.Seed) % 2147483647
-  return 1 + floor(n * the.Seed / 2147483647) end
+function rint(n)                   -- 1..n, repeatable from the.seed
+  the.seed = (16807 * the.seed) % 2147483647
+  return 1 + floor(n * the.seed / 2147483647) end
 
 function shuffle(t,   j)           -- in place, Fisher-Yates
   for i = #t, 2, -1 do j = rint(i); t[i], t[j] = t[j], t[i] end
@@ -34,7 +46,7 @@ function cells(s,   t) t = {}
   return t end
 
 function csv(file,   t, s) t = {}  -- rows; first one is the names
-  for line in io.lines(file) do
+  for line in io.lines((file:gsub("^~", os.getenv"HOME" or "~"))) do
     s = line:match"^%s*(.-)%s*$"
     if s ~= "" and s:sub(1, 1) ~= "#" then t[#t + 1] = cells(s) end end
   return t end
@@ -71,10 +83,10 @@ function norm(c, v,   z)           -- logistic cdf; syms pass through
   z = z > 3 and 3 or (z < -3 and -3 or z)
   return 1 / (1 + exp(-1.7 * z)) end
 
-function bin(c, v,   b)            -- 1..the.Bins; a sym is its own bin
+function bin(c, v,   b)            -- 1..the.bins; a sym is its own bin
   if not c.num or v == "?" then return v end
-  b = 1 + floor(the.Bins * norm(c, v))
-  return b > the.Bins and the.Bins or b end
+  b = 1 + floor(the.bins * norm(c, v))
+  return b > the.bins and the.bins or b end
 
 -- ---- tables ----------------------------------------------------------
 function tbl(src,   i)             -- a file name, or names then rows
@@ -108,8 +120,8 @@ function ydist(i, r,   n, d, v)    -- goals to heaven; 0 is best
   for _, c in ipairs(i.y) do
     n = n + 1
     v = norm(c, r[c.at]) - c.w
-    d = d + (v < 0 and -v or v) ^ the.P end
-  return (d / n) ^ (1 / the.P) end
+    d = d + (v < 0 and -v or v) ^ the.p end
+  return (d / n) ^ (1 / the.p) end
 
 -- ---- rmeans ----------------------------------------------------------
 function nums(lst, f,   c)         -- lst, summarized in one num
@@ -133,7 +145,7 @@ function vcut(a, all,   s)         -- variance a's bins cut from all
   return s > 0 and s or 0 end
 
 function est(v, all)               -- v's mean, pulled to all's
-  return (v.n * v.mu + the.M * all.mu) / (v.n + the.M) end
+  return (v.n * v.mu + the.m * all.mu) / (v.n + the.m) end
 
 function train(i, rows, y,   j, all, m)
   j   = clone(i, rows)
@@ -162,14 +174,14 @@ function split(i,   rows, n, tr, te)
     if j <= n then tr[#tr + 1] = r else te[#te + 1] = r end end
   return tr, te end
 
-function secs(file,   all, reps, tot, t0, tr, te, tr2, y, m, cut)
-  all, reps, tot = tbl(file), 3, 0
+function secs(file,   all, reps, tot, t0, tr, te, tr2, y, m, cut, seed)
+  all, reps, tot, seed = tbl(file), 3, 0, the.seed
   for s = 1, reps do
-    the.Seed = 1234567891 + s
+    the.seed = seed + s
     tr, te = split(all)
     tr2 = clone(all, tr)
     y   = function(r) return ydist(tr2, r) end
-    cut = the.Budget - the.Check
+    cut = the.budget - the.check
     t0  = os.clock()
     do
       local few = {}
@@ -182,6 +194,13 @@ function secs(file,   all, reps, tot, t0, tr, te, tr2, y, m, cut)
                       file:match"([^/]+)%.csv$", #all.rows,
                       tot / reps)) end
 
+-- ---- start up ------------------------------------------------------
+go = {}                            -- go[the.go]() runs at start up
+
+function go.help() print(help) end
+function go.secs() secs(the.file) end
+
+for k, v in help:gmatch"\n%s+(%a+)=(%S+)" do the[k] = thing(v) end
 knobs()
-if the.file then secs(the.file) end
+go[the.go]()
 return _ENV
