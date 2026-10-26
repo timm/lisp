@@ -211,7 +211,7 @@ cut into.  Same rig, `m` held at 2:
 ![seconds](docs/secs.png)
 
 The same estimator, five ways: `min.py` under CPython and pypy,
-`min.lua` under Lua and LuaJIT, `min.lisp` under SBCL.  Each
+`jiffy.lua` under Lua and LuaJIT, `min.lisp` under SBCL.  Each
 trains on the budget then scores every test row -- what the
 protocol actually costs -- against LightGBM fitting all training
 rows and predicting the test (one model per goal column).  124

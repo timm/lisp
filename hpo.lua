@@ -4,12 +4,12 @@
 -- usage: luajit hpo.lua file=f.csv [knob=m] [vals=0,1,2,4]
 -- out:   file val budget median rank% then each seed's rank%
 package.path = (arg[0]:match"^(.*)/" or ".") .. "/?.lua;" .. package.path
-local min = require "min"
+local min = require "jiffy"
 local the = min.cli()              -- name=value, file off the cli
 
 local KNOB     = the.knob or "m"
 local VALS     = {}
-for v in (the.vals or "0,1,2,4"):gmatch"[^,]+" do
+for v in tostring(the.vals or "0,1,2,4"):gmatch"[^,]+" do
   VALS[#VALS + 1] = tonumber(v) end
 local BUDGETS  = {25, 50, 100, 200, 400}
 local REPEATS  = 20
@@ -27,7 +27,7 @@ local function top(m,rows,y,    ys,best,g)
   g = {}                                     -- rows, best guess first
   for i, r in ipairs(rows) do g[i] = r end
   local key = {}
-  for _, r in ipairs(rows) do key[r] = min.guess(m, r) end
+  for _, r in ipairs(rows) do key[r] = m:guess(r) end
   table.sort(g, function(a, b) return key[a] < key[b] end)
   for i = 1, (#g < the.check and #g or the.check) do
     local v = y(g[i])
@@ -38,7 +38,7 @@ local function top(m,rows,y,    ys,best,g)
   return 100 end
 
 local file = the.file
-local all  = min.tbl(file)
+local all  = min.Tbl(file)
 local name = file:match"([^/]+)%.csv$"
 local seed = the.seed
 for _, budget in ipairs(BUDGETS) do
@@ -47,15 +47,15 @@ for _, budget in ipairs(BUDGETS) do
   local enough = true
   for s = 1, REPEATS do
     the.seed = seed + s
-    local tr, te = min.split(all)
+    local tr, te = all:split()
     if #tr < budget then enough = false break end
-    local tr2 = min.clone(all, tr)
-    local y   = function(r) return min.ydist(tr2, r) end
+    local tr2 = all:clone(tr)
+    local y   = function(r) return tr2:ydist(r) end
     local few = {}
     for j = 1, budget - the.check do few[j] = tr[j] end
     for _, v in ipairs(VALS) do
       the[KNOB] = v
-      local model = min.train(all, few, y)
+      local model = min.Rmeans(all, few, y)
       out[v][#out[v] + 1] = top(model, te, y) end end
   if enough then
     for _, v in ipairs(VALS) do

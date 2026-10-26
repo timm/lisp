@@ -6,21 +6,29 @@ A2PS_DIR := $(shell a2ps --list=defaults 2>/dev/null \
 
 # a2ps splits option values on commas, and our etc dir IS
 # a comma, so it can never be named in a path.  Install the
-# sheet by name instead, then ask for it as "def".
-$(A2PS_DIR)/def.ssh: $(ETC)/def.ssh ## install a2ps style
+# sheet by name instead, then ask for that name (def, lua).
+$(A2PS_DIR)/%.ssh: $(ETC)/%.ssh ## install an a2ps style
 	@mkdir -p $(dir $@)
 	@cp $< $@
 
 Chars ?= 65
 Font  ?= 4.5
+A2PS   = a2ps -Br --quiet --landscape                 \
+             --pro=color --chars-per-line=$(Chars)   \
+             --font-size=$(Font)                     \
+             --line-numbers=1 --borders=no           \
+             --columns=3 -M letter -o -
+
 ~/tmp/%.pdf: %.lisp Makefile $(A2PS_DIR)/def.ssh ## .lisp ==> .pdf
 	@mkdir -p ~/tmp
 	@echo "pdf-ing $@ ... "
-	@a2ps --pretty-print=def -Br --quiet --landscape          \
-	      --pro=color --chars-per-line=$(Chars)        \
-	      --font-size=$(Font)                          \
-	      --line-numbers=1 --borders=no --columns=3    \
-	      -M letter -o - $< | ps2pdf - $@
+	@$(A2PS) --pretty-print=def $< | ps2pdf - $@
+	@open $@
+
+~/tmp/%.pdf: %.lua Makefile $(A2PS_DIR)/lua.ssh ## .lua ==> .pdf
+	@mkdir -p ~/tmp
+	@echo "pdf-ing $@ ... "
+	@$(A2PS) --pretty-print=lua $< | ps2pdf - $@
 	@open $@
 
 .DEFAULT_GOAL := usage
@@ -33,7 +41,7 @@ Reps ?= 20
 # what each tool is good at.  Timestamps are make's job, so "an
 # input moved, the old scores are void" lives here, as a rule that
 # DELETES them.  "This learner has no scores yet" is an existence
-# test, so it lives in min-eg.lua and in lgbm.py, each of which
+# test, so it lives in jiffy-eg.lua and in lgbm.py, each of which
 # skips any file already written.  Make invalidates; lua rebuilds.
 CACHE ?= $(HOME)/tmp/cache
 P     ?= 8
@@ -48,7 +56,7 @@ SETS   = $(CLAS) $(OPT) $(REG)
 VOID   = $(patsubst $(MOOT)/%.csv,$(CACHE)/%/.lua,$(SETS)) \
          $(patsubst $(MOOT)/%.csv,$(CACHE)/%/.py,$(SETS))
 
-$(CACHE)/%/.lua: $(MOOT)/%.csv min.lua min-eg.lua
+$(CACHE)/%/.lua: $(MOOT)/%.csv jiffy.lua jiffy-eg.lua
 	@mkdir -p $(dir $@)
 	@rm -f $(dir $@)nb.csv $(dir $@)rmeans.csv $(dir $@)rmeansall.csv
 	@touch $@
@@ -63,12 +71,12 @@ cache: $(VOID) ## drop any scores whose csv or code has moved
 nb: cache ## naive Bayes, every classify set, 20 seeds
 	@echo "$@ ..."
 	@ls $(MOOT)/classify/*.csv \
-	 | xargs -P $(P) -S 8192 -I{} luajit min-eg.lua go=$@ file={} > /dev/null
+	 | xargs -P $(P) -S 8192 -I{} luajit jiffy-eg.lua go=$@ file={} > /dev/null
 
 rmeans: cache ## rmeans, every optimize and regression set
 	@echo "$@ ..."
 	@ls $(MOOT)/optimize/*/*.csv $(MOOT)/regression/*.csv \
-	 | xargs -P $(P) -S 8192 -I{} luajit min-eg.lua go=$@ file={} > /dev/null
+	 | xargs -P $(P) -S 8192 -I{} luajit jiffy-eg.lua go=$@ file={} > /dev/null
 
 lgbm: cache ## LightGBM, those same seeds, those same scores
 	@echo "$@ ..."
@@ -79,7 +87,7 @@ lgbm: cache ## LightGBM, those same seeds, those same scores
 rmeansall: cache ## rmeans again, reading every training row
 	@echo "$@ ..."
 	@ls $(MOOT)/optimize/*/*.csv $(MOOT)/regression/*.csv \
-	 | xargs -P $(P) -S 8192 -I{} luajit min-eg.lua go=$@ file={} > /dev/null
+	 | xargs -P $(P) -S 8192 -I{} luajit jiffy-eg.lua go=$@ file={} > /dev/null
 
 results: nb rmeans rmeansall lgbm ## every learner, every set, once
 
