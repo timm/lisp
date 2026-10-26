@@ -290,8 +290,13 @@ function SAME.ks(i,    xs,ys,p,q,d,v) -- widest gap of two cdfs, in crits
     d = max(d, abs(p/#xs - q/#ys)) end
   return d / sqrt((#xs + #ys) / (#xs * #ys)) end
 
--- ---- rig -------------------------------------------------------------
-function secs(file,    tbl,reps,tot,t0,tr,te,sub,y,model,lim,seed)
+-- ---- start up ------------------------------------------------------
+eg = {}                            -- eg[the.go]() runs at start up
+
+function eg.help() print(help) end
+
+function eg.secs(    file,tbl,reps,tot,t0,tr,te,sub,y,model,lim,seed)
+  file = the.file                   -- time rmeans: train, then guess
   tbl, reps, tot, seed = Tbl(file), 3, 0, the.seed
   for s = 1, reps do
     the.seed = seed + s
@@ -310,12 +315,6 @@ function secs(file,    tbl,reps,tot,t0,tr,te,sub,y,model,lim,seed)
   print(string.format("%s rows=%6d secs=%.4f",
                       file:match"([^/]+)%.csv$", #tbl.rows,
                       tot / reps)) end
-
--- ---- start up ------------------------------------------------------
-eg = {}                            -- eg[the.go]() runs at start up
-
-function eg.help() print(help) end
-function eg.secs() secs(the.file) end
 
 for k, v in help:gmatch"\n%s+(%a+)=(%S+)" do the[k] = thing(v) end
 if (arg and arg[0] or ""):find"jiffy%.lua$" then eg[cli().go]() end
