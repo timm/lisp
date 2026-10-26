@@ -139,35 +139,35 @@ function versus(kind,who1,who2,what,big,    w,t,l,ma,mb,xs,ys)
     xs, ys = readcol(dir, who1, what), readcol(dir, who2, what)
     if xs and ys then
       ma[#ma+1], mb[#mb+1] = mid(xs), mid(ys)
-      if same(xs, ys)                  then t = t + 1
+      if Same(xs, ys):ok()             then t = t + 1
       elseif (mid(xs) > mid(ys)) == big then w = w + 1
       else                                  l = l + 1 end end end
   print(("%-11s %-10s %7.3f   %-10s %7.3f   %d win %d tie %d loss")
         :format(kind, who1, mid(ma), who2, mid(mb), w, t, l)) end
 
 -- ---- start up --------------------------------------------------------
-function go.splits(    tbl,tr,te)  -- what seed s gives, for checking
+function eg.splits(    tbl,tr,te)  -- what seed s gives, for checking
   tbl = Tbl(the.file)
   tr, te = pair(tbl, tonumber(the.rep) or 1)
   print(#tr.rows, #te.rows, table.concat(tr.rows[1], ",")) end
 
-function go.report()                -- what the cache says, so far
+function eg.report()                -- what the cache says, so far
   versus("classify",   "nb",     "lgbm",      "acc",  true)
   versus("regression", "rmeans", "lgbm",      "mae",  false)
   versus("regression", "rmeans", "rmeansall", "rank", false)
   versus("optimize",   "rmeans", "rmeansall", "rank", false) end
 
-function go.nb()
+function eg.nb()
   print(scored(the.file, "nb", bayes, "acc,pd,pf,d2h")) end
 
-function go.rmeans()
+function eg.rmeans()
   print(scored(the.file, "rmeans", rmeans, "rank,mae")) end
 
-function go.rmeansall()
+function eg.rmeansall()
   print(scored(the.file, "rmeansall", rmeansall, "rank,mae")) end
 
 if (arg and arg[0] or ""):find"jiffy%-eg%.lua$" then
-  ok, err = pcall(go[the.go])       -- a broken csv is a skip, not a stop
+  ok, err = pcall(eg[the.go])       -- a broken csv is a skip, not a stop
   if not ok then
     io.stderr:write(the.file, ": ", tostring(err), "\n") end end
 return _ENV

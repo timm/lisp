@@ -25,7 +25,7 @@ if setfenv then setfenv(1, _ENV) end   -- lua 5.1, luajit
 floor, exp, sqrt, log = math.floor, math.exp, math.sqrt, math.log
 abs, min, max = math.abs, math.min, math.max
 
-TBL,NUM,SYM,BINS,RMEANS,NB,BAG = {},{},{},{},{},{},{} -- the classes
+TBL,NUM,SYM,BINS,RMEANS,NB,BAG,SAME = {},{},{},{},{},{},{},{}
 
 function new(meta,i)                -- i is now one of meta's kind
   meta.__index = meta; return setmetatable(i, meta) end
@@ -259,36 +259,37 @@ function BAG.abcd(i,    k,pd,pf,d2h,r1,f1,d1) -- macro: one vote each
   return 100*i.ok/i.n, 100*pd/k, 100*pf/k, d2h/k, k end
 
 -- ---- stats -----------------------------------------------------------
-function cohen(xs,ys,    col1,col2,sd) -- gap of means, in pooled sds
-  col1, col2 = nums(xs, same1), nums(ys, same1)
-  sd = sqrt(((col1.n - 1) * col1:div() ^ 2
-             + (col2.n - 1) * col2:div() ^ 2) / (col1.n + col2.n - 2))
-  return abs(col1.mu - col2.mu) / (sd + 1e-32) end
+function Same(xs,ys)                -- two samples, sorted, to compare
+  table.sort(xs); table.sort(ys)
+  return new(SAME, {xs = xs, ys = ys}) end
+
+function SAME.ok(i)                 -- do all three tests say "same"?
+  return i:cohen() <= .35 and i:cliffs() <= .195 and i:ks() <= 1.36 end
+
+function SAME.cohen(i,    a,b,sd)   -- gap of means, in pooled sds
+  a, b = nums(i.xs, same1), nums(i.ys, same1)
+  sd = sqrt(((a.n - 1) * a:div() ^ 2
+             + (b.n - 1) * b:div() ^ 2) / (a.n + b.n - 2))
+  return abs(a.mu - b.mu) / (sd + 1e-32) end
 
 function same1(x) return x end      -- nums() wants a selector
 
-function cliffs(xs,ys,    gt,lt,j,k) -- how often xs out-ranks ys
-  gt, lt, j, k = 0, 0, 0, 0
+function SAME.cliffs(i,    xs,ys,gt,lt,j,k) -- how often xs out-ranks ys
+  xs, ys, gt, lt, j, k = i.xs, i.ys, 0, 0, 0, 0
   for _, x in ipairs(xs) do
     while j < #ys and ys[j+1] <  x do j = j + 1; k = j end
     while k < #ys and ys[k+1] == x do k = k + 1 end
     gt, lt = gt + j, lt + #ys - k end
   return abs(gt - lt) / (#xs * #ys) end
 
-function ks(xs,ys,    p,q,d,v)      -- widest gap of two cdfs, in crits
-  p, q, d = 0, 0, 0
+function SAME.ks(i,    xs,ys,p,q,d,v) -- widest gap of two cdfs, in crits
+  xs, ys, p, q, d = i.xs, i.ys, 0, 0, 0
   while p < #xs and q < #ys do
     v = min(xs[p+1], ys[q+1])
     while p < #xs and xs[p+1] == v do p = p + 1 end
     while q < #ys and ys[q+1] == v do q = q + 1 end
     d = max(d, abs(p/#xs - q/#ys)) end
   return d / sqrt((#xs + #ys) / (#xs * #ys)) end
-
-function same(xs,ys)                -- do all three tests say "same"?
-  table.sort(xs); table.sort(ys)
-  return cohen(xs,ys)  <= .35  and 
-         cliffs(xs,ys) <= .195 and 
-         ks(xs,ys)     <= 1.36 end
 
 -- ---- rig -------------------------------------------------------------
 function secs(file,    tbl,reps,tot,t0,tr,te,sub,y,model,lim,seed)
@@ -312,12 +313,12 @@ function secs(file,    tbl,reps,tot,t0,tr,te,sub,y,model,lim,seed)
                       tot / reps)) end
 
 -- ---- start up ------------------------------------------------------
-go = {}                            -- go[the.go]() runs at start up
+eg = {}                            -- eg[the.go]() runs at start up
 
-function go.help() print(help) end
-function go.secs() secs(the.file) end
+function eg.help() print(help) end
+function eg.secs() secs(the.file) end
 
 for k, v in help:gmatch"\n%s+(%a+)=(%S+)" do the[k] = thing(v) end
-if (arg and arg[0] or ""):find"jiffy%.lua$" then go[cli().go]() end
+if (arg and arg[0] or ""):find"jiffy%.lua$" then eg[cli().go]() end
 
 return _ENV
