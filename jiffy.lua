@@ -266,13 +266,12 @@ function Same(xs,ys)                -- two samples, sorted, to compare
 function SAME.ok(i)                 -- do all three tests say "same"?
   return i:cohen() <= .35 and i:cliffs() <= .195 and i:ks() <= 1.36 end
 
-function SAME.cohen(i,    a,b,sd)   -- gap of means, in pooled sds
-  a, b = nums(i.xs, same1), nums(i.ys, same1)
+function SAME.cohen(i,    f,a,b,sd) -- gap of means, in pooled sds
+  f    = function(x) return x end   -- nums() wants a selector
+  a, b = nums(i.xs, f), nums(i.ys, f)
   sd = sqrt(((a.n - 1) * a:div() ^ 2
              + (b.n - 1) * b:div() ^ 2) / (a.n + b.n - 2))
   return abs(a.mu - b.mu) / (sd + 1e-32) end
-
-function same1(x) return x end      -- nums() wants a selector
 
 function SAME.cliffs(i,    xs,ys,gt,lt,j,k) -- how often xs out-ranks ys
   xs, ys, gt, lt, j, k = i.xs, i.ys, 0, 0, 0, 0
