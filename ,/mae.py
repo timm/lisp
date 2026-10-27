@@ -3,7 +3,7 @@ import matplotlib; matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 rows = [l.split() for l in open(sys.argv[1])]
 rows = [(n, float(a), float(b), v, float(g)) for n, a, b, v, g in rows]
-rows.sort(key=lambda r: math.log(r[1]) - math.log(r[2]))   # the gap you see
+rows.sort(key=lambda r: math.log(r[4]) - math.log(r[2]))   # lgbm - rmeans, as drawn
 names = [r[0] for r in rows]; fm = [r[1] for r in rows]; rm = [r[2] for r in rows]
 lg = [r[4] for r in rows]
 wins = sum(r[3] == "win" for r in rows); losses = sum(r[3] == "loss" for r in rows)
@@ -27,8 +27,8 @@ for s in ["top", "right", "left"]: ax.spines[s].set_visible(False)
 ax.spines["bottom"].set_color(GRID)
 ax.set_ylabel("median MAE over 20 seeds (log scale)", color=INK2, fontsize=9)
 lw_, lt_ = sum(a < b for a, b in zip(lg, rm)), sum(a < b for a, b in zip(lg, fm))
-ax.set_title(f"MAE per regression data set, sorted by the gap fmpsc3 − rmeans "
-             f"(on the log scale)\nfmpsc3 better on the left; {wins} win, "
+ax.set_title(f"MAE per regression data set, sorted by the gap LightGBM − rmeans "
+             f"(on the log scale): LightGBM furthest ahead on the left\nfmpsc3 vs rmeans: {wins} win, "
              f"{ties} tie, {losses} loss (Same test). LightGBM's median beats rmeans on "
              f"{lw_} of {len(rows)}, fmpsc3 on {lt_}", loc="left", fontsize=11,
              color=INK)
