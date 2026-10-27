@@ -51,7 +51,6 @@ function scored(file,who,fun,what,    dir,f,h,tbl,t0,line,ok) -- once
 
 -- ---- learners --------------------------------------------------------
 function bayes(tr,te,    nb,col,bag,trb) -- learn tr, guess all of te
-  if the.sup > 0 then tr:supervise(tr.rows) end  -- klass-aware bin edges
   trb, bag = tr:clone(tr.rows, "bin"), Bag()
   nb, col = Nb(trb, trb.rows), trb.klass
   for _, row in ipairs(tr:clone(te.rows, "bin").rows) do
@@ -157,110 +156,8 @@ function eg.report()                -- what the cache says, so far
   versus("regression", "rmeans", "rmeansall", "rank", false)
   versus("optimize",   "rmeans", "rmeansall", "rank", false) end
 
-function few(tbl,n,    rows)         -- tbl's first n rows, cloned
-  rows = {}                         -- (pair already shuffled them, so
-  for j = 1, math.min(n, #tbl.rows) do rows[j] = tbl.rows[j] end
-  return tbl:clone(rows) end        -- these are a random n)
-
-function bayes50(tr,te)             -- bayes, on a budget of labels
-  return bayes(few(tr, the.budget), te) end
-
-function aode(tr,te,    md,col,bag,trb) -- as bayes, one parent deeper
-  trb, bag = tr:clone(tr.rows, "bin"), Bag()
-  md, col  = Aode(trb, trb.rows), trb.klass
-  for _, row in ipairs(tr:clone(te.rows, "bin").rows) do
-    bag:tally(row[col.at], md:guess(row)) end
-  return ("%.1f,%.1f,%.1f,%.3f"):format(bag:abcd()) end
-
-function worth(tr,    nums)         -- is this set worth clustering?
-  nums = 0                          -- distance needs numbers, and every
-  for _, col in ipairs(tr.x) do     -- leaf needs rows enough to count
-    if getmetatable(col) == NUM then nums = nums + 1 end end
-  return 2 * nums >= #tr.x
-     and #tr.rows / tr.klass:nVals() >= the.enough end
-
-function nbc(tr,te,    trb,bag,col,all,tree,row2)
-  if not worth(tr) then return bayes(tr, te) end
-  trb, bag = tr:clone(tr.rows, "bin"), Bag() -- cluster in x space, then
-  col      = trb.klass                       -- one naive Bayes per leaf
-  all      = Nb(trb, trb.rows)               -- plus the global one
-  tree     = tr:tree(tr.rows,          -- a leaf has to hold enough
-             math.max(the.stop * col:nVals(),  -- rows to see every
-                      #tr.rows / the.parts))   -- klass a few times
-  for _, row in ipairs(te.rows) do
-    local at = tr:leaf(tree, row)            -- the leaf training would
-    if not at.nb then                        -- have put this row in
-      at.nb = Nb(trb, tr:clone(at.rows, "bin").rows) end
-    row2 = tr:clone({row}, "bin").rows[1]
-    bag:tally(row2[col.at], at.nb:guess2(row2, all)) end
-  return ("%.1f,%.1f,%.1f,%.3f"):format(bag:abcd()) end
-
-function eg.nbc()
-  print(scored(the.file, "nbc", nbc, "acc,pd,pf,d2h")) end
-
-function perKlass(tbl,n,col,    seen,rows,k) -- up to n rows of each klass
-  seen, rows = {}, {}               -- pair() shuffled, so these are a
-  for _, r in ipairs(tbl.rows) do   -- random n, not the first n seen
-    k = r[col.at]
-    seen[k] = (seen[k] or 0) + 1
-    if seen[k] <= n then rows[#rows + 1] = r end end
-  return rows end
-
-function spreadPer(tbl,n,col,    at,out,k) -- n per klass, spread over x
-  at = {}                           -- the balance of perKlass, and the
-  for _, r in ipairs(tbl.rows) do   -- coverage of spread, together
-    k = r[col.at]
-    at[k] = at[k] or {}
-    at[k][#at[k] + 1] = r end
-  out = {}
-  for _, rows in pairs(at) do
-    for _, r in ipairs(#rows <= n and rows or tbl:spread(rows, n)) do
-      out[#out + 1] = r end end
-  return out end
-
-function knn(tr,te,    bag,tree,col,ref) -- k nearest, in a capped sample
-  bag, col = Bag(), tr.klass
-  ref  = the.pick == 1 and tr:spread(tr.rows, the.per * col:nVals())
-      or the.pick == 2 and spreadPer(tr, the.per, col)
-      or perKlass(tr, the.per, col) -- every klass gets the same say, so
-  tree = tr:tree(ref, #ref)         -- a rare one is not voted down
-  for _, row in ipairs(te.rows) do
-    bag:tally(row[col.at], tr:votes(tree, row)) end
-  return ("%.1f,%.1f,%.1f,%.3f"):format(bag:abcd()) end
-
-function eg.knn()
-  print(scored(the.file, "knn", knn, "acc,pd,pf,d2h")) end
-
-function hold(tr,    n,a,b)         -- tr, split for inner tuning
-  n, a, b = floor(.75 * #tr.rows), {}, {}
-  for j, row in ipairs(tr.rows) do
-    if j <= n then a[#a + 1] = row else b[#b + 1] = row end end
-  return tr:clone(a), tr:clone(b) end
-
-function tuned(tr,te,    sub,val,best,at,was,now) -- pick bins,m on tr alone
-  sub, val = hold(tr)
-  was = {bins = the.bins, m = the.m}
-  for _, bins in ipairs{5, 7, 10, 16} do
-    for _, m in ipairs{.25, .5, 1, 2} do
-      the.bins, the.m = bins, m
-      now = tonumber(bayes(sub, val):match"[^,]+,[^,]+,[^,]+,(.+)") -- d2h
-      if not best or now < best then best, at = now, {bins = bins, m = m} end end end
-  the.bins, the.m = at.bins, at.m
-  now = bayes(tr, te)               -- refit on all of tr, with the winner
-  the.bins, the.m = was.bins, was.m
-  return now end
-
-function eg.nbt()
-  print(scored(the.file, "nbt", tuned, "acc,pd,pf,d2h")) end
-
 function eg.nb()
   print(scored(the.file, "nb", bayes, "acc,pd,pf,d2h")) end
-
-function eg.nb50()
-  print(scored(the.file, "nb50", bayes50, "acc,pd,pf,d2h")) end
-
-function eg.aode()
-  print(scored(the.file, "aode", aode, "acc,pd,pf,d2h")) end
 
 function eg.rmeans()
   print(scored(the.file, "rmeans", rmeans, "rank,mae")) end

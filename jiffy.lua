@@ -14,18 +14,7 @@ flags:
   m=2              m-estimate: prior weight for a thin bin
   p=2              minkowski coefficient
   seed=1234567891  random number seed
-  w=0              1: weight x by info gain, 2: sqrt, 3: select
-  parts=4          nbc: how many clusters to aim for
-  stop=30          nbc: never cluster below this many rows
-  enough=50        nbc: rows per klass needed, to cluster
-  sup=0            1: mdl cuts, 2: equal count, 4: merge up
-  small=8          a bin thinner than this always merges
-  knn=5            how many neighbours vote
-  per=40           neighbours are sought in this many per klass
-  pick=0           1: spread the sample over x, not by klass
   file=~/gits/moot/optimize/misc/auto93.csv
-  train=           a cached training set
-  test=            a cached test set
   go=help          start-up action: help, secs]]
 
 local _ENV = setmetatable({}, {__index = _G})
@@ -34,7 +23,7 @@ if setfenv then setfenv(1, _ENV) end   -- lua 5.1, luajit
 floor, exp, sqrt, log = math.floor, math.exp, math.sqrt, math.log
 abs, min, max = math.abs, math.min, math.max
 
-TBL,NUM,SYM,BINS,RMEANS,NB,AODE,BAG,SAME = {},{},{},{},{},{},{},{},{}
+TBL,NUM,SYM,BINS,RMEANS,NB,BAG,SAME = {},{},{},{},{},{},{},{}
 
 function new(meta,i)                -- i is now one of meta's kind
   meta.__index = meta; return setmetatable(i, meta) end
@@ -96,49 +85,10 @@ function NUM.norm(i,v,    z)        -- logistic cdf, clipped at 3 sds
   z = z > 3 and 3 or (z < -3 and -3 or z)
   return 1 / (1 + exp(-1.7 * z)) end
 
-function NUM.bin(i,v,    b)         -- 1..the.bins, or supervised cuts
+function NUM.bin(i,v,    b)         -- 1..the.bins
   if v == "?" then return v end
-  if i.cut then                     -- klass-aware edges, if we have them
-    for b = 1, #i.cut do if v <= i.cut[b] then return b end end
-    return #i.cut + 1 end
   b = 1 + floor(the.bins * i:norm(v))
   return b > the.bins and the.bins or b end
-
-function ent(has,n,    e,v)         -- entropy of a klass tally
-  e = 0
-  for _, m in pairs(has) do v = m / n; e = e - v * log(v) / log(2) end
-  return e end
-
-function NUM.cuts(i,xy,lo,hi,out,    best,cut,a,b,n1,n2,j,k,e,e1,e2,gain,d)
-  -- Fayyad-Irani: split [lo,hi] of the sorted (value,klass) list xy at
-  -- the point that most reduces klass entropy, if MDL says it is worth it
-  a, b, n1, n2 = {}, {}, 0, 0
-  for j = lo, hi do b[xy[j].y] = (b[xy[j].y] or 0) + 1; n2 = n2 + 1 end
-  if n2 < 4 then return out end
-  e = ent(b, n2)
-  for j = lo, hi - 1 do
-    d = xy[j].y
-    a[d], b[d] = (a[d] or 0) + 1, b[d] - 1
-    if b[d] == 0 then b[d] = nil end
-    n1, n2 = n1 + 1, n2 - 1
-    if xy[j].x ~= xy[j + 1].x then
-      e1, e2 = ent(a, n1), ent(b, n2)
-      gain = e - (n1 * e1 + n2 * e2) / (n1 + n2)
-      if not best or gain > best then
-        best, cut, k = gain, j, {e1 = e1, e2 = e2, n1 = n1, n2 = n2} end end end
-  if not cut then return out end
-  n1, n2 = k.n1, k.n2
-  j = 0                              -- klasses on each side, for the MDL
-  for _ in pairs(b) do j = j + 1 end
-  d = 0
-  for _ in pairs(a) do d = d + 1 end
-  gain = (log(n1 + n2 - 1) / log(2)
-          + log(3 ^ (d + j) - 2) / log(2)
-          - ((d + j) * e - d * k.e1 - j * k.e2)) / (n1 + n2)
-  if best <= gain then return out end            -- MDL says: do not cut
-  out = i:cuts(xy, lo, cut, out)
-  out[#out + 1] = xy[cut].x
-  return i:cuts(xy, cut + 1, hi, out) end
 
 function nums(lst,f,    i)          -- lst, summarized in one num
   i=Num(); for _,x in ipairs(lst) do i:add(f(x)) end; return i end
@@ -276,27 +226,6 @@ function Nb(tbl,rows,    i,col,v)   -- one sub-table per klass, and
     if not i.subs[v] then
       i.subs[v], i.nKlass = tbl:clone(), i.nKlass + 1 end
     i.subs[v]:addRow(row) end
-  return the.w > 0 and i:weigh() or i end
-
-function NB.weigh(i,    all,here,s,c,n) -- info gain, one per x column
-  i.w, s, all = {}, 0, Sym()        -- how much each x says about klass
-  for v, sub in pairs(i.subs) do
-    all.has[v], all.n = #sub.rows, all.n + #sub.rows end
-  for at, col in ipairs(i.tbl.x) do
-    n = 0
-    for v, _ in pairs(col.has) do    -- what that value leaves unsaid
-      here = Sym()
-      for k, sub in pairs(i.subs) do
-        c = sub.x[at].has[v] or 0
-        if c > 0 then here.has[k], here.n = c, here.n + c end end
-      if here.n > 0 then n = n + here.n / all.n * here:div() end end
-    i.w[at] = math.max(0, all:div() - n)
-    s = s + i.w[at] end
-  s = s / #i.tbl.x                  -- a mean weight of 1 keeps the
-  for at, _ in ipairs(i.w) do       -- likelihoods on their old scale
-    i.w[at] = s > 0 and i.w[at] / s or 1
-    if     the.w == 2 then i.w[at] = sqrt(i.w[at])     -- softer
-    elseif the.w == 3 then i.w[at] = i.w[at] < 1 and 0 or 1 end end -- pick
   return i end
 
 function NB.like(i,sub,row,    l,col,v) -- log P(row|sub), m-estimated
@@ -304,17 +233,9 @@ function NB.like(i,sub,row,    l,col,v) -- log P(row|sub), m-estimated
   for at, col1 in ipairs(sub.x) do
     col, v = i.tbl.x[at], row[col1.at]   -- col knows every value;
     if v ~= "?" then                     -- col1 knows this klass's
-      l = l + (i.w and i.w[at] or 1)                 -- and m per value
-              * log(((col1.has[v] or 0) + the.m)
-                    / (col1.n + the.m * col:nVals())) end end
+      l = l + log(((col1.has[v] or 0) + the.m)       -- and m per value
+                  / (col1.n + the.m * col:nVals())) end end
   return l end
-
-function NB.guess2(i,row,all,    best,out,l) -- local, backed by global
-  for v, sub in pairs(i.subs) do
-    l = i:like(sub, row)
-    if all.subs[v] then l = l + all:like(all.subs[v], row) end
-    if not best or l > best then best, out = l, v end end
-  return out or all:guess(row) end
 
 function NB.guess(i,row,    best,out,l) -- row's likeliest klass
   for v, sub in pairs(i.subs) do
@@ -322,210 +243,7 @@ function NB.guess(i,row,    best,out,l) -- row's likeliest klass
     if not best or l > best then best, out = l, v end end
   return out end
 
-function TBL.supervise(i,rows,    xy,y)  -- give each num its own cuts
-  y = i.klass
-  for _, col in ipairs(i.x) do
-    if getmetatable(col) == NUM then
-      xy = {}
-      for _, row in ipairs(rows) do
-        if row[col.at] ~= "?" then
-          xy[#xy + 1] = {x = row[col.at], y = row[y.at]} end end
-      table.sort(xy, function(p, q) return p.x < q.x end)
-      if     the.sup == 2 then col.cut = col:pkid(xy)    -- equal count
-      elseif the.sup == 4 then col.cut = col:chop(xy)    -- merge up
-      else col.cut = #xy > 8 and col:cuts(xy, 1, #xy, {}) or nil end
-      if col.cut and #col.cut < (the.sup == 3 and 2 or 1) then
-        col.cut = nil end end end                   -- too few: fall back
-  return i end
-
-function NUM.merge1(a,b,    c,k,v) -- one bin, if it says as much as two
-  c = {lo = a.lo, hi = b.hi, n = a.n + b.n, has = {}}
-  for _, t in ipairs{a, b} do
-    for k, v in pairs(t.has) do c.has[k] = (c.has[k] or 0) + v end end
-  if a.n < the.small or b.n < the.small then return c end  -- too thin
-  return ent(c.has, c.n) <= (a.n * ent(a.has, a.n)       -- no worse than
-                           + b.n * ent(b.has, b.n)) / c.n -- the two apart
-         and c or nil end
-
-function NUM.merge(i,b4,    now,j,a,b,ab) -- merge up, till nothing merges
-  now, j = {}, 1
-  while j <= #b4 do
-    a = b4[j]
-    if j < #b4 then
-      ab = NUM.merge1(a, b4[j + 1])
-      if ab then a, j = ab, j + 1 end end
-    now[#now + 1] = a
-    j = j + 1 end
-  return #now == #b4 and now or i:merge(now) end
-
-function NUM.chop(i,xy,    k,out,at,b) -- fine bins, then merge them back
-  k = max(the.bins, floor(sqrt(#xy)))
-  out = {}
-  for j = 1, #xy do
-    at = 1 + floor((j - 1) * k / #xy)
-    b  = out[at]
-    if not b then b = {lo = xy[j].x, n = 0, has = {}}; out[at] = b end
-    b.hi, b.n = xy[j].x, b.n + 1
-    b.has[xy[j].y] = (b.has[xy[j].y] or 0) + 1 end
-  for j = 1, k do if not out[j] then return nil end end  -- ties made holes
-  out = i:merge(out)
-  if #out < 2 then return nil end
-  k = {}
-  for j = 1, #out - 1 do k[#k + 1] = out[j].hi end
-  return k end
-
-function NUM.pkid(i,xy,    k,out,at)  -- sqrt(n) bins of equal count
-  k, out = floor(sqrt(#xy)), {}
-  if k < 2 then return nil end
-  for j = 1, k - 1 do
-    at = floor(j * #xy / k)
-    if at >= 1 and xy[at].x ~= xy[at + 1].x then out[#out + 1] = xy[at].x end end
-  return out end
-
--- ---- clusters --------------------------------------------------------
-function TBL.xdist(i,row1,row2,    d,a,b) -- minkowski over the x columns
-  d = 0
-  for _, col in ipairs(i.x) do
-    a, b = row1[col.at], row2[col.at]
-    if a == "?" and b == "?" then d = d + 1
-    elseif getmetatable(col) == SYM then      -- syms: same, or not
-      d = d + (a == b and 0 or 1)
-    else a, b = col:norm(a), col:norm(b)      -- nums: the gap, 0..1
-         if     a == "?" then a = b > .5 and 0 or 1
-         elseif b == "?" then b = a > .5 and 0 or 1 end
-         d = d + abs(a - b) ^ the.p end end
-  return (d / #i.x) ^ (1 / the.p) end
-
-function TBL.far(i,rows,row,    out,most,d) -- the row furthest from row
-  most = -1
-  for _, r in ipairs(rows) do      -- a sample would do; these are small
-    d = i:xdist(row, r)
-    if d > most then most, out = d, r end end
-  return out, most end
-
-function TBL.tree(i,rows,stop,    a,b,c,out,x,lo,hi) -- halve, recursively
-  if #rows <= stop then return {rows = rows} end
-  a    = i:far(rows, rows[1 + floor(#rows / 2)])
-  b, c = i:far(rows, a)
-  if c == 0 then return {rows = rows} end
-  out = {}
-  for _, r in ipairs(rows) do       -- cosine rule: where r falls on a-b
-    out[#out + 1] = {x = i:project(r, a, b, c), row = r} end
-  table.sort(out, function(p, q) return p.x < q.x end)
-  lo, hi = {}, {}
-  for j, p in ipairs(out) do
-    local to = j <= floor(#out / 2) and lo or hi
-    to[#to + 1] = p.row end
-  if #lo == 0 or #hi == 0 then return {rows = rows} end
-  return {a = a, b = b, c = c, cut = out[floor(#out / 2)].x,
-          lo = i:tree(lo, stop), hi = i:tree(hi, stop)} end
-
-function TBL.project(i,row,a,b,c)   -- where row falls on the a-b line
-  return (i:xdist(row, a) ^ 2 + c ^ 2 - i:xdist(row, b) ^ 2)
-         / (2 * c + 1e-32) end
-
-function TBL.leaf(i,node,row)       -- run row down the training tree
-  while not node.rows do
-    node = i:project(row, node.a, node.b, node.c) <= node.cut
-           and node.lo or node.hi end
-  return node end
-
-function TBL.halve(i,rows,    a,b,c,out,x) -- split on the a-b line
-  a    = i:far(rows, rows[1 + floor(#rows / 2)])
-  b, c = i:far(rows, a)
-  out  = {}
-  for _, r in ipairs(rows) do      -- cosine rule: where r falls on a-b
-    x = (i:xdist(r, a) ^ 2 + c ^ 2 - i:xdist(r, b) ^ 2) / (2 * c + 1e-32)
-    out[#out + 1] = {x = x, row = r} end
-  table.sort(out, function(p, q) return p.x < q.x end)
-  a, b = {}, {}
-  for j, p in ipairs(out) do
-    local to = j <= floor(#out / 2) and a or b
-    to[#to + 1] = p.row end
-  return a, b end
-
-function TBL.cluster(i,rows,stop,    a,b,out) -- leaves of repeated halving
-  if #rows <= stop then return {rows} end
-  a, b = i:halve(rows)
-  if #a == 0 or #b == 0 then return {rows} end
-  out = {}
-  for _, half in ipairs({a, b}) do
-    for _, leaf in ipairs(i:cluster(half, stop)) do out[#out + 1] = leaf end end
-  return out end
-
-function TBL.spread(i,rows,n,    out,leaf) -- n rows, spread over x
-  out = {}                          -- one from each leaf of a tree cut
-  for _, leaf in ipairs(i:cluster(rows, max(2, floor(#rows / n)))) do
-    out[#out + 1] = leaf[1 + floor(#leaf / 2)] end
-  return out end
-
--- ---- knn -------------------------------------------------------------
--- The tree is an index: a test row only meets the rows that landed in
--- its leaf, so this is O(leaf), not O(all rows).
-function TBL.votes(i,node,row,    all,got,best,out,n) -- knn, inside a leaf
-  all = {}
-  for _, r in ipairs(i:leaf(node, row).rows) do
-    all[#all + 1] = {d = i:xdist(row, r), row = r} end
-  table.sort(all, function(p, q) return p.d < q.d end)
-  got = {}
-  for j = 1, min(the.knn, #all) do                  -- nearer rows count
-    n = all[j].row[i.klass.at]                      -- more, as 1/(d+eps)
-    got[n] = (got[n] or 0) + 1 / (all[j].d + 1e-9) end
-  for k, v in pairs(got) do
-    if not best or v > best then best, out = v, k end end
-  return out end
-
--- ---- aode ------------------------------------------------------------
--- One naive Bayes per (attribute,value) parent, averaged.  Each model
--- is still naive, but every pair of attributes is joint in one of them,
--- so interactions that defeat NB survive in the average.
-function Aode(tbl,rows,    i,y,va,vb,k1,k2) -- counts, two deep
-  i = new(AODE, {tbl = tbl, n = #rows, nKlass = 0, ks = {},
-                 c1 = {}, c2 = {}})
-  for _, row in ipairs(rows) do
-    y = row[tbl.klass.at]
-    if not i.ks[y] then i.ks[y], i.nKlass = 0, i.nKlass + 1 end
-    i.ks[y] = i.ks[y] + 1
-    for a, cola in ipairs(tbl.x) do
-      va = row[cola.at]
-      if va ~= "?" then
-        k1 = y .. "\1" .. a .. "\1" .. va
-        i.c1[k1] = (i.c1[k1] or 0) + 1
-        for b, colb in ipairs(tbl.x) do
-          vb = row[colb.at]
-          if b ~= a and vb ~= "?" then
-            k2 = k1 .. "\1" .. b .. "\1" .. vb
-            i.c2[k2] = (i.c2[k2] or 0) + 1 end end end end end
-  return i end
-
-function AODE.guess(i,row,    best,out,s,lo,p,k1,k2,va,vb,n) -- argmax y
-  for y, _ in pairs(i.ks) do
-    s = nil                         -- sum over parents, in log space
-    for a, cola in ipairs(i.tbl.x) do
-      va = row[cola.at]
-      if va ~= "?" then
-        k1 = y .. "\1" .. a .. "\1" .. va
-        n  = i.c1[k1] or 0
-        if n > 0 then
-          p = log((n + the.m) / (i.n + the.m * i.nKlass * cola:nVals()))
-          for b, colb in ipairs(i.tbl.x) do
-            vb = row[colb.at]
-            if b ~= a and vb ~= "?" then
-              k2 = k1 .. "\1" .. b .. "\1" .. vb
-              p = p + log(((i.c2[k2] or 0) + the.m)
-                          / (n + the.m * colb:nVals())) end end
-          if not s then s = p        -- log(exp(s) + exp(p)), kept stable
-          else lo = s > p and s or p
-               s  = lo + log(exp(s - lo) + exp(p - lo)) end end end end
-    if s and (not best or s > best) then best, out = s, y end end
-  return out or i:anyKlass() end
-
-function AODE.anyKlass(i,    best,out) -- nothing matched: the commonest
-  for y, n in pairs(i.ks) do
-    if not best or n > best then best, out = n, y end end
-  return out end
-
--- ---- scoring ---------------------------------------------------------
+-- ---- scoring ---------------------------------------------------------
 function Bag()                      -- blank counts, for one test set
   return new(BAG, {n = 0, ok = 0, got = {}, want = {}, hit = {}}) end
 
