@@ -99,7 +99,7 @@ def main(file):
     secs   = time.time() - t0
     lines.append(f"{s},{secs:.4f}," + (macro(y2, got) if klass else
       f"{rank(y2, got):.3f},"
-      f"{sum(abs(a-b) for a,b in zip(y2,got))/len(y2):.3f}"))
+      f"{sum(abs(a-b) for a,b in zip(y2,got))/len(y2):.6g}"))
   with open(out, "w") as f:
     f.write("rep,secs," + ("acc,pd,pf,d2h" if klass else "rank,mae") + "\n")
     f.write("\n".join(lines) + "\n")

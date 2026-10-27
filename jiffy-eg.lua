@@ -79,15 +79,14 @@ function head1(rows,n,    out)      -- rows' first n, or all of them
   return out end
 
 function score(model,te,y)          -- where its top 5 sat, and its mae
-  return ("%.3f,%.3f"):format(top(model, te, y), mae(model, te, y)) end
+  return ("%.3f,%.6g"):format(top(model, te, y), mae(model, te, y)) end
 
-function top(model,te,y,    ys,rows,best) -- where its top 5 landed
-  ys, rows = {}, {}
-  for n, row in ipairs(te.rows) do ys[n], rows[n] = y(row), row end
+function top(model,te,y,    ys,rows,g,best) -- where its top 5 landed
+  ys, rows, g = {}, {}, {}
+  for n, row in ipairs(te.rows) do
+    ys[n], rows[n], g[row] = y(row), row, model:guess(row) end
   table.sort(ys)
-  table.sort(rows, function(row1,row2)
-                     return model:guess(row1)
-                          < model:guess(row2) end)
+  table.sort(rows, function(row1,row2) return g[row1] < g[row2] end)
   for n = 1, (#rows < the.check and #rows or the.check) do
     best = (not best or y(rows[n]) < best) and y(rows[n]) or best end
   for n, v in ipairs(ys) do

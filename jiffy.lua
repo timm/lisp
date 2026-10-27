@@ -250,6 +250,23 @@ function RMEANS.guess(i,row,    s,w,bins,v,mu) -- bin means, m-estimated,
   if w > 0 then return s / w end
   return i.all.mu end
 
+function RMEANS.prune(i,how,    most,keep,b) -- after training, keep only
+  most, keep = 0, {}                  -- cols worth their weight: "max",
+  for _, col in ipairs(i.cols) do     -- >= 10% of the best; "chance",
+    most = max(most, i.has[col.at].w) end -- more than noise would cut
+  for _, col in ipairs(i.cols) do
+    b = i.has[col.at]
+    if how == "max" and b.w >= .1 * most
+       or how == "chance" and b.w > i:chance(b) then
+      keep[#keep + 1] = col end end
+  i.cols = keep
+  return i end
+
+function RMEANS.chance(i,b,    k)     -- variance k random bins would cut
+  k = 0                               -- from all: (k-1)/(n-1) of it
+  for _ in pairs(b.has) do k = k + 1 end
+  return (k - 1) / max(1, i.all.n - 1) * i.all:div() ^ 2 end
+
 -- ---- bayes -----------------------------------------------------------
 function Nb(tbl,rows,    i,col,v)   -- one sub-table per klass, and
   col = tbl.klass                   -- how many klasses that turned
