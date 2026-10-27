@@ -54,7 +54,8 @@ REG    = $(wildcard $(MOOT)/regression/*.csv)
 # LightGBM runs, and editing python never voids the lua ones.
 SETS   = $(CLAS) $(OPT) $(REG)
 VOID   = $(patsubst $(MOOT)/%.csv,$(CACHE)/%/.lua,$(SETS)) \
-         $(patsubst $(MOOT)/%.csv,$(CACHE)/%/.py,$(SETS))
+         $(patsubst $(MOOT)/%.csv,$(CACHE)/%/.py,$(SETS)) \
+         $(patsubst $(MOOT)/%.csv,$(CACHE)/%/.nn,$(SETS))
 
 $(CACHE)/%/.lua: $(MOOT)/%.csv jiffy.lua jiffy-eg.lua
 	@mkdir -p $(dir $@)
@@ -64,6 +65,13 @@ $(CACHE)/%/.lua: $(MOOT)/%.csv jiffy.lua jiffy-eg.lua
 $(CACHE)/%/.py: $(MOOT)/%.csv min.py $(ETC)/lgbm.py
 	@mkdir -p $(dir $@)
 	@rm -f $(dir $@)lgbm.csv
+	@touch $@
+
+# min.py owns the 80/20 split, so both runners watch it: a change
+# there must void both arms, or they compare on different rows.
+$(CACHE)/%/.nn: $(MOOT)/%.csv min.py $(ETC)/nn.py
+	@mkdir -p $(dir $@)
+	@rm -f $(dir $@)tabicl.csv $(dir $@)tabpfn.csv
 	@touch $@
 
 cache: $(VOID) ## drop any scores whose csv or code has moved
@@ -77,6 +85,20 @@ rmeans: cache ## rmeans, every optimize and regression set
 	@echo "$@ ..."
 	@ls $(MOOT)/optimize/*/*.csv $(MOOT)/regression/*.csv \
 	 | xargs -P $(P) -S 8192 -I{} luajit jiffy-eg.lua go=$@ file={} > /dev/null
+
+NN     = $(HOME)/tmp/nnenv/bin/python
+
+tabicl tabpfn: cache ## a tabular foundation model, classify+regression
+	@echo "$@ ..."
+	@ls $(MOOT)/classify/*.csv $(MOOT)/regression/*.csv \
+	 | OMP_NUM_THREADS=2 xargs -P 4 -S 8192 -I{} \
+	   $(NN) $(ETC)/nn.py $@ {} > /dev/null
+
+docs/%.png: $(ETC)/charts.py ## redraw one figure from the cache
+	@$(NN) $(ETC)/charts.py $*
+
+figures: ## redraw every figure from the cache
+	@$(NN) $(ETC)/charts.py
 
 lgbm: cache ## LightGBM, those same seeds, those same scores
 	@echo "$@ ..."
