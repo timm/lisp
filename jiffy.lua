@@ -202,6 +202,23 @@ function RMEANS.guess(i,row,mu,    s,w,bins,v) -- bin means, m-estimated
   if w > 0 then return s / w end
   return mu end
 
+function RMEANS.prune(i,how,    most,keep,b) -- after training, keep only
+  most, keep = 0, {}                  -- cols worth their weight: "max",
+  for _, col in ipairs(i.cols) do     -- >= 10% of the best; "chance",
+    most = max(most, i.has[col.at].w) end -- more than noise would cut
+  for _, col in ipairs(i.cols) do
+    b = i.has[col.at]
+    if how == "max" and b.w >= .1 * most
+       or how == "chance" and b.w > i:chance(b) then
+      keep[#keep + 1] = col end end
+  i.cols = keep
+  return i end
+
+function RMEANS.chance(i,b,    k)     -- variance k random bins would cut
+  k = 0                               -- from all: (k-1)/(n-1) of it
+  for _ in pairs(b.has) do k = k + 1 end
+  return (k - 1) / max(1, i.all.n - 1) * i.all:div() ^ 2 end
+
 -- ---- clusters --------------------------------------------------------
 function NUM.dist(i,a,b)            -- 0..1; two unknowns are far apart
   if a == "?" and b == "?" then return 1 end
@@ -234,9 +251,11 @@ function TBL.poles(i,rows,    some,far,lo,hi,c) -- fastmap: a ruler
   return function(r) return (i:distx(lo, r) ^ 2 + c ^ 2
                              - i:distx(hi, r) ^ 2) / (2 * c) end end
 
-function Fm(tbl,rows,lab,y,    small,few,recurse,copy) -- halve on x;
-  small = 2 * sqrt(#rows)           -- stop near sqrt(n) rows, or when
-  few   = floor(sqrt(#lab))         -- a half would get under sqrt(lab)
+function Fm(tbl,rows,lab,y,how,    small,few,recurse,copy) -- halve on
+  small = 2 * sqrt(#rows)
+  few   = floor(sqrt(#lab))         -- x; stop near sqrt(n) rows, or if
+                                    -- a half would get under sqrt(lab).
+                                    -- how: prune each leaf's columns
   function recurse(rows,lab,    i,ruler,p,lo,hi,inLo,lab1,lab2,n)
     i = new(FM, {})
     if #rows >= small and #lab >= 2 * few then
@@ -253,7 +272,9 @@ function Fm(tbl,rows,lab,y,    small,few,recurse,copy) -- halve on x;
       if #lab1 >= few and #lab2 >= few then
         i.ruler, i.cut = ruler, p[rows[n]]
         i.lo, i.hi     = recurse(lo, lab1), recurse(hi, lab2) end end
-    if not i.lo then i.model = Rmeans(tbl, lab, y, rows) end
+    if not i.lo then
+      i.model = Rmeans(tbl, lab, y, rows)
+      if how then i.model:prune(how) end end
     return i end
   copy = {}                         -- sorting must not touch tbl.rows
   for j, row in ipairs(rows) do copy[j] = row end
@@ -265,6 +286,9 @@ function FM.guess(i,row,mu)         -- walk to row's leaf; its rmeans
 
 function FM.leaves(i)               -- how many leaves
   return i.lo and i.lo:leaves() + i.hi:leaves() or 1 end
+
+function FM.cols(i)                 -- columns used, summed over leaves
+  return i.lo and i.lo:cols() + i.hi:cols() or #i.model.cols end
 
 -- ---- bayes -----------------------------------------------------------
 function Nb(tbl,rows,    i,col,v)   -- one sub-table per klass, and

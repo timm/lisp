@@ -72,22 +72,36 @@ function rmeansall(tr,te,    y)     -- the rich arm: every train row
   y = goal(tr)
   return score(Rmeans(tr, tr.rows, y), te, y) end
 
-function arm(kind,bins)             -- rm: rmeans. rmx: bins set from
-  return function(tr,te,    b4,y,lab,model,glob,fm,out) -- every train
-    b4, the.bins = the.bins, bins   -- row's x. fm: fastmap leaves, an
-    y   = goal(tr)                  -- rmeans in each. fmp: fm, but
-    lab = head1(tr.rows, the.budget - the.check) -- leaf bins shrink to
-    if     kind == "rm"  then model = Rmeans(tr, lab, y) -- rmx's guess
-    elseif kind == "rmx" then model = Rmeans(tr, lab, y, tr.rows)
+function arm(kind,bins,most,how)    -- rm: rmeans. rmx: bins set from
+  return function(tr,te,              -- every train row's x. fm: fastmap
+                  b4,y,lab,xs,model,glob,fm,out) -- leaves, rmeans in
+    b4, the.bins = the.bins, bins     -- each. fmp: fm, leaf bins shrunk
+    y   = goal(tr)                    -- to the global guess. most: x
+    lab = head1(tr.rows, the.budget - the.check) -- rows for fastmap
+    xs  = most and some(tr.rows, lab, most) or tr.rows -- (all if nil).
+    if     kind == "rm"  then model = Rmeans(tr, lab, y) -- how: prune
+    elseif kind == "rmx" then model = Rmeans(tr, lab, y, tr.rows) -- cols
     else
-      glob  = Rmeans(tr, lab, y, tr.rows)
-      fm    = Fm(tr, tr.rows, lab, y)
+      glob  = Rmeans(tr, lab, y, xs)
+      if how then glob:prune(how) end
+      fm    = Fm(tr, xs, lab, y, how)
       model = {guess = function(_, row)
                  return fm:guess(row, kind == "fmp" and glob:guess(row)
                                       or nil) end} end
-    out = score(model, te, y) .. "," .. (fm and fm:leaves() or 1)
+    out = score(model, te, y) .. "," .. (fm and fm:leaves() or 1) ..
+          "," .. (fm and ("%.3f"):format(
+                    fm:cols() / fm:leaves() / #tr.x) or 1)
     the.bins = b4
     return out end end
+
+function some(rows,lab,n,    seen,out,pool) -- lab, then others, to n
+  seen, out, pool = {}, {}, {}
+  for _, row in ipairs(lab) do seen[row], out[#out+1] = true, row end
+  for _, row in ipairs(rows) do
+    if not seen[row] then pool[#pool+1] = row end end
+  shuffle(pool)
+  for j = 1, math.min(#pool, n - #out) do out[#out+1] = pool[j] end
+  return out end
 
 arms = {"rm", "rmx", "fm", "fmp"}
 
@@ -99,13 +113,12 @@ function head1(rows,n,    out)      -- rows' first n, or all of them
 function score(model,te,y)          -- where its top 5 sat, and its mae
   return ("%.3f,%.3f"):format(top(model, te, y), mae(model, te, y)) end
 
-function top(model,te,y,    ys,rows,best) -- where its top 5 landed
-  ys, rows = {}, {}
-  for n, row in ipairs(te.rows) do ys[n], rows[n] = y(row), row end
+function top(model,te,y,    ys,rows,g,best) -- where its top 5 landed
+  ys, rows, g = {}, {}, {}
+  for n, row in ipairs(te.rows) do
+    ys[n], rows[n], g[row] = y(row), row, model:guess(row) end
   table.sort(ys)
-  table.sort(rows, function(row1,row2)
-                     return model:guess(row1)
-                          < model:guess(row2) end)
+  table.sort(rows, function(row1,row2) return g[row1] < g[row2] end)
   for n = 1, (#rows < the.check and #rows or the.check) do
     best = (not best or y(rows[n]) < best) and y(rows[n]) or best end
   for n, v in ipairs(ys) do
@@ -180,7 +193,24 @@ function eg.arms()                  -- every arm, at 3 and 7 bins
   for _, kind in ipairs(arms) do
     for _, bins in ipairs{3, 7} do
       scored(the.file, kind .. bins, arm(kind, bins),
-             "rank,mae,leaves") end end end
+             "rank,mae,leaves,cols") end end end
+
+prunes = {fmps3  = {2000},           -- fmp3, fastmap on 2000 rows
+          fmpsm3 = {2000, "max"},    -- and only cols >= 10% of best
+          fmpsc3 = {2000, "chance"}} -- and only cols beating noise
+
+function eg.prunes()                -- fmp3, sampled, then pruned
+  for who, o in pairs(prunes) do
+    scored(the.file, who, arm("fmp", 3, o[1], o[2]),
+           "rank,mae,leaves,cols") end end
+
+function eg.prunesreport()          -- each against fmp3, then rm7
+  for _, kind in ipairs{"regression", "optimize"} do
+    for _, base in ipairs{"fmp3", "rm7"} do
+      for _, who in ipairs{"fmps3", "fmpsm3", "fmpsc3"} do
+        versus(kind, who, base, kind == "regression" and "mae"
+                                  or "rank", false) end end
+    print() end end
 
 function eg.armsreport(    b)       -- each arm against rm7 and rm3
   for _, kind in ipairs{"regression", "optimize"} do
