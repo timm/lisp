@@ -111,7 +111,7 @@ function head1(rows,n,    out)      -- rows' first n, or all of them
   return out end
 
 function score(model,te,y)          -- where its top 5 sat, and its mae
-  return ("%.3f,%.3f"):format(top(model, te, y), mae(model, te, y)) end
+  return ("%.3f,%.6g"):format(top(model, te, y), mae(model, te, y)) end
 
 function top(model,te,y,    ys,rows,g,best) -- where its top 5 landed
   ys, rows, g = {}, {}, {}
