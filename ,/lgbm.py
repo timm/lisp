@@ -79,7 +79,7 @@ def main(file):
     got    = list(model.predict(X2))
     secs   = time.time() - t0
     lines.append(f"{s},{secs:.4f}," + (macro(y2, got) if klass else
-      f"0.000,{sum(abs(a-b) for a,b in zip(y2,got))/len(y2):.3f}"))
+      f"0.000,{sum(abs(a-b) for a,b in zip(y2,got))/len(y2):.6g}"))
   with open(out, "w") as f:
     f.write("rep,secs," + ("acc,pd,pf,d2h" if klass else "rank,mae") + "\n")
     f.write("\n".join(lines) + "\n")
