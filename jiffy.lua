@@ -25,7 +25,7 @@ if setfenv then setfenv(1, _ENV) end   -- lua 5.1, luajit
 floor, exp, sqrt, log = math.floor, math.exp, math.sqrt, math.log
 abs, min, max = math.abs, math.min, math.max
 
-TBL,NUM,SYM,BINS,RMEANS,NB,BAG,SAME = {},{},{},{},{},{},{},{}
+TBL,NUM,SYM,BINS,RMEANS,NB,BAG,SAME,FM = {},{},{},{},{},{},{},{},{}
 
 function new(meta,i)                -- i is now one of meta's kind
   meta.__index = meta; return setmetatable(i, meta) end
@@ -183,16 +183,16 @@ function BINS.weight(i,all,    s)   -- variance i's bins cut off
   s = all:div() ^ 2 - s
   return s > 0 and s or 0 end
 
-function Rmeans(tbl,rows,y,    sub,all,i) -- one bins per x column
-  sub = tbl:clone(rows)
-  all = nums(sub.rows, y)
+function Rmeans(tbl,rows,y,xrows,    sub,all,i) -- bins per x column;
+  sub = tbl:clone(xrows or rows)      -- xrows (unlabelled ok) set the
+  all = nums(rows, y)                 -- bins, else rows do
   i   = new(RMEANS, {all = all, has = {}, cols = sub.x})
   for _, col in ipairs(sub.x) do
-    i.has[col.at] = Bins(col, sub.rows, y, all) end
+    i.has[col.at] = Bins(col, rows, y, all) end
   return i end
 
-function RMEANS.guess(i,row,    s,w,bins,v,mu) -- bin means, m-estimated,
-  s, w, mu = 0, 0, i.all.mu               -- weighed by variance won
+function RMEANS.guess(i,row,mu,    s,w,bins,v) -- bin means, m-estimated
+  s, w, mu = 0, 0, mu or i.all.mu     -- toward mu, weighed by variance
   for _, col in ipairs(i.cols) do
     bins = i.has[col.at]
     v    = bins and bins.has[col:bin(row[col.at])]
@@ -200,7 +200,71 @@ function RMEANS.guess(i,row,    s,w,bins,v,mu) -- bin means, m-estimated,
       s = s + bins.w * (v.n * v.mu + the.m * mu) / (v.n + the.m)
       w = w + bins.w end end
   if w > 0 then return s / w end
-  return i.all.mu end
+  return mu end
+
+-- ---- clusters --------------------------------------------------------
+function NUM.dist(i,a,b)            -- 0..1; two unknowns are far apart
+  if a == "?" and b == "?" then return 1 end
+  a, b = i:norm(a), i:norm(b)
+  a = a ~= "?" and a or (b > .5 and 0 or 1)
+  b = b ~= "?" and b or (a > .5 and 0 or 1)
+  return abs(a - b) end
+
+function SYM.dist(i,a,b)            -- same symbol, or not
+  if a == "?" and b == "?" then return 1 end
+  return a == b and 0 or 1 end
+
+function TBL.distx(i,r1,r2,    d)   -- minkowski over the x columns
+  d = 0
+  for _, col in ipairs(i.x) do
+    d = d + col:dist(r1[col.at], r2[col.at]) ^ the.p end
+  return (d / #i.x) ^ (1 / the.p) end
+
+function TBL.poles(i,rows,    some,far,lo,hi,c) -- fastmap: a ruler
+  some = {}                         -- between two far rows
+  for j = 1, min(#rows, 64) do some[j] = rows[rint(#rows)] end
+  far = function(r,    d,best,out)
+          best = -1
+          for _, z in ipairs(some) do
+            d = i:distx(r, z)
+            if d > best then best, out = d, z end end
+          return out end
+  lo = far(some[1]); hi = far(lo)
+  c  = i:distx(lo, hi) + 1e-32
+  return function(r) return (i:distx(lo, r) ^ 2 + c ^ 2
+                             - i:distx(hi, r) ^ 2) / (2 * c) end end
+
+function Fm(tbl,rows,lab,y,    small,few,recurse,copy) -- halve on x;
+  small = 2 * sqrt(#rows)           -- stop near sqrt(n) rows, or when
+  few   = floor(sqrt(#lab))         -- a half would get under sqrt(lab)
+  function recurse(rows,lab,    i,ruler,p,lo,hi,inLo,lab1,lab2,n)
+    i = new(FM, {})
+    if #rows >= small and #lab >= 2 * few then
+      ruler, p = tbl:poles(rows), {}
+      for _, row in ipairs(rows) do p[row] = ruler(row) end
+      table.sort(rows, function(a,b) return p[a] < p[b] end)
+      n, lo, hi, inLo, lab1, lab2 = floor(#rows / 2), {}, {}, {}, {}, {}
+      for j, row in ipairs(rows) do
+        if j <= n then lo[#lo+1], inLo[row] = row, true
+        else           hi[#hi+1] = row end end
+      for _, row in ipairs(lab) do
+        if inLo[row] then lab1[#lab1+1] = row
+        else              lab2[#lab2+1] = row end end
+      if #lab1 >= few and #lab2 >= few then
+        i.ruler, i.cut = ruler, p[rows[n]]
+        i.lo, i.hi     = recurse(lo, lab1), recurse(hi, lab2) end end
+    if not i.lo then i.model = Rmeans(tbl, lab, y, rows) end
+    return i end
+  copy = {}                         -- sorting must not touch tbl.rows
+  for j, row in ipairs(rows) do copy[j] = row end
+  return recurse(copy, lab) end
+
+function FM.guess(i,row,mu)         -- walk to row's leaf; its rmeans
+  while i.lo do i = i.ruler(row) <= i.cut and i.lo or i.hi end
+  return i.model:guess(row, mu) end
+
+function FM.leaves(i)               -- how many leaves
+  return i.lo and i.lo:leaves() + i.hi:leaves() or 1 end
 
 -- ---- bayes -----------------------------------------------------------
 function Nb(tbl,rows,    i,col,v)   -- one sub-table per klass, and

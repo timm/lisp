@@ -72,6 +72,25 @@ function rmeansall(tr,te,    y)     -- the rich arm: every train row
   y = goal(tr)
   return score(Rmeans(tr, tr.rows, y), te, y) end
 
+function arm(kind,bins)             -- rm: rmeans. rmx: bins set from
+  return function(tr,te,    b4,y,lab,model,glob,fm,out) -- every train
+    b4, the.bins = the.bins, bins   -- row's x. fm: fastmap leaves, an
+    y   = goal(tr)                  -- rmeans in each. fmp: fm, but
+    lab = head1(tr.rows, the.budget - the.check) -- leaf bins shrink to
+    if     kind == "rm"  then model = Rmeans(tr, lab, y) -- rmx's guess
+    elseif kind == "rmx" then model = Rmeans(tr, lab, y, tr.rows)
+    else
+      glob  = Rmeans(tr, lab, y, tr.rows)
+      fm    = Fm(tr, tr.rows, lab, y)
+      model = {guess = function(_, row)
+                 return fm:guess(row, kind == "fmp" and glob:guess(row)
+                                      or nil) end} end
+    out = score(model, te, y) .. "," .. (fm and fm:leaves() or 1)
+    the.bins = b4
+    return out end end
+
+arms = {"rm", "rmx", "fm", "fmp"}
+
 function head1(rows,n,    out)      -- rows' first n, or all of them
   out = {}
   for j = 1, (#rows < n and #rows or n) do out[j] = rows[j] end
@@ -156,6 +175,23 @@ function eg.report()                -- what the cache says, so far
   versus("regression", "rmeans", "lgbm",      "mae",  false)
   versus("regression", "rmeans", "rmeansall", "rank", false)
   versus("optimize",   "rmeans", "rmeansall", "rank", false) end
+
+function eg.arms()                  -- every arm, at 3 and 7 bins
+  for _, kind in ipairs(arms) do
+    for _, bins in ipairs{3, 7} do
+      scored(the.file, kind .. bins, arm(kind, bins),
+             "rank,mae,leaves") end end end
+
+function eg.armsreport(    b)       -- each arm against rm7 and rm3
+  for _, kind in ipairs{"regression", "optimize"} do
+    for _, base in ipairs{"rm7", "rm3"} do
+      for _, kind1 in ipairs(arms) do
+        for _, bins in ipairs{3, 7} do
+          b = kind1 .. bins
+          if b ~= base then
+            versus(kind, b, base, kind == "regression" and "mae"
+                                    or "rank", false) end end end
+      print() end end end
 
 function eg.nb()
   print(scored(the.file, "nb", bayes, "acc,pd,pf,d2h")) end
