@@ -289,33 +289,40 @@ def secs():
        "LightGBM seconds / this arm's  (log)", rot=0, size=9)
 
 def raw():
-  "Absolute seconds per run, each arm's sets sorted on its own."
-  mine = {"classify": "nb", "regression": "rmeans"}
+  "Absolute seconds per run, each task on its own panel."
+  mine = (("classify", "nb72"), ("regression", "rmeans"))
   who  = arms(["lgbm"], ("tabicl", "tabpfn")) + ["jiffy"]
   Look["jiffy"] = ("#1f5f9e", "-", "o", "jiffy (luajit)")
-  cur, n = {w: [] for w in who}, 0
-  for kind, ours in mine.items():
-    for name, d in sets(kind, ["lgbm", ours]):
-      n += 1
+  f, ax = plt.subplots(1, 2, figsize=(13, 5.8), dpi=200, sharey=True)
+  for k, (kind, ours) in enumerate(mine):
+    a, cur = ax[k], {w: [] for w in who}
+    S = sets(kind, ["lgbm", ours])
+    for name, d in S:
       for w in who:
         v = cells(d, ours if w == "jiffy" else w, "secs")
         if v: cur[w].append(st.fmean(v))
-  f, ax = fig(13, 6)
-  for w in who:
-    xs = sorted(cur[w])
-    if not xs: continue
-    c, _, _, lab = Look[w]
-    ax.plot(range(1, len(xs) + 1), xs, "-", color=c, lw=2.2, zorder=3,
-            label=f"{lab}   median {st.median(xs):.4g}s"
-                  f"   total {sum(xs):,.0f}s")
-  ax.set_yscale("log")
-  for y, t in ((1, "1 second"), (60, "1 minute")):
-    ax.axhline(y, color="#cccccc", lw=1, zorder=1)
-    ax.text(1, y, " " + t, fontsize=8, color="#999999", va="bottom")
-  ax.legend(frameon=False, fontsize=10, loc="upper left")
-  save(f, ax, "raw", "What one fit and predict costs",
-       f"{n} moot classify+regression sets, each curve sorted on its own",
-       "seconds, mean of 20 seeds  (log)", rot=0, size=9)
+    a.spines[["top", "right"]].set_visible(False)
+    a.grid(axis="y", color="#eeeeee", zorder=0)
+    for w in who:
+      xs = sorted(cur[w])
+      if not xs: continue
+      c, _, _, lab = Look[w]
+      a.plot(range(1, len(xs) + 1), xs, "-", color=c, lw=2.2, zorder=3,
+             label=f"{lab}   total {sum(xs):,.0f}s")
+    a.set_yscale("log")
+    for y, t in ((1, "1 second"), (60, "1 minute")):
+      a.axhline(y, color="#cccccc", lw=1, zorder=1)
+      if k == 0: a.text(1, y, " " + t, fontsize=8, color="#999999",
+                        va="bottom")
+    a.legend(frameon=False, fontsize=9, loc="upper left")
+    a.set_title(f"moot/{kind}   ({len(S)} sets)", fontsize=11)
+    a.set_xlabel("sets, each curve sorted on its own", fontsize=10)
+  ax[0].set_ylabel("seconds for one fit and predict,\n"
+                   "mean of 20 seeds  (log)", fontsize=11)
+  f.suptitle("What one fit and predict costs", fontsize=13)
+  f.tight_layout()
+  f.savefig(f"{Docs}/raw.png", bbox_inches="tight"); plt.close(f)
+  print(f"{Docs}/raw.png")
 
 def cost():
   "Seconds against training rows: how each arm grows with the data."
