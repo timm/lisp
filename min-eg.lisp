@@ -26,10 +26,10 @@
 (defun eg-train (&aux (a (tbl)) (m (train a (split a))) rows)
   (format t "~&~a rows sampled of ~a; mean ydist per bin:~%"
           (@ budget) (length (? a rows)))
-  (loop for at being the hash-keys of (? m arms) using (hash-value arm)
-        do (loop for b being the hash-keys of (? arm bins)
+  (loop for at being the hash-keys of (? m cuts) using (hash-value cut)
+        do (loop for b being the hash-keys of (? cut bins)
                    using (hash-value v)
-                 do (push (list (elt (? a names) at) b v (? arm w))
+                 do (push (list (elt (? a names) at) b v (? cut w))
                           rows)))
   (dolist (z (sort rows (lambda (p q) (< (? (third p) mu)
                                          (? (third q) mu)))))

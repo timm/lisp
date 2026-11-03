@@ -5,7 +5,8 @@
 
 ;;;; config --------------------------------------------------------------
 (defstruct opts
-  (seed 1234567891) (p 2) (budget 50) (goods t) (file "auto93.csv"))
+  (seed 1234567891) (p 2) (m 2) (budget 50) (goods t)
+  (file "auto93.csv"))
 
 (defparameter *the* (make-opts))
 
@@ -99,10 +100,10 @@
     (values (subseq rows 0 n) (subseq rows n))))
 
 ;;;; inference: rmeans -------------------------------------------------
-(defstruct arm bins w)                 ; one column: its bins, its weight
-(defstruct model all arms cols)        ; grand num, arms, x cols
+(defstruct cut bins w)                 ; one column: its bins, its weight
+(defstruct model all cuts cols)        ; grand num, cuts, x cols
 
-(defm arm! (col rows y all &aux (a (make-arm :bins (o))))
+(defm cut! (col rows y all &aux (a (make-cut :bins (o))))
   (dolist (r rows)
     (add (want (gethash (bin col (elt r $at)) (? a bins)))
          (funcall y r)))
@@ -110,34 +111,32 @@
   a)
 
 (defm train (tbl rows &optional (y (lambda (r) (ydist tbl r)))
-            &aux (arms (o)))
+            &aux (cuts (o)))
   (let* ((i   (clone tbl rows))
          (all (nums (mapcar y (? i rows)))))
-    (dolist (c (? i x) (make-model :all all :arms arms
+    (dolist (c (? i x) (make-model :all all :cuts cuts
                                    :cols (? i x)))
-      (setf (gethash (? c at) arms) (arm! c (? i rows) y all)))))
+      (setf (gethash (? c at) cuts) (cut! c (? i rows) y all)))))
 
-(defm vcut (arm all) 
+(defm vcut (cut all) 
   (max 0 (- (expt (div all) 2)
             (loop for v being the hash-values of $bins
                   sum (* (/ (? v n) (? all n)) (expt (div v) 2))))))
 
-(defm est (num all &optional (m 2)) 
-  (/ (+ (* $n $mu) (* m (? all mu))) (+ $n m)))
-
-(defun hit (m col r &aux (a (gethash (? col at) (? m arms))))
+(defun hit (m col r &aux (a (gethash (? col at) (? m cuts))))
   (if a (values (gethash (bin col (elt r (? col at))) (? a bins)) a)))
 
 (defm bins (m r) 
   (loop for c in $cols for v = (hit m c r) when v collect v))
 
-(defm guess (m r &aux (s 0) (w 0)) 
-  (dolist (c $cols)
+(defm guess (m r &aux (s 0) (w 0) (mu (? m all mu)) (k (@ m)))
+  (dolist (c $cols)                    ; bin means, m-estimated, weighed
     (multiple-value-bind (v a) (hit m c r)
       (when (and v (plusp (? a w)))
-        (incf s (* (? a w) (est v $all)))
+        (incf s (* (? a w) (/ (+ (* (? v n) (? v mu)) (* k mu))
+                              (+ (? v n) k))))
         (incf w (? a w)))))
-  (if (plusp w) (/ s w) (? $all mu)))
+  (if (plusp w) (/ s w) mu))
 
 ;;;; stats -------------------------------------------------------------
 (defun nums (lst &aux (col (num))) (dolist (x lst col) (add col x)))
