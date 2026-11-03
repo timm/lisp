@@ -1,4 +1,4 @@
-;;; vim: set ts=2 sw=2 sts=2 et lisp cc=75 lispwords+=loop,aif,defm :
+;;; vim: set ts=2 sw=2 sts=2 et lisp cc=75 lispwords+=defun,let,dolist,loop,aif,defm :
 #+sbcl (declaim (sb-ext:muffle-conditions warning))
 #+sbcl (setf sb-ext:*invoke-debugger-hook* (lambda (c h)
   (format *error-output* "~&~a~%" c) (sb-ext:exit :code 1 :abort t)))
@@ -142,36 +142,37 @@
 ;;;; stats -------------------------------------------------------------
 (defun nums (lst &aux (col (num))) (dolist (x lst col) (add col x)))
 
-(defun cohen (xs ys &aux (a (nums xs)) (b (nums ys))
-                         (n (? a n)) (m (? b n)))
-  (/ (abs (- (? a mu) (? b mu)))
-     (+ 1e-32 (sqrt (/ (+ (* (1- n) (expt (div a) 2))
-                          (* (1- m) (expt (div b) 2)))
-                       (- (+ n m) 2))))))
+(defun same-cohen (xs ys)
+  (let ((a (nums xs)) (b (nums ys)) (n (? a n)) (m (? b n)))
+    (/ (abs (- (? a mu) (? b mu)))
+       (+ 1e-32 (sqrt (/ (+ (* (1- n) (expt (div a) 2))
+                            (* (1- m) (expt (div b) 2)))
+                         (- (+ n m) 2)))))))
 
-(defun cliffs (xs ys &aux (b (coerce ys 'vector)) (m (length b))
-                          (gt 0) (lt 0) (j 0) (k 0))
-  (dolist (x xs (/ (abs (- gt lt)) (* (length xs) m)))
-    (loop while (and (< j m) (< (aref b j) x)) do (setf k (incf j)))
-    (loop while (and (< k m) (= (aref b k) x)) do (incf k))
-    (incf gt j)
-    (incf lt (- m k))))
+(defun same-cliffs (xs ys)
+  (let ((b (coerce ys 'vector)) (m (length b)) 
+        (gt 0) (lt 0) (j 0) (k 0))
+    (dolist (x xs (/ (abs (- gt lt)) (* (length xs) m)))
+      (loop while (and (< j m) (< (aref b j) x)) do (setf k (incf j)))
+      (loop while (and (< k m) (= (aref b k) x)) do (incf k))
+      (incf gt j)
+      (incf lt (- m k)))))
 
-(defun ks (xs ys &aux (a (coerce xs 'vector)) (b (coerce ys 'vector))
-                      (n (length a)) (m (length b))
-                      (p 0) (q 0) (d 0) v)
-  (loop while (and (< p n) (< q m)) do
-    (setf v (min (aref a p) (aref b q)))
-    (loop while (and (< p n) (= (aref a p) v)) do (incf p))
-    (loop while (and (< q m) (= (aref b q) v)) do (incf q))
-    (setf d (max d (abs (- (/ p n) (/ q m))))))
-  (/ d (sqrt (/ (+ n m) (* n m)))))
+(defun same-ks (xs ys)
+  (let ((a (coerce xs 'vector)) (b (coerce ys 'vector))
+        (n (length a)) (m (length b)) (p 0) (q 0) (d 0) v)
+    (loop while (and (< p n) (< q m)) do
+      (setf v (min (aref a p) (aref b q)))
+      (loop while (and (< p n) (= (aref a p) v)) do (incf p))
+      (loop while (and (< q m) (= (aref b q) v)) do (incf q))
+      (setf d (max d (abs (- (/ p n) (/ q m))))))
+    (/ d (sqrt (/ (+ n m) (* n m)))))
 
 (defun same (xs ys &aux (a (sort (copy-list xs) #'<))
                         (b (sort (copy-list ys) #'<)))
-  (and (<= (cohen  a b) 0.350)          ; `and` is lazy, so the
-       (<= (cliffs a b) 0.195)          ; cheap tests run first
-       (<= (ks     a b) 1.360)))
+  (and (<= (stats-cohen  a b) 0.350)    
+       (<= (stats-cliffs a b) 0.195)   
+       (<= (stats-ks     a b) 1.360)))
 
 ;;;; misc -----------------------------------------------------------
 (defun at (s i &aux (n (length s))) (when (plusp n) (elt s (mod i n))))
