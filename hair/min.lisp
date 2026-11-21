@@ -26,15 +26,13 @@
       (let ((self ,self)) (declare (ignorable self)) ,@body))))
 
 ;;;; misc --------------------------------------------------------------
-(defun bisect (v x &optional (lt #'<))
+(defun bisect (v x &optional (lt #'<) (lo 0) (hi (length v)))
   "#items in sorted vector v that are (lt item x)"
-  (let ((lo 0) (hi (length v)))
-    (loop :while (< lo hi)
-          :do (let ((mid (floor (+ lo hi) 2)))
-               (if (funcall lt (aref v mid) x)
-                 (setf lo (1+ mid))
-                 (setf hi mid))))
-    lo))
+  (if (>= lo hi) lo
+    (let ((mid (floor (+ lo hi) 2)))
+      (if (funcall lt (aref v mid) x)
+        (bisect v x lt (1+ mid) hi)
+        (bisect v x lt lo mid)))))
 
 (defun argmost (&optional (better #'>) &aux out b4)
   "Visitor: (f x n) offers x scored n; (f) = first x with the most n.
