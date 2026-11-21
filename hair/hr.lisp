@@ -2,6 +2,7 @@
 ;;; hr: hair minus ai. General lisp tricks; nothing here knows AI.
 ;;; (c) 2026, Tim Menzies <timm@ieee.org>, MIT license
 (in-package :hair)
+(in-hair)
 
 (defparameter +tiny+ 1e-32)
 
@@ -11,10 +12,6 @@
 
 (defmacro aif (test ok &optional no) "Anaphoric if: `it` = test"
   `(let ((it ,test)) (if it ,ok ,no)))
-
-(set-macro-character #\$       ; $x = (slot-value self 'x)
-  (lambda (s c) (declare (ignore c))
-    `(slot-value self ',(read s t nil t))) t)
 
 (defmacro defm (name (cls &rest args) &body body)
   "defmethod with `self` bound to the first arg, specialized on class
@@ -51,7 +48,8 @@
 (defun charn (s &optional (n -1)) "Char n of s; negative = from the end"
   (char s (mod n (length s))))
 
-(defun thing (s &aux (*read-eval* nil)) "String to number, ?, or string"
+(defun thing (s &aux (*read-eval* nil) (*package* (find-package :hair)))
+  "String to number, ?, or string"
   (let ((v (ignore-errors (read-from-string s nil nil))))
     (if (or (numberp v) (eql v '?)) v (string-trim " " s))))
 

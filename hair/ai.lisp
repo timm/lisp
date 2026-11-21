@@ -1,9 +1,17 @@
 ; vim: set ts=2 sw=2 sts=2 et lisp cc=75 lispwords+=loop,defm,aif,cond,labels :
 ;;; ai: tiny AI, explained. Sections follow the python hair/ files:
-;;; data, dist, stats, tree, then the egs (tests). Plain lisp only;
+;;; about, data, dist, stats, tree, then the egs (tests). Plain lisp;
 ;;; the system tricks live in hair.lisp (run that, not this).
 ;;; (c) 2026, Tim Menzies <timm@ieee.org>, MIT license
 (in-package :hair)
+(in-hair)
+
+;;;; about -------------------------------------------------------------
+(defstruct about
+  (file "~/gits/moot/optimize/misc/auto93.csv")
+  (seed 1234567891) (pow 2) (leaf 3) (maxd 8) (eps 0.35))
+
+(defvar *k* (make-about))
 
 ;;;; data --------------------------------------------------------------
 ;;; Header: Upper case = Num, else Sym. Last char: + - goal (a y),

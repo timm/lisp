@@ -1,11 +1,9 @@
-; vim: set ts=2 sw=2 sts=2 et lisp cc=75 lispwords+=loop,defm,aif :
-;;; hair: where the system tricks live. Start the package, tell the
-;;; debugger to chill, set the config, load the plain-lisp rest, run.
+; vim: set ts=2 sw=2 sts=2 et lisp cc=75 lispwords+=loop :
+;;; hair: the command-line script; all the system tricks live here.
+;;; Tell the debugger to chill, load the system, run the args.
 ;;; Usage: sbcl --script hair.lisp [--key=val ...] [NAME ...]
+;;; As a library: (ql:quickload "hair") or (asdf:load-system "hair").
 ;;; (c) 2026, Tim Menzies <timm@ieee.org>, MIT license
-(defpackage :hair (:use :cl))
-(in-package :hair)
-
 #+sbcl (declaim (sb-ext:muffle-conditions style-warning))
 #+sbcl (setf sb-ext:*invoke-debugger-hook*  ; one line per crash, then exit
          (lambda (c h) (declare (ignore h))
@@ -17,17 +15,6 @@
   #+clisp ext:*args*
   #+ecl   (cdddr ext:*command-args*))
 
-(defun halt (&optional (n 0)) "Exit with status n."
-  #+sbcl (sb-ext:exit :code n :abort t) #+(or clisp ecl) (ext:quit n))
-
-(load "hr")    ; hair minus ai: general lisp tricks
-
-;;;; about -------------------------------------------------------------
-(defstruct about
-  (file "~/gits/moot/optimize/misc/auto93.csv")
-  (seed 1234567891) (pow 2) (leaf 3) (maxd 8) (eps 0.35))
-
-(defvar *k* (make-about))
-
-(load "ai")    ; the AI
-(mapc #'cli (args))
+(mapc #'load '("package" "hr" "ai"))   ; same order as hair.asd
+(let ((*package* (find-package :hair)))  ; print symbols as before
+  (mapc #'hair:cli (args)))
