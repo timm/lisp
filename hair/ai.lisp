@@ -1,5 +1,5 @@
 ; vim: set ts=2 sw=2 sts=2 et lisp cc=75 lispwords+=loop,defm,aif,cond,labels :
-;;; think: tiny AI, explained. Sections follow the python hair/ files:
+;;; ai: tiny AI, explained. Sections follow the python hair/ files:
 ;;; data, dist, stats, tree, then the egs (tests). Plain lisp only;
 ;;; the system tricks live in hair.lisp (run that, not this).
 ;;; (c) 2026, Tim Menzies <timm@ieee.org>, MIT license

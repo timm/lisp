@@ -29,5 +29,5 @@
 
 (defvar *k* (make-about))
 
-(load "think") ; the AI
+(load "ai")    ; the AI
 (mapc #'cli (args))
