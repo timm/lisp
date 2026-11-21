@@ -3,7 +3,8 @@ SHELL := bash
 .SILENT:
 cols  ?= 3
 Lisp   = $(wildcard *.lisp)
-Html   = $(Lisp:%.lisp=docs/%.lisp.html)
+D     ?= ../docs
+Html   = $(Lisp:%.lisp=$(D)/%.lisp.html)
 
 help: ## show this help
 	grep -E '^[a-z.%/]+:.*##' Makefile | sed 's/:.*## /\t/'
@@ -16,12 +17,12 @@ push: ## git add this dir, commit (msg="..."), push
 run: ## run every eg (sbcl --script hair.lisp all)
 	sbcl --script hair.lisp all
 
-html: docs/index.html ## render *.lisp + docs/index.html; open it
-	open docs/index.html
+html: $(D)/index.html ## render *.lisp + ../docs/index.html; open it
+	open $(D)/index.html
 
 # index: title, one-liner, a link per source with its lines of code
 # (no blanks, no ;comments)
-docs/index.html: $(Html) Makefile
+$(D)/index.html: $(Html) Makefile
 	{ echo '<meta charset=utf-8><title>hair (lisp)</title>'; \
 	  echo '<body style="margin:0;padding:2em 0"><center>'; \
 	  echo '<h1 style="font:normal 2em Times New Roman,serif">'; \
@@ -38,13 +39,13 @@ docs/index.html: $(Html) Makefile
 
 Chrome = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 
-pdf: docs/hair.lisp.pdf ## hair.lisp as landscape pdf; open it
+pdf: $(D)/ai.lisp.pdf ## ai.lisp as landscape pdf; open it
 	open $<
 
-docs/%.pdf: docs/%.html
+$(D)/%.pdf: $(D)/%.html
 	$(Chrome) --headless --disable-gpu --no-pdf-header-footer \
 	  --print-to-pdf=$@ $< 2>/dev/null
 
-docs/%.lisp.html: %.lisp docs/hi.py
-	mkdir -p docs
-	python3 docs/hi.py $(cols) $< > $@
+$(D)/%.lisp.html: %.lisp $(D)/hi.py
+	mkdir -p $(D)
+	python3 $(D)/hi.py $(cols) $< > $@
