@@ -1,0 +1,17 @@
+; vim: set ts=2 sw=2 sts=2 et lisp cc=75 lispwords+=loop :
+;;; sys: system tricks. Start the package; tell sbcl's debugger to chill.
+;;; (c) 2026, Tim Menzies <timm@ieee.org>, MIT license
+(defpackage :hair (:use :cl))
+(in-package :hair)
+
+#+sbcl (declaim (sb-ext:muffle-conditions warning style-warning))
+#+sbcl (setf sb-ext:*invoke-debugger-hook*  ; one line per crash, then exit
+         (lambda (c h) (declare (ignore h))
+           (format *error-output* "~&!! ~a~%" c)
+           (sb-ext:exit :code 1 :abort t)))
+
+(defun args () "Command-line words after the script name."
+  #+sbcl (cdr sb-ext:*posix-argv*) #+clisp ext:*args*)
+
+(defun halt (&optional (n 0)) "Exit with status n."
+  #+sbcl (sb-ext:exit :code n :abort t) #+clisp (ext:quit n))
