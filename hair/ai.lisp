@@ -188,16 +188,16 @@
 
 (defm tree (tbl rows y &optional (make #'make-num) (lvl 0))
   "Split rows on the min-cost cut, recursively"
-  (let* ((all (adds (mapcar y rows) (funcall make)))
-         (tr  (make-node :mid (mid all) :n (length rows) :rows rows))
-         (cut (and (< lvl (? *k* maxd)) (best-cut self rows y make))))
-    (when cut              ; best-cut is nil unless both sides get >= leaf
-      (setf (? tr at) (first cut) (? tr v) (second cut))
-      (labels ((kid (rs) (tree self rs y make (1+ lvl))))
-        (loop :for r :in rows           ; one pass: split, then recurse
-              :if (yes? tr r) :collect r :into yes
-              :else           :collect r :into no
-              :finally (setf (? tr yes) (kid yes) (? tr no) (kid no)))))
+  (let ((tr (make-node :mid (mid (adds (mapcar y rows) (funcall make)))
+                       :n (length rows) :rows rows)))
+    (aif (and (< lvl (? *k* maxd)) (best-cut self rows y make))
+      (flet ((kid (keep)   ; keep = remove-if-not (yes) or remove-if (no)
+               (tree self (funcall keep (lambda (r) (yes? tr r)) rows)
+                     y make (1+ lvl))))
+        (setf (? tr at)  (first it)
+              (? tr v)   (second it)    ; set first: yes? reads at, v
+              (? tr yes) (kid #'remove-if-not)
+              (? tr no)  (kid #'remove-if))))
     tr))
 
 (defun yes? (tr r) "Does row r go down tr's yes branch? (? = yes)"

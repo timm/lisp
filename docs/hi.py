@@ -24,9 +24,13 @@ PAT = re.compile("|".join("(?P<%s>%s)" % kv for kv in RULES), re.M)
 
 cols, path = sys.argv[1], sys.argv[2]
 src  = open(path).read()
-out  = PAT.sub(lambda m: '<span style="color:%s">%s</span>'
-               % (COLOR[m.lastgroup or "n"], m.group()),
-               html.escape(src, quote=False))
+out, i = "", 0       # match raw text, escape after: "<=" must not hit ";.*"
+for m in PAT.finditer(src):
+  out += html.escape(src[i:m.start()], quote=False)
+  out += '<span style="color:%s">%s</span>' % (
+           COLOR[m.lastgroup or "n"], html.escape(m.group(), quote=False))
+  i = m.end()
+out += html.escape(src[i:], quote=False)
 
 print('<meta charset=utf-8><title>%s</title>'
       '<link rel=stylesheet href="https://fonts.googleapis.com/css2'
