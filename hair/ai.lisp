@@ -18,7 +18,8 @@
 ;;; ! class, X skip, else an x. "?" cells are unknown.
 (defstruct num (at 0) (txt "") (n 0) (mu 0) (m2 0) (goal 1))
 (defstruct sym (at 0) (txt "") (n 0) (has (o)))
-(defstruct tbl (n 0) names cols x y klass rows)
+(defstruct cols names all x y klass)
+(defstruct tbl (n 0) cols rows)
 
 (defun col (at txt)
   (if (upper-case-p (charn txt 0))
@@ -31,7 +32,7 @@
 
 (defm add1 (tbl r inc)
   (if (plusp inc) (push r $rows) (setf $rows (remove r $rows)))
-  (dolist (c $cols) (add c (aref r (? c at)) inc)))
+  (dolist (c (? $cols all)) (add c (aref r (? c at)) inc)))
 
 (defm add1 (sym v inc) (incf (gethash v $has 0) inc))
 
@@ -63,19 +64,21 @@
     (let ((z (/ (- v $mu) (+ (div self) +tiny+))))
       (/ 1 (+ 1 (exp (* -1.7 (max -3 (min 3 z)))))))))
 
-(defun tbl (rows &aux (self (make-tbl))) "First row names the cols"
-  (setf $names (pop rows)
-        $cols  (loop :for txt :across $names :for at :from 0
-                     :collect (col at txt)))
-  (dolist (c $cols)
+(defun cols (names &aux (self (make-cols :names names)))
+  "Columns from the header row; last char of name says x, y, ! or X"
+  (setf $all (loop :for txt :across names :for at :from 0
+                   :collect (col at txt)))
+  (dolist (c $all self)
     (case (charn (? c txt))
       (#\X)
       (#\! (setf $klass c))
       ((#\+ #\-) (push c $y))
-      (t (push c $x))))
-  (dolist (r rows self) (add self r)))
+      (t (push c $x)))))
 
-(defm clone (tbl &optional rows) (tbl (cons $names rows)))
+(defun tbl (rows) "First row names the cols"
+  (adds (cdr rows) (make-tbl :cols (cols (car rows)))))
+
+(defm clone (tbl &optional rows) (tbl (cons (? $cols names) rows)))
 
 ;;;; dist --------------------------------------------------------------
 (defun minkowski (vs &aux (n 0) (d 0) (p (? *k* pow)))
@@ -91,11 +94,11 @@
              (abs (- u v))))))
 
 (defm distx (tbl r q) "r to query q, over q's known x values"
-  (minkowski (loop :for c :in $x :for v := (aref q (? c at))
+  (minkowski (loop :for c :in (? $cols x) :for v := (aref q (? c at))
                :unless (eql v '?) :collect (gap c (aref r (? c at)) v))))
 
 (defm disty (tbl r) "Distance to heaven (0 = best)"
-  (minkowski (loop :for c :in $y :for v := (aref r (? c at))
+  (minkowski (loop :for c :in (? $cols y) :for v := (aref r (? c at))
                :unless (eql v '?)
                :collect (abs (- (norm c v) (? c goal))))))
 
@@ -189,7 +192,7 @@
 
 (defm best-cut (tbl rows y make &aux (best (argmost #'<)))
   "Lowest-cost (col v) whose sides both have >= leaf rows, or nil"
-  (dolist (c $x (funcall best))
+  (dolist (c (? $cols x) (funcall best))
     (cuts c rows y make (lambda (v yes no)
                           (if (<= (? *k* leaf) (min (? yes n) (? no n)))
                             (funcall best (list c v) (xpect yes no)))))))
@@ -231,8 +234,9 @@
 
 (defun eg-tbl (&aux (tb (tbl (csv (? *k* file)))))
   (format t "~a rows, ~a x, ~a y~%"
-          (length (? tb rows)) (length (? tb x)) (length (? tb y)))
-  (dolist (c (? tb cols)) (format t "~10a ~,2f~%" (? c txt) (mid c))))
+          (length (? tb rows))
+          (length (? tb cols x)) (length (? tb cols y)))
+  (dolist (c (? tb cols all)) (format t "~10a ~,2f~%" (? c txt) (mid c))))
 
 (defun eg-dist (&aux (tb (tbl (csv (? *k* file)))))
   (let ((rows (sort (copy-list (? tb rows)) #'< :key (lambda (r) (disty tb r)))))

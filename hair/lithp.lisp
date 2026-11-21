@@ -1,9 +1,9 @@
 ; vim: set ts=2 sw=2 sts=2 et lisp cc=75 lispwords+=loop,defm,aif :
-;;; hr: hair minus ai. General lisp tricks; nothing here knows AI.
+;;; lithp: lisp, with a lisp. General tricks; nothing here knows AI.
 ;;; (c) 2026, Tim Menzies <timm@ieee.org>, MIT license
 (defpackage :hair (:use :cl)
   (:export #:*k* #:about #:make-about
-           #:tbl #:clone #:add #:adds #:mid #:div #:norm
+           #:cols #:tbl #:clone #:add #:adds #:mid #:div #:norm
            #:distx #:disty #:near #:same #:rank #:xval
            #:tree #:leaf #:show #:csv #:srand #:rand #:normal #:cli))
 (in-package :hair)
