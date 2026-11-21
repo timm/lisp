@@ -9,7 +9,7 @@
 ;;;; about -------------------------------------------------------------
 (defstruct about
   (file "~/gits/moot/optimize/misc/auto93.csv")
-  (seed 1234567891) (p 2) (leaf 3) (maxd 8) (eps 0.35))
+  (seed 1234567891) (pow 2) (leaf 3) (maxd 8) (eps 0.35))
 
 (defvar *k* (make-about))
 
@@ -78,7 +78,7 @@
 (defm clone (tbl &optional rows) (tbl (cons $names rows)))
 
 ;;;; dist --------------------------------------------------------------
-(defun minkowski (vs &aux (n 0) (d 0) (p (? *k* p)))
+(defun minkowski (vs &aux (n 0) (d 0) (p (? *k* pow)))
   (dolist (v vs (expt (/ d (max n 1)) (/ 1 p)))
     (incf n) (incf d (expt v p))))
 

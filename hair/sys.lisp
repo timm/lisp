@@ -4,14 +4,16 @@
 (defpackage :hair (:use :cl))
 (in-package :hair)
 
-#+sbcl (declaim (sb-ext:muffle-conditions warning style-warning))
+#+sbcl (declaim (sb-ext:muffle-conditions style-warning))
 #+sbcl (setf sb-ext:*invoke-debugger-hook*  ; one line per crash, then exit
          (lambda (c h) (declare (ignore h))
            (format *error-output* "~&!! ~a~%" c)
            (sb-ext:exit :code 1 :abort t)))
 
 (defun args () "Command-line words after the script name."
-  #+sbcl (cdr sb-ext:*posix-argv*) #+clisp ext:*args*)
+  #+sbcl  (cdr sb-ext:*posix-argv*)
+  #+clisp ext:*args*
+  #+ecl   (cdddr ext:*command-args*))
 
 (defun halt (&optional (n 0)) "Exit with status n."
-  #+sbcl (sb-ext:exit :code n :abort t) #+clisp (ext:quit n))
+  #+sbcl (sb-ext:exit :code n :abort t) #+(or clisp ecl) (ext:quit n))
