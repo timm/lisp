@@ -241,7 +241,8 @@
     (print (rank `((a . ,(g 10)) (b . ,(g 10.1)) (c . ,(g 14)) (d . ,(g 14.2)))))))
 
 (defun eg-tree (&aux (tb (tbl (csv (? *k* file)))))
-  (show (tree tb (? tb rows) (lambda (r) (disty tb r)))))
+  (show (tree tb (? tb rows)   ; tb frozen during build, so memo is safe
+              (memo (lambda (r) (disty tb r))))))
 
 (defun eg-all ()
   (dolist (f '(eg-config eg-tbl eg-dist eg-same eg-rank eg-tree))

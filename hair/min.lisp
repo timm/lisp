@@ -22,6 +22,11 @@
   `(defmethod ,name ((self ,cls) ,@args) ,@body))
 
 ;;;; misc --------------------------------------------------------------
+(defun memo (f &aux (h (make-hash-table :test #'eq)))
+  "f, caching each result by its (eq) argument"
+  (lambda (x) (multiple-value-bind (v ok) (gethash x h)
+                (if ok v (setf (gethash x h) (funcall f x))))))
+
 (defun bisect (v x &optional (lt #'<) (lo 0) (hi (length v)))
   "#items in sorted vector v that are (lt item x)"
   (if (>= lo hi) lo
