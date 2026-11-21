@@ -64,16 +64,20 @@
     (let ((z (/ (- v $mu) (+ (div self) +tiny+))))
       (/ 1 (+ 1 (exp (* -1.7 (max -3 (min 3 z)))))))))
 
+(defun skip? (txt) "Ignore this col? Name ends in X, X+, X- or X!"
+  (or (eql #\X (charn txt))
+      (and (find (charn txt) "+-!") (eql #\X (charn txt -2)))))
+
 (defun cols (names &aux (self (make-cols :names names)))
   "Columns from the header row; last char of name says x, y, ! or X"
   (setf $all (loop :for txt :across names :for at :from 0
                    :collect (col at txt)))
   (dolist (c $all self)
-    (case (charn (? c txt))
-      (#\X)
-      (#\! (setf $klass c))
-      ((#\+ #\-) (push c $y))
-      (t (push c $x)))))
+    (let ((e (charn (? c txt))))
+      (cond ((skip? (? c txt)))
+            ((eql e #\!) (setf $klass c))
+            ((find e "+-") (push c $y))
+            (t (push c $x))))))
 
 (defun tbl (rows) "First row names the cols"
   (adds (cdr rows) (make-tbl :cols (cols (car rows)))))
