@@ -45,6 +45,6 @@ docs/%.pdf: docs/%.html
 	$(Chrome) --headless --disable-gpu --no-pdf-header-footer \
 	  --print-to-pdf=$@ $< 2>/dev/null
 
-docs/%.lisp.html: %.lisp hi.py
+docs/%.lisp.html: %.lisp docs/hi.py
 	mkdir -p docs
-	python3 hi.py $(cols) $< > $@
+	python3 docs/hi.py $(cols) $< > $@
