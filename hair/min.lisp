@@ -37,8 +37,8 @@
 (defun argmost (&optional (better #'>) &aux out b4)
   "Visitor: (f x n) offers x scored n; (f) = first x with the most n.
    (argmost #'<) = argmin"
-  (lambda (&optional (x nil x-p) n)
-    (when (and x-p (or (null b4) (funcall better n b4)))
+  (lambda (&optional x n)
+    (when (and x (or (null b4) (funcall better n b4)))
       (setf out x b4 n))
     out))
 
