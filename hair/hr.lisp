@@ -1,5 +1,5 @@
 ; vim: set ts=2 sw=2 sts=2 et lisp cc=75 lispwords+=loop,defm,aif :
-;;; min: general lisp tricks; nothing here knows about tables or AI.
+;;; hr: hair minus ai. General lisp tricks; nothing here knows AI.
 ;;; (c) 2026, Tim Menzies <timm@ieee.org>, MIT license
 (in-package :hair)
 

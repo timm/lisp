@@ -20,7 +20,7 @@
 (defun halt (&optional (n 0)) "Exit with status n."
   #+sbcl (sb-ext:exit :code n :abort t) #+(or clisp ecl) (ext:quit n))
 
-(load "min")   ; general lisp tricks
+(load "hr")    ; hair minus ai: general lisp tricks
 
 ;;;; about -------------------------------------------------------------
 (defstruct about
