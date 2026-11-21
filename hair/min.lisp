@@ -16,14 +16,10 @@
   (lambda (s c) (declare (ignore c))
     `(slot-value self ',(read s t nil t))) t)
 
-(defmacro defm (name (a &rest args) &body body)
-  "defun with `self` = first arg. If the first arg names a class (or
-   is (x class)), a defmethod on that class: (defm mid (sym) ...)"
-  (let ((self (if (consp a) (car a) a))
-        (cls  (if (consp a) (cadr a) (and (find-class a nil) a))))
-    `(,(if cls 'defmethod 'defun) ,name
-      (,(if cls `(,self ,cls) a) ,@args)
-      (let ((self ,self)) (declare (ignorable self)) ,@body))))
+(defmacro defm (name (cls &rest args) &body body)
+  "defmethod with `self` bound to the first arg, specialized on class
+   cls (t = anything): (defm mid (sym) ...), (defm add (t v) ...)"
+  `(defmethod ,name ((self ,cls) ,@args) ,@body))
 
 ;;;; misc --------------------------------------------------------------
 (defun bisect (v x &optional (lt #'<) (lo 0) (hi (length v)))

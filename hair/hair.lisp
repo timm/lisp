@@ -25,8 +25,8 @@
     (make-num :at at :txt txt :goal (if (eql #\- (charn txt)) 0 1))
     (make-sym :at at :txt txt)))
 
-(defm add (it v &optional (inc 1)) "Grow (inc=-1: shrink) a num,sym,tbl"
-  (unless (eql v '?) (incf $n inc) (add1 it v inc))
+(defm add (t v &optional (inc 1)) "Grow (inc=-1: shrink) a num,sym,tbl"
+  (unless (eql v '?) (incf $n inc) (add1 self v inc))
   v)
 
 (defm add1 (tbl r inc)
@@ -58,9 +58,9 @@
   (loop :for v :being :the :hash-values :of $has
     :when (plusp v) :sum (* -1 (/ v $n) (log (/ v $n) 2))))
 
-(defm norm (col v) "A Num's value to 0..1, by a logistic z-score"
+(defm norm (num v) "A Num's value to 0..1, by a logistic z-score"
   (if (eql v '?) v
-    (let ((z (/ (- v $mu) (+ (div col) +tiny+))))
+    (let ((z (/ (- v $mu) (+ (div self) +tiny+))))
       (/ 1 (+ 1 (exp (* -1.7 (max -3 (min 3 z)))))))))
 
 (defun tbl (rows &aux (self (make-tbl))) "First row names the cols"
@@ -100,7 +100,7 @@
                :collect (abs (- (norm c v) (? c goal))))))
 
 (defm near (tbl q &optional rows) "rows (default: all), nearest q first"
-  (sort (copy-list (or rows $rows)) #'< :key (lambda (r) (distx tbl r q))))
+  (sort (copy-list (or rows $rows)) #'< :key (lambda (r) (distx self r q))))
 
 ;;;; stats -------------------------------------------------------------
 (defun median (xs) (nth (floor (length xs) 2) (sort (copy-list xs) #'<)))
@@ -170,7 +170,7 @@
   (loop :for r :in rows :for x := (aref r (? c at))
         :unless (eql x '?) :collect (cons x (funcall y r))))
 
-(defm cuts (sym rows y make fn &aux (xy (xys sym rows y)))
+(defm cuts (sym rows y make fn &aux (xy (xys self rows y)))
   "Offer (fn v yes no) per value v: v vs the rest"
   (dolist (k (remove-duplicates (mapcar #'car xy) :test #'equal))
     (let ((yes (funcall make)) (no (funcall make)))
@@ -178,7 +178,7 @@
       (funcall fn k yes no))))
 
 (defm cuts (num rows y make fn
-            &aux (xy (sort (xys num rows y) #'< :key #'car)))
+            &aux (xy (sort (xys self rows y) #'< :key #'car)))
   "Offer (fn x yes no) per split x <= v; sweep yes up, no down"
   (let ((yes (funcall make)) 
         (no  (adds (mapcar #'cdr xy) (funcall make))))
@@ -198,10 +198,10 @@
   "Split rows on the min-cost cut, recursively"
   (let* ((all (adds (mapcar y rows) (funcall make)))
          (tr  (make-node :mid (mid all) :n (length rows) :rows rows))
-         (cut (and (< lvl (? *k* maxd)) (best-cut tbl rows y make))))
+         (cut (and (< lvl (? *k* maxd)) (best-cut self rows y make))))
     (when cut              ; best-cut is nil unless both sides get >= leaf
       (setf (? tr at) (first cut) (? tr v) (second cut))
-      (labels ((kid (rs) (tree tbl rs y make (1+ lvl))))
+      (labels ((kid (rs) (tree self rs y make (1+ lvl))))
         (loop :for r :in rows           ; one pass: split, then recurse
               :if (yes? tr r) :collect r :into yes
               :else           :collect r :into no
