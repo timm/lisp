@@ -3,6 +3,77 @@
 Newest first. One entry per question asked. Each says what was run, on
 what, and what it showed, so a later session can pick up from here.
 
+## Dead ends (read this first)
+
+Paths already tried across lisp/hair, ~/gh/hair, ~/gh/tab-dev (lua).
+Do not re-run without a reason something changed. Source in brackets:
+[L] lisp/hair, [P] ~/gh/hair, [T] ~/gh/tab-dev/CLAUDE.md (details there).
+
+**Live path (2026-11-22):** bagged forest of deep trees (leaf=2,
+maxd 30), 10 trees on random halves, sqrt(#x) cols per node, rows
+binned once per fold into 8 equal-frequency bins, cut by histogram
+count-and-sweep, <=200 rows/class, vote = mean leaf class share.
+39 sets: forest 87.1 vs LightGBM 89.1 auc, same or faster. Level on
+small sets; loses 6-12 on big mixed (electricity, churn,
+bank-marketing, adult) [L][P]. tab-dev: 30 deep trees reach LightGBM
+parity on acc/auc, still lose on d2h; TabICL far ahead [T].
+
+Discretization
+- MDL (Fayyad-Irani) / recursive bins before trees: -1.5 auc vs q8 [L];
+  -4.1 for naive Bayes [T]. Fine for *showing* bins (2-6), not for
+  learning.
+- Equal width bins: as bad as q4, fails on skewed cols (hypothyroid
+  -17.5) [L].
+- More bins: q16 +0.1, q64 +0.3, q256 ~= no binning. Not worth it [L].
+- Re-binning per node (`cutTill`): slower and worse [T].
+- Fixed sd/2 bin width: a bug, not a finding; it produced false
+  "binning hurts" results [T].
+- Uncapped sym values as bins: ID-like cols (~7000 values) blew up
+  time; cap sym to q-1 values [L].
+
+Ensembles
+- Laplace-smoothed leaf votes: no gain [L].
+- FFT / best-of-3^d collapsed subtrees from one tree: worse than one
+  tree (78.9 vs 79.5) [L]; many-klass collapses (k+1 regions) [T].
+- Boosting (SAMME over deep trees): no gain over plain deep forest;
+  maybe needs a learning rate -- the one open boosting question [T].
+- More trees: past 30, +0.1 per doubling [T]. More rows per class
+  (cap 512/1024): +1.6 auc for 2x time; big-set gap stays [L].
+- Shallow trees (depth 4, leaf 8): starved, -13 on many-klass sets.
+  Always deep, small leaves [T].
+- Column subsample cols=3: -5; sqrt(#x) ties all cols and is faster
+  [T][L].
+- Bagged / random-subspace naive Bayes: nothing (NB is stable) [T].
+- Big-data tuning (cap1k + q32 + all trees): closes some gap, slower
+  than LightGBM; reverted [L].
+
+Naive Bayes [T]
+- Info-gain column weighting -4 to -6 (UNVERIFIED rig; replication
+  queued in tab-dev/QUEUE.md), AODE (contradictory records),
+  per-cluster NB (unverified), bottom-up entropy merge (tie), kNN
+  (worse, 12x slower), tuning m/bins (seed noise).
+
+Speed
+- Hash tables for small counts in SBCL: slow; use alists [L].
+- Sorting per node per col: replace by bin ids cached once per fold +
+  counts into a bins x classes array (lisp 12.9 -> 3.5 s; lua 6.7x)
+  [L][T].
+- Speedups measured under parallel load lie (GC/scheduler contention,
+  Apple E-cores). Time serially, take the min of reps [T].
+- LightGBM max_bin 255/32/8: barely changes its auc [L].
+- PyPy: 1.5-2x on the python forest; no lightgbm under pypy [P].
+
+Data / rig traps
+- COMPAS53 leaked its class (post-outcome cols): fixed in moot [L].
+- Binning test rows with stats from all of train while training on a
+  sample: leak; fixed [T].
+- Lisp csv: strip \r, skip blank lines (blood-transfusion, german) [L].
+- Python `bin` min() over (cost, at, v) crashed on int/str ties (car);
+  fixed [P]. `!` col must also be in tbl.y [P].
+- report rows must follow the header's order, not each dict's [P].
+- Seed set once per run: adding a treatment shifts every later draw;
+  +/-1 auc noise per set [L].
+
 Shared setup, unless an entry says otherwise:
 
 - data: the 39 `*ens*` sets in `~/gits/moot/classify` (see `eg.lisp`)
