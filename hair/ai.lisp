@@ -87,8 +87,6 @@
 (defun tbl (rows) "First row names the cols"
   (adds (cdr rows) (make-tbl :cols (cols (car rows)))))
 
-(defm clone (tbl &optional rows) (tbl (cons (? $cols names) rows)))
-
 ;;;; dist --------------------------------------------------------------
 (defun minkowski (vs &optional (p (? *k* pow)) &aux (n 0) (d 0))
   (dolist (v vs (expt (/ d (max n 1)) (/ 1 p)))
@@ -163,12 +161,6 @@
           :if (= k (mod i n)) :collect r :into test
           :else :collect r :into train
           :finally (funcall fn train test))))))
-
-(defun rae (pairs &aux (mu (/ (loop :for (w) :in pairs :sum w)
-                               (max 1 (length pairs)))))
-  "Relative absolute error over (want . got): 100 = guessing the mean"
-  (* 100 (/ (loop :for (w . g) :in pairs :sum (abs (- w g)))
-            (+ +tiny+ (loop :for (w) :in pairs :sum (abs (- w mu)))))))
 
 ;;;; tree --------------------------------------------------------------
 (defstruct node at v ys n rows yes no)

@@ -3,7 +3,7 @@
 ;;; (c) 2026, Tim Menzies <timm@ieee.org>, MIT license
 (defpackage :hair (:use :cl)
   (:export #:*k* #:about #:make-about
-           #:cols #:tbl #:clone #:add #:adds #:mid #:div #:norm
+           #:cols #:tbl #:add #:adds #:mid #:div #:norm
            #:distx #:disty #:near #:same #:rank #:xval
            #:tree #:leaf #:csv #:srand #:rand #:normal))
 (in-package :hair)
@@ -55,11 +55,6 @@
     (when (and x (or (null b4) (funcall better n b4)))
       (setf out x b4 n))
     (values out b4)))
-
-(defun o (&rest kvs) "A hash table from k1 v1 k2 v2 ..."
-  (let ((h (make-hash-table :test #'equal)))
-    (loop :for (k v) :on kvs :by #'cddr :do (setf (gethash k h) v))
-    h))
 
 (defun charn (s &optional (n -1)) "Char n of s; negative = from the end"
   (char s (mod n (length s))))
