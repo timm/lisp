@@ -54,8 +54,8 @@
 (defm div (num) "Spread: standard deviation"
   (if (< $n 2) 0 (sqrt (/ $m2 (1- $n)))))
 
-(defun ent (cs n) "Entropy of counts cs (list or vector), summing to n"
-  (loop :for c :in (coerce cs 'list) :when (plusp c)
+(defun ent (cs n) "Entropy of counts cs, summing to n"
+  (loop :for c :in cs :when (plusp c)
         :sum (let ((p (/ c (float n 1d0)))) (- (* p (log p 2))))))
 
 (defm div (sym) "Spread: entropy"
@@ -207,8 +207,7 @@
 ;;;; bins: cut once, into q bins per col; trees just walk bins -----
 (defm choices (sym rows q) "Vector of cut values: q-1 commonest values"
   (let ((vs (sort (copy-list $has) #'> :key #'cdr)))
-    (coerce (mapcar #'car (subseq vs 0 (min (1- q) (length vs))))
-            'vector)))
+    (map 'vector #'car (subseq vs 0 (min (1- q) (length vs))))))
 
 (defm choices (num rows q)
   "Vector of cut values: up to q-1 edges, equal #known xs between each"
