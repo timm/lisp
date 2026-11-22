@@ -24,7 +24,7 @@ for gi,(g,fs) in enumerate(G):
   fs=sorted(fs,key=lambda f:d[f][2]); xs=np.arange(x0,x0+len(fs))
   for name,j,c,m in T:
     ys=[d[f][j] for f in fs]
-    lab=f"{name:<10}{np.mean([d[f][j] for f in order]):6.1f}{np.mean([sp[f][j] for f in order]):10.1f}"
+    lab=f"{name:<10}{np.mean([d[f][j] for f in order]):8.1f}{np.mean([sp[f][j] for f in order]):13.1f}"
     ax.plot(xs,ys,color=c,marker=m,lw=2.2,ms=7)
     if gi==0: H.append(((plt.Line2D([],[],color=c,lw=2.5,marker=m,ms=7),plt.Line2D([],[],color=c,lw=2,ls="--")),lab))
     iq=[sp[f][j] for f in fs]
@@ -37,28 +37,35 @@ for gi,(g,fs) in enumerate(G):
   if gi<3: ax.axvline(x0-1,color="#555",lw=1)
 ax.set_xticks(ticks); ax.set_xticklabels(labs,rotation=50,ha="right",fontsize=14)
 ax.set_ylim(0,100); ax.set_xlim(-.7,x0-1.3); ax.set_yticks(range(0,101,10))
-ax.grid(axis="y",color="#ddd"); ax.set_ylabel("AUC (0..100), 5x2 folds",color="#555",fontsize=14); ax.tick_params(axis="y",labelsize=13)
+ax.set_yticks(range(5,100,10),minor=True); ax.tick_params(axis="y",which="minor",length=0)
+ax.grid(axis="y",which="major",color="#ddd"); ax.grid(axis="y",which="minor",color="#b0b0b0",ls=(0,(4,4)),lw=1); ax.set_ylabel("AUC (0..100), 5x2 folds",color="#555",fontsize=14); ax.tick_params(axis="y",labelsize=13)
 
 for s in ("top","right"): ax.spines[s].set_visible(False)
 from matplotlib.legend_handler import HandlerTuple
-hd=f"{'':<10}{'50th':>6}{'80th-20th':>10}"
-H.insert(0,((plt.Line2D([],[],alpha=0),),hd))
-lg=ax.legend(*zip(*[(h,l) for h,l in H]),handler_map={tuple:HandlerTuple(ndivide=None,pad=.8)},handlelength=5,
-   loc="lower center",bbox_to_anchor=(.635,.11),
-   frameon=False,prop={"family":"monospace","size":14},title_fontproperties={"family":"monospace","size":14})
-lg._legend_box.align="left"
+# legend as a table in panel 3: name | solid 50th | dashed (80-20)th
+X0=22; mono=dict(family="monospace",fontsize=14)
+ax.add_patch(plt.Rectangle((X0-.5,22.6-4.2),9.8,25,fc="#fcfcfa",ec="none",zorder=1.5))
+ax.text(X0+5.0,37,"50th\nmedian",ha="right",va="bottom",**mono)
+ax.text(X0+9.0,37,"(80-20)th\n~1.7 sd",ha="right",va="bottom",**mono)
+for k,(h,lab) in enumerate(H):
+  y=33-4.2*k; c=h[0].get_color(); m=h[0].get_marker(); name,med,spr=lab.split()
+  ax.text(X0-.3,y,name,ha="left",va="center",**mono)
+  ax.plot([X0+2.3,X0+3.3],[y,y],color=c,lw=2.5); ax.plot(X0+2.8,y,m,color=c,ms=7)
+  ax.text(X0+5.0,y,med,ha="right",va="center",**mono)
+  ax.plot([X0+5.7,X0+6.9],[y,y],color=c,lw=2,ls="--")
+  ax.text(X0+9.0,y,spr,ha="right",va="center",**mono)
 bt=sorted([(sec[j],n,c) for n,j,c,_ in T])
 bx.bar(range(3),[b[0] for b in bt],color=[b[2] for b in bt],width=.65)
 for i,b in enumerate(bt): bx.text(i,b[0]+1,f"{b[0]:.0f}s",ha="center",fontsize=15)
 bx.set_xticks(range(3)); bx.set_xticklabels([b[1] for b in bt],fontsize=13)
-bx.set_title("total secs, 39 sets\ntrain+predict, 10 folds\n1 core each (of 2)\nXeon 2.1GHz, 7.8GB RAM\ncloud VM, run serially",fontsize=13)
+bx.set_title("total secs, 39 sets\ntrain+predict, 10 folds\nrun serially (1 core each)\nXeon 2.1GHz, 8GB RAM\ncloud VM",fontsize=13)
 bx.set_yticks([]); bx.set_facecolor("#fcfcfa")
 for sp in ("top","right","left"): bx.spines[sp].set_visible(False)
 LOC=[("lisp",346,"#e8613c"),("lgbm",36328,"#2a6fdb")]  # see docstring
 (ln,lv,lc),(gn,gv,gc)=LOC; r=(lv/gv)**.5          # areas ~ LOC
 lx.add_patch(plt.Rectangle((0,0),1,1,color=gc)); lx.add_patch(plt.Rectangle((0,0),r,r,color=lc,ec="white",lw=1))
-lx.text(.5,.55,f"{gn}\n{gv:,}",ha="center",va="center",color="white",fontsize=18,weight="bold")
-lx.annotate(f"{ln} {lv:,}",(r,r),(r+.08,r+.18),color="white",fontsize=15,weight="bold",
+lx.text(.5,.55,f"{gn}\n({gv:,} LOC)",ha="center",va="center",color="white",fontsize=18,weight="bold")
+lx.annotate(f"{ln}\n({lv:,} LOC)",(r,r),(r+.08,r+.18),color="white",fontsize=15,weight="bold",
             arrowprops=dict(arrowstyle="-",color="white"))
 lx.set_xlim(0,1); lx.set_ylim(0,1); lx.set_xticks([]); lx.set_yticks([])
 lx.set_title("lines of code\n(area ~ LOC; no blanks/comments)",fontsize=14); lx.set_facecolor("#fcfcfa")
