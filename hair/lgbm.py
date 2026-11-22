@@ -1,6 +1,6 @@
 #!/usr/bin/env python3 -B
 """lgbm: add lightgbm to eg-ens's table, on the same 5x2 folds.
-Reads ens.dat (from `sbcl --script hair.lisp ens`): a #names
+Reads ens.dat (from `sbcl --script hair.lisp ens > ens.dat`): a #names
 line, then per fold: data | aucs | secs | test row #s. Scores and ranks with
 ~/gh/hair's aucs and rank (Cohen + Cliff's delta + KS)."""
 import os, sys, time, warnings

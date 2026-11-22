@@ -15,6 +15,6 @@
   #+clisp ext:*args*
   #+ecl   (cdddr ext:*command-args*))
 
-(mapc #'load '("lithp" "ai"))   ; same order as hair.asd
+(mapc #'load '("lithp" "ai" "eg"))   ; same order as hair.asd
 (let ((*package* (find-package :hair)))  ; print symbols as before
   (mapc #'hair:cli (args)))

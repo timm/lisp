@@ -4,4 +4,4 @@
   :author "Tim Menzies <timm@ieee.org>"
   :license "MIT"
   :serial t
-  :components ((:file "lithp") (:file "ai")))
+  :components ((:file "lithp") (:file "ai") (:file "eg")))
