@@ -26,13 +26,15 @@
   "defmethod with `self` bound to the first arg, specialized on class
    cls (t = anything): (defm mid (sym) ...), (defm add (t v) ...).
    In body, $x = (slot-value self 'x)"
-  (labels ((dollar (x &aux (s (and (symbolp x) (symbol-name x))))
-             (cond ((consp x) (cons (dollar (car x)) (dollar (cdr x))))
-                   ((and s (> (length s) 1) (char= #\$ (char s 0)))
-                    `(slot-value self ',(intern (subseq s 1)
-                                                (symbol-package x))))
-                   (t x))))
-    `(defmethod ,name ((self ,cls) ,@args) ,@(dollar body))))
+  (labels ((swap (x)
+             (if (and (symbolp x) (eql #\$ (charn x 0)))
+               `(slot-value self ',(intern (subseq (string x) 1)
+                                           (symbol-package x)))
+               x))
+           (visit (x) (if (consp x)
+                          (cons (visit (car x)) (visit (cdr x)))
+                          (swap x))))
+    `(defmethod ,name ((self ,cls) ,@args) ,@(visit body))))
 
 ;;;; misc --------------------------------------------------------------
 (defun memo (f &aux (h (make-hash-table :test #'eq)))
@@ -56,8 +58,9 @@
       (setf out x b4 n))
     (values out b4)))
 
-(defun charn (s &optional (n -1)) "Char n of s; negative = from the end"
-  (char s (mod n (length s))))
+(defun charn (s &optional (n -1))
+  "Char n of string (or symbol) s; negative = from the end"
+  (let ((s (string s))) (char s (mod n (length s)))))
 
 (defun thing (s &aux (*read-eval* nil) (*package* (find-package :hair)))
   "String to number, ?, or string"
