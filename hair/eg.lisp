@@ -47,8 +47,7 @@
 
 (defun eg-tree (&aux (tb (data))
                      (y (memo (lambda (r) (disty tb r))))) ; tb frozen
-  (show (tree (? tb rows) y
-              (lambda (rs) (best-cut (? tb cols x) rs y #'make-num)))))
+  (show (tree (? tb rows) y (binned tb (? tb rows) y :make #'make-num))))
 
 (defparameter *ens* ; 39 classify sets: num, sym, mixed, big mixed
   '("balance.scale" "blood-transfusion-service-center" "breast.w"

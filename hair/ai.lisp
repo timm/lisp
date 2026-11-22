@@ -169,40 +169,10 @@
   "Size-weighted spread of two summaries (lower = better)"
   (/ (+ (* n (div a)) (* m (div b))) (+ n m +tiny+)))
 
-(defun xys (c rows y) "(x . y) for rows whose x in col c is known"
-  (loop :for r :in rows :for x := (aref r (? c at))
-        :unless (eql x '?) :collect (cons x (funcall y r))))
-
-(defm cuts (sym rows y make fn &aux (xy (xys self rows y)))
-  "Offer (fn self v yes no) per value v: v vs the rest"
-  (dolist (k (remove-duplicates (mapcar #'car xy) :test #'equal))
-    (let ((yes (funcall make)) (no (funcall make)))
-      (loop :for (x . v) :in xy :do (add (if (equal x k) yes no) v))
-      (funcall fn self k yes no))))
-
-(defm cuts (num rows y make fn
-            &aux (xy (sort (xys self rows y) #'< :key #'car)))
-  "Offer (fn self x yes no) per split x <= v; sweep yes up, no down"
-  (let ((yes (funcall make)) 
-        (no  (adds (mapcar #'cdr xy) (funcall make))))
-    (loop :for ((x . v) nxt) :on xy
-          :do (add yes v) (add no v -1)
-          :when (and nxt (/= x (car nxt))) 
-          :do (funcall fn self x yes no))))
-
-(defun best-cut (cols rows y make &key (leaf (? *k* leaf))
-                                      &aux (best (argmost #'<)))
-  "Lowest-cost (col v) over cols, both sides >= leaf rows; and its cost"
-  (labels ((fun (c v yes no)            ; cuts passes its col as c
-                (if (<= leaf (min (? yes n) (? no n)))
-                  (funcall best (list c v) (xpect yes no)))))
-    (dolist (c cols (funcall best))
-      (cuts c rows y make #'fun))))
-
 (defun tree (rows y cut &key (make #'make-num) (maxd (? *k* maxd))
                              (lvl 0))
   "A node per level, down to maxd. (cut rows) => nil (a leaf) or
-   (col v): rows where (yes? col v r) go left. E.g. cut = best-cut"
+   (col v): rows where (yes? col v r) go left. E.g. cut = binned"
   (let ((it (and (< lvl maxd) (funcall cut rows))) yes no)
     (when it                             ; split rows, keeping their order
       (dolist (r (reverse rows))
@@ -235,67 +205,73 @@
             (append (kid (? tr yes) (if (sym-p it) "==" "<="))
                     (kid (? tr no)  (if (sym-p it) "!=" ">")))))))
 
-;;;; bins --------------------------------------------------------------
-(defun quantiles (c rows q &aux (xs (coerce (sort (xys c rows #'identity)
-                                                  #'< :key #'car)
-                                            'vector))
-                                (n (length xs)))
-  "Equal-frequency edges: up to q-1 cuts, y ignored"
-  (remove-duplicates (loop :for j :from 1 :below (if (plusp n) q 0)
-                           :collect (car (aref xs (floor (* j n) q))))))
+;;;; bins: cut once, into q bins per col; trees just walk bins -----
+(defun quantiles (c rows q)
+  "Equal-frequency edges: up to q-1 cuts"
+  (let* ((xs (coerce (sort (loop :for r :in rows :for x := (aref r (? c at))
+                                 :unless (eql x '?) :collect x)
+                           #'<)
+                     'vector))
+         (n (length xs)))
+    (remove-duplicates (loop :for j :from 1 :below (if (plusp n) q 0)
+                             :collect (aref xs (floor (* j n) q))))))
 
-(defm choices (sym rows q) "Vector of cut values: each sym value"
-  (coerce (mapcar #'car $has) 'vector))
+(defm choices (sym rows q) "Vector of cut values: q-1 commonest values"
+  (let ((vs (sort (copy-list $has) #'> :key #'cdr)))
+    (coerce (mapcar #'car (subseq vs 0 (min (1- q) (length vs))))
+            'vector)))
 
 (defm choices (num rows q) "Vector of cut values: q quantile edges"
   (coerce (quantiles self rows q) 'vector))
 
-;;;; coded: binned rows as fixnums, for fast class trees ----------------
-(defun coder (xs cs klass rows &aux (h (make-hash-table :test #'eq))
-                                    (ks (mapcar #'car (? klass has))))
-  "Hash: row -> vector, one bin (sym: value) index per col in xs, cut
-   at cs (-1 = ?), then the class index. Built once; shared by all
-   trees"
-  (labels ((idx (c ch x)
-             (cond ((eql x '?) -1)
-                   ((sym-p c) (position x ch :test #'equal))
-                   (t (bisect ch x)))))
-    (dolist (r rows h)
-      (setf (gethash r h)
-            (coerce (append (loop :for c :in xs :for ch :in cs
-                                  :collect (idx c ch (aref r (? c at))))
-                            (list (position (aref r (? klass at)) ks
-                                            :test #'equal)))
-                    'vector)))))
+(defm binner (sym ch &aux (h (make-hash-table :test #'equal)))
+  "x -> its bin: index of x in ch, else (length ch) = other; ? = -1"
+  (loop :for v :across ch :for i :from 0 :do (setf (gethash v h) i))
+  (lambda (x) (if (eql x '?) -1 (gethash x h (length ch)))))
 
-(defun ent2 (yes all &aux (no (map 'vector #'- all yes))
-                          (ny (reduce #'+ yes)) (nn (reduce #'+ no)))
-  "Size-weighted entropy of class counts yes vs all-yes; and both sizes"
-  (values (/ (+ (* ny (ent yes ny)) (* nn (ent no nn))) (max 1 (+ ny nn)))
-          ny nn))
+(defm binner (num ch) "x -> its bin: #edges in ch below x; ? = -1"
+  (lambda (x) (if (eql x '?) -1 (bisect ch x))))
 
-(defun bcut (xs cs vs nk &key m (leaf (? *k* leaf))
-                         &aux (best (argmost #'<)) (at (length xs))
-                              (is (loop :for i :below at :collect i)))
-  "Lowest-cost (col v) over coded rows vs: per col, count classes per
-   bin in one pass, then sweep the bins. Bins: x <= edge; syms: = v.
-   m: try just m random cols (a random forest)"
-  (dolist (i (if m (sort (subseq (shuffle is) 0 (min m at)) #'<) is)
+(defun coder (xs cs rows &aux (h (make-hash-table :test #'eq))
+                              (fs (mapcar #'binner xs cs)))
+  "Hash: row -> vector of its bins, one per col in xs (edges cs)"
+  (dolist (r rows h)
+    (setf (gethash r h)
+          (map 'vector (lambda (c f) (funcall f (aref r (? c at))))
+               xs fs))))
+
+(defun bcut (xs cs vs ys make &key m (leaf (? *k* leaf))
+                              &aux (best (argmost #'<))
+                                   (is (loop :for i :below (length xs)
+                                             :collect i)))
+  "Lowest-xpect (col v) over binned rows vs with y values ys: per col,
+   drop ys into bins, then sweep the bins. Nums: x <= edge; syms:
+   = v. make: y summary (make-sym = classes). m: just m random cols"
+  (dolist (i (if m (sort (subseq (shuffle is) 0 (min m (length is))) #'<)
+                 is)
              (funcall best))
     (let* ((c (nth i xs)) (ch (nth i cs))
-           (n (make-array (list (1+ (length ch)) nk) :initial-element 0))
-           (all (make-array nk :initial-element 0))
-           (yes (make-array nk :initial-element 0)))
-      (dolist (v vs)                     ; count classes per bin
-        (let ((b (aref v i)) (k (aref v at)))
-          (when (>= b 0) (incf (aref n b k)) (incf (aref all k)))))
-      (dotimes (b (length ch))           ; bins: add up; syms: just this
-        (dotimes (k nk)
-          (setf (aref yes k) (+ (aref n b k)
-                                (if (sym-p c) 0 (aref yes k)))))
-        (multiple-value-bind (e ny nn) (ent2 yes all)
-          (if (<= leaf (min ny nn))
-            (funcall best (list c (aref ch b)) e)))))))
+           (bins (make-array (1+ (length ch)) :initial-element nil))
+           (yes (funcall make)) (no (funcall make)))
+      (loop :for v :in vs :for y :in ys :for b := (aref v i)
+            :unless (< b 0) :do (push y (aref bins b)) (add no y))
+      (dotimes (b (length ch))
+        (dolist (y (aref bins b)) (add yes y) (add no y -1))
+        (if (<= leaf (min (? yes n) (? no n)))
+          (funcall best (list c (aref ch b)) (xpect yes no)))
+        (if (sym-p c)                    ; syms: one value vs rest; undo
+          (dolist (y (aref bins b)) (add yes y -1) (add no y)))))))
+
+(defun binned (tb rows y &key (q 8) rf (leaf (? *k* leaf))
+                              (make #'make-sym))
+  "A cut for tree: bcut on rows binned once (rf: sqrt(#x) random cols
+   per node). make-sym for classes, make-num for numeric ys"
+  (let* ((xs (? tb cols x))
+         (cs (mapcar (lambda (c) (choices c rows q)) xs))
+         (h  (coder xs cs rows))
+         (m  (and rf (ceiling (sqrt (length xs))))))
+    (lambda (rs) (bcut xs cs (mapcar (lambda (r) (gethash r h)) rs)
+                       (mapcar y rs) make :m m :leaf leaf))))
 
 ;;;; forest ------------------------------------------------------------
 (defun capped (rows y n &aux h) "At most n random rows per class"
@@ -304,22 +280,12 @@
 
 ;; q=8 equal-freq bins: on 39 classify sets (5x2), -0.3 auc vs q=256;
 ;; equal-width 8 bins: -0.7 (and -17 on skewed hypothyroid)
-(defun binned (tb rows &key (q 8) rf leaf)
-  "A cut for tree: bcut on rows coded once into q bins (rf: just
-   sqrt(#x) random cols per node)"
-  (let* ((xs (? tb cols x)) (k (? tb cols klass))
-         (cs (mapcar (lambda (c) (choices c rows q)) xs))
-         (h  (coder xs cs k rows))
-         (m  (and rf (ceiling (sqrt (length xs))))))
-    (lambda (rs) (bcut xs cs (mapcar (lambda (r) (gethash r h)) rs)
-                       (length (? k has)) :m m :leaf leaf))))
-
 (defun forest (tb rows y &key (n 10) (cap 200) (q 8) rf (leaf 2) (maxd 30))
   "n deep class trees (small leaves), each on a random half of rows
    (n=1: all of them), from <= cap rows per class, binned once into
    q bins (see binned)"
   (let* ((rows (if cap (capped rows y cap) rows))
-         (cut  (binned tb rows :q q :rf rf :leaf leaf)))
+         (cut  (binned tb rows y :q q :rf rf :leaf leaf)))
     (loop :repeat n
           :collect (tree (if (= n 1) rows
                              (subseq (shuffle rows) 0
