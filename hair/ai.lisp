@@ -240,14 +240,14 @@
           (map 'vector (lambda (c f) (funcall f (aref r (? c at))))
                xs fs))))
 
-(defun bcut (xs cs vs ys make &key m (leaf (? *k* leaf))
+(defun best-cut (xs cs vs ys make &key m (leaf (? *k* leaf))
                               &aux (best (argmost #'<)))
   "Lowest-xpect (col v) over binned rows vs with y values ys. make: y
    summary (make-sym = classes). m: just m random cols"
   (dolist (i (pick (length xs) m) (funcall best))
-    (sweep (nth i xs) (nth i cs) i vs ys make leaf best)))
+    (cuts (nth i xs) (nth i cs) i vs ys make leaf best)))
 
-(defun sweep (c ch i vs ys make leaf best)
+(defun cuts (c ch i vs ys make leaf best)
   "Offer each cut (c v) of col c to best, scored by xpect: drop ys
    into c's bins (slot i of vs), then sweep. Nums: x <= v; syms: = v"
   (let ((bins (make-array (1+ (length ch)) :initial-element nil))
@@ -263,13 +263,13 @@
 
 (defun binned (tb rows y &key (q 8) rf (leaf (? *k* leaf))
                               (make #'make-sym))
-  "A cut for tree: bcut on rows binned once (rf: sqrt(#x) random cols
+  "A cut for tree: best-cut on rows binned once (rf: sqrt(#x) random cols
    per node). make-sym for classes, make-num for numeric ys"
   (let* ((xs (? tb cols x))
          (cs (mapcar (lambda (c) (choices c rows q)) xs))
          (h  (coder xs cs rows))
          (m  (and rf (ceiling (sqrt (length xs))))))
-    (lambda (rs) (bcut xs cs (mapcar (lambda (r) (gethash r h)) rs)
+    (lambda (rs) (best-cut xs cs (mapcar (lambda (r) (gethash r h)) rs)
                        (mapcar y rs) make :m m :leaf leaf))))
 
 ;;;; forest ------------------------------------------------------------
