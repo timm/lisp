@@ -155,7 +155,7 @@
     (setf pool (append pool xs))
     :collect (cons k r)))
 
-(defun xval (rows fn &key (m 5) (n 5)) "m*n cross-val: (fn train test)"
+(defun xval (rows fn &key (m 5) (n 2)) "m*n cross-val: (fn train test)"
   (dotimes (_ m)
     (let ((rows (shuffle rows)))
       (dotimes (k n)

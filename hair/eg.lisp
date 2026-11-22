@@ -89,8 +89,7 @@
                                        f as ss (mapcar (lambda (r)
                                                          (gethash r ix))
                                                        test))
-                               (finish-output)))
-              :m 5 :n 2)))))
+                               (finish-output))))))))
 
 (defun eg-all ()
   (dolist (f '(eg-config eg-tbl eg-dist eg-same eg-rank eg-tree))
