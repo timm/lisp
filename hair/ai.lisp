@@ -224,21 +224,18 @@
 (defm choices (num rows q) "Vector of cut values: q quantile edges"
   (coerce (quantiles self rows q) 'vector))
 
-(defm binner (sym ch &aux (h (make-hash-table :test #'equal)))
-  "x -> its bin: index of x in ch, else (length ch) = other; ? = -1"
-  (loop :for v :across ch :for i :from 0 :do (setf (gethash v h) i))
-  (lambda (x) (if (eql x '?) -1 (gethash x h (length ch)))))
+(defm bin (num ch x) "x -> its bin: #edges in ch below x; ? = -1"
+  (if (eql x '?) -1 (bisect ch x)))
 
-(defm binner (num ch) "x -> its bin: #edges in ch below x; ? = -1"
-  (lambda (x) (if (eql x '?) -1 (bisect ch x))))
+(defm bin (sym ch x) "x -> its bin: index in ch, else (length ch); ? = -1"
+  (if (eql x '?) -1 (or (position x ch :test #'equal) (length ch))))
 
-(defun coder (xs cs rows &aux (h (make-hash-table :test #'eq))
-                              (fs (mapcar #'binner xs cs)))
+(defun coder (xs cs rows &aux (h (make-hash-table :test #'eq)))
   "Hash: row -> vector of its bins, one per col in xs (edges cs)"
   (dolist (r rows h)
     (setf (gethash r h)
-          (map 'vector (lambda (c f) (funcall f (aref r (? c at))))
-               xs fs))))
+          (map 'vector (lambda (c ch) (bin c ch (aref r (? c at))))
+               xs cs))))
 
 (defun best-cut (xs cs vs ys make &key m (leaf (? *k* leaf))
                               &aux (best (argmost #'<)))
