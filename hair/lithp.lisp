@@ -5,22 +5,8 @@
   (:export #:*k* #:about #:make-about
            #:cols #:tbl #:clone #:add #:adds #:mid #:div #:norm
            #:distx #:disty #:near #:same #:rank #:xval
-           #:tree #:leaf #:show #:csv #:srand #:rand #:normal #:cli))
+           #:tree #:leaf #:csv #:srand #:rand #:normal))
 (in-package :hair)
-
-(eval-when (:compile-toplevel :load-toplevel :execute) ; ready to compile
-  (defvar *hair-readtable*       ; $x = (slot-value self 'x), hair only
-    (let ((r (copy-readtable nil)))
-      (set-macro-character #\$
-        (lambda (s c) (declare (ignore c))
-          `(slot-value self ',(read s t nil t))) t r)
-      r)))
-
-(defmacro in-hair () "Use hair's readtable for the rest of this file"
-  ;; load and compile-file rebind *readtable* per file, so this is local
-  `(eval-when (:compile-toplevel :load-toplevel :execute)
-     (setf *readtable* *hair-readtable*)))
-(in-hair)
 
 (defparameter +tiny+ 1e-32)
 
@@ -38,8 +24,15 @@
 
 (defmacro defm (name (cls &rest args) &body body)
   "defmethod with `self` bound to the first arg, specialized on class
-   cls (t = anything): (defm mid (sym) ...), (defm add (t v) ...)"
-  `(defmethod ,name ((self ,cls) ,@args) ,@body))
+   cls (t = anything): (defm mid (sym) ...), (defm add (t v) ...).
+   In body, $x = (slot-value self 'x)"
+  (labels ((dollar (x &aux (s (and (symbolp x) (symbol-name x))))
+             (cond ((consp x) (cons (dollar (car x)) (dollar (cdr x))))
+                   ((and s (> (length s) 1) (char= #\$ (char s 0)))
+                    `(slot-value self ',(intern (subseq s 1)
+                                                (symbol-package x))))
+                   (t x))))
+    `(defmethod ,name ((self ,cls) ,@args) ,@(dollar body))))
 
 ;;;; misc --------------------------------------------------------------
 (defun memo (f &aux (h (make-hash-table :test #'eq)))

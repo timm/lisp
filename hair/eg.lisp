@@ -4,7 +4,7 @@
 ;;; the command line: sbcl --script hair.lisp [--key=val ...] NAME
 ;;; (c) 2026, Tim Menzies <timm@ieee.org>, MIT license
 (in-package :hair)
-(in-hair)
+(export '(show cli))
 
 ;;;; helpers -----------------------------------------------------------
 (defun data (&optional (f (? *k* file))) "A tbl from csv file f"

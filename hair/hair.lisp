@@ -2,7 +2,10 @@
 ;;; hair: the command-line script; all the system tricks live here.
 ;;; Tell the debugger to chill, load the system, run the args.
 ;;; Usage: sbcl --script hair.lisp [--key=val ...] [NAME ...]
-;;; As a library: (ql:quickload "hair") or (asdf:load-system "hair").
+;;;   e.g. sbcl --script hair.lisp --leaf=20 tree
+;;; Script only: don't (load) this from a REPL; it exits on any error.
+;;; As a library: (ql:quickload "hair") or (asdf:load-system "hair");
+;;; add the egs and cli with "hair/eg". None of that runs anything.
 ;;; (c) 2026, Tim Menzies <timm@ieee.org>, MIT license
 #+sbcl (declaim (sb-ext:muffle-conditions style-warning))
 #+sbcl (setf sb-ext:*invoke-debugger-hook*  ; one line per crash, then exit
@@ -15,6 +18,7 @@
   #+clisp ext:*args*
   #+ecl   (cdddr ext:*command-args*))
 
-(mapc #'load '("lithp" "ai" "eg"))   ; same order as hair.asd
+(dolist (f '("lithp" "ai" "eg"))      ; same order as hair.asd
+  (load (merge-pathnames f *load-truename*)))  ; works from any dir
 (let ((*package* (find-package :hair)))  ; print symbols as before
   (mapc #'hair:cli (args)))

@@ -5,7 +5,6 @@
 ;;; lithp.lisp, printing and experiments in eg.lisp.
 ;;; (c) 2026, Tim Menzies <timm@ieee.org>, MIT license
 (in-package :hair)
-(in-hair)
 
 ;;;; about -------------------------------------------------------------
 (defstruct about
@@ -73,15 +72,17 @@
       (and (find (charn txt) "+-!") (eql #\X (charn txt -2)))))
 
 (defun cols (names &aux (self (make-cols :names names)))
-  "Columns from the header row; last char of name says x, y, ! or X"
-  (setf $all (loop :for txt :across names :for at :from 0
-                   :collect (col at txt)))
-  (dolist (c $all self)
-    (let ((e (charn (? c txt))))
-      (cond ((skip? (? c txt)))
-            ((eql e #\!) (setf $klass c))
-            ((find e "+-") (push c $y))
-            (t (push c $x))))))
+  "Columns from the header row; last char of name says x, y, ! or X.
+   ! = the class, and a y too"
+  (with-slots (all klass x y) self
+    (setf all (loop :for txt :across names :for at :from 0
+                    :collect (col at txt)))
+    (dolist (c all self)
+      (let ((e (charn (? c txt))))
+        (cond ((skip? (? c txt)))
+              ((find e "+-!") (push c y)
+                              (if (eql e #\!) (setf klass c)))
+              (t (push c x)))))))
 
 (defun tbl (rows) "First row names the cols"
   (adds (cdr rows) (make-tbl :cols (cols (car rows)))))
@@ -299,6 +300,8 @@
                                               :initial-value 0)))
                               (n (make-array (list nb nk)
                                              :element-type 'fixnum))
+                              (flat (make-array (* nb nk) :displaced-to n
+                                                 :element-type 'fixnum))
                               (all (make-array nk :element-type 'fixnum))
                               (yes (make-array nk :element-type 'fixnum)))
   "Lowest-cost (col v) over coded rows vs: per col, count classes per
@@ -308,7 +311,7 @@
   (loop :for c :in xs :for ch :in cs :for i :of-type fixnum :from 0
         :for sym := (sym-p c)
         :when (or (null pick) (member i pick))
-        :do (fill (sb-ext:array-storage-vector n) 0)
+        :do (fill flat 0)
             (fill all 0) (fill yes 0)
             (dolist (v vs)
               (let ((b (aref (the (simple-array fixnum (*)) v) i))
