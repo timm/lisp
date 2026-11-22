@@ -211,19 +211,16 @@
                              (lvl 0))
   "A node per level, down to maxd. (cut rows) => nil (a leaf) or
    (col v): rows where (yes? col v r) go left. E.g. cut = best-cut"
-  (let ((it (and (< lvl maxd) (funcall cut rows))))
+  (let ((it (and (< lvl maxd) (funcall cut rows))) yes no)
+    (when it                             ; split rows, keeping their order
+      (dolist (r (reverse rows))
+        (if (yes? (first it) (second it) r) (push r yes) (push r no))))
     (labels ((kid (rows) (tree rows y cut :make make :maxd maxd
                                           :lvl (1+ lvl))))
-      (loop :for r :in rows              ; one pass: split, then recurse
-            :if (and it (yes? (first it) (second it) r))
-              :collect r :into yes
-            :else :collect r :into no
-            :finally (return
-                       (make-node
-                        :ys (adds (mapcar y rows) (funcall make))
-                        :n (length rows) :rows rows
-                        :at (first it) :v (second it)
-                        :yes (and it (kid yes)) :no (and it (kid no))))))))
+      (make-node :ys (adds (mapcar y rows) (funcall make))
+                 :n (length rows) :rows rows
+                 :at (first it) :v (second it)
+                 :yes (and it (kid yes)) :no (and it (kid no))))))
 
 (defun yes? (c v r &aux (w (aref r (? c at))))
   "Is row r on the yes side of col c's cut v? (? = yes)"
@@ -332,6 +329,7 @@
   (loop :for r :in (shuffle rows)
         :when (<= (incf (has (funcall y r) h)) n) :collect r))
 
+;; TODO: check 8 bins is ok (and equal-width vs these equal-freq bins)
 (defun binned (tb rows &key (q 8) rf leaf
                &aux (k (? tb cols klass)) (xs (? tb cols x))
                     (cs (mapcar (lambda (c) (choices c rows q)) xs))
