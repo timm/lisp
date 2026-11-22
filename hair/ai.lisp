@@ -48,9 +48,8 @@
 
 (defm mid (num) "Center: the mean" $mu)
 
-(defm mid (sym &aux (most (argmost))) "Center: the mode"
-  (loop :for (k . n) :in $has :do (funcall most k n))
-  (funcall most))
+(defm mid (sym) "Center: the mode"
+  (car (first (stable-sort (copy-list $has) #'> :key #'cdr))))
 
 (defm div (num) "Spread: standard deviation"
   (if (< $n 2) 0 (sqrt (/ $m2 (1- $n)))))
@@ -206,23 +205,22 @@
                     (kid (? tr no)  (if (sym-p it) "!=" ">")))))))
 
 ;;;; bins: cut once, into q bins per col; trees just walk bins -----
-(defun quantiles (c rows q)
-  "Equal-frequency edges: up to q-1 cuts"
-  (let* ((xs (coerce (sort (loop :for r :in rows :for x := (aref r (? c at))
-                                 :unless (eql x '?) :collect x)
-                           #'<)
-                     'vector))
-         (n (length xs)))
-    (remove-duplicates (loop :for j :from 1 :below (if (plusp n) q 0)
-                             :collect (aref xs (floor (* j n) q))))))
-
 (defm choices (sym rows q) "Vector of cut values: q-1 commonest values"
   (let ((vs (sort (copy-list $has) #'> :key #'cdr)))
     (coerce (mapcar #'car (subseq vs 0 (min (1- q) (length vs))))
             'vector)))
 
-(defm choices (num rows q) "Vector of cut values: q quantile edges"
-  (coerce (quantiles self rows q) 'vector))
+(defm choices (num rows q)
+  "Vector of cut values: up to q-1 edges, equal #known xs between each"
+  (let* ((xs (coerce (sort (loop :for r :in rows :for x := (aref r $at)
+                                 :unless (eql x '?) :collect x)
+                           #'<)
+                     'vector))
+         (n (length xs)))
+    (coerce (remove-duplicates
+             (loop :for j :from 1 :below (if (plusp n) q 0)
+                   :collect (aref xs (floor (* j n) q))))
+            'vector)))
 
 (defm bin (num ch x) "x -> its bin: #edges in ch below x; ? = -1"
   (if (eql x '?) -1 (bisect ch x)))
