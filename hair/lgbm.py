@@ -43,6 +43,7 @@ def main():
     folds.setdefault(f, []).append(([float(v) for v in a.split()],
                                     [float(v) for v in s.split()],
                                     [int(v) for v in t.split()]))
+  spread = {}
   W, wins, means, secs = 12, dict.fromkeys(T, 0), {t: [] for t in T}, \
                          dict.fromkeys(T, 0.0)
   print("%-34s" % "#data" + "".join("%-*s" % (W, t) for t in T))
@@ -58,6 +59,7 @@ def main():
       t0 = time.time()
       d["lgbm"].append(aucs(lgbm(X, y, cats, train, test)))
       secs["lgbm"] += time.time() - t0
+    spread[f] = d
     rk = rank(d, reverse=True)
     cells = []
     for t in T:
@@ -69,5 +71,7 @@ def main():
   print("%-34s" % "#mean auc" + "".join(
         "%5.1f       " % (sum(means[t]) / len(means[t])) for t in T))
   print("%-34s" % "#secs (all data)" + "".join("%5.1f       " % secs[t] for t in T))
+  for f, d in spread.items():                    # per-fold aucs, for plot.py
+    for t in T: print("%%folds %s %s %s" % (f, t, " ".join("%.1f" % v for v in d[t])))
 
 if __name__ == "__main__": main()
