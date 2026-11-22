@@ -61,7 +61,7 @@
     "electricity" "adult"))
 
 (defparameter *treatments*            ; name, then forest's keys
-  '(("1:cap200" :n 1) ("cap200" :b4 t :rf t)))
+  '(("1:q8" :n 1) ("q8" :rf t)))
 
 (defun eg-ens ()
   "Per *ens* data, 5x2 xval. Prints a #names line, then per fold:

@@ -302,32 +302,29 @@
   (loop :for r :in (shuffle rows)
         :when (<= (incf (has (funcall y r) h)) n) :collect r))
 
-;; TODO: check 8 bins is ok (and equal-width vs these equal-freq bins)
-(defun binned (tb rows &key (q 8) rf leaf
-               &aux (k (? tb cols klass)) (xs (? tb cols x))
-                    (cs (mapcar (lambda (c) (choices c rows q)) xs))
-                    (h (coder xs cs k rows))
-                    (m (and rf (ceiling (sqrt (length xs))))))
+;; q=8 equal-freq bins: on 39 classify sets (5x2), -0.3 auc vs q=256;
+;; equal-width 8 bins: -0.7 (and -17 on skewed hypothyroid)
+(defun binned (tb rows &key (q 8) rf leaf)
   "A cut for tree: bcut on rows coded once into q bins (rf: just
    sqrt(#x) random cols per node)"
-  (lambda (rs) (bcut xs cs (mapcar (lambda (r) (gethash r h)) rs)
-                     (length (? k has)) :m m :leaf leaf)))
+  (let* ((xs (? tb cols x)) (k (? tb cols klass))
+         (cs (mapcar (lambda (c) (choices c rows q)) xs))
+         (h  (coder xs cs k rows))
+         (m  (and rf (ceiling (sqrt (length xs))))))
+    (lambda (rs) (bcut xs cs (mapcar (lambda (r) (gethash r h)) rs)
+                       (length (? k has)) :m m :leaf leaf))))
 
-(defun forest (tb rows y &key (n 10) (cap 200) b4 (q 8) rf
-                              (leaf 2) (maxd 30)
-               &aux (rows (if cap (capped rows y cap) rows))
-                    (cut (if b4 (binned tb rows :q q :rf rf :leaf leaf)
-                             (lambda (rs) (best-cut (? tb cols x) rs y
-                                                    #'make-sym
-                                                    :leaf leaf)))))
+(defun forest (tb rows y &key (n 10) (cap 200) (q 8) rf (leaf 2) (maxd 30))
   "n deep class trees (small leaves), each on a random half of rows
-   (n=1: all of them), from <= cap rows per class. b4: cut on rows
-   binned first (see binned)"
-  (loop :repeat n
-        :collect (tree (if (= n 1) rows
-                           (subseq (shuffle rows) 0
-                                   (floor (length rows) 2)))
-                       y cut :make #'make-sym :maxd maxd)))
+   (n=1: all of them), from <= cap rows per class, binned once into
+   q bins (see binned)"
+  (let* ((rows (if cap (capped rows y cap) rows))
+         (cut  (binned tb rows :q q :rf rf :leaf leaf)))
+    (loop :repeat n
+          :collect (tree (if (= n 1) rows
+                             (subseq (shuffle rows) 0
+                                     (floor (length rows) 2)))
+                         y cut :make #'make-sym :maxd maxd))))
 
 (defun vote (trees r &aux h (w (float (length trees))))
   "class -> probability: mean over trees of r's leaf's class share"
