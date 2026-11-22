@@ -252,10 +252,12 @@
   (remove-duplicates (loop :for j :from 1 :below (if (plusp n) q 0)
                            :collect (car (aref xs (floor (* j n) q))))))
 
-(defun choices (c rows q)
-  "Vector of c's cut values: sym values, or num's q quantile edges"
-  (coerce (if (sym-p c) (mapcar #'car (? c has)) (quantiles c rows q))
-          'vector))
+(defm choices (sym rows q) "Vector of cut values: each sym value"
+  (declare (ignore rows q))
+  (coerce (mapcar #'car $has) 'vector))
+
+(defm choices (num rows q) "Vector of cut values: q quantile edges"
+  (coerce (quantiles self rows q) 'vector))
 
 ;;;; coded: binned rows as fixnums, for fast class trees ----------------
 (defun coder (xs cs klass rows &aux (h (make-hash-table :test #'eq))
