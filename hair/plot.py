@@ -1,5 +1,5 @@
 #!/usr/bin/env python3 -B
-"""plot: ens-nose.png from lgbm.py output: mean AUC over folds per set (solid), (p90-p10)/2.56 ~ sd over folds (dashed), LOC + secs bars.
+"""plot: ens-nose.png from lgbm.py output: mean AUC over folds per set (solid), (p90-p10)/2.56 ~ sd over folds (dashed), secs bars; LOC as its own loc.png/.pdf.
 LOC (2026-11-22): lisp = ai+lithp+hair.lisp (whole lib, not just forest);
 lgbm = LightGBM 7810ece src/ + include/LightGBM, C++, no cuda.
 Usage: python3 plot.py ens.txt ens-nose.png      (also writes ens-nose.pdf)
@@ -36,8 +36,8 @@ SHORT={"blood-transfusion-service-center":"blood-transfusion",
        "Internet-Advertisements":"internet-ads"}
 fig=plt.figure(figsize=(14.3,5.2))
 # runtime bars on the left; lines of code on the right (not for SE: same code)
-gs=fig.add_gridspec(1,5 if not SE else 3,width_ratios=[3.4,1.6,20]+([.45,2.9] if not SE else []),wspace=0)
-bx=fig.add_subplot(gs[0]); ax=fig.add_subplot(gs[2]); lx=None if SE else fig.add_subplot(gs[4])
+gs=fig.add_gridspec(1,3,width_ratios=[3.4,1.6,20],wspace=0)   # runtime bars | gap | AUC
+bx=fig.add_subplot(gs[0]); ax=fig.add_subplot(gs[2])
 x0=0; ticks=[]; labs=[]; H=[]
 for gi,(g,fs) in enumerate(G):
   fs=sorted(fs,key=lambda f:d[f][2]); xs=np.arange(x0,x0+len(fs))
@@ -84,16 +84,24 @@ bx.set_title("total secs\n(serial, 1 core;\nXeon 2.1GHz, 8GB)",fontsize=FS["head
 bx.set_yticks([]); bx.set_facecolor("#fcfcfa"); bx.set_xlim(-.55,2.55)
 for s_ in ("top","right","left"): bx.spines[s_].set_visible(False)
 
-if not SE:
-  LOC=[("lisp",346,"#e8613c"),("lgbm",36328,"#2a6fdb")]  # see docstring
-  (ln,lv,lc),(gn,gv,gc)=LOC; r=(lv/gv)**.5          # areas ~ LOC
-  lx.add_patch(plt.Rectangle((0,0),1,1,color=gc)); lx.add_patch(plt.Rectangle((0,0),r,r,color=lc,ec="white",lw=1))
-  lx.text(.5,.72,f"{gn}\n{gv:,}\nLOC",ha="center",va="center",color="white",fontsize=FS["loc"]-1,weight="bold")
-  lx.annotate(f"{ln}\n{lv}\nLOC",(r,r),(.12,.24),color="white",fontsize=FS["loc"]-2,weight="bold",
-              arrowprops=dict(arrowstyle="-",color="white"))
-  lx.set_xlim(0,1); lx.set_ylim(0,1); lx.set_xticks([]); lx.set_yticks([])
-  lx.set_title("lines of code\n(area ~ LOC)",fontsize=FS["head"]-2); lx.set_facecolor("#fcfcfa")
-  for s_ in lx.spines.values(): s_.set_visible(False)
 fig.set_facecolor("#fcfcfa"); ax.set_facecolor("#fcfcfa"); plt.tight_layout()
 plt.savefig(sys.argv[2],dpi=200)
 plt.savefig(sys.argv[2].rsplit(".",1)[0]+".pdf")   # vector copy for the paper
+
+# lines of code: its own small figure (loc.png/.pdf, next to the output),
+# sized to print as is (no scaling) in a wrapfigure about 1.7in wide
+if not SE:
+  LOC=[("lisp",346,"#e8613c"),("lgbm",36328,"#2a6fdb")]  # see docstring
+  (ln,lv,lc),(gn,gv,gc)=LOC; r=(lv/gv)**.5          # areas ~ LOC
+  f2,lx=plt.subplots(figsize=(1.7,1.9))
+  lx.add_patch(plt.Rectangle((0,0),1,1,color=gc))
+  lx.add_patch(plt.Rectangle((0,0),r,r,color=lc,ec="white",lw=.6))
+  lx.text(.55,.62,f"{gn}\n{gv:,} LOC",ha="center",va="center",color="white",fontsize=8,weight="bold")
+  lx.annotate(f"{ln}\n{lv} LOC",(r,r),(.1,.28),color="white",fontsize=7,weight="bold",
+              arrowprops=dict(arrowstyle="-",color="white",lw=.6))
+  lx.set_xlim(0,1); lx.set_ylim(0,1); lx.set_xticks([]); lx.set_yticks([]); lx.set_aspect("equal")
+  for s_ in lx.spines.values(): s_.set_visible(False)
+  f2.set_facecolor("white"); f2.tight_layout(pad=.1)
+  d=sys.argv[2].rsplit("/",1)[0]+"/" if "/" in sys.argv[2] else ""
+  f2.savefig(d+"loc.png",dpi=300); f2.savefig(d+"loc.pdf")
+
