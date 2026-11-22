@@ -50,3 +50,8 @@ $(D)/%.pdf: $(D)/%.html
 $(D)/%.lisp.html: %.lisp $(D)/hi.py
 	mkdir -p $(D)
 	python3 $(D)/hi.py $(cols) $< > $@
+
+ens: ## rerun forest + lightgbm on 39 sets (5x2), redraw ens.png
+	sbcl --script hair.lisp ens > ens.dat
+	python3 -B lgbm.py ens.dat > ens.txt
+	python3 -B plot.py ens.txt ens.png
