@@ -212,10 +212,8 @@
 
 (defm choices (num rows q)
   "Vector of cut values: up to q-1 edges, equal #known xs between each"
-  (let* ((xs (coerce (sort (loop :for r :in rows :for x := (aref r $at)
-                                 :unless (eql x '?) :collect x)
-                           #'<)
-                     'vector))
+  (let* ((xs (sort (remove '? (map 'vector (lambda (r) (aref r $at)) rows))
+                   #'<))
          (n (length xs)))
     (coerce (remove-duplicates
              (loop :for j :from 1 :below (if (plusp n) q 0)
