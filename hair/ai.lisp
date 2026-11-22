@@ -241,26 +241,25 @@
                xs fs))))
 
 (defun bcut (xs cs vs ys make &key m (leaf (? *k* leaf))
-                              &aux (best (argmost #'<))
-                                   (is (loop :for i :below (length xs)
-                                             :collect i)))
-  "Lowest-xpect (col v) over binned rows vs with y values ys: per col,
-   drop ys into bins, then sweep the bins. Nums: x <= edge; syms:
-   = v. make: y summary (make-sym = classes). m: just m random cols"
-  (dolist (i (if m (sort (subseq (shuffle is) 0 (min m (length is))) #'<)
-                 is)
-             (funcall best))
-    (let* ((c (nth i xs)) (ch (nth i cs))
-           (bins (make-array (1+ (length ch)) :initial-element nil))
-           (yes (funcall make)) (no (funcall make)))
-      (loop :for v :in vs :for y :in ys :for b := (aref v i)
-            :unless (< b 0) :do (push y (aref bins b)) (add no y))
-      (dotimes (b (length ch))
-        (dolist (y (aref bins b)) (add yes y) (add no y -1))
-        (if (<= leaf (min (? yes n) (? no n)))
-          (funcall best (list c (aref ch b)) (xpect yes no)))
-        (if (sym-p c)                    ; syms: one value vs rest; undo
-          (dolist (y (aref bins b)) (add yes y -1) (add no y)))))))
+                              &aux (best (argmost #'<)))
+  "Lowest-xpect (col v) over binned rows vs with y values ys. make: y
+   summary (make-sym = classes). m: just m random cols"
+  (dolist (i (pick (length xs) m) (funcall best))
+    (sweep (nth i xs) (nth i cs) i vs ys make leaf best)))
+
+(defun sweep (c ch i vs ys make leaf best)
+  "Offer each cut (c v) of col c to best, scored by xpect: drop ys
+   into c's bins (slot i of vs), then sweep. Nums: x <= v; syms: = v"
+  (let ((bins (make-array (1+ (length ch)) :initial-element nil))
+        (yes (funcall make)) (no (funcall make)))
+    (loop :for v :in vs :for y :in ys :for b := (aref v i)
+          :unless (< b 0) :do (push y (aref bins b)) (add no y))
+    (dotimes (b (length ch))
+      (dolist (y (aref bins b)) (add yes y) (add no y -1))
+      (if (<= leaf (min (? yes n) (? no n)))
+        (funcall best (list c (aref ch b)) (xpect yes no)))
+      (if (sym-p c)                      ; syms: one value vs rest; undo
+        (dolist (y (aref bins b)) (add yes y -1) (add no y))))))
 
 (defun binned (tb rows y &key (q 8) rf (leaf (? *k* leaf))
                               (make #'make-sym))

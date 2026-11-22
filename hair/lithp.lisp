@@ -96,3 +96,7 @@
   (loop :for i :from (1- (length v)) :downto 1
     :do (rotatef (aref v i) (aref v (floor (rand (1+ i))))))
   (coerce v 'list))
+
+(defun pick (n &optional m &aux (is (loop :for i :below n :collect i)))
+  "0..n-1; or just m of them, at random (kept in order)"
+  (if m (sort (subseq (shuffle is) 0 (min m n)) #'<) is))

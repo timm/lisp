@@ -70,25 +70,29 @@
   (dolist (f *ens*)
     (let* ((tb (data (format nil "~~/gits/moot/classify/~a.csv" f)))
            (at (? tb cols klass at))
-           (y (lambda (r) (aref r at)))
-           (ix (make-hash-table :test #'eq)))      ; row -> its csv row #
-      (loop :for r :in (reverse (? tb rows)) :for i :from 0
-            :do (setf (gethash r ix) i))
-      (labels ((run (train test keys)  ; auc of a forest; and its secs
-                 (timed (lambda ()
-                          (aucs (votes (apply #'forest tb train y keys)
-                                       test y))))))
-        (xval (? tb rows)
-              (lambda (train test)
-                (loop :for (nil . keys) :in *treatments*
-                      :for (a secs) := (multiple-value-list
-                                        (run train test keys))
-                      :collect a :into as :collect secs :into ss
-                      :finally (format t "~a|~{~,3f ~}|~{~,3f ~}|~{~a ~}~%"
-                                       f as ss (mapcar (lambda (r)
-                                                         (gethash r ix))
-                                                       test))
-                               (finish-output))))))))
+           (y  (lambda (r) (aref r at)))
+           (ix (rownums tb)))
+      (xval (? tb rows)
+            (lambda (train test) (fold f tb y ix train test))))))
+
+(defun rownums (tb &aux (h (make-hash-table :test #'eq)))
+  "Hash: row -> its csv row # (rows are stored newest first)"
+  (loop :for r :in (reverse (? tb rows)) :for i :from 0
+        :do (setf (gethash r h) i))
+  h)
+
+(defun fold (f tb y ix train test)
+  "One eg-ens line: f|aucs|secs|test row #s, per *treatments* forest"
+  (loop :for (nil . keys) :in *treatments*
+        :for (a secs) := (multiple-value-list
+                          (timed (lambda ()
+                                   (aucs (votes (apply #'forest tb train
+                                                       y keys)
+                                                test y)))))
+        :collect a :into as :collect secs :into ss
+        :finally (format t "~a|~{~,3f ~}|~{~,3f ~}|~{~a ~}~%" f as ss
+                         (mapcar (lambda (r) (gethash r ix)) test))
+                 (finish-output)))
 
 (defun eg-all ()
   (dolist (f '(eg-config eg-tbl eg-dist eg-same eg-rank eg-tree))
