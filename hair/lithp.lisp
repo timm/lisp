@@ -22,6 +22,10 @@
   `(cdr (or (assoc ,x ,lst :test #'equal)
             (car (setf ,lst (cons (cons ,x 0) ,lst))))))
 
+(defun charn (s &optional (n -1))
+  "Char n of string (or symbol) s; negative = from the end"
+  (let ((s (string s))) (char s (mod n (length s)))))
+
 (defmacro defm (name (cls &rest args) &body body)
   "defmethod with `self` bound to the first arg, specialized on class
    cls (t = anything): (defm mid (sym) ...), (defm add (t v) ...).
@@ -57,10 +61,6 @@
     (when (and x (or (null b4) (funcall better n b4)))
       (setf out x b4 n))
     (values out b4)))
-
-(defun charn (s &optional (n -1))
-  "Char n of string (or symbol) s; negative = from the end"
-  (let ((s (string s))) (char s (mod n (length s)))))
 
 (defun thing (s &aux (*read-eval* nil) (*package* (find-package :hair)))
   "String to number, ?, or string"
