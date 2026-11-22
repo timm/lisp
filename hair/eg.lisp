@@ -73,7 +73,7 @@
            (y  (lambda (r) (aref r at)))
            (ix (rownums tb)))
       (xval (? tb rows)
-            (lambda (train test) (fold f tb y ix train test))))))
+            (lambda (train test) (ens-fold f tb y ix train test))))))
 
 (defun rownums (tb &aux (h (make-hash-table :test #'eq)))
   "Hash: row -> its csv row # (rows are stored newest first)"
@@ -81,7 +81,7 @@
         :do (setf (gethash r h) i))
   h)
 
-(defun fold (f tb y ix train test)
+(defun ens-fold (f tb y ix train test)
   "One eg-ens line: f|aucs|secs|test row #s, per *treatments* forest"
   (loop :for (nil . keys) :in *treatments*
         :for (a secs) := (multiple-value-list
