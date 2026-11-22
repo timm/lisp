@@ -33,9 +33,14 @@ for m in PAT.finditer(src):
 out += html.escape(src[i:], quote=False)
 
 print('<meta charset=utf-8><title>%s</title>'
+      '<meta name=viewport content="width=device-width,initial-scale=1">'
       '<link rel=stylesheet href="https://fonts.googleapis.com/css2'
       '?family=JetBrains+Mono:wght@400&display=swap">'
-      '<style>@page{size:letter landscape;margin:.4in}</style>'
+      '<style>@page{size:letter landscape;margin:.4in}'
+      'html{-webkit-text-size-adjust:100%%;text-size-adjust:100%%}'
+      '@media screen and (max-width:700px){body{margin:4px}'
+      'pre{columns:1!important;font-size:calc(100vw/50)!important;'
+      'white-space:pre-wrap;overflow-wrap:anywhere}}</style>'
       '<body style="background:#ffffff">' % path.split("/")[-1])
 print('<pre style="font:6.5pt/1.4 JetBrains Mono,Monaco,Menlo,monospace;'
       'color:#1f2328;columns:%s 80ch;column-gap:2em;'

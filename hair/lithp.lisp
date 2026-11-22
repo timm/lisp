@@ -31,6 +31,11 @@
 (defmacro aif (test ok &optional no) "Anaphoric if: `it` = test"
   `(let ((it ,test)) (if it ,ok ,no)))
 
+(defmacro has (x lst)
+  "Place for x's count in alist lst (if missing, add x with 0)"
+  `(cdr (or (assoc ,x ,lst :test #'equal)
+            (car (setf ,lst (cons (cons ,x 0) ,lst))))))
+
 (defmacro defm (name (cls &rest args) &body body)
   "defmethod with `self` bound to the first arg, specialized on class
    cls (t = anything): (defm mid (sym) ...), (defm add (t v) ...)"
@@ -51,12 +56,12 @@
         (bisect v x lt lo mid)))))
 
 (defun argmost (&optional (better #'>) &aux out b4)
-  "Visitor: (f x n) offers x scored n; (f) = first x with the most n.
-   (argmost #'<) = argmin"
+  "Visitor: (f x n) offers x scored n; (f) = first x with the most n,
+   and its n as a 2nd value. (argmost #'<) = argmin"
   (lambda (&optional x n)
     (when (and x (or (null b4) (funcall better n b4)))
       (setf out x b4 n))
-    out))
+    (values out b4)))
 
 (defun o (&rest kvs) "A hash table from k1 v1 k2 v2 ..."
   (let ((h (make-hash-table :test #'equal)))
@@ -75,10 +80,11 @@
   (let ((hi (position #\, s :start lo)))
     (cons (thing (subseq s lo hi)) (if hi (cells s (1+ hi))))))
 
-(defun csv (file) "Rows of a csv file, each a vector"
+(defun csv (file) "Rows of a csv file, each a vector; skips blanks"
   (with-open-file (s (expand file))
     (loop :for line := (read-line s nil) :while line
-      :collect (coerce (cells line) 'vector))))
+      :for txt := (string-trim '(#\Return #\Space #\Tab) line)
+      :unless (equal txt "") :collect (coerce (cells txt) 'vector))))
 
 (defun expand (file) "A leading ~ means home"
   (if (eql #\~ (charn file 0))

@@ -24,10 +24,11 @@ html: $(D)/index.html ## render *.lisp + ../docs/index.html; open it
 # (no blanks, no ;comments)
 $(D)/index.html: $(Html) Makefile
 	{ echo '<meta charset=utf-8><title>hair (lisp)</title>'; \
+	  echo '<meta name=viewport content="width=device-width,initial-scale=1">'; \
 	  echo '<body style="margin:0;padding:2em 0"><center>'; \
 	  echo '<h1 style="font:normal 2em Times New Roman,serif">'; \
 	  echo 'hair (lisp) : hands-on AI recipes</h1>'; \
-	  echo '<div style="max-width:600px;text-align:left;font:11pt serif">'; \
+	  echo '<div style="max-width:600px;padding:0 16px;text-align:left;font:11pt serif">'; \
 	  echo '<p>A Common Lisp port of <a href="https://timm.github.io/hair/">'; \
 	  echo 'hair</a>: data, distances, stats and trees in a few hundred'; \
 	  echo 'lines. Run it with <code>sbcl --script hair.lisp all</code>.'; \
