@@ -1,5 +1,12 @@
 # hair (lisp): experiment notes
 
+## improtant prompt
+
+often overwhelmed by the itneraction. code accumualtes fillsls (relics from bygne experinetns that yu did not thnk to remove which confuse ther esults)
+
+good tacit tow rite down what you think ash been elarned so far, start a new code base and implemtn from scratch jsut the things you think matter the most
+
+## Notes
 Newest first. One entry per question asked. Each says what was run, on
 what, and what it showed, so a later session can pick up from here.
 
