@@ -55,9 +55,9 @@
 (defm div (num) "Spread: standard deviation"
   (if (< $n 2) 0 (sqrt (/ $m2 (1- $n)))))
 
-(defun ent (cs n) "Entropy of counts cs, summing to n"
-  (loop :for c :in cs :when (plusp c)
-        :sum (let ((p (/ c (float n)))) (- (* p (log p 2))))))
+(defun ent (cs n) "Entropy of counts cs (list or vector), summing to n"
+  (loop :for c :in (coerce cs 'list) :when (plusp c)
+        :sum (let ((p (/ c (float n 1d0)))) (- (* p (log p 2))))))
 
 (defm div (sym) "Spread: entropy"
   (ent (mapcar #'cdr $has) $n))
@@ -253,7 +253,6 @@
                            :collect (car (aref xs (floor (* j n) q))))))
 
 (defm choices (sym rows q) "Vector of cut values: each sym value"
-  (declare (ignore rows q))
   (coerce (mapcar #'car $has) 'vector))
 
 (defm choices (num rows q) "Vector of cut values: q quantile edges"
@@ -262,9 +261,9 @@
 ;;;; coded: binned rows as fixnums, for fast class trees ----------------
 (defun coder (xs cs klass rows &aux (h (make-hash-table :test #'eq))
                                     (ks (mapcar #'car (? klass has))))
-  "Hash: row -> fixnum vector, one bin (sym: value) index per col in
-   xs, cut at cs (-1 = ?), then the class index. Built once; shared
-   by all trees"
+  "Hash: row -> vector, one bin (sym: value) index per col in xs, cut
+   at cs (-1 = ?), then the class index. Built once; shared by all
+   trees"
   (labels ((idx (c ch x)
              (cond ((eql x '?) -1)
                    ((sym-p c) (position x ch :test #'equal))
@@ -275,56 +274,36 @@
                                   :collect (idx c ch (aref r (? c at))))
                             (list (position (aref r (? klass at)) ks
                                             :test #'equal)))
-                    '(simple-array fixnum (*)))))))
+                    'vector)))))
 
-(defun ent2 (yes all)
+(defun ent2 (yes all &aux (no (map 'vector #'- all yes))
+                          (ny (reduce #'+ yes)) (nn (reduce #'+ no)))
   "Size-weighted entropy of class counts yes vs all-yes; and both sizes"
-  (declare (optimize speed) (type (simple-array fixnum (*)) yes all))
-  (let* ((ny (reduce #'+ yes)) (na (reduce #'+ all)) (nn (- na ny))
-         (sy 0d0) (sn 0d0))
-    (declare (fixnum ny na nn) (double-float sy sn))
-    (loop :for c :of-type fixnum :across yes
-          :for a :of-type fixnum :across all :for d := (- a c)
-          :do (if (plusp c) (decf sy (* c (log (/ (float c 1d0) ny)))))
-              (if (plusp d) (decf sn (* d (log (/ (float d 1d0) nn))))))
-    (values (/ (+ sy sn) (log 2d0) (max na 1)) ny nn)))  ; ln -> bits
+  (values (/ (+ (* ny (ent yes ny)) (* nn (ent no nn))) (max 1 (+ ny nn)))
+          ny nn))
 
 (defun bcut (xs cs vs nk &key m (leaf (? *k* leaf))
                          &aux (best (argmost #'<)) (at (length xs))
-                              (pick (and m (subseq
-                                            (shuffle (loop :for i :below at
-                                                           :collect i))
-                                            0 (min m at))))
-                              (nb (1+ (reduce #'max (mapcar #'length cs)
-                                              :initial-value 0)))
-                              (n (make-array (list nb nk)
-                                             :element-type 'fixnum))
-                              (flat (make-array (* nb nk) :displaced-to n
-                                                 :element-type 'fixnum))
-                              (all (make-array nk :element-type 'fixnum))
-                              (yes (make-array nk :element-type 'fixnum)))
+                              (is (loop :for i :below at :collect i)))
   "Lowest-cost (col v) over coded rows vs: per col, count classes per
    bin in one pass, then sweep the bins. Bins: x <= edge; syms: = v.
    m: try just m random cols (a random forest)"
-  (declare (fixnum at nk))
-  (loop :for c :in xs :for ch :in cs :for i :of-type fixnum :from 0
-        :for sym := (sym-p c)
-        :when (or (null pick) (member i pick))
-        :do (fill flat 0)
-            (fill all 0) (fill yes 0)
-            (dolist (v vs)
-              (let ((b (aref (the (simple-array fixnum (*)) v) i))
-                    (k (aref (the (simple-array fixnum (*)) v) at)))
-                (declare (fixnum b k))
-                (when (>= b 0) (incf (aref n b k)) (incf (aref all k)))))
-            (dotimes (b (length ch))
-              (dotimes (k nk)            ; bins: add up; syms: just this
-                (if sym (setf (aref yes k) (aref n b k))
-                    (incf (aref yes k) (aref n b k))))
-              (multiple-value-bind (e ny nn) (ent2 yes all)
-                (if (<= leaf (min ny nn))
-                  (funcall best (list c (aref ch b)) e)))))
-  (funcall best))
+  (dolist (i (if m (sort (subseq (shuffle is) 0 (min m at)) #'<) is)
+             (funcall best))
+    (let* ((c (nth i xs)) (ch (nth i cs))
+           (n (make-array (list (1+ (length ch)) nk) :initial-element 0))
+           (all (make-array nk :initial-element 0))
+           (yes (make-array nk :initial-element 0)))
+      (dolist (v vs)                     ; count classes per bin
+        (let ((b (aref v i)) (k (aref v at)))
+          (when (>= b 0) (incf (aref n b k)) (incf (aref all k)))))
+      (dotimes (b (length ch))           ; bins: add up; syms: just this
+        (dotimes (k nk)
+          (setf (aref yes k) (+ (aref n b k)
+                                (if (sym-p c) 0 (aref yes k)))))
+        (multiple-value-bind (e ny nn) (ent2 yes all)
+          (if (<= leaf (min ny nn))
+            (funcall best (list c (aref ch b)) e)))))))
 
 ;;;; forest ------------------------------------------------------------
 (defun capped (rows y n &aux h) "At most n random rows per class"
