@@ -79,7 +79,7 @@
                  (timed (lambda ()
                           (aucs (votes (apply #'forest tb train y keys)
                                        test y))))))
-        (xval (remove '? (? tb rows) :key y)
+        (xval (? tb rows)
               (lambda (train test)
                 (loop :for (nil . keys) :in *treatments*
                       :for (a secs) := (multiple-value-list
