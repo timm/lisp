@@ -1,0 +1,37 @@
+# TabICLv2 mean auc (0..100) per set, from ~/gh/tab-dev/cache/classify/*/tabiclauc.csv
+# (tab-dev protocol: 20 seeds x 80:20 splits, NOT bald's 5x2 folds)
+set,auc
+balance.scale,99.96
+blood-transfusion-service-center,75.51
+breast.w,99.47
+diabetes,82.83
+ecoli,97.92
+glass,94.98
+ionosphere,98.42
+sonar,97.47
+vehicle,98.02
+wdbc,99.69
+vote,99.28
+soybean,99.75
+tic-tac-toe,99.96
+german,79.07
+car,99.97
+solar.flare2,72.02
+primary.tumor,84.98
+breast.cancer,70.29
+spect.test,81.07
+audiology,99.17
+credit.a,94.44
+eucalyptus,93.36
+ilpd,77.43
+heart.c,93.06
+hepatitis,88.45
+colic,89.11
+autos,97.81
+cylinder.bands,92.93
+credit.g,80.30
+cmc,74.92
+hypothyroid,99.95
+sick,99.79
+churn,93.10
+COMPAS53,98.49
