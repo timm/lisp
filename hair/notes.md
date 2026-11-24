@@ -95,6 +95,38 @@ Shared setup, unless an entry says otherwise:
   changing one data set shifts the random draws for everything after it;
   expect +/- 1 AUC run-to-run noise on any one set
 
+## 2026-11-23: idea (NOT RUN): is tree learning = GAC on pair-packets?
+
+Question: before tree learning, bin each col into tiny lo..hi ranges,
+make 2-D "packets" (cells over a pair of cols). Is tree learning then
+just greedy agglomerative clustering (GAC) of those packets?
+
+Answer: partly. It is the bottom-up mirror of a tree, not the same.
+- Same: a tree is divisive clustering of x, scored by y; merging
+  tiny bins is GAC, scored by y (ChiMerge vs Fayyad-Irani in 1-D).
+  Same score + adjacent-only merges -> similar, not identical, cuts.
+- Differ:
+  - leaves: tree = axis-aligned boxes; GAC = any union of cells
+    (can be non-convex)
+  - depth: tree = path length; pairs = 2 cols only
+  - context: tree re-splits col b differently under each branch of a;
+    a pair (a,b) is fixed globally
+  - GAC gives a dendrogram, not a decision rule
+- So GAC on pairs ~ a set of depth-2 trees with freer leaf shapes.
+- Cost: d^2 * b^2 grid, but data clumps in few cells (bingo), so only
+  occupied packets need merging. Cheap.
+
+Hybrid to try: GAC inside each pair, tree chooses among pairs, recurse.
+
+    def tree(rows, pairs):       # split on best merged pair, recurse
+      i, j, regions = min(((i, j, gac(packets(rows, i, j, B), y_var, adj))
+                           for i, j in pairs), key=lambda t: wvar(t[2]))
+      return {reg: tree(reg.rows, pairs) for reg in regions}
+
+Risk: leaves are unions of cells, not boxes -> rules harder to read.
+Relevant dead ends above: re-binning per node was slower and worse;
+here bins are built once, only merges are per node.
+
 ## 2026-11-22: rows per class (cap 200, 512, 1024)
 
 7 sets: diabetes, vehicle, soybean, COMPAS53, churn, adult, electricity.
