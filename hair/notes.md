@@ -26,6 +26,8 @@ bank-marketing, adult) [L][P]. tab-dev: 30 deep trees reach LightGBM
 parity on acc/auc, still lose on d2h; TabICL far ahead [T].
 
 Discretization
+- Pair-packet GAC nodes (2-D cells, merged to 2 regions): -4.3 auc,
+  10/10 sets worse, 10-100x slower (2026-11-23) [L].
 - MDL (Fayyad-Irani) / recursive bins before trees: -1.5 auc vs q8 [L];
   -4.1 for naive Bayes [T]. Fine for *showing* bins (2-6), not for
   learning.
@@ -95,7 +97,7 @@ Shared setup, unless an entry says otherwise:
   changing one data set shifts the random draws for everything after it;
   expect +/- 1 AUC run-to-run noise on any one set
 
-## 2026-11-23: idea (NOT RUN): is tree learning = GAC on pair-packets?
+## 2026-11-23: is tree learning = GAC on pair-packets? (RAN: dead end)
 
 Question: before tree learning, bin each col into tiny lo..hi ranges,
 make 2-D "packets" (cells over a pair of cols). Is tree learning then
@@ -126,6 +128,30 @@ Hybrid to try: GAC inside each pair, tree chooses among pairs, recurse.
 Risk: leaves are unions of cells, not boxes -> rules harder to read.
 Relevant dead ends above: re-binning per node was slower and worse;
 here bins are built once, only merges are per node.
+
+Result (5x2, 10 sets, both forests: 10 trees, rf, q8, cap 200, leaf 2).
+Pair node = sqrt(#x) random cols, every pair among them, GAC of occupied
+(bin i, bin j) cells by class entropy down to 2 regions (any union of
+cells), unseen cell -> bigger region.
+
+    data           q8   pair  delta   secs q8  secs pair
+    diabetes     80.4   75.9   -4.5     0.20     7.97
+    ecoli        95.6   93.0   -2.6     0.11     3.91
+    glass        86.5   80.8   -5.7     0.06     2.81
+    ionosphere   95.4   91.7   -3.7     0.20    14.68
+    sonar        84.2   69.3  -14.9     0.14    27.79
+    vehicle      90.5   86.7   -3.9     0.41    43.36
+    wdbc         98.5   97.3   -1.2     0.28    38.85
+    vote         98.5   97.7   -0.7     0.12     1.22
+    tic-tac-toe  92.8   89.2   -3.6     0.24     1.73
+    credit.g     73.2   71.0   -2.2     0.38     8.05
+    mean         89.6   85.3   -4.3
+
+Loses on 10/10, 10-100x slower. Even tic-tac-toe (all interactions)
+loses. Likely cause: free unions of tiny cells overfit; the deep tree
+already gets pair interactions from two levels. Code not committed
+(kept out to avoid relics). Untried: adjacency-only merges; pairs at
+the root only.
 
 ## 2026-11-22: rows per class (cap 200, 512, 1024)
 
