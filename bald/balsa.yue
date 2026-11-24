@@ -1,0 +1,299 @@
+-- balsa.yue: the learner, a Yue port of bald (lisp). Data, bins,
+-- trees, forest, auc. Same Park-Miller rand, so same shuffles.
+-- The library: no printing, no files beyond csv, no experiments.
+-- The rigs (5x2 xval, fold replay, stats) live in balsa_eg.yue.
+-- (c) 2026 Tim Menzies <timm@ieee.org>, MIT license
+import floor, sqrt, max, min, log from math
+LOG2 = log 2
+
+k = {seed: 1234567891, eps: 0.35, bins: 16,
+     trees: 30, cap: 200, leaf: 2, maxd: 30, rf: true}
+
+------------------------------------------------------------- random
+seed = k.seed
+srand = (n) -> seed = n
+rand = (n=1) ->
+  seed = (16807 * seed) % 2147483647
+  n * seed / 2147483647
+
+shuffle = (rows) ->                     -- new, shuffled copy
+  u = [row for row in *rows]
+  for i = #u, 2, -1
+    j = 1 + floor rand i
+    u[i], u[j] = u[j], u[i]
+  u
+
+pick = (n, m) ->                        -- 0..n-1; or just m of them
+  return [i for i = 0, n - 1] unless m and m < n
+  got, out = {}, {}
+  while #out < m
+    i = floor rand n
+    unless got[i] then got[i] = true; out[] = i
+  table.sort out
+  out
+
+---------------------------------------------------------------- csv
+thing = (cell) ->
+  cell = cell\match "^%s*(.-)%s*$"
+  tonumber(cell) or cell
+
+csv = (file) ->
+  file = file\gsub "^~", os.getenv "HOME"
+  rows = {}
+  for line in io.lines file
+    txt = line\gsub("\r", "")\match "^%s*(.-)%s*$"
+    if txt != ""
+      rows[] = [thing cell for cell in "#{txt},"\gmatch "(.-),"]
+  rows
+
+--------------------------------------------------------------- data
+-- Header: Uppercase = Num, else Sym. Last char: ! class, X skip.
+-- "?" cells unknown. Rows keep raw cells and cooked ones (bin #s).
+Col = (at, txt) ->
+  if txt\match "^%u"
+    {:at, :txt, nm: true, n: 0, mu: 0, m2: 0}  -- a Num
+  else
+    {:at, :txt, n: 0, has: {}}                 -- a Sym
+
+add = (col, v, inc=1) ->
+  return if v == "?"
+  col.n += inc
+  if col.nm
+    d = v - col.mu
+    col.mu += inc * d / col.n
+    col.m2 = max 0, col.m2 + inc * d * (v - col.mu)
+  else
+    col.has[v] = (col.has[v] or 0) + inc
+
+adds = (vs, col) ->
+  add col, v for v in *vs
+  col
+
+div = (col) ->                          -- sd for Nums, entropy for Syms
+  if col.nm
+    return if col.n < 2 then 0 else sqrt(col.m2 / (col.n - 1))
+  e = 0
+  for _, m in pairs col.has
+    if m > 0
+      p = m / col.n
+      e -= p * log(p) / LOG2
+  e
+
+-- ys summaries: klass codes 1..kn, counts in a plain array. Integer
+-- adds in the loops; logs only when a spread is asked for.
+Ys = (kn) -> {n: 0, cs: [0 for _ = 1, kn]}
+
+yadd = (ys, code, m=1) ->
+  ys.cs[code] += m
+  ys.n += m
+
+yadds = (codes, ys) ->
+  for code in *codes
+    yadd ys, code if code
+  ys
+
+yfold = (a, b, inc=1) ->                -- add (inc=-1: take) b into a
+  for i = 1, #a.cs
+    a.cs[i] += inc * b.cs[i]
+  a.n += inc * b.n
+  a
+
+ydiv = (ys) ->                          -- entropy of the counts
+  n, e = ys.n, 0
+  return 0 if n < 2
+  for c in *ys.cs
+    if c > 0
+      e -= c * log(c)
+  (e / n + log(n)) / LOG2
+
+skip = (txt) -> txt\match("X$") or txt\match "X[-+!]$"
+
+Cols = (names) ->
+  all = [Col at, txt for at, txt in ipairs names]
+  x, y, klass = {}, {}, nil
+  for i = #all, 1, -1                   -- reversed: the lisp pushes
+    col = all[i]
+    e = col.txt\sub -1
+    if skip col.txt then continue
+    if e == "+" or e == "-" or e == "!"
+      y[] = col
+      if e == "!" then klass = col
+    else
+      x[] = col
+  {:names, :all, :x, :y, :klass}
+
+------------------- bins: discretize once; trees then cut on bin #s
+bisect = (v, x, le) ->                  -- #items in sorted v below x
+  lo, hi = 1, #v + 1
+  while lo < hi
+    mid = floor (lo + hi) / 2
+    below = if le then v[mid] <= x else v[mid] < x
+    if below then lo = mid + 1 else hi = mid
+  lo - 1
+
+choices = (col, rows, q) ->
+  if col.nm                             -- q bins, equal #known in each
+    xs = [row.raw[col.at] for row in *rows when row.raw[col.at] != "?"]
+    table.sort xs
+    out, b4 = {}, nil
+    for j = 0, (#xs > 0 and q - 1 or -1)
+      v = xs[1 + floor j * #xs / q]
+      if v != b4 then out[] = v; b4 = v
+    out
+  else                                  -- the q-1 commonest values
+    vs = [{v, m} for v, m in pairs col.has]
+    table.sort vs, (a, b) ->
+      a[2] > b[2] or (a[2] == b[2] and tostring(a[1]) < tostring(b[1]))
+    [vs[i][1] for i = 1, min q - 1, #vs]
+
+cook = (col, x) ->                      -- x -> 0-based bin #; ? = -1
+  if x == "?" then return -1
+  if col.nm then return max 0, bisect(col.bins, x, true) - 1
+  for i, v in ipairs col.bins
+    if v == x then return i - 1
+  #col.bins
+
+discretize = (tb) ->                    -- once per tbl: bins, then
+  for col in *tb.cols.x                 -- each row's bin # per x col
+    col.bins = choices col, tb.rows, k.bins
+  for row in *tb.rows
+    row.cooked = {}
+    row.cooked[col.at] = cook col, row.raw[col.at] for col in *tb.cols.x
+
+encode = (tb) ->                        -- klass -> int code, cached
+  at = tb.cols.klass and tb.cols.klass.at
+  return unless at
+  for row in *tb.rows
+    v = row.raw[at]
+    if v != "?"
+      unless tb.code[v]
+        tb.kn += 1
+        tb.code[v] = tb.kn
+      row.kl = tb.code[v]
+
+Tbl = (rows) ->
+  tb = {cols: Cols(rows[1]), rows: {}, code: {}, kn: 0}
+  for i = #rows, 2, -1                  -- newest first, like the lisp
+    row = {raw: rows[i]}
+    tb.rows[] = row
+    add col, row.raw[col.at] for col in *tb.cols.all
+  discretize tb
+  encode tb
+  tb
+
+--------------------------------------------------------------- tree
+argmost = (better) ->                   -- visitor; f! = best so far
+  out, b4 = nil, nil
+  (x, n) ->
+    if x and (b4 == nil or better n, b4) then out, b4 = x, n
+    out, b4
+
+xpect = (a, b) ->                       -- size-weighted spread
+  (a.n * ydiv(a) + b.n * ydiv(b)) / (a.n + b.n + 1e-32)
+
+cuts = (col, rows, ys, mk, leaf, best) ->
+  nb = #col.bins
+  bins = [mk! for _ = 0, nb]            -- one ys per bin, 0-based
+  for i, row in ipairs rows
+    b = row.cooked[col.at]
+    if b >= 0 and ys[i] then yadd bins[b + 1], ys[i]
+  yes = mk!
+  no = mk!
+  yfold no, bin for bin in *bins
+  for b = 0, nb - 1
+    bin = bins[b + 1]
+    yfold no, bin, -1                   -- syms: bin vs rest
+    unless col.has then yfold yes, bin  -- nums: bins <= b
+    lhs = col.has and bin or yes
+    if leaf <= min lhs.n, no.n
+      best {col, b}, xpect lhs, no
+    if col.has then yfold no, bin
+
+best_cut = (xs, rows, ys, mk, m, leaf) ->
+  best = argmost (a, b) -> a < b
+  for i in *pick #xs, m
+    cuts xs[i + 1], rows, ys, mk, leaf, best
+  best!
+
+yes_ = (col, b, row) ->                 -- row on the yes side of cut?
+  w = row.cooked[col.at]
+  w < 0 or (if col.has then w == b else w <= b)
+
+tree = (rows, y, xs, mk, m, leaf, maxd, lvl=0) ->
+  ys = [y row for row in *rows]
+  cut = lvl < maxd and best_cut xs, rows, ys, mk, m, leaf
+  node = {ys: yadds(ys, mk!), n: #rows}
+  if cut
+    col, b = cut[1], cut[2]
+    node.v = b
+    node.ati, node.sym = col.at, col.has != nil
+    yes = [row for row in *rows when yes_ col, b, row]
+    no  = [row for row in *rows when not yes_ col, b, row]
+    node.yes = tree yes, y, xs, mk, m, leaf, maxd, lvl + 1
+    node.no  = tree no,  y, xs, mk, m, leaf, maxd, lvl + 1
+  node
+
+leaf_of = (node, row) ->                -- flat fields: no col deref
+  while node.ati
+    w = row.cooked[node.ati]
+    ok = w < 0 or (if node.sym then w == node.v else w <= node.v)
+    node = ok and node.yes or node.no
+  node
+
+------------------------------------------------------------- forest
+capped = (rows, y, n) ->                -- <= n random rows per class
+  h, out = {}, {}
+  for row in *shuffle rows
+    v = y(row) or "?"
+    h[v] = (h[v] or 0) + 1
+    if h[v] <= n then out[] = row
+  out
+
+forest = (tb, rows, y) ->
+  xs = tb.cols.x
+  m = k.rf and math.ceil sqrt #xs
+  mk = -> Ys tb.kn
+  rows = capped rows, y, k.cap if k.cap
+  half = ->
+    u = shuffle rows
+    [u[i] for i = 1, floor #rows / 2]
+  out = {}
+  for _ = 1, k.trees
+    out[] = tree k.trees == 1 and rows or half!, y, xs, mk, m,
+                 k.leaf, k.maxd
+  out
+
+vote = (trees, row, kn) ->              -- class -> mean leaf share
+  h, w = [0 for _ = 1, kn], #trees
+  for node in *trees
+    ys = leaf_of(node, row).ys
+    for i = 1, kn
+      h[i] += ys.cs[i] / ys.n / w
+  h
+
+votes = (trees, rows, y, kn) ->
+  [{y(row), vote trees, row, kn} for row in *rows]
+
+---------------------------------------------------------------- auc
+auc = (pos, neg) ->                     -- Mann-Whitney, ties halved:
+  return nil if #pos == 0 or #neg == 0  -- the chance a random pos
+  table.sort neg                        -- outscores a random neg
+  s = 0
+  for p in *pos
+    s += (bisect(neg, p) + bisect(neg, p, true)) / 2
+  s / (#pos * #neg)
+
+aucs = (wps, kn) ->                     -- expected 1-vs-rest, 0..100
+  n, sum = 0, 0
+  for code = 1, kn
+    pos = [wp[2][code] for wp in *wps when wp[1] == code]
+    neg = [wp[2][code] for wp in *wps when wp[1] != code]
+    a = auc pos, neg
+    if a
+      n += #pos
+      sum += #pos * a
+  100 * sum / max n, 1
+
+-- the module: what balsa_eg.yue (and any other rig) may touch
+{:k, :srand, :rand, :shuffle, :bisect, :csv, :Tbl, :adds, :div,
+ :tree, :leaf_of, :forest, :votes, :auc, :aucs}

@@ -7,7 +7,7 @@ total secs as log bars on the left.  Only sets where every arm has folds
 appear (tabicl3.py's report already drops the rest).
 
 Usage: python3 plot3.py ens3.txt OUT.png      (also writes OUT.pdf)"""
-import sys, numpy as np, matplotlib; matplotlib.use("Agg")
+import os, sys, numpy as np, matplotlib; matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 L=open(sys.argv[1]).read().splitlines()
 sec=[float(v) for v in [l for l in L if l.startswith("#secs")][0].split()[3:7]]
@@ -43,8 +43,10 @@ else:    # the 39 non-SE classify sets, grouped by NAME (some sets may
   G=[(h,fs) for h,fs in G if fs]
   order=[f for _,fs in G for f in fs]
   CAPY,TAB=52,[.555,.14,.40,.40]
-T=[("lisp(1)",0,"#2ca02c","^"),("lgbm(100)",2,"#2a6fdb","o"),
-   ("bald(30)",1,"#e8613c","s"),("TabICL",3,"#000000","D")]
+T=[(os.getenv("LAB1","lisp(1)"),0,"#2ca02c","^"),
+   ("lgbm(100)",2,"#2a6fdb","o"),
+   (os.getenv("LAB30","bald(30)"),1,"#e8613c","s"),
+   ("TabICL",3,"#000000","D")]
 # sized for an IEEE 2-col figure: drawn at 2x (14.3in wide), printed at 7.16in,
 # so a FS of n pt prints at n/2 pt
 XT=14 if len(order)<50 else 10   # x tick font
@@ -98,7 +100,7 @@ for i,b in enumerate(bt):
           ha="center",va="bottom",weight="bold",fontsize=FS["bar"]-1)
 bx.set_xticks(range(len(bt)))
 bx.set_xticklabels([b[1].replace("(","\n(") for b in bt],fontsize=FS["bar"]-2)
-bx.set_title("total secs, log scale\n(wall clock, 5 folds\nat a time, M4, 10 cores)",fontsize=FS["head"]-5)
+bx.set_title("total secs, log scale\n(summed over folds,\n1 thread each)",fontsize=FS["head"]-5)
 bx.set_yticks([]); bx.set_facecolor("#fcfcfa"); bx.set_xlim(-.55,len(bt)-.45)
 for s_ in ("top","right","left"): bx.spines[s_].set_visible(False)
 
