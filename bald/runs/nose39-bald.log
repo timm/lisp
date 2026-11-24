@@ -1,0 +1,53 @@
+# hepatitis (155 rows) done; 10/390 folds, 0.1 min, eta 2.4 min
+# spect.test (187 rows) done; 20/390 folds, 0.1 min, eta 2.5 min
+# autos (205 rows) done; 30/390 folds, 0.2 min, eta 2.6 min
+# sonar (208 rows) done; 40/390 folds, 0.4 min, eta 3.1 min
+# glass (214 rows) done; 50/390 folds, 0.4 min, eta 2.8 min
+# audiology (226 rows) done; 60/390 folds, 0.6 min, eta 3.4 min
+# breast.cancer (286 rows) done; 70/390 folds, 0.7 min, eta 3.2 min
+# heart.c (303 rows) done; 80/390 folds, 0.8 min, eta 3.0 min
+# ecoli (336 rows) done; 90/390 folds, 0.8 min, eta 2.8 min
+# primary.tumor (339 rows) done; 100/390 folds, 1.0 min, eta 2.8 min
+# ionosphere (351 rows) done; 110/390 folds, 1.1 min, eta 2.8 min
+# colic (368 rows) done; 120/390 folds, 1.2 min, eta 2.7 min
+# vote (435 rows) done; 130/390 folds, 1.3 min, eta 2.6 min
+# cylinder.bands (540 rows) done; 140/390 folds, 1.5 min, eta 2.7 min
+# wdbc (569 rows) done; 150/390 folds, 1.7 min, eta 2.7 min
+# ilpd (583 rows) done; 160/390 folds, 1.8 min, eta 2.5 min
+# balance.scale (625 rows) done; 170/390 folds, 1.9 min, eta 2.4 min
+# soybean (683 rows) done; 180/390 folds, 2.2 min, eta 2.6 min
+# credit.a (690 rows) done; 190/390 folds, 2.4 min, eta 2.5 min
+# breast.w (699 rows) done; 200/390 folds, 2.5 min, eta 2.4 min
+# eucalyptus (736 rows) done; 210/390 folds, 2.6 min, eta 2.3 min
+# blood-transfusion-service-center (748 rows) done; 220/390 folds, 2.7 min, eta 2.1 min
+# diabetes (768 rows) done; 230/390 folds, 2.9 min, eta 2.0 min
+# vehicle (846 rows) done; 240/390 folds, 3.0 min, eta 1.9 min
+# tic-tac-toe (958 rows) done; 250/390 folds, 3.2 min, eta 1.8 min
+# german (1000 rows) done; 260/390 folds, 3.4 min, eta 1.7 min
+# credit.g (1000 rows) done; 270/390 folds, 3.6 min, eta 1.6 min
+# solar.flare2 (1066 rows) done; 280/390 folds, 3.8 min, eta 1.5 min
+# cmc (1473 rows) done; 290/390 folds, 4.0 min, eta 1.4 min
+# car (1728 rows) done; 300/390 folds, 4.3 min, eta 1.3 min
+# Internet-Advertisements fold 0 tabicl: TabICL fold over 900s
+# Internet-Advertisements: TabICL timed out on the probe fold; dropping its other 9 folds
+# hypothyroid (3772 rows) done; 311/381 folds, 21.3 min, eta 4.8 min
+# sick (3772 rows) done; 321/381 folds, 23.1 min, eta 4.3 min
+# churn (5000 rows) done; 331/381 folds, 25.4 min, eta 3.8 min
+# COMPAS53 (7102 rows) done; 341/381 folds, 29.2 min, eta 3.4 min
+# nomao fold 0 tabicl: TabICL fold over 900s
+# nomao: TabICL timed out on the probe fold; dropping its other 9 folds
+# bank-marketing fold 1 tabicl: TabICL fold over 900s
+# bank-marketing fold 2 tabicl: TabICL fold over 900s
+# bank-marketing (45211 rows) done; 352/372 folds, 124.9 min, eta 7.1 min
+# electricity (45312 rows) done; 362/372 folds, 196.1 min, eta 5.4 min
+# adult fold 2 tabicl: TabICL fold over 900s
+# adult fold 1 tabicl: TabICL fold over 900s
+# adult fold 3 tabicl: TabICL fold over 900s
+# adult fold 4 tabicl: TabICL fold over 900s
+# adult fold 5 tabicl: TabICL fold over 900s
+# adult fold 6 tabicl: TabICL fold over 900s
+# adult fold 8 tabicl: TabICL fold over 900s
+# adult fold 7 tabicl: TabICL fold over 900s
+# adult (48842 rows) done; 372/372 folds, 283.7 min, eta 0.0 min
+# Internet-Advertisements: incomplete, skipped
+# nomao: incomplete, skipped

@@ -1,0 +1,127 @@
+[00:12:07] start
+# small: 530 folds, 5 workers, batch=1
+# small 10/530, 0.2 min, eta 8.6 min
+# small 20/530, 0.2 min, eta 5.6 min
+# small 30/530, 0.3 min, eta 4.8 min
+# small 40/530, 0.4 min, eta 5.0 min
+# small 50/530, 0.6 min, eta 5.5 min
+# small 60/530, 0.8 min, eta 5.9 min
+# small 70/530, 0.8 min, eta 5.2 min
+# small 80/530, 0.8 min, eta 4.7 min
+# small 90/530, 0.9 min, eta 4.5 min
+# small 100/530, 1.0 min, eta 4.2 min
+# small 110/530, 1.0 min, eta 4.0 min
+# small 120/530, 1.1 min, eta 3.8 min
+# small 130/530, 1.2 min, eta 3.6 min
+# small 140/530, 1.3 min, eta 3.6 min
+# small 150/530, 1.3 min, eta 3.3 min
+# small 160/530, 1.3 min, eta 3.1 min
+# small 170/530, 1.4 min, eta 3.0 min
+# small 180/530, 1.4 min, eta 2.8 min
+# small 190/530, 1.5 min, eta 2.7 min
+# small 200/530, 1.6 min, eta 2.6 min
+# small 210/530, 1.6 min, eta 2.5 min
+# small 220/530, 1.7 min, eta 2.4 min
+# small 230/530, 1.8 min, eta 2.3 min
+# small 240/530, 1.8 min, eta 2.2 min
+# small 250/530, 2.0 min, eta 2.2 min
+# small 260/530, 2.0 min, eta 2.1 min
+# small 270/530, 2.0 min, eta 2.0 min
+# small 280/530, 2.1 min, eta 1.9 min
+# small 290/530, 2.2 min, eta 1.8 min
+# small 300/530, 2.3 min, eta 1.8 min
+# small 310/530, 2.4 min, eta 1.7 min
+# small 320/530, 2.4 min, eta 1.6 min
+# small 330/530, 2.5 min, eta 1.5 min
+# small 340/530, 2.6 min, eta 1.4 min
+# small 350/530, 2.7 min, eta 1.4 min
+# small 360/530, 2.9 min, eta 1.4 min
+# small 370/530, 3.1 min, eta 1.3 min
+# small 380/530, 3.2 min, eta 1.3 min
+# small 390/530, 3.3 min, eta 1.2 min
+# small 400/530, 3.4 min, eta 1.1 min
+# small 410/530, 3.7 min, eta 1.1 min
+# small 420/530, 4.0 min, eta 1.1 min
+# small 430/530, 4.3 min, eta 1.0 min
+# small 440/530, 4.4 min, eta 0.9 min
+# small 450/530, 4.5 min, eta 0.8 min
+# small 460/530, 4.5 min, eta 0.7 min
+# small 470/530, 4.6 min, eta 0.6 min
+# small 480/530, 5.5 min, eta 0.6 min
+# small 490/530, 6.5 min, eta 0.5 min
+# small 500/530, 6.6 min, eta 0.4 min
+# small 510/530, 7.0 min, eta 0.3 min
+# small 520/530, 7.3 min, eta 0.1 min
+# small 530/530, 8.2 min, eta 0.0 min
+# big: 80 folds, 2 workers, batch=1
+# big 10/80, 1.9 min, eta 13.1 min
+# big 20/80, 8.8 min, eta 26.3 min
+# big 30/80, 10.9 min, eta 18.2 min
+# big 40/80, 13.4 min, eta 13.4 min
+# big 50/80, 15.9 min, eta 9.5 min
+# big 60/80, 17.9 min, eta 6.0 min
+# big 70/80, 21.3 min, eta 3.0 min
+# big 80/80, 24.1 min, eta 0.0 min
+[00:44:25] run done: #mean auc                          68.1        77.2        78.6        83.7       
+[00:44:26] figure drawn
+Rc files read:
+  NONE
+Latexmk: This is Latexmk, John Collins, 15 June 2025. Version 4.87.
+No existing .aux file, so I'll make a simple one, and require run of *latex.
+Latexmk: applying rule 'pdflatex'...
+Rule 'pdflatex':  Reasons for rerun
+Category 'other':
+  Rerun of 'pdflatex' forced or previously required:
+    Reason or flag: 'Initial setup'
+
+------------
+Run number 1 of rule 'pdflatex'
+------------
+------------
+Running 'pdflatex  -interaction=nonstopmode -halt-on-error -recorder  "main.tex"'
+------------
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) (preloaded format=pdflatex)
+ restricted \write18 enabled.
+entering extended mode
+(./main.tex
+LaTeX2e <2025-11-01>
+L3 programming layer <2026-01-19>
+(./elsarticle.cls
+Document Class: elsarticle 2025/01/11, 3.4c: Elsevier Ltd
+(/Users/timm/Library/TinyTeX/texmf-dist/tex/latex/base/fontenc.sty) (/Users/timm/Library/TinyTeX/texmf-dist/tex/latex/l3kernel/expl3.sty (/Users/timm/Library/TinyTeX/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def)) (/Users/timm/Library/TinyTeX/texmf-dist/tex/latex/l3packages/xparse/xparse.sty) (/Users/timm/Library/TinyTeX/texmf-dist/tex/latex/etoolbox/etoolbox.sty) (/Users/timm/Library/TinyTeX/texmf-dist/tex/latex/base/article.cls
+Document Class: article 2025/01/22 v1.4n Standard LaTeX document class
+(/Users/timm/Library/TinyTeX/texmf-dist/tex/latex/base/size10.clo)) (/Users/timm/Library/TinyTeX/texmf-dist/tex/latex/graphics/graphicx.sty (/Users/timm/Library/TinyTeX/texmf-dist/tex/latex/graphics/keyval.sty) (/Users/timm/Library/TinyTeX/texmf-dist/tex/latex/graphics/graphics.sty (/Users/timm/Library/TinyTeX/texmf-dist/tex/latex/graphics/trig.sty) (/Users/timm/Library/TinyTeX/texmf-dist/tex/latex/graphics-cfg/graphics.cfg) (/Users/timm/Library/TinyTeX/texmf-dist/tex/latex/graphics-def/pdftex.def))) (/Users/timm/Library/TinyTeX/texmf-dist/tex/latex/natbib/natbib.sty) (/Users/timm/Library/TinyTeX/texmf-dist/tex/latex/geometry/geometry.sty (/Users/timm/Library/TinyTeX/texmf-dist/tex/generic/iftex/ifvtex.sty (/Users/timm/Library/TinyTeX/texmf-dist/tex/generic/iftex/iftex.sty))) (/Users/timm/Library/TinyTeX/texmf-dist/tex/latex/base/fleqn.clo)) (/Users/timm/Library/TinyTeX/texmf-dist/tex/latex/txfonts/txfonts.sty) (/Users/timm/Library/TinyTeX/texmf-dist/tex/latex/xcolor/xcolor.sty (/Users/timm/Library/TinyTeX/texmf-dist/tex/latex/graphics-cfg/color.cfg) (/Users/timm/Library/TinyTeX/texmf-dist/tex/latex/graphics/mathcolor.ltx)) (/Users/timm/Library/TinyTeX/texmf-dist/tex/latex/colortbl/colortbl.sty (/Users/timm/Library/TinyTeX/texmf-dist/tex/latex/tools/array.sty)) (/Users/timm/Library/TinyTeX/texmf-dist/tex/latex/wrapfig/wrapfig.sty) (/Users/timm/Library/TinyTeX/texmf-dist/tex/latex/amsfonts/amssymb.sty (/Users/timm/Library/TinyTeX/texmf-dist/tex/latex/amsfonts/amsfonts.sty)) (/Users/timm/Library/TinyTeX/texmf-dist/tex/latex/amsmath/amsmath.sty
+For additional information on amsmath, use the `?' option.
+(/Users/timm/Library/TinyTeX/texmf-dist/tex/latex/amsmath/amstext.sty (/Users/timm/Library/TinyTeX/texmf-dist/tex/latex/amsmath/amsgen.sty)) (/Users/timm/Library/TinyTeX/texmf-dist/tex/latex/amsmath/amsbsy.sty) (/Users/timm/Library/TinyTeX/texmf-dist/tex/latex/amsmath/amsopn.sty))
+
+! LaTeX Error: File `xurl.sty' not found.
+
+Type X to quit or <RETURN> to proceed,
+or enter new name. (Default extension: sty)
+
+Enter file name: 
+! Emergency stop.
+<read *> 
+         
+l.12 ^^M
+        
+!  ==> Fatal error occurred, no output PDF file produced!
+Transcript written on main.log.
+Latexmk: Getting log file 'main.log'
+Latexmk: Examining 'main.fls'
+Latexmk: Examining 'main.log'
+Latexmk: Missing input file 'xurl.sty' message in .log file:
+  ! LaTeX Error: File `xurl.sty' not found.
+Latexmk: Using bibtex to make bibliography file(s).
+Latexmk: Errors, so I did not complete making targets
+Collected error summary (may duplicate other messages):
+  pdflatex: Command for 'pdflatex' gave return code 1
+      Refer to 'main.log' and/or above output for details
+
+Latexmk: Sometimes, the -f option can be used to get latexmk
+  to try to force complete processing.
+  But normally, you will need to correct the file(s) that caused the
+  error, and then rerun latexmk.
+  In some cases, it is best to clean out generated files before rerunning
+  latexmk after you've corrected the files.
+[00:44:26] FAIL: latex did not build; not pushing

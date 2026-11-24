@@ -1,0 +1,310 @@
+#data                             1:q16       n30         lgbm        tabicl      
+se/defect/ant                      67.9        81.3        79.0        83.8!      
+se/defect/arc                      58.9        68.7        62.6        71.1!      
+se/defect/camel-1.0                54.9        75.7!       75.2!       72.9!      
+se/defect/camel-1.2                58.8        64.0        63.8        83.4!      
+se/defect/camel-1.4                58.6        69.9        70.2        82.6!      
+se/defect/camel-1.6                60.7        70.1        68.8        87.8!      
+se/defect/ivy-1.1                  61.4        72.7!       70.3        68.4       
+se/defect/ivy-1.4                  51.5        62.3        56.8        66.0!      
+se/defect/ivy-2.0                  63.0        78.1!       72.9        80.7       
+se/defect/jedit-3.2                69.9        84.3        81.6        90.7!      
+se/defect/jedit-4.0                66.1        79.8        77.7        86.4!      
+se/defect/jedit-4.1                67.5        82.0        79.3        86.6!      
+se/defect/jedit-4.2                64.7        82.7        80.3        88.0!      
+se/defect/jedit-4.3                71.3        85.4!       77.3        84.2!      
+se/defect/log4j-1.0                67.7        82.4!       77.2        81.3!      
+se/defect/log4j-1.1                74.0        83.7!       83.0!       82.4!      
+se/defect/log4j-1.2                64.7        75.9!       74.6!       75.6!      
+se/defect/lucene-2.0               63.2        72.8!       71.1        73.3!      
+se/defect/lucene-2.2               56.7        63.6!       62.1        64.6!      
+se/defect/lucene-2.4               63.5        76.4        75.5        78.7!      
+se/defect/poi-1.5                  68.9        80.1        77.5        81.5!      
+se/defect/poi-2.0                  61.7        75.6!       71.7        75.4!      
+se/defect/poi-2.5                  78.3        89.8        89.8        94.9!      
+se/defect/poi-3.0                  76.4        87.8        87.2        90.0!      
+se/defect/prop                     64.9        72.0!       72.3!       73.5!      
+se/defect/redaktor                 70.6        71.9        72.7!       74.8!      
+se/defect/synapse-1.0              60.0        77.9!       71.8        76.1       
+se/defect/synapse-1.1              67.1        76.6        75.2        84.8!      
+se/defect/synapse-1.2              65.1        79.0        75.4        82.7!      
+se/defect/tomcat                   61.6        81.2        78.9        84.0!      
+se/defect/velocity-1.4             76.3        84.5        80.3        94.3!      
+se/defect/velocity-1.5             71.7        80.5        78.3        83.1!      
+se/defect/velocity-1.6             65.9        77.7        77.5        80.9!      
+se/defect/xalan-2.4                62.7        79.3        78.6        82.1!      
+se/defect/xalan-2.5                61.8        72.2        72.7        85.7!      
+se/defect/xalan-2.6                71.9        84.3        83.4        88.5!      
+se/defect/xalan-2.7                78.2        88.8        91.4        94.0!      
+se/defect/xerces-1.2               64.1        76.7        76.6        91.2!      
+se/defect/xerces-1.3               66.2        82.4        79.2        88.3!      
+se/defect/xerces-1.4               89.0        95.2        94.2        98.5!      
+se/issues/7/camel                  74.2        85.5        86.8        88.5!      
+se/issues/7/cloudstack             58.6        65.0        68.8        71.7!      
+se/issues/7/cocoon                 73.2        89.5        90.0        90.4!      
+se/issues/7/deeplearning           59.4        69.2        70.1        72.5!      
+se/issues/7/hadoop                 72.5        88.0        85.2        91.4!      
+se/issues/7/hive                   75.4        91.0        88.2        95.5!      
+se/issues/7/node                   57.7        66.4        69.9        72.3!      
+se/issues/7/ofbiz                  54.3        59.7        65.3        68.4!      
+se/issues/7/qpid                   64.4        72.0        72.7        76.4!      
+se/smells/DataClass                59.4        63.0        60.1        69.1!      
+se/smells/FeatureEnvy              99.0!       99.7        99.3        99.9       
+se/smells/GodClass                 96.0        99.9!       96.7        99.8!      
+se/smells/LongMethod               59.5        65.2!       59.9        65.2!      
+se/static/cooked/ant               81.0        89.2        93.9        94.8!      
+se/static/cooked/cassandra         80.1        90.4        94.9        95.7!      
+se/static/cooked/commons           88.2        97.0        96.9        98.6!      
+se/static/cooked/derby             79.2        89.6        94.3        95.5!      
+se/static/cooked/jmeter            78.3        87.2        89.6        93.8!      
+se/static/cooked/lucene-solr       67.0        77.8        90.9        93.8!      
+se/static/cooked/maven             86.9        95.3        97.2        98.6!      
+se/static/cooked/tomcat            71.9        83.0        93.4        95.5!      
+
+#wins                                 1          14           5          57       
+#mean auc                          68.6        79.5        78.8        83.9       
+#secs (all data)                    3.7        14.3        12.9       5667.2       
+%folds se/defect/ant 1:q16 67.3 68.6 65.4 73.6 67.1 68.3 72.0 67.1 66.8 63.4
+%folds se/defect/ant n30 84.6 79.7 81.7 82.5 80.8 81.5 82.8 80.1 82.2 77.4
+%folds se/defect/ant lgbm 82.3 75.8 79.9 81.3 77.5 80.0 79.7 77.3 79.7 76.2
+%folds se/defect/ant tabicl 86.0 81.8 83.1 84.2 82.9 84.2 84.1 83.4 84.5 84.1
+%folds se/defect/arc 1:q16 59.2 47.7 59.5 59.2 55.5 67.8 54.9 61.5 58.5 64.9
+%folds se/defect/arc n30 66.2 73.6 71.7 61.7 63.5 77.8 67.9 62.9 73.8 67.4
+%folds se/defect/arc lgbm 63.1 66.7 60.8 60.3 56.4 67.7 58.4 66.4 64.0 61.9
+%folds se/defect/arc tabicl 67.9 65.7 75.7 73.5 62.6 75.7 68.5 76.6 73.6 71.2
+%folds se/defect/camel-1.0 1:q16 77.2 53.2 55.2 57.4 47.3 50.9 60.3 47.5 47.0 52.7
+%folds se/defect/camel-1.0 n30 77.9 63.7 78.3 77.3 89.9 69.4 72.8 83.1 73.9 70.5
+%folds se/defect/camel-1.0 lgbm 75.0 71.5 76.0 70.5 75.8 69.6 73.2 81.8 79.2 79.4
+%folds se/defect/camel-1.0 tabicl 80.0 65.5 76.3 64.2 61.3 63.3 80.7 85.5 73.8 78.3
+%folds se/defect/camel-1.2 1:q16 58.6 55.7 55.6 56.4 63.0 61.2 58.9 58.5 62.8 57.4
+%folds se/defect/camel-1.2 n30 61.4 63.5 62.6 63.1 67.5 67.0 61.4 63.9 65.9 63.5
+%folds se/defect/camel-1.2 lgbm 64.3 61.5 62.7 62.8 67.5 63.6 63.8 64.0 65.1 63.1
+%folds se/defect/camel-1.2 tabicl 83.8 81.9 81.9 83.0 84.1 86.6 84.8 79.1 84.7 83.7
+%folds se/defect/camel-1.4 1:q16 61.8 60.3 58.1 53.6 59.2 54.6 60.7 56.0 61.5 59.9
+%folds se/defect/camel-1.4 n30 73.4 69.5 67.7 73.7 70.2 70.9 68.2 66.0 67.9 71.8
+%folds se/defect/camel-1.4 lgbm 70.6 66.4 66.0 71.6 71.6 71.6 73.2 69.0 70.2 71.8
+%folds se/defect/camel-1.4 tabicl 86.9 79.4 77.7 85.1 80.6 83.9 84.6 83.4 83.2 81.3
+%folds se/defect/camel-1.6 1:q16 59.3 62.0 63.0 58.0 58.5 55.6 65.5 60.3 62.0 62.7
+%folds se/defect/camel-1.6 n30 72.0 71.8 72.1 67.2 69.8 68.3 69.2 69.0 70.9 70.7
+%folds se/defect/camel-1.6 lgbm 69.5 68.0 69.7 65.8 69.7 69.6 68.1 69.7 69.0 69.1
+%folds se/defect/camel-1.6 tabicl 88.5 88.8 87.6 86.2 88.7 89.5 86.5 89.9 87.2 85.5
+%folds se/defect/ivy-1.1 1:q16 53.9 69.0 49.9 61.8 71.8 62.5 49.7 65.5 64.4 65.9
+%folds se/defect/ivy-1.1 n30 80.9 67.5 77.4 65.2 78.0 67.2 69.7 72.5 71.0 77.9
+%folds se/defect/ivy-1.1 lgbm 77.5 63.2 70.7 69.2 73.5 65.5 65.7 73.6 71.9 72.4
+%folds se/defect/ivy-1.1 tabicl 78.1 66.3 59.9 62.5 69.9 66.1 64.6 70.4 71.5 74.6
+%folds se/defect/ivy-1.4 1:q16 53.4 46.9 62.7 42.5 48.7 55.5 55.8 53.6 44.0 51.5
+%folds se/defect/ivy-1.4 n30 51.8 62.6 66.1 54.1 61.9 69.1 66.4 80.4 55.9 54.5
+%folds se/defect/ivy-1.4 lgbm 65.2 60.1 56.8 44.9 65.9 58.1 60.0 83.0 33.0 41.0
+%folds se/defect/ivy-1.4 tabicl 57.5 68.0 67.0 68.3 78.8 66.5 70.2 88.7 42.7 52.2
+%folds se/defect/ivy-2.0 1:q16 66.0 59.1 55.6 51.5 69.8 57.5 65.8 67.4 68.3 69.1
+%folds se/defect/ivy-2.0 n30 78.9 82.1 74.3 80.6 77.4 67.2 80.7 82.1 75.8 81.6
+%folds se/defect/ivy-2.0 lgbm 72.3 73.9 70.5 72.1 76.4 70.0 64.1 82.5 75.2 72.3
+%folds se/defect/ivy-2.0 tabicl 78.2 83.7 79.5 80.4 78.3 77.1 81.4 83.5 80.4 83.9
+%folds se/defect/jedit-3.2 1:q16 60.9 55.5 77.7 72.6 70.7 71.8 77.0 68.0 69.0 75.9
+%folds se/defect/jedit-3.2 n30 78.8 84.2 86.0 87.0 82.2 86.2 87.4 81.5 83.1 86.3
+%folds se/defect/jedit-3.2 lgbm 76.9 77.8 83.6 83.0 80.0 85.8 83.6 78.5 82.1 84.8
+%folds se/defect/jedit-3.2 tabicl 86.5 90.4 93.2 93.1 87.9 91.3 92.0 90.7 90.1 92.2
+%folds se/defect/jedit-4.0 1:q16 65.4 65.3 67.1 69.0 68.5 63.4 66.5 66.2 63.2 66.4
+%folds se/defect/jedit-4.0 n30 83.1 81.3 79.8 78.1 79.1 81.0 82.0 78.6 80.3 74.7
+%folds se/defect/jedit-4.0 lgbm 79.1 78.9 79.2 78.3 78.5 78.4 78.6 76.3 75.6 73.8
+%folds se/defect/jedit-4.0 tabicl 88.0 86.0 84.0 87.3 86.4 87.2 86.6 89.3 87.9 81.8
+%folds se/defect/jedit-4.1 1:q16 68.2 69.7 63.6 67.0 68.9 68.2 73.1 54.6 72.6 69.0
+%folds se/defect/jedit-4.1 n30 82.0 78.9 81.5 84.1 87.5 84.5 81.3 80.0 81.6 78.5
+%folds se/defect/jedit-4.1 lgbm 81.0 76.2 82.3 78.6 81.8 84.8 77.3 75.5 79.3 76.3
+%folds se/defect/jedit-4.1 tabicl 87.8 87.8 85.2 87.3 88.5 86.8 86.8 85.3 84.4 86.0
+%folds se/defect/jedit-4.2 1:q16 61.4 68.2 68.2 66.2 66.3 64.8 72.2 57.0 64.4 58.0
+%folds se/defect/jedit-4.2 n30 74.8 84.3 87.9 79.9 80.3 90.0 79.1 82.4 85.5 82.9
+%folds se/defect/jedit-4.2 lgbm 77.8 83.6 82.6 76.9 79.8 84.9 79.7 76.8 84.8 76.5
+%folds se/defect/jedit-4.2 tabicl 81.6 88.7 91.4 85.5 85.9 90.9 87.5 90.9 88.4 89.6
+%folds se/defect/jedit-4.3 1:q16 71.2 57.8 72.4 64.5 93.8 69.8 55.6 80.2 71.6 75.9
+%folds se/defect/jedit-4.3 n30 92.8 79.2 81.7 74.5 98.6 80.4 74.2 93.5 91.4 87.7
+%folds se/defect/jedit-4.3 lgbm 78.6 61.7 77.4 77.4 99.4 64.3 67.0 88.9 80.7 77.3
+%folds se/defect/jedit-4.3 tabicl 88.2 81.4 83.5 90.6 99.6 77.4 65.5 78.7 93.3 83.8
+%folds se/defect/log4j-1.0 1:q16 75.8 55.8 68.1 69.1 64.9 59.2 70.3 73.3 73.0 67.2
+%folds se/defect/log4j-1.0 n30 86.4 81.0 89.3 77.9 79.1 77.6 79.7 87.8 84.3 80.7
+%folds se/defect/log4j-1.0 lgbm 84.9 70.3 87.3 70.1 76.0 74.4 77.3 82.5 75.0 73.8
+%folds se/defect/log4j-1.0 tabicl 85.8 75.5 81.6 77.6 81.7 81.6 79.6 88.4 79.9 81.0
+%folds se/defect/log4j-1.1 1:q16 75.6 69.2 67.3 76.9 77.9 76.9 73.7 77.4 66.7 78.1
+%folds se/defect/log4j-1.1 n30 83.8 80.4 84.9 80.5 91.4 80.7 85.3 78.8 86.6 84.8
+%folds se/defect/log4j-1.1 lgbm 90.9 81.4 87.4 79.6 89.1 79.9 83.8 75.0 83.6 79.2
+%folds se/defect/log4j-1.1 tabicl 87.6 77.2 77.0 80.2 90.5 75.0 83.7 81.2 85.1 86.6
+%folds se/defect/log4j-1.2 1:q16 89.5 63.5 64.0 73.0 53.4 73.2 56.7 63.8 40.3 69.4
+%folds se/defect/log4j-1.2 n30 60.7 58.1 70.7 88.0 84.1 80.9 78.9 83.0 73.8 80.7
+%folds se/defect/log4j-1.2 lgbm 75.6 71.7 69.9 61.3 71.3 82.1 71.6 86.7 78.0 77.4
+%folds se/defect/log4j-1.2 tabicl 55.7 69.9 67.2 80.2 76.4 83.1 85.9 83.5 77.8 76.3
+%folds se/defect/lucene-2.0 1:q16 63.9 70.5 64.7 66.5 52.2 59.7 63.9 60.1 70.3 60.5
+%folds se/defect/lucene-2.0 n30 72.2 76.6 69.1 77.1 72.0 66.2 72.0 73.2 77.3 71.9
+%folds se/defect/lucene-2.0 lgbm 69.5 74.7 65.0 69.6 70.0 68.3 73.2 71.5 75.5 74.3
+%folds se/defect/lucene-2.0 tabicl 71.9 76.7 69.3 81.7 72.4 67.9 71.4 73.1 74.8 74.3
+%folds se/defect/lucene-2.2 1:q16 56.1 51.9 54.4 59.6 57.7 61.5 54.3 56.9 57.8 57.0
+%folds se/defect/lucene-2.2 n30 60.5 61.9 65.8 64.4 63.5 65.2 64.0 58.5 63.7 68.1
+%folds se/defect/lucene-2.2 lgbm 59.2 59.3 67.0 69.2 61.6 62.2 59.7 58.8 62.2 61.6
+%folds se/defect/lucene-2.2 tabicl 63.0 64.0 69.6 71.1 68.2 61.9 58.9 58.6 66.3 64.9
+%folds se/defect/lucene-2.4 1:q16 63.8 59.7 65.2 59.9 66.9 72.2 63.0 63.9 65.4 54.7
+%folds se/defect/lucene-2.4 n30 81.1 72.0 76.6 77.2 75.7 79.6 74.3 74.2 75.2 77.7
+%folds se/defect/lucene-2.4 lgbm 77.6 70.6 73.5 76.4 76.7 79.2 74.3 72.6 76.6 77.6
+%folds se/defect/lucene-2.4 tabicl 81.0 74.8 78.2 81.4 80.8 81.3 77.3 72.9 78.6 80.2
+%folds se/defect/poi-1.5 1:q16 74.1 67.5 68.2 78.2 64.5 71.7 68.2 67.6 65.2 63.3
+%folds se/defect/poi-1.5 n30 85.2 75.0 79.5 81.8 78.1 82.8 78.3 80.3 77.8 82.1
+%folds se/defect/poi-1.5 lgbm 82.5 72.8 78.7 77.3 74.6 77.9 77.5 78.8 76.3 78.9
+%folds se/defect/poi-1.5 tabicl 86.0 77.8 83.7 78.2 80.6 84.1 80.0 78.7 81.3 84.2
+%folds se/defect/poi-2.0 1:q16 59.0 56.8 57.4 68.8 68.2 66.5 63.0 52.1 68.2 56.6
+%folds se/defect/poi-2.0 n30 66.8 73.0 78.5 82.9 79.6 80.5 73.2 67.2 81.2 72.7
+%folds se/defect/poi-2.0 lgbm 69.4 66.7 72.2 77.8 75.4 79.7 65.5 66.6 75.1 69.1
+%folds se/defect/poi-2.0 tabicl 73.4 69.8 78.8 81.7 80.6 82.6 73.7 68.9 74.7 69.6
+%folds se/defect/poi-2.5 1:q16 79.0 79.2 77.1 76.5 82.4 78.0 80.5 76.9 72.0 81.2
+%folds se/defect/poi-2.5 n30 89.3 88.8 89.7 88.2 91.0 89.6 92.0 88.3 93.1 88.2
+%folds se/defect/poi-2.5 lgbm 91.3 90.1 90.6 89.5 89.0 88.3 89.7 87.7 92.2 89.4
+%folds se/defect/poi-2.5 tabicl 94.7 96.2 95.9 94.2 95.0 94.5 96.6 94.0 94.7 93.2
+%folds se/defect/poi-3.0 1:q16 75.8 77.2 81.2 76.1 68.7 75.7 77.6 76.0 75.4 80.0
+%folds se/defect/poi-3.0 n30 88.7 87.3 87.8 88.1 85.3 86.7 87.8 88.7 88.4 88.7
+%folds se/defect/poi-3.0 lgbm 87.9 87.5 87.6 88.9 83.9 86.9 87.1 86.2 87.1 88.7
+%folds se/defect/poi-3.0 tabicl 91.2 89.5 91.8 91.4 86.2 88.3 89.9 90.7 91.1 90.4
+%folds se/defect/prop 1:q16 64.5 68.6 64.1 66.4 70.6 63.1 66.2 61.0 62.9 61.6
+%folds se/defect/prop n30 73.4 76.3 70.6 71.5 66.3 72.3 71.5 71.1 82.2 65.1
+%folds se/defect/prop lgbm 74.5 78.3 76.2 70.7 68.6 75.4 70.2 71.1 71.9 66.4
+%folds se/defect/prop tabicl 70.6 81.2 70.1 70.2 68.9 77.5 76.2 76.9 77.6 65.9
+%folds se/defect/redaktor 1:q16 68.8 76.4 55.4 74.8 79.2 77.0 66.1 66.4 74.6 67.2
+%folds se/defect/redaktor n30 69.3 69.0 56.9 72.7 71.4 80.3 78.7 71.6 81.1 67.9
+%folds se/defect/redaktor lgbm 68.9 64.7 55.5 79.4 79.1 79.7 81.4 66.7 74.5 77.4
+%folds se/defect/redaktor tabicl 69.8 69.2 60.2 78.4 83.6 81.5 87.2 73.0 77.4 67.5
+%folds se/defect/synapse-1.0 1:q16 67.5 68.9 54.5 63.5 60.9 52.7 55.5 60.4 62.4 53.9
+%folds se/defect/synapse-1.0 n30 77.8 80.6 72.6 76.8 72.3 82.9 76.5 81.1 79.5 78.5
+%folds se/defect/synapse-1.0 lgbm 76.1 77.9 71.6 63.2 69.7 78.1 78.4 56.1 76.4 70.4
+%folds se/defect/synapse-1.0 tabicl 72.8 82.6 74.3 78.9 71.4 82.3 71.3 75.9 74.8 76.2
+%folds se/defect/synapse-1.1 1:q16 69.9 68.3 64.0 73.8 70.2 65.9 63.4 70.0 64.9 60.9
+%folds se/defect/synapse-1.1 n30 79.1 72.9 77.6 76.3 74.0 75.7 76.8 76.5 74.9 81.9
+%folds se/defect/synapse-1.1 lgbm 73.4 76.3 76.5 77.5 72.3 78.6 74.7 79.2 69.8 73.4
+%folds se/defect/synapse-1.1 tabicl 84.5 82.0 85.7 86.1 81.8 83.3 81.4 88.7 84.3 90.2
+%folds se/defect/synapse-1.2 1:q16 65.1 59.5 69.6 75.3 62.1 63.1 65.0 65.2 62.8 63.3
+%folds se/defect/synapse-1.2 n30 80.9 79.7 74.7 83.0 79.0 77.3 81.4 78.1 78.4 77.2
+%folds se/defect/synapse-1.2 lgbm 77.9 77.2 69.9 80.4 75.7 73.4 70.5 73.6 77.3 77.7
+%folds se/defect/synapse-1.2 tabicl 85.1 81.1 80.7 88.4 81.3 81.2 84.9 79.8 82.6 82.2
+%folds se/defect/tomcat 1:q16 64.2 61.0 61.7 66.1 60.2 62.3 63.1 62.0 52.2 63.0
+%folds se/defect/tomcat n30 79.9 82.5 75.5 81.1 78.6 81.1 80.4 82.9 87.6 82.9
+%folds se/defect/tomcat lgbm 80.6 80.9 75.7 76.5 78.4 80.1 76.8 81.5 81.2 76.9
+%folds se/defect/tomcat tabicl 84.9 83.8 81.1 87.4 81.9 86.1 83.7 83.8 87.5 79.9
+%folds se/defect/velocity-1.4 1:q16 81.0 78.0 74.0 71.6 75.9 79.4 78.8 66.5 78.8 78.8
+%folds se/defect/velocity-1.4 n30 88.7 83.1 84.8 79.0 84.8 84.3 87.6 83.3 85.1 84.7
+%folds se/defect/velocity-1.4 lgbm 80.6 82.7 81.5 67.9 83.8 81.3 83.7 79.3 81.2 80.8
+%folds se/defect/velocity-1.4 tabicl 94.4 96.5 94.2 91.6 94.6 95.1 97.1 93.2 94.0 92.7
+%folds se/defect/velocity-1.5 1:q16 67.0 72.5 69.6 72.4 67.0 80.0 70.3 75.6 63.2 79.0
+%folds se/defect/velocity-1.5 n30 84.0 80.2 82.9 80.0 79.0 82.1 76.1 82.2 76.1 82.4
+%folds se/defect/velocity-1.5 lgbm 80.3 79.3 74.4 80.3 76.0 78.8 76.0 79.0 79.5 79.1
+%folds se/defect/velocity-1.5 tabicl 87.9 82.0 81.8 83.9 80.7 83.0 81.0 83.7 81.6 85.8
+%folds se/defect/velocity-1.6 1:q16 68.7 61.8 68.9 65.2 63.4 62.2 62.5 69.2 70.7 65.8
+%folds se/defect/velocity-1.6 n30 79.4 77.6 77.0 79.6 74.4 76.1 71.1 80.6 81.6 79.9
+%folds se/defect/velocity-1.6 lgbm 74.2 79.4 79.6 77.3 78.1 69.1 73.5 79.9 85.3 78.9
+%folds se/defect/velocity-1.6 tabicl 78.9 81.4 84.3 81.1 81.6 74.3 72.3 85.5 86.7 83.2
+%folds se/defect/xalan-2.4 1:q16 58.6 65.5 64.3 65.2 60.3 60.4 61.2 63.4 63.5 65.0
+%folds se/defect/xalan-2.4 n30 80.4 78.0 77.2 82.4 80.9 78.2 79.7 77.7 79.5 78.4
+%folds se/defect/xalan-2.4 lgbm 78.7 79.2 77.4 81.7 80.4 75.3 78.5 76.3 77.0 82.0
+%folds se/defect/xalan-2.4 tabicl 82.4 83.0 82.4 84.7 82.7 80.8 79.9 81.5 82.3 81.8
+%folds se/defect/xalan-2.5 1:q16 61.6 64.4 62.5 62.5 60.3 65.1 61.2 56.0 59.2 65.5
+%folds se/defect/xalan-2.5 n30 72.5 72.9 73.9 72.8 71.8 69.7 68.4 74.7 69.8 75.2
+%folds se/defect/xalan-2.5 lgbm 76.0 72.7 74.2 73.1 73.2 72.4 69.5 71.7 70.6 73.7
+%folds se/defect/xalan-2.5 tabicl 86.5 86.2 84.6 86.2 86.1 83.8 84.3 89.5 84.4 85.4
+%folds se/defect/xalan-2.6 1:q16 72.5 70.4 68.6 73.5 68.6 72.6 71.7 72.1 73.0 75.7
+%folds se/defect/xalan-2.6 n30 84.2 87.3 82.5 82.9 83.7 84.2 85.9 83.8 83.4 85.0
+%folds se/defect/xalan-2.6 lgbm 84.0 84.9 81.6 83.7 84.4 81.4 84.6 82.1 84.0 83.3
+%folds se/defect/xalan-2.6 tabicl 89.7 89.7 88.0 88.0 88.2 87.6 88.9 87.5 88.2 89.4
+%folds se/defect/xalan-2.7 1:q16 78.2 85.9 68.3 82.7 83.0 79.0 78.3 74.6 74.0 77.6
+%folds se/defect/xalan-2.7 n30 89.5 82.5 84.5 94.7 91.6 94.5 80.9 83.6 95.7 90.4
+%folds se/defect/xalan-2.7 lgbm 92.7 90.6 95.9 99.6 84.2 90.5 90.1 93.7 94.3 82.7
+%folds se/defect/xalan-2.7 tabicl 95.9 85.0 90.5 98.7 95.1 98.4 94.7 91.1 98.7 92.5
+%folds se/defect/xerces-1.2 1:q16 65.5 61.1 66.0 67.0 57.3 66.4 66.4 65.8 63.2 62.2
+%folds se/defect/xerces-1.2 n30 75.6 77.1 76.4 80.9 77.3 75.4 85.7 76.4 72.5 69.7
+%folds se/defect/xerces-1.2 lgbm 78.2 74.4 77.4 79.5 76.2 73.5 84.0 76.2 75.1 71.2
+%folds se/defect/xerces-1.2 tabicl 92.6 92.8 87.6 95.1 83.2 95.1 95.3 90.9 93.0 86.0
+%folds se/defect/xerces-1.3 1:q16 70.2 64.6 64.4 64.3 63.4 70.1 69.3 62.7 65.7 67.8
+%folds se/defect/xerces-1.3 n30 84.7 84.6 75.1 75.4 82.5 85.4 81.1 84.9 86.4 83.9
+%folds se/defect/xerces-1.3 lgbm 81.4 77.3 74.9 74.3 75.8 80.1 80.8 81.8 84.2 81.0
+%folds se/defect/xerces-1.3 tabicl 89.9 87.0 87.1 84.8 87.9 89.1 88.0 91.5 88.3 89.3
+%folds se/defect/xerces-1.4 1:q16 88.3 90.1 89.2 87.5 89.3 91.2 85.0 91.9 87.6 89.7
+%folds se/defect/xerces-1.4 n30 95.4 95.5 95.3 94.9 94.7 96.3 96.1 94.9 92.3 96.2
+%folds se/defect/xerces-1.4 lgbm 94.6 93.8 94.3 94.4 93.3 95.4 94.5 95.5 90.3 96.4
+%folds se/defect/xerces-1.4 tabicl 99.1 98.1 98.7 98.2 97.9 99.1 98.8 98.6 97.3 99.2
+%folds se/issues/7/camel 1:q16 73.2 78.9 72.8 76.1 74.2 75.9 73.0 73.0 72.0 73.1
+%folds se/issues/7/camel n30 85.7 85.8 85.6 84.6 86.9 84.6 84.3 86.1 86.0 85.5
+%folds se/issues/7/camel lgbm 87.3 88.1 87.4 86.9 86.5 87.3 84.9 87.5 86.2 86.3
+%folds se/issues/7/camel tabicl 88.6 88.4 88.3 89.1 88.8 89.2 87.7 88.5 88.0 88.2
+%folds se/issues/7/cloudstack 1:q16 58.5 61.5 55.6 57.4 59.8 59.8 60.2 56.8 57.9 58.4
+%folds se/issues/7/cloudstack n30 67.2 66.9 63.4 63.4 67.0 67.2 64.4 63.4 62.7 64.6
+%folds se/issues/7/cloudstack lgbm 69.0 69.9 68.9 67.0 70.8 69.7 68.0 68.5 66.7 69.1
+%folds se/issues/7/cloudstack tabicl 72.7 73.7 72.5 71.1 72.2 68.7 70.1 70.6 70.9 74.3
+%folds se/issues/7/cocoon 1:q16 71.0 79.1 70.8 71.7 75.3 69.1 79.9 75.4 63.9 75.4
+%folds se/issues/7/cocoon n30 90.2 89.7 89.3 90.2 88.5 89.6 89.0 88.3 89.6 90.8
+%folds se/issues/7/cocoon lgbm 90.2 88.9 90.1 92.1 90.0 90.9 90.0 90.4 88.4 89.1
+%folds se/issues/7/cocoon tabicl 89.9 90.9 91.1 91.6 88.4 90.7 90.6 90.7 89.5 90.5
+%folds se/issues/7/deeplearning 1:q16 59.2 59.3 62.4 63.3 58.2 59.8 59.8 61.8 55.5 55.1
+%folds se/issues/7/deeplearning n30 72.8 69.5 67.5 70.4 68.0 68.1 73.6 69.9 65.2 66.9
+%folds se/issues/7/deeplearning lgbm 70.8 71.3 67.9 71.0 67.7 69.0 73.1 71.8 69.3 68.6
+%folds se/issues/7/deeplearning tabicl 75.5 72.3 71.7 75.2 71.3 69.6 72.8 73.7 70.8 72.1
+%folds se/issues/7/hadoop 1:q16 79.3 80.6 74.8 63.4 75.1 67.9 72.8 70.7 67.6 73.2
+%folds se/issues/7/hadoop n30 87.4 89.3 90.9 79.2 93.2 88.1 90.2 86.8 89.7 85.4
+%folds se/issues/7/hadoop lgbm 86.6 89.8 79.2 80.6 91.2 84.6 87.0 83.1 85.5 84.8
+%folds se/issues/7/hadoop tabicl 90.5 92.6 92.2 85.3 96.1 91.2 93.3 91.4 93.2 88.8
+%folds se/issues/7/hive 1:q16 87.9 81.3 82.9 64.1 84.6 65.3 63.5 69.6 73.6 80.8
+%folds se/issues/7/hive n30 84.7 97.2 91.2 89.0 87.4 95.0 89.3 88.3 95.9 91.4
+%folds se/issues/7/hive lgbm 89.7 85.6 93.0 77.5 91.3 95.1 84.7 79.0 95.1 91.3
+%folds se/issues/7/hive tabicl 93.7 96.1 98.1 94.4 92.6 99.2 92.8 95.1 95.8 96.8
+%folds se/issues/7/node 1:q16 58.7 57.1 58.5 57.9 56.7 58.0 56.6 58.6 58.2 57.0
+%folds se/issues/7/node n30 65.3 65.9 65.3 65.0 66.4 67.2 66.7 67.6 65.4 69.3
+%folds se/issues/7/node lgbm 70.7 70.1 70.0 70.3 71.0 68.7 69.9 70.7 68.5 69.0
+%folds se/issues/7/node tabicl 72.6 72.1 72.6 71.9 73.4 71.3 72.0 72.5 70.4 73.8
+%folds se/issues/7/ofbiz 1:q16 54.1 53.7 54.5 55.3 51.6 55.0 53.2 54.5 56.5 54.5
+%folds se/issues/7/ofbiz n30 60.0 60.1 61.4 59.9 58.2 59.6 58.7 60.4 60.0 58.7
+%folds se/issues/7/ofbiz lgbm 64.7 66.8 63.6 65.9 64.8 64.2 65.9 64.9 65.9 65.8
+%folds se/issues/7/ofbiz tabicl 67.4 68.4 67.9 68.4 69.1 66.4 70.3 67.4 69.9 68.7
+%folds se/issues/7/qpid 1:q16 65.3 64.5 64.1 68.8 61.2 66.5 65.7 64.4 60.0 63.8
+%folds se/issues/7/qpid n30 70.0 72.6 77.6 76.9 70.8 72.0 73.4 66.1 70.5 70.5
+%folds se/issues/7/qpid lgbm 70.2 77.2 78.7 75.2 70.3 72.2 71.0 71.4 67.8 72.7
+%folds se/issues/7/qpid tabicl 74.4 78.2 80.2 78.1 76.1 78.0 77.4 74.7 71.8 75.6
+%folds se/smells/DataClass 1:q16 50.9 51.9 56.3 65.7 58.1 53.9 56.1 66.8 69.2 65.3
+%folds se/smells/DataClass n30 54.1 60.8 66.3 68.4 69.9 64.4 59.0 67.3 54.2 65.5
+%folds se/smells/DataClass lgbm 57.6 54.7 62.7 62.5 61.1 65.1 59.9 67.1 52.0 58.1
+%folds se/smells/DataClass tabicl 70.1 60.8 65.3 72.9 69.7 71.2 67.6 73.0 69.0 71.3
+%folds se/smells/FeatureEnvy 1:q16 98.3 100.0 98.1 100.0 100.0 97.8 100.0 97.9 100.0 98.1
+%folds se/smells/FeatureEnvy n30 98.9 100.0 100.0 99.9 100.0 100.0 98.5 100.0 99.6 99.7
+%folds se/smells/FeatureEnvy lgbm 99.6 100.0 100.0 96.8 100.0 100.0 100.0 100.0 96.9 100.0
+%folds se/smells/FeatureEnvy tabicl 100.0 100.0 100.0 99.9 100.0 100.0 99.1 100.0 100.0 100.0
+%folds se/smells/GodClass 1:q16 94.3 97.0 97.1 98.7 95.5 97.1 86.2 98.6 98.8 97.1
+%folds se/smells/GodClass n30 99.9 99.7 99.8 99.9 100.0 99.5 99.9 100.0 100.0 99.9
+%folds se/smells/GodClass lgbm 93.5 99.6 94.2 94.4 99.9 96.7 93.1 99.8 100.0 96.0
+%folds se/smells/GodClass tabicl 99.8 99.8 99.5 99.8 100.0 99.8 99.7 99.9 100.0 99.9
+%folds se/smells/LongMethod 1:q16 65.6 46.3 66.9 57.2 67.7 59.8 61.4 53.8 67.8 48.7
+%folds se/smells/LongMethod n30 67.0 66.6 69.0 57.4 67.0 61.5 58.5 74.8 62.1 68.0
+%folds se/smells/LongMethod lgbm 62.4 50.5 64.2 54.8 54.3 53.8 59.9 64.9 65.8 68.5
+%folds se/smells/LongMethod tabicl 69.1 62.6 67.8 56.4 63.3 67.0 62.9 68.5 64.3 70.3
+%folds se/static/cooked/ant 1:q16 78.5 83.7 78.9 79.0 82.8 78.9 80.8 79.6 84.3 83.3
+%folds se/static/cooked/ant n30 88.6 89.1 88.1 89.2 89.3 88.3 92.1 88.7 90.7 88.0
+%folds se/static/cooked/ant lgbm 93.9 93.4 93.1 93.8 94.9 93.4 95.9 92.7 94.5 93.0
+%folds se/static/cooked/ant tabicl 96.2 94.0 94.7 94.0 95.4 94.7 94.9 94.2 96.0 93.6
+%folds se/static/cooked/cassandra 1:q16 80.7 79.6 81.3 80.9 80.8 77.9 81.4 81.4 80.0 77.2
+%folds se/static/cooked/cassandra n30 89.7 91.1 92.2 89.4 90.9 90.7 89.9 90.3 88.9 90.3
+%folds se/static/cooked/cassandra lgbm 95.4 94.7 95.6 95.1 95.4 94.6 94.0 94.6 94.9 95.1
+%folds se/static/cooked/cassandra tabicl 95.8 95.8 96.2 95.8 95.8 95.3 95.6 95.4 95.8 95.8
+%folds se/static/cooked/commons 1:q16 86.7 90.6 88.8 94.5 92.1 78.6 89.1 92.5 89.6 79.3
+%folds se/static/cooked/commons n30 96.6 96.6 97.8 97.4 98.8 95.9 94.5 99.3 97.7 95.3
+%folds se/static/cooked/commons lgbm 97.6 96.3 99.0 97.2 99.5 91.6 95.3 99.2 98.6 94.6
+%folds se/static/cooked/commons tabicl 99.5 98.1 98.2 99.3 99.8 97.1 97.4 99.6 98.9 97.8
+%folds se/static/cooked/derby 1:q16 78.5 79.4 76.8 80.8 78.9 79.2 80.9 78.6 80.6 78.1
+%folds se/static/cooked/derby n30 88.8 90.5 89.8 88.6 88.8 89.6 89.2 90.8 90.7 89.6
+%folds se/static/cooked/derby lgbm 93.2 95.4 94.7 93.0 93.8 95.4 93.2 95.5 94.9 94.1
+%folds se/static/cooked/derby tabicl 95.2 96.2 95.7 94.7 95.4 96.3 94.2 96.5 95.8 95.4
+%folds se/static/cooked/jmeter 1:q16 83.8 74.4 75.5 78.5 82.1 79.7 80.4 74.4 79.7 74.9
+%folds se/static/cooked/jmeter n30 88.4 89.5 83.6 86.6 88.0 91.8 85.6 86.0 89.7 82.8
+%folds se/static/cooked/jmeter lgbm 89.2 89.6 87.5 91.4 89.4 96.6 86.7 84.0 92.4 89.5
+%folds se/static/cooked/jmeter tabicl 94.3 93.6 93.8 94.2 93.7 98.1 91.5 92.4 94.9 92.0
+%folds se/static/cooked/lucene-solr 1:q16 67.1 67.0 66.0 68.0 67.0 69.5 68.9 64.0 64.1 68.4
+%folds se/static/cooked/lucene-solr n30 76.8 78.6 77.0 77.7 76.9 77.8 79.6 78.4 77.7 77.7
+%folds se/static/cooked/lucene-solr lgbm 90.9 90.5 90.3 90.9 90.1 91.5 92.3 91.0 91.0 90.4
+%folds se/static/cooked/lucene-solr tabicl 94.0 93.1 93.6 94.5 94.0 93.7 94.7 93.4 93.8 93.5
+%folds se/static/cooked/maven 1:q16 88.8 85.9 90.3 88.6 86.0 80.9 85.1 85.4 89.8 88.0
+%folds se/static/cooked/maven n30 95.7 94.2 96.7 95.5 94.3 95.8 95.2 95.4 95.6 94.6
+%folds se/static/cooked/maven lgbm 97.8 96.9 98.2 96.8 96.4 96.9 97.1 97.0 97.5 97.7
+%folds se/static/cooked/maven tabicl 99.1 98.1 98.7 97.9 98.4 98.5 99.2 98.6 99.0 98.4
+%folds se/static/cooked/tomcat 1:q16 72.4 75.1 69.1 71.3 72.2 71.6 72.1 72.2 70.0 72.6
+%folds se/static/cooked/tomcat n30 82.0 84.7 81.1 83.0 82.4 82.2 83.8 84.0 84.3 82.8
+%folds se/static/cooked/tomcat lgbm 93.6 93.8 91.9 93.0 94.6 93.4 93.9 94.0 94.0 92.3
+%folds se/static/cooked/tomcat tabicl 95.7 95.7 94.5 95.8 95.9 95.2 95.1 95.5 95.7 95.9
