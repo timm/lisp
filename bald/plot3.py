@@ -73,7 +73,8 @@ ax.set_ylim(0,100); ax.set_xlim(-.7,x0-1.3); ax.set_yticks(range(0,101,10))
 ax.set_yticks(range(5,100,10),minor=True); ax.tick_params(axis="y",which="minor",length=0)
 ax.grid(axis="y",which="major",color="#ddd")
 ax.grid(axis="y",which="minor",color="#b0b0b0",ls=(0,(4,4)),lw=1)
-ax.set_ylabel("AUC (0..100), 5x2 folds",fontsize=FS["lab"]); ax.tick_params(axis="y",labelsize=FS["tick"])
+# nudged right: the runtime panel's "28,066s" was touching this label
+ax.set_ylabel("AUC (0..100), 5x2 folds",fontsize=FS["lab"],labelpad=-2); ax.tick_params(axis="y",labelsize=FS["tick"])
 for s_ in ("top","right"): ax.spines[s_].set_visible(False)
 
 # legend table (inset over panels 3+4): name | solid mean | dashed sd
@@ -99,7 +100,9 @@ for i,b in enumerate(bt):
   bx.text(i,b[0]*1.25,f"{b[0]:,.0f}s" if b[0]>=10 else f"{b[0]:.1f}s",
           ha="center",va="bottom",weight="bold",fontsize=FS["bar"]-1)
 bx.set_xticks(range(len(bt)))
-bx.set_xticklabels([b[1].replace("(","\n(") for b in bt],fontsize=FS["bar"]-2)
+# four arm names side by side in a narrow panel collide; stand them up
+bx.set_xticklabels([b[1] for b in bt],rotation=90,ha="center",
+                   va="top",fontsize=FS["bar"]-1)
 bx.set_title("total secs, log scale\n(summed over folds,\n1 thread each)",fontsize=FS["head"]-5)
 bx.set_yticks([]); bx.set_facecolor("#fcfcfa"); bx.set_xlim(-.55,len(bt)-.45)
 for s_ in ("top","right","left"): bx.spines[s_].set_visible(False)

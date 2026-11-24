@@ -3,8 +3,8 @@
 are in proportion to the line counts.
 
 The Lisp count is taken from the files, not typed in, so the figure cannot
-drift from the code the way the old hard-coded 346 did.  It counts bald.yue, the
-file printed in the paper: learner and rig together, non-blank and
+drift from the code the way the old hard-coded 346 did.  It counts balsa.yue, the
+learner printed in the paper: learner and rig together, non-blank and
 non-comment.
 
 LightGBM's number is from its own repo at 7810ece: src/ plus
@@ -18,7 +18,7 @@ import matplotlib; matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 Here = os.path.dirname(os.path.abspath(__file__))
-Lib  = ("bald.yue",)
+Lib  = ("balsa.yue",)        # the learner; the rigs are a separate file
 Lgbm = 36328
 
 
