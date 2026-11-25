@@ -4,7 +4,7 @@
 -- The rigs (5x2 xval, fold replay, stats) live in balsa_eg.yue.
 -- Names say shape: tb col row; v = one cell value, b = a bin #,
 -- n = a count, s = a string; fn mk = functions; plurals are lists;
--- sym1, sym2 where only Syms will do; y reads a row's label.
+-- ys1, ys2 where only label counts will do; y reads a row's label.
 -- (c) 2026 Tim Menzies <timm@ieee.org>, MIT license
 import floor, sqrt, max, min, log from math
 LOG2 = log 2
@@ -55,42 +55,45 @@ csv = (file) ->
 -- Header: Uppercase = Num, else Sym. Last char: ! class, X skip.
 -- "?" cells unknown. A row IS its csv cells (numeric indexes),
 -- plus one named field: cooked, its bin # per x column.
+-- Labels: every value the learner counts is a small int. x cells
+-- get their bin # (cooked, 0..; ? = -1); class cells get 1..k in
+-- first-seen order (? = -1; names back via klass.labels). So label
+-- counts (Ys) are arrays: no pairs, no hash order, no string sorts.
 Col = (txt="N", at=0) ->                -- no args: an anonymous Num
   if txt\match "^%u"
     {:at, :txt, nm: true, n: 0, mu: 0, m2: 0}  -- a Num
   else
-    {:at, :txt, n: 0, has: {}, keys: {}}       -- a Sym
+    {:at, :txt, n: 0, has: {}}                 -- a Sym
+
+Ys = (k) -> {:k, n: 0, has: [0 for _ = 1, k]}  -- counts of labels 1..k
 
 add = (col, v, inc=1) ->
-  return if v == "?"
+  return if v == "?" or (col.k and v < 1)  -- ys: -1 = unknown
   col.n += inc
   if col.nm
     d = v - col.mu
     col.mu += inc * d / col.n
     col.m2 = max 0, col.m2 + inc * d * (v - col.mu)
   else
-    col.keys[] = v unless col.has[v]       -- first-seen order
     col.has[v] = (col.has[v] or 0) + inc
 
 adds = (vs, col=Col!) ->
   add col, v for v in *vs
   col
 
-div = (col) ->                          -- sd for Nums, entropy for Syms
+div = (col) ->                          -- sd for Nums, entropy for Ys
   if col.nm
     return if col.n < 2 then 0 else sqrt(col.m2 / (col.n - 1))
   e = 0
-  for v in *col.keys                    -- not pairs: fixed order,
-    m = col.has[v]                      -- so same sum every run
+  for m in *col.has                     -- an array: same order always
     e -= m/col.n * log(m/col.n) if m > 0
   e / LOG2
 
-fold = (sym1, sym2, inc=1) ->           -- add (inc=-1: take) 2 into 1
-  for v in *sym2.keys
-    sym1.keys[] = v unless sym1.has[v]
-    sym1.has[v] = (sym1.has[v] or 0) + inc * sym2.has[v]
-  sym1.n += inc * sym2.n
-  sym1
+fold = (ys1, ys2, inc=1) ->             -- add (inc=-1: take) 2 into 1
+  for v = 1, ys1.k
+    ys1.has[v] += inc * ys2.has[v]
+  ys1.n += inc * ys2.n
+  ys1
 
 Cols = (names) ->
   all = [Col txt, at for at, txt in ipairs names]
@@ -151,6 +154,14 @@ Tbl = (rows) ->
     tb.rows[] = row
     add col, row[col.at] for col in *tb.cols.all
   discretize tb
+  if kl := tb.cols.klass                -- class cells -> labels 1..k
+    kl.labels, code = {}, {}
+    for row in *tb.rows
+      v = row[kl.at]
+      unless v == "?" or code[v]
+        kl.labels[] = v
+        code[v] = #kl.labels
+      row[kl.at] = code[v] or -1
   tb
 
 --------------------------------------------------------------- tree
@@ -224,7 +235,7 @@ capped = (rows, y, n) ->                -- <= n random rows per class
 forest = (tb, rows, y) ->
   xcols = tb.cols.x
   m = k.rf and math.ceil sqrt #xcols
-  mk = -> Col "y"
+  mk = -> Ys #tb.cols.klass.labels
   rows = capped rows, y, k.cap if k.cap
   half = ->
     u = shuffle rows
@@ -239,8 +250,8 @@ vote = (trees, row) ->                  -- class -> mean leaf share
   h, w = {}, #trees
   for node in *trees
     ys = leaf_of(node, row).ys
-    for v, m in pairs ys.has
-      h[v] = (h[v] or 0) + m / ys.n / w
+    for v, m in ipairs ys.has
+      h[v] = (h[v] or 0) + m / ys.n / w if m > 0
   h
 
 votes = (trees, rows, y) ->

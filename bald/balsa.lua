@@ -4,7 +4,7 @@
 -- The rigs (5x2 xval, fold replay, stats) live in balsa_eg.yue.
 -- Names say shape: tb col row; v = one cell value, b = a bin #,
 -- n = a count, s = a string; fn mk = functions; plurals are lists;
--- sym1, sym2 where only Syms will do; y reads a row's label.
+-- ys1, ys2 where only label counts will do; y reads a row's label.
 -- (c) 2026 Tim Menzies <timm@ieee.org>, MIT license
 local floor, sqrt, max, min, log = math.floor, math.sqrt, math.max, math.min, math.log
 local LOG2 = log(2)
@@ -108,6 +108,10 @@ end
 -- Header: Uppercase = Num, else Sym. Last char: ! class, X skip.
 -- "?" cells unknown. A row IS its csv cells (numeric indexes),
 -- plus one named field: cooked, its bin # per x column.
+-- Labels: every value the learner counts is a small int. x cells
+-- get their bin # (cooked, 0..; ? = -1); class cells get 1..k in
+-- first-seen order (? = -1; names back via klass.labels). So label
+-- counts (Ys) are arrays: no pairs, no hash order, no string sorts.
 local Col
 Col = function(txt, at)
   if txt == nil then
@@ -130,10 +134,27 @@ Col = function(txt, at)
       at = at,
       txt = txt,
       n = 0,
-      has = { },
-      keys = { }
+      has = { }
     }
   end
+end
+
+local _anon_func_0 = function(k)
+  local _accum_0 = { }
+  local _len_0 = 1
+  for _ = 1, k do
+    _accum_0[_len_0] = 0
+    _len_0 = _len_0 + 1
+  end
+  return _accum_0
+end
+local Ys
+Ys = function(k)
+  return {
+    k = k,
+    n = 0,
+    has = _anon_func_0(k)
+  }
 end
 
 local add
@@ -141,7 +162,7 @@ add = function(col, v, inc)
   if inc == nil then
     inc = 1
   end
-  if v == "?" then
+  if v == "?" or (col.k and v < 1) then
     return
   end
   col.n = col.n + inc
@@ -150,10 +171,6 @@ add = function(col, v, inc)
     col.mu = col.mu + (inc * d / col.n)
     col.m2 = max(0, col.m2 + inc * d * (v - col.mu))
   else
-    if not col.has[v] then
-      local _obj_0 = col.keys
-      _obj_0[#_obj_0 + 1] = v
-    end
     col.has[v] = (col.has[v] or 0) + inc
   end
 end
@@ -180,10 +197,9 @@ div = function(col)
     end
   end
   local e = 0
-  local _list_0 = col.keys
+  local _list_0 = col.has
   for _index_0 = 1, #_list_0 do
-    local v = _list_0[_index_0]
-    local m = col.has[v]
+    local m = _list_0[_index_0]
     if m > 0 then
       e = e - (m / col.n * log(m / col.n))
     end
@@ -192,21 +208,16 @@ div = function(col)
 end
 
 local fold
-fold = function(sym1, sym2, inc)
+fold = function(ys1, ys2, inc)
   if inc == nil then
     inc = 1
   end
-  local _list_0 = sym2.keys
-  for _index_0 = 1, #_list_0 do
-    local v = _list_0[_index_0]
-    if not sym1.has[v] then
-      local _obj_0 = sym1.keys
-      _obj_0[#_obj_0 + 1] = v
-    end
-    sym1.has[v] = (sym1.has[v] or 0) + inc * sym2.has[v]
+  for v = 1, ys1.k do
+    local _obj_0 = ys1.has
+    _obj_0[v] = _obj_0[v] + (inc * ys2.has[v])
   end
-  sym1.n = sym1.n + (inc * sym2.n)
-  return sym1
+  ys1.n = ys1.n + (inc * ys2.n)
+  return ys1
 end
 
 local Cols
@@ -382,6 +393,26 @@ Tbl = function(rows)
     end
   end
   discretize(tb)
+  do
+    local kl = tb.cols.klass
+    if kl then
+      local code
+      kl.labels, code = { }, { }
+      local _list_0 = tb.rows
+      for _index_0 = 1, #_list_0 do
+        local row = _list_0[_index_0]
+        local v = row[kl.at]
+        if not (v == "?" or code[v]) then
+          do
+            local _obj_0 = kl.labels
+            _obj_0[#_obj_0 + 1] = v
+          end
+          code[v] = #kl.labels
+        end
+        row[kl.at] = code[v] or -1
+      end
+    end
+  end
   return tb
 end
 
@@ -459,7 +490,7 @@ best_cut = function(xcols, rows, ys, mk, m, leaf)
   return best()
 end
 
-local _anon_func_0 = function(b, col, w)
+local _anon_func_1 = function(b, col, w)
   if col.has then
     return w == b
   else
@@ -469,7 +500,7 @@ end
 local yes_
 yes_ = function(col, b, row)
   local w = row.cooked[col.at]
-  return w < 0 or (_anon_func_0(b, col, w))
+  return w < 0 or (_anon_func_1(b, col, w))
 end
 
 local tree
@@ -529,7 +560,7 @@ tree = function(rows, y, xcols, mk, m, leaf, maxd, lvl)
   return node
 end
 
-local _anon_func_1 = function(node, w)
+local _anon_func_2 = function(node, w)
   if node.sym then
     return w == node.v
   else
@@ -540,7 +571,7 @@ local leaf_of
 leaf_of = function(node, row)
   while node.ati do
     local w = row.cooked[node.ati]
-    local ok = w < 0 or (_anon_func_1(node, w))
+    local ok = w < 0 or (_anon_func_2(node, w))
     node = ok and node.yes or node.no
   end
   return node
@@ -568,7 +599,7 @@ forest = function(tb, rows, y)
   local m = k.rf and math.ceil(sqrt(#xcols))
   local mk
   mk = function()
-    return Col("y")
+    return Ys(#tb.cols.klass.labels)
   end
   if k.cap then
     rows = capped(rows, y, k.cap)
@@ -597,8 +628,10 @@ vote = function(trees, row)
   for _index_0 = 1, #trees do
     local node = trees[_index_0]
     local ys = leaf_of(node, row).ys
-    for v, m in pairs(ys.has) do
-      h[v] = (h[v] or 0) + m / ys.n / w
+    for v, m in ipairs(ys.has) do
+      if m > 0 then
+        h[v] = (h[v] or 0) + m / ys.n / w
+      end
     end
   end
   return h
