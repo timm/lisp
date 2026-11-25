@@ -173,11 +173,10 @@ div = function(col)
   local e = 0
   for _, m in pairs(col.has) do
     if m > 0 then
-      local p = m / col.n
-      e = e - (p * log(p) / LOG2)
+      e = e - (m / col.n * log(m / col.n))
     end
   end
-  return e
+  return e / LOG2
 end
 
 -- ys summaries: klass codes 1..kn, counts in a plain array. Integer

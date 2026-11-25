@@ -73,11 +73,8 @@ div = (col) ->                          -- sd for Nums, entropy for Syms
   if col.nm
     return if col.n < 2 then 0 else sqrt(col.m2 / (col.n - 1))
   e = 0
-  for _, m in pairs col.has
-    if m > 0
-      p = m / col.n
-      e -= p * log(p) / LOG2
-  e
+  e -= m/col.n * log(m/col.n) for _, m in pairs col.has when m > 0
+  e / LOG2
 
 -- ys summaries: klass codes 1..kn, counts in a plain array. Integer
 -- adds in the loops; logs only when a spread is asked for.
@@ -101,9 +98,7 @@ yfold = (a, b, inc=1) ->                -- add (inc=-1: take) b into a
 ydiv = (ys) ->                          -- entropy of the counts
   n, e = ys.n, 0
   return 0 if n < 2
-  for c in *ys.cs
-    if c > 0
-      e -= c * log(c)
+  e -= c * log(c) for c in *ys.cs when c > 0
   (e / n + log(n)) / LOG2
 
 skip = (txt) -> txt\match("X$") or txt\match "X[-+!]$"
