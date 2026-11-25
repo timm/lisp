@@ -2,6 +2,9 @@
 -- trees, forest, auc. Same Park-Miller rand, so same shuffles.
 -- The library: no printing, no files beyond csv, no experiments.
 -- The rigs (5x2 xval, fold replay, stats) live in balsa_eg.yue.
+-- Names say shape: tb col row; v = one cell value, b = a bin #,
+-- n = a count, s = a string; fn mk = functions; plurals are lists;
+-- sym1, sym2 where only Syms will do; y reads a row's label.
 -- (c) 2026 Tim Menzies <timm@ieee.org>, MIT license
 import floor, sqrt, max, min, log from math
 LOG2 = log 2
@@ -76,11 +79,11 @@ div = (col) ->                          -- sd for Nums, entropy for Syms
   e -= m/col.n * log(m/col.n) for _, m in pairs col.has when m > 0
   e / LOG2
 
-fold = (a, b, inc=1) ->                 -- add (inc=-1: take) b into a
-  for v, m in pairs b.has
-    a.has[v] = (a.has[v] or 0) + inc * m
-  a.n += inc * b.n
-  a
+fold = (sym1, sym2, inc=1) ->           -- add (inc=-1: take) 2 into 1
+  for v, m in pairs sym2.has
+    sym1.has[v] = (sym1.has[v] or 0) + inc * m
+  sym1.n += inc * sym2.n
+  sym1
 
 Cols = (names) ->
   all = [Col txt, at for at, txt in ipairs names]
@@ -97,34 +100,34 @@ Cols = (names) ->
   {:names, :all, :x, :y, :klass}
 
 ------------------- bins: discretize once; trees then cut on bin #s
-bisect = (v, x, le) ->                  -- #items in sorted v below x
-  lo, hi = 1, #v + 1
+bisect = (vs, v, le) ->                 -- #items in sorted vs below v
+  lo, hi = 1, #vs + 1
   while lo < hi
     mid = floor (lo + hi) / 2
-    below = if le then v[mid] <= x else v[mid] < x
+    below = if le then vs[mid] <= v else vs[mid] < v
     if below then lo = mid + 1 else hi = mid
   lo - 1
 
-choices = (col, rows, q) ->
-  if col.nm                             -- q bins, equal #known in each
-    xs = [row.raw[col.at] for row in *rows when row.raw[col.at] != "?"]
-    table.sort xs
+choices = (col, rows, n) ->
+  if col.nm                             -- n bins, equal #known in each
+    vs = [row.raw[col.at] for row in *rows when row.raw[col.at] != "?"]
+    table.sort vs
     out, b4 = {}, nil
-    for j = 0, (#xs > 0 and q - 1 or -1)
-      v = xs[1 + floor j * #xs / q]
+    for j = 0, (#vs > 0 and n - 1 or -1)
+      v = vs[1 + floor j * #vs / n]
       if v != b4 then out[] = v; b4 = v
     out
-  else                                  -- the q-1 commonest values
+  else                                  -- the n-1 commonest values
     vs = [{v, m} for v, m in pairs col.has]
     table.sort vs, (a, b) ->
       a[2] > b[2] or (a[2] == b[2] and tostring(a[1]) < tostring(b[1]))
-    [vs[i][1] for i = 1, min q - 1, #vs]
+    [vs[i][1] for i = 1, min n - 1, #vs]
 
-cook = (col, x) ->                      -- x -> 0-based bin #; ? = -1
-  if x == "?" then return -1
-  if col.nm then return max 0, bisect(col.bins, x, true) - 1
-  for i, v in ipairs col.bins
-    if v == x then return i - 1
+cook = (col, v) ->                      -- v -> 0-based bin #; ? = -1
+  if v == "?" then return -1
+  if col.nm then return max 0, bisect(col.bins, v, true) - 1
+  for i, b in ipairs col.bins
+    if b == v then return i - 1
   #col.bins
 
 discretize = (tb) ->                    -- once per tbl: bins, then
@@ -171,19 +174,19 @@ cuts = (col, rows, ys, mk, leaf, best) ->
       best {col, b}, xpect lhs, no
     if col.has then fold no, bin
 
-best_cut = (xs, rows, ys, mk, m, leaf) ->
+best_cut = (xcols, rows, ys, mk, m, leaf) ->
   best = argmost (a, b) -> a < b
-  for i in *pick #xs, m
-    cuts xs[i + 1], rows, ys, mk, leaf, best
+  for i in *pick #xcols, m
+    cuts xcols[i + 1], rows, ys, mk, leaf, best
   best!
 
 yes_ = (col, b, row) ->                 -- row on the yes side of cut?
   w = row.cooked[col.at]
   w < 0 or (if col.has then w == b else w <= b)
 
-tree = (rows, y, xs, mk, m, leaf, maxd, lvl=0) ->
+tree = (rows, y, xcols, mk, m, leaf, maxd, lvl=0) ->
   ys = [y row for row in *rows]
-  cut = lvl < maxd and best_cut xs, rows, ys, mk, m, leaf
+  cut = lvl < maxd and best_cut xcols, rows, ys, mk, m, leaf
   node = {ys: adds(ys, mk!), n: #rows}
   if cut
     col, b = cut[1], cut[2]
@@ -191,8 +194,8 @@ tree = (rows, y, xs, mk, m, leaf, maxd, lvl=0) ->
     node.ati, node.sym = col.at, col.has != nil
     yes = [row for row in *rows when yes_ col, b, row]
     no  = [row for row in *rows when not yes_ col, b, row]
-    node.yes = tree yes, y, xs, mk, m, leaf, maxd, lvl + 1
-    node.no  = tree no,  y, xs, mk, m, leaf, maxd, lvl + 1
+    node.yes = tree yes, y, xcols, mk, m, leaf, maxd, lvl + 1
+    node.no  = tree no,  y, xcols, mk, m, leaf, maxd, lvl + 1
   node
 
 leaf_of = (node, row) ->                -- flat fields: no col deref
@@ -212,8 +215,8 @@ capped = (rows, y, n) ->                -- <= n random rows per class
   out
 
 forest = (tb, rows, y) ->
-  xs = tb.cols.x
-  m = k.rf and math.ceil sqrt #xs
+  xcols = tb.cols.x
+  m = k.rf and math.ceil sqrt #xcols
   mk = -> Col "y"
   rows = capped rows, y, k.cap if k.cap
   half = ->
@@ -221,7 +224,7 @@ forest = (tb, rows, y) ->
     [u[i] for i = 1, floor #rows / 2]
   out = {}
   for _ = 1, k.trees
-    out[] = tree k.trees == 1 and rows or half!, y, xs, mk, m,
+    out[] = tree k.trees == 1 and rows or half!, y, xcols, mk, m,
                  k.leaf, k.maxd
   out
 

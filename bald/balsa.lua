@@ -2,6 +2,9 @@
 -- trees, forest, auc. Same Park-Miller rand, so same shuffles.
 -- The library: no printing, no files beyond csv, no experiments.
 -- The rigs (5x2 xval, fold replay, stats) live in balsa_eg.yue.
+-- Names say shape: tb col row; v = one cell value, b = a bin #,
+-- n = a count, s = a string; fn mk = functions; plurals are lists;
+-- sym1, sym2 where only Syms will do; y reads a row's label.
 -- (c) 2026 Tim Menzies <timm@ieee.org>, MIT license
 local floor, sqrt, max, min, log = math.floor, math.sqrt, math.max, math.min, math.log
 local LOG2 = log(2)
@@ -180,15 +183,15 @@ div = function(col)
 end
 
 local fold
-fold = function(a, b, inc)
+fold = function(sym1, sym2, inc)
   if inc == nil then
     inc = 1
   end
-  for v, m in pairs(b.has) do
-    a.has[v] = (a.has[v] or 0) + inc * m
+  for v, m in pairs(sym2.has) do
+    sym1.has[v] = (sym1.has[v] or 0) + inc * m
   end
-  a.n = a.n + (inc * b.n)
-  return a
+  sym1.n = sym1.n + (inc * sym2.n)
+  return sym1
 end
 
 local Cols
@@ -231,15 +234,15 @@ end
 
 ------------------- bins: discretize once; trees then cut on bin #s
 local bisect
-bisect = function(v, x, le)
-  local lo, hi = 1, #v + 1
+bisect = function(vs, v, le)
+  local lo, hi = 1, #vs + 1
   while lo < hi do
     local mid = floor((lo + hi) / 2)
     local below
     if le then
-      below = v[mid] <= x
+      below = vs[mid] <= v
     else
-      below = v[mid] < x
+      below = vs[mid] < v
     end
     if below then
       lo = mid + 1
@@ -251,9 +254,9 @@ bisect = function(v, x, le)
 end
 
 local choices
-choices = function(col, rows, q)
+choices = function(col, rows, n)
   if col.nm then
-    local xs
+    local vs
     do
       local _accum_0 = { }
       local _len_0 = 1
@@ -264,12 +267,12 @@ choices = function(col, rows, q)
           _len_0 = _len_0 + 1
         end
       end
-      xs = _accum_0
+      vs = _accum_0
     end
-    table.sort(xs)
+    table.sort(vs)
     local out, b4 = { }, nil
-    for j = 0, (#xs > 0 and q - 1 or -1) do
-      local v = xs[1 + floor(j * #xs / q)]
+    for j = 0, (#vs > 0 and n - 1 or -1) do
+      local v = vs[1 + floor(j * #vs / n)]
       if v ~= b4 then
         out[#out + 1] = v
       end
@@ -295,7 +298,7 @@ choices = function(col, rows, q)
     end)
     local _accum_0 = { }
     local _len_0 = 1
-    for i = 1, min(q - 1, #vs) do
+    for i = 1, min(n - 1, #vs) do
       _accum_0[_len_0] = vs[i][1]
       _len_0 = _len_0 + 1
     end
@@ -304,15 +307,15 @@ choices = function(col, rows, q)
 end
 
 local cook
-cook = function(col, x)
-  if x == "?" then
+cook = function(col, v)
+  if v == "?" then
     return -1
   end
   if col.nm then
-    return max(0, bisect(col.bins, x, true) - 1)
+    return max(0, bisect(col.bins, v, true) - 1)
   end
-  for i, v in ipairs(col.bins) do
-    if v == x then
+  for i, b in ipairs(col.bins) do
+    if b == v then
       return i - 1
     end
   end
@@ -424,14 +427,14 @@ cuts = function(col, rows, ys, mk, leaf, best)
 end
 
 local best_cut
-best_cut = function(xs, rows, ys, mk, m, leaf)
+best_cut = function(xcols, rows, ys, mk, m, leaf)
   local best = argmost(function(a, b)
     return a < b
   end)
-  local _list_0 = pick(#xs, m)
+  local _list_0 = pick(#xcols, m)
   for _index_0 = 1, #_list_0 do
     local i = _list_0[_index_0]
-    cuts(xs[i + 1], rows, ys, mk, leaf, best)
+    cuts(xcols[i + 1], rows, ys, mk, leaf, best)
   end
   return best()
 end
@@ -450,7 +453,7 @@ yes_ = function(col, b, row)
 end
 
 local tree
-tree = function(rows, y, xs, mk, m, leaf, maxd, lvl)
+tree = function(rows, y, xcols, mk, m, leaf, maxd, lvl)
   if lvl == nil then
     lvl = 0
   end
@@ -465,7 +468,7 @@ tree = function(rows, y, xs, mk, m, leaf, maxd, lvl)
     end
     ys = _accum_0
   end
-  local cut = lvl < maxd and best_cut(xs, rows, ys, mk, m, leaf)
+  local cut = lvl < maxd and best_cut(xcols, rows, ys, mk, m, leaf)
   local node = {
     ys = adds(ys, mk()),
     n = #rows
@@ -500,8 +503,8 @@ tree = function(rows, y, xs, mk, m, leaf, maxd, lvl)
       end
       no = _accum_0
     end
-    node.yes = tree(yes, y, xs, mk, m, leaf, maxd, lvl + 1)
-    node.no = tree(no, y, xs, mk, m, leaf, maxd, lvl + 1)
+    node.yes = tree(yes, y, xcols, mk, m, leaf, maxd, lvl + 1)
+    node.no = tree(no, y, xcols, mk, m, leaf, maxd, lvl + 1)
   end
   return node
 end
@@ -541,8 +544,8 @@ end
 
 local forest
 forest = function(tb, rows, y)
-  local xs = tb.cols.x
-  local m = k.rf and math.ceil(sqrt(#xs))
+  local xcols = tb.cols.x
+  local m = k.rf and math.ceil(sqrt(#xcols))
   local mk
   mk = function()
     return Col("y")
@@ -563,7 +566,7 @@ forest = function(tb, rows, y)
   end
   local out = { }
   for _ = 1, k.trees do
-    out[#out + 1] = tree(k.trees == 1 and rows or half(), y, xs, mk, m, k.leaf, k.maxd)
+    out[#out + 1] = tree(k.trees == 1 and rows or half(), y, xcols, mk, m, k.leaf, k.maxd)
   end
   return out
 end
