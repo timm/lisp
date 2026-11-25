@@ -8,10 +8,6 @@ local floor, sqrt, max = math.floor, math.sqrt, math.max
 local b = require("balsa")
 local k, srand, shuffle, bisect, csv, Tbl, adds, div, forest, votes, aucs = b.k, b.srand, b.shuffle, b.bisect, b.csv, b.Tbl, b.adds, b.div, b.forest, b.votes, b.aucs
 local fmt = string.format
-local kl
-kl = function(row)
-  return row.kl
-end
 
 -------------------------------------------------------------- stats
 local median
@@ -149,9 +145,14 @@ ens = function(sets)
   for _index_0 = 1, #sets do
     local f = sets[_index_0]
     local tb = Tbl(csv("~/gits/moot/classify/" .. tostring(f) .. ".csv"))
+    local at = tb.cols.klass.at
+    local kl
+    kl = function(row)
+      return row.raw[at]
+    end
     xval(tb.rows, function(train, test)
       local t0 = os.clock()
-      local a = aucs(votes(forest(tb, train, kl), test, kl, tb.kn), tb.kn)
+      local a = aucs(votes(forest(tb, train, kl), test, kl))
       io.write(fmt("%s|%.3f |%.3f |\n", f, a, os.clock() - t0))
       return io.flush()
     end)
@@ -175,6 +176,11 @@ replay = function(dat)
       for i, row in ipairs(tb.rows) do
         v[#tb.rows - i] = row
       end
+    end
+    local at = tb.cols.klass.at
+    local kl
+    kl = function(row)
+      return row.raw[at]
     end
     local test, inh = { }, { }
     for s in ids:gmatch("%d+") do
@@ -211,7 +217,7 @@ replay = function(dat)
       local arm = _list_0[_index_0]
       k.trees, k.rf = arm[1], arm[2]
       local t0 = os.clock()
-      aucs_[#aucs_ + 1] = aucs(votes(forest(tb, train, kl), test, kl, tb.kn), tb.kn)
+      aucs_[#aucs_ + 1] = aucs(votes(forest(tb, train, kl), test, kl))
       secs[#secs + 1] = os.clock() - t0
     end
     io.write(fmt("%s|%.3f %.3f |%.3f %.3f |%s\n", f, aucs_[1], aucs_[2], secs[1], secs[2], ids))

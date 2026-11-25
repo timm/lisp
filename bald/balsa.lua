@@ -179,73 +179,16 @@ div = function(col)
   return e / LOG2
 end
 
--- ys summaries: klass codes 1..kn, counts in a plain array. Integer
--- adds in the loops; logs only when a spread is asked for.
-local _anon_func_0 = function(kn)
-  local _accum_0 = { }
-  local _len_0 = 1
-  for _ = 1, kn do
-    _accum_0[_len_0] = 0
-    _len_0 = _len_0 + 1
-  end
-  return _accum_0
-end
-local Ys
-Ys = function(kn)
-  return {
-    n = 0,
-    cs = _anon_func_0(kn)
-  }
-end
-
-local yadd
-yadd = function(ys, code, m)
-  if m == nil then
-    m = 1
-  end
-  local _obj_0 = ys.cs
-  _obj_0[code] = _obj_0[code] + m
-  ys.n = ys.n + m
-end
-
-local yadds
-yadds = function(codes, ys)
-  for _index_0 = 1, #codes do
-    local code = codes[_index_0]
-    if code then
-      yadd(ys, code)
-    end
-  end
-  return ys
-end
-
-local yfold
-yfold = function(a, b, inc)
+local fold
+fold = function(a, b, inc)
   if inc == nil then
     inc = 1
   end
-  for i = 1, #a.cs do
-    local _obj_0 = a.cs
-    _obj_0[i] = _obj_0[i] + (inc * b.cs[i])
+  for v, m in pairs(b.has) do
+    a.has[v] = (a.has[v] or 0) + inc * m
   end
   a.n = a.n + (inc * b.n)
   return a
-end
-
-local ydiv
-ydiv = function(ys)
-  local n, e = ys.n, 0
-  if n < 2 then
-    return 0
-  end
-  local _list_0 = ys.cs
-  for _index_0 = 1, #_list_0 do
-    local c = _list_0[_index_0]
-    if c > 0 then
-      e = e - (c * log(c))
-    end
-  end
-  return (e / n + log(n)) / LOG2
 end
 
 local Cols
@@ -395,33 +338,11 @@ discretize = function(tb)
   end
 end
 
-local encode
-encode = function(tb)
-  local at = tb.cols.klass and tb.cols.klass.at
-  if not at then
-    return
-  end
-  local _list_0 = tb.rows
-  for _index_0 = 1, #_list_0 do
-    local row = _list_0[_index_0]
-    local v = row.raw[at]
-    if v ~= "?" then
-      if not tb.code[v] then
-        tb.kn = tb.kn + 1
-        tb.code[v] = tb.kn
-      end
-      row.kl = tb.code[v]
-    end
-  end
-end
-
 local Tbl
 Tbl = function(rows)
   local tb = {
     cols = Cols(rows[1]),
-    rows = { },
-    code = { },
-    kn = 0
+    rows = { }
   }
   for i = #rows, 2, -1 do
     local row = {
@@ -438,7 +359,6 @@ Tbl = function(rows)
     end
   end
   discretize(tb)
-  encode(tb)
   return tb
 end
 
@@ -456,7 +376,7 @@ end
 
 local xpect
 xpect = function(a, b)
-  return (a.n * ydiv(a) + b.n * ydiv(b)) / (a.n + b.n + 1e-32)
+  return (a.n * div(a) + b.n * div(b)) / (a.n + b.n + 1e-32)
 end
 
 local cuts
@@ -474,21 +394,21 @@ cuts = function(col, rows, ys, mk, leaf, best)
   end
   for i, row in ipairs(rows) do
     local b = row.cooked[col.at]
-    if b >= 0 and ys[i] then
-      yadd(bins[b + 1], ys[i])
+    if b >= 0 then
+      add(bins[b + 1], ys[i])
     end
   end
   local yes = mk()
   local no = mk()
   for _index_0 = 1, #bins do
     local bin = bins[_index_0]
-    yfold(no, bin)
+    fold(no, bin)
   end
   for b = 0, nb - 1 do
     local bin = bins[b + 1]
-    yfold(no, bin, -1)
+    fold(no, bin, -1)
     if not col.has then
-      yfold(yes, bin)
+      fold(yes, bin)
     end
     local lhs = col.has and bin or yes
     if leaf <= min(lhs.n, no.n) then
@@ -498,7 +418,7 @@ cuts = function(col, rows, ys, mk, leaf, best)
       }, xpect(lhs, no))
     end
     if col.has then
-      yfold(no, bin)
+      fold(no, bin)
     end
   end
 end
@@ -516,7 +436,7 @@ best_cut = function(xs, rows, ys, mk, m, leaf)
   return best()
 end
 
-local _anon_func_1 = function(b, col, w)
+local _anon_func_0 = function(b, col, w)
   if col.has then
     return w == b
   else
@@ -526,7 +446,7 @@ end
 local yes_
 yes_ = function(col, b, row)
   local w = row.cooked[col.at]
-  return w < 0 or (_anon_func_1(b, col, w))
+  return w < 0 or (_anon_func_0(b, col, w))
 end
 
 local tree
@@ -547,7 +467,7 @@ tree = function(rows, y, xs, mk, m, leaf, maxd, lvl)
   end
   local cut = lvl < maxd and best_cut(xs, rows, ys, mk, m, leaf)
   local node = {
-    ys = yadds(ys, mk()),
+    ys = adds(ys, mk()),
     n = #rows
   }
   if cut then
@@ -586,7 +506,7 @@ tree = function(rows, y, xs, mk, m, leaf, maxd, lvl)
   return node
 end
 
-local _anon_func_2 = function(node, w)
+local _anon_func_1 = function(node, w)
   if node.sym then
     return w == node.v
   else
@@ -597,7 +517,7 @@ local leaf_of
 leaf_of = function(node, row)
   while node.ati do
     local w = row.cooked[node.ati]
-    local ok = w < 0 or (_anon_func_2(node, w))
+    local ok = w < 0 or (_anon_func_1(node, w))
     node = ok and node.yes or node.no
   end
   return node
@@ -625,7 +545,7 @@ forest = function(tb, rows, y)
   local m = k.rf and math.ceil(sqrt(#xs))
   local mk
   mk = function()
-    return Ys(tb.kn)
+    return Col("y")
   end
   if k.cap then
     rows = capped(rows, y, k.cap)
@@ -648,37 +568,28 @@ forest = function(tb, rows, y)
   return out
 end
 
-local _anon_func_3 = function(kn)
-  local _accum_0 = { }
-  local _len_0 = 1
-  for _ = 1, kn do
-    _accum_0[_len_0] = 0
-    _len_0 = _len_0 + 1
-  end
-  return _accum_0
-end
 local vote
-vote = function(trees, row, kn)
-  local h, w = _anon_func_3(kn), #trees
+vote = function(trees, row)
+  local h, w = { }, #trees
   for _index_0 = 1, #trees do
     local node = trees[_index_0]
     local ys = leaf_of(node, row).ys
-    for i = 1, kn do
-      h[i] = h[i] + (ys.cs[i] / ys.n / w)
+    for v, m in pairs(ys.has) do
+      h[v] = (h[v] or 0) + m / ys.n / w
     end
   end
   return h
 end
 
 local votes
-votes = function(trees, rows, y, kn)
+votes = function(trees, rows, y)
   local _accum_0 = { }
   local _len_0 = 1
   for _index_0 = 1, #rows do
     local row = rows[_index_0]
     _accum_0[_len_0] = {
       y(row),
-      vote(trees, row, kn)
+      vote(trees, row)
     }
     _len_0 = _len_0 + 1
   end
@@ -701,39 +612,44 @@ auc = function(pos, neg)
 end
 
 local aucs
-aucs = function(wps, kn)
-  local n, sum = 0, 0
-  for code = 1, kn do
-    local pos
-    do
-      local _accum_0 = { }
-      local _len_0 = 1
-      for _index_0 = 1, #wps do
-        local wp = wps[_index_0]
-        if wp[1] == code then
-          _accum_0[_len_0] = wp[2][code]
-          _len_0 = _len_0 + 1
+aucs = function(wps)
+  local seen, n, sum = { }, 0, 0
+  for _index_0 = 1, #wps do
+    local wp = wps[_index_0]
+    local c = wp[1]
+    if not seen[c] then
+      seen[c] = true
+      local pos
+      do
+        local _accum_0 = { }
+        local _len_0 = 1
+        for _index_1 = 1, #wps do
+          local w = wps[_index_1]
+          if w[1] == c then
+            _accum_0[_len_0] = w[2][c] or 0
+            _len_0 = _len_0 + 1
+          end
         end
+        pos = _accum_0
       end
-      pos = _accum_0
-    end
-    local neg
-    do
-      local _accum_0 = { }
-      local _len_0 = 1
-      for _index_0 = 1, #wps do
-        local wp = wps[_index_0]
-        if wp[1] ~= code then
-          _accum_0[_len_0] = wp[2][code]
-          _len_0 = _len_0 + 1
+      local neg
+      do
+        local _accum_0 = { }
+        local _len_0 = 1
+        for _index_1 = 1, #wps do
+          local w = wps[_index_1]
+          if w[1] ~= c then
+            _accum_0[_len_0] = w[2][c] or 0
+            _len_0 = _len_0 + 1
+          end
         end
+        neg = _accum_0
       end
-      neg = _accum_0
-    end
-    local a = auc(pos, neg)
-    if a then
-      n = n + (#pos)
-      sum = sum + (#pos * a)
+      local a = auc(pos, neg)
+      if a then
+        n = n + (#pos)
+        sum = sum + (#pos * a)
+      end
     end
   end
   return 100 * sum / max(n, 1)

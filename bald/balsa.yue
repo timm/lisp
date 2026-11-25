@@ -76,30 +76,11 @@ div = (col) ->                          -- sd for Nums, entropy for Syms
   e -= m/col.n * log(m/col.n) for _, m in pairs col.has when m > 0
   e / LOG2
 
--- ys summaries: klass codes 1..kn, counts in a plain array. Integer
--- adds in the loops; logs only when a spread is asked for.
-Ys = (kn) -> {n: 0, cs: [0 for _ = 1, kn]}
-
-yadd = (ys, code, m=1) ->
-  ys.cs[code] += m
-  ys.n += m
-
-yadds = (codes, ys) ->
-  for code in *codes
-    yadd ys, code if code
-  ys
-
-yfold = (a, b, inc=1) ->                -- add (inc=-1: take) b into a
-  for i = 1, #a.cs
-    a.cs[i] += inc * b.cs[i]
+fold = (a, b, inc=1) ->                 -- add (inc=-1: take) b into a
+  for v, m in pairs b.has
+    a.has[v] = (a.has[v] or 0) + inc * m
   a.n += inc * b.n
   a
-
-ydiv = (ys) ->                          -- entropy of the counts
-  n, e = ys.n, 0
-  return 0 if n < 2
-  e -= c * log(c) for c in *ys.cs when c > 0
-  (e / n + log(n)) / LOG2
 
 Cols = (names) ->
   all = [Col txt, at for at, txt in ipairs names]
@@ -153,25 +134,13 @@ discretize = (tb) ->                    -- once per tbl: bins, then
     row.cooked = {}
     row.cooked[col.at] = cook col, row.raw[col.at] for col in *tb.cols.x
 
-encode = (tb) ->                        -- klass -> int code, cached
-  at = tb.cols.klass and tb.cols.klass.at
-  return unless at
-  for row in *tb.rows
-    v = row.raw[at]
-    if v != "?"
-      unless tb.code[v]
-        tb.kn += 1
-        tb.code[v] = tb.kn
-      row.kl = tb.code[v]
-
 Tbl = (rows) ->
-  tb = {cols: Cols(rows[1]), rows: {}, code: {}, kn: 0}
+  tb = {cols: Cols(rows[1]), rows: {}}
   for i = #rows, 2, -1                  -- newest first, like the lisp
     row = {raw: rows[i]}
     tb.rows[] = row
     add col, row.raw[col.at] for col in *tb.cols.all
   discretize tb
-  encode tb
   tb
 
 --------------------------------------------------------------- tree
@@ -182,25 +151,25 @@ argmost = (better) ->                   -- visitor; f! = best so far
     out, b4
 
 xpect = (a, b) ->                       -- size-weighted spread
-  (a.n * ydiv(a) + b.n * ydiv(b)) / (a.n + b.n + 1e-32)
+  (a.n * div(a) + b.n * div(b)) / (a.n + b.n + 1e-32)
 
 cuts = (col, rows, ys, mk, leaf, best) ->
   nb = #col.bins
   bins = [mk! for _ = 0, nb]            -- one ys per bin, 0-based
   for i, row in ipairs rows
     b = row.cooked[col.at]
-    if b >= 0 and ys[i] then yadd bins[b + 1], ys[i]
+    if b >= 0 then add bins[b + 1], ys[i]
   yes = mk!
   no = mk!
-  yfold no, bin for bin in *bins
+  fold no, bin for bin in *bins
   for b = 0, nb - 1
     bin = bins[b + 1]
-    yfold no, bin, -1                   -- syms: bin vs rest
-    unless col.has then yfold yes, bin  -- nums: bins <= b
+    fold no, bin, -1                    -- syms: bin vs rest
+    unless col.has then fold yes, bin   -- nums: bins <= b
     lhs = col.has and bin or yes
     if leaf <= min lhs.n, no.n
       best {col, b}, xpect lhs, no
-    if col.has then yfold no, bin
+    if col.has then fold no, bin
 
 best_cut = (xs, rows, ys, mk, m, leaf) ->
   best = argmost (a, b) -> a < b
@@ -215,7 +184,7 @@ yes_ = (col, b, row) ->                 -- row on the yes side of cut?
 tree = (rows, y, xs, mk, m, leaf, maxd, lvl=0) ->
   ys = [y row for row in *rows]
   cut = lvl < maxd and best_cut xs, rows, ys, mk, m, leaf
-  node = {ys: yadds(ys, mk!), n: #rows}
+  node = {ys: adds(ys, mk!), n: #rows}
   if cut
     col, b = cut[1], cut[2]
     node.v = b
@@ -245,7 +214,7 @@ capped = (rows, y, n) ->                -- <= n random rows per class
 forest = (tb, rows, y) ->
   xs = tb.cols.x
   m = k.rf and math.ceil sqrt #xs
-  mk = -> Ys tb.kn
+  mk = -> Col "y"
   rows = capped rows, y, k.cap if k.cap
   half = ->
     u = shuffle rows
@@ -256,16 +225,16 @@ forest = (tb, rows, y) ->
                  k.leaf, k.maxd
   out
 
-vote = (trees, row, kn) ->              -- class -> mean leaf share
-  h, w = [0 for _ = 1, kn], #trees
+vote = (trees, row) ->                  -- class -> mean leaf share
+  h, w = {}, #trees
   for node in *trees
     ys = leaf_of(node, row).ys
-    for i = 1, kn
-      h[i] += ys.cs[i] / ys.n / w
+    for v, m in pairs ys.has
+      h[v] = (h[v] or 0) + m / ys.n / w
   h
 
-votes = (trees, rows, y, kn) ->
-  [{y(row), vote trees, row, kn} for row in *rows]
+votes = (trees, rows, y) ->
+  [{y(row), vote trees, row} for row in *rows]
 
 ---------------------------------------------------------------- auc
 auc = (pos, neg) ->                     -- Mann-Whitney, ties halved:
@@ -276,15 +245,18 @@ auc = (pos, neg) ->                     -- Mann-Whitney, ties halved:
     s += (bisect(neg, p) + bisect(neg, p, true)) / 2
   s / (#pos * #neg)
 
-aucs = (wps, kn) ->                     -- expected 1-vs-rest, 0..100
-  n, sum = 0, 0
-  for code = 1, kn
-    pos = [wp[2][code] for wp in *wps when wp[1] == code]
-    neg = [wp[2][code] for wp in *wps when wp[1] != code]
-    a = auc pos, neg
-    if a
-      n += #pos
-      sum += #pos * a
+aucs = (wps) ->                         -- expected 1-vs-rest, 0..100
+  seen, n, sum = {}, 0, 0
+  for wp in *wps
+    c = wp[1]
+    unless seen[c]
+      seen[c] = true
+      pos = [w[2][c] or 0 for w in *wps when w[1] == c]
+      neg = [w[2][c] or 0 for w in *wps when w[1] != c]
+      a = auc pos, neg
+      if a
+        n += #pos
+        sum += #pos * a
   100 * sum / max n, 1
 
 -- the module: what balsa_eg.yue (and any other rig) may touch
