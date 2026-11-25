@@ -49,8 +49,8 @@ csv = (file) ->
 --------------------------------------------------------------- data
 -- Header: Uppercase = Num, else Sym. Last char: ! class, X skip.
 -- "?" cells unknown. Rows keep raw cells and cooked ones (bin #s).
-Col = (txt="", at=0) ->                 -- no args: an anonymous Num
-  if txt == "" or txt\match "^%u"
+Col = (txt="N", at=0) ->                -- no args: an anonymous Num
+  if txt\match "^%u"
     {:at, :txt, nm: true, n: 0, mu: 0, m2: 0}  -- a Num
   else
     {:at, :txt, n: 0, has: {}}                 -- a Sym

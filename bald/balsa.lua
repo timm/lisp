@@ -107,12 +107,12 @@ end
 local Col
 Col = function(txt, at)
   if txt == nil then
-    txt = ""
+    txt = "N"
   end
   if at == nil then
     at = 0
   end
-  if txt == "" or txt:match("^%u") then
+  if txt:match("^%u") then
     return {
       at = at,
       txt = txt,
