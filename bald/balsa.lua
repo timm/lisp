@@ -106,7 +106,8 @@ end
 
 --------------------------------------------------------------- data
 -- Header: Uppercase = Num, else Sym. Last char: ! class, X skip.
--- "?" cells unknown. Rows keep raw cells and cooked ones (bin #s).
+-- "?" cells unknown. A row IS its csv cells (numeric indexes),
+-- plus one named field: cooked, its bin # per x column.
 local Col
 Col = function(txt, at)
   if txt == nil then
@@ -262,8 +263,8 @@ choices = function(col, rows, n)
       local _len_0 = 1
       for _index_0 = 1, #rows do
         local row = rows[_index_0]
-        if row.raw[col.at] ~= "?" then
-          _accum_0[_len_0] = row.raw[col.at]
+        if row[col.at] ~= "?" then
+          _accum_0[_len_0] = row[col.at]
           _len_0 = _len_0 + 1
         end
       end
@@ -336,7 +337,7 @@ discretize = function(tb)
     local _list_2 = tb.cols.x
     for _index_1 = 1, #_list_2 do
       local col = _list_2[_index_1]
-      row.cooked[col.at] = cook(col, row.raw[col.at])
+      row.cooked[col.at] = cook(col, row[col.at])
     end
   end
 end
@@ -348,9 +349,7 @@ Tbl = function(rows)
     rows = { }
   }
   for i = #rows, 2, -1 do
-    local row = {
-      raw = rows[i]
-    }
+    local row = rows[i]
     do
       local _obj_0 = tb.rows
       _obj_0[#_obj_0 + 1] = row
@@ -358,7 +357,7 @@ Tbl = function(rows)
     local _list_0 = tb.cols.all
     for _index_0 = 1, #_list_0 do
       local col = _list_0[_index_0]
-      add(col, row.raw[col.at])
+      add(col, row[col.at])
     end
   end
   discretize(tb)

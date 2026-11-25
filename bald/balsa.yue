@@ -51,7 +51,8 @@ csv = (file) ->
 
 --------------------------------------------------------------- data
 -- Header: Uppercase = Num, else Sym. Last char: ! class, X skip.
--- "?" cells unknown. Rows keep raw cells and cooked ones (bin #s).
+-- "?" cells unknown. A row IS its csv cells (numeric indexes),
+-- plus one named field: cooked, its bin # per x column.
 Col = (txt="N", at=0) ->                -- no args: an anonymous Num
   if txt\match "^%u"
     {:at, :txt, nm: true, n: 0, mu: 0, m2: 0}  -- a Num
@@ -110,7 +111,7 @@ bisect = (vs, v, le) ->                 -- #items in sorted vs below v
 
 choices = (col, rows, n) ->
   if col.nm                             -- n bins, equal #known in each
-    vs = [row.raw[col.at] for row in *rows when row.raw[col.at] != "?"]
+    vs = [row[col.at] for row in *rows when row[col.at] != "?"]
     table.sort vs
     out, b4 = {}, nil
     for j = 0, (#vs > 0 and n - 1 or -1)
@@ -135,14 +136,14 @@ discretize = (tb) ->                    -- once per tbl: bins, then
     col.bins = choices col, tb.rows, k.bins
   for row in *tb.rows
     row.cooked = {}
-    row.cooked[col.at] = cook col, row.raw[col.at] for col in *tb.cols.x
+    row.cooked[col.at] = cook col, row[col.at] for col in *tb.cols.x
 
 Tbl = (rows) ->
   tb = {cols: Cols(rows[1]), rows: {}}
   for i = #rows, 2, -1                  -- newest first, like the lisp
-    row = {raw: rows[i]}
+    row = rows[i]
     tb.rows[] = row
-    add col, row.raw[col.at] for col in *tb.cols.all
+    add col, row[col.at] for col in *tb.cols.all
   discretize tb
   tb
 

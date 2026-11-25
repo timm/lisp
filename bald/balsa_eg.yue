@@ -71,7 +71,7 @@ ens = (sets) ->
   for f in *sets
     tb = Tbl csv "~/gits/moot/classify/#{f}.csv"
     at = tb.cols.klass.at
-    kl = (row) -> row.raw[at]
+    kl = (row) -> row[at]
     xval tb.rows, (train, test) ->
       t0 = os.clock!
       a = aucs votes forest(tb, train, kl), test, kl
@@ -92,7 +92,7 @@ replay = (dat) ->                       -- rerun DAT's recorded folds:
       for i, row in ipairs tb.rows
         v[#tb.rows - i] = row
     at = tb.cols.klass.at
-    kl = (row) -> row.raw[at]
+    kl = (row) -> row[at]
     test, inh = {}, {}
     for s in ids\gmatch "%d+"
       row = v[tonumber(s)]
