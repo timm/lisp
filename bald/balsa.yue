@@ -101,15 +101,13 @@ ydiv = (ys) ->                          -- entropy of the counts
   e -= c * log(c) for c in *ys.cs when c > 0
   (e / n + log(n)) / LOG2
 
-skip = (txt) -> txt\match("X$") or txt\match "X[-+!]$"
-
 Cols = (names) ->
   all = [Col txt, at for at, txt in ipairs names]
   x, y, klass = {}, {}, nil
   for i = #all, 1, -1                   -- reversed: the lisp pushes
     col = all[i]
     e = col.txt\sub -1
-    if skip col.txt then continue
+    if col.txt\match "X$" then continue
     if e == "+" or e == "-" or e == "!"
       y[] = col
       if e == "!" then klass = col

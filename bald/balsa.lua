@@ -248,11 +248,6 @@ ydiv = function(ys)
   return (e / n + log(n)) / LOG2
 end
 
-local skip
-skip = function(txt)
-  return txt:match("X$") or txt:match("X[-+!]$")
-end
-
 local Cols
 Cols = function(names)
   local all
@@ -269,7 +264,7 @@ Cols = function(names)
   for i = #all, 1, -1 do
     local col = all[i]
     local e = col.txt:sub(-1)
-    if skip(col.txt) then
+    if col.txt:match("X$") then
       goto _continue_0
     end
     if e == "+" or e == "-" or e == "!" then
