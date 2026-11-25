@@ -31,7 +31,9 @@ pick = (n, m) ->                        -- 0..n-1; or just m of them
   got, out = {}, {}
   while #out < m
     i = floor rand n
-    unless got[i] then got[i] = true; out[] = i
+    unless got[i]
+      got[i] = true
+      out[] = i
   table.sort out
   out
 
@@ -57,7 +59,7 @@ Col = (txt="N", at=0) ->                -- no args: an anonymous Num
   if txt\match "^%u"
     {:at, :txt, nm: true, n: 0, mu: 0, m2: 0}  -- a Num
   else
-    {:at, :txt, n: 0, has: {}}                 -- a Sym
+    {:at, :txt, n: 0, has: {}, keys: {}}       -- a Sym
 
 add = (col, v, inc=1) ->
   return if v == "?"
@@ -67,6 +69,7 @@ add = (col, v, inc=1) ->
     col.mu += inc * d / col.n
     col.m2 = max 0, col.m2 + inc * d * (v - col.mu)
   else
+    col.keys[] = v unless col.has[v]       -- first-seen order
     col.has[v] = (col.has[v] or 0) + inc
 
 adds = (vs, col=Col!) ->
@@ -77,12 +80,15 @@ div = (col) ->                          -- sd for Nums, entropy for Syms
   if col.nm
     return if col.n < 2 then 0 else sqrt(col.m2 / (col.n - 1))
   e = 0
-  e -= m/col.n * log(m/col.n) for _, m in pairs col.has when m > 0
+  for v in *col.keys                    -- not pairs: fixed order,
+    m = col.has[v]                      -- so same sum every run
+    e -= m/col.n * log(m/col.n) if m > 0
   e / LOG2
 
 fold = (sym1, sym2, inc=1) ->           -- add (inc=-1: take) 2 into 1
-  for v, m in pairs sym2.has
-    sym1.has[v] = (sym1.has[v] or 0) + inc * m
+  for v in *sym2.keys
+    sym1.keys[] = v unless sym1.has[v]
+    sym1.has[v] = (sym1.has[v] or 0) + inc * sym2.has[v]
   sym1.n += inc * sym2.n
   sym1
 

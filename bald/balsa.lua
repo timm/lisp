@@ -71,8 +71,8 @@ pick = function(n, m)
     local i = floor(rand(n))
     if not got[i] then
       got[i] = true
+      out[#out + 1] = i
     end
-    out[#out + 1] = i
   end
   table.sort(out)
   return out
@@ -130,7 +130,8 @@ Col = function(txt, at)
       at = at,
       txt = txt,
       n = 0,
-      has = { }
+      has = { },
+      keys = { }
     }
   end
 end
@@ -149,6 +150,10 @@ add = function(col, v, inc)
     col.mu = col.mu + (inc * d / col.n)
     col.m2 = max(0, col.m2 + inc * d * (v - col.mu))
   else
+    if not col.has[v] then
+      local _obj_0 = col.keys
+      _obj_0[#_obj_0 + 1] = v
+    end
     col.has[v] = (col.has[v] or 0) + inc
   end
 end
@@ -175,7 +180,10 @@ div = function(col)
     end
   end
   local e = 0
-  for _, m in pairs(col.has) do
+  local _list_0 = col.keys
+  for _index_0 = 1, #_list_0 do
+    local v = _list_0[_index_0]
+    local m = col.has[v]
     if m > 0 then
       e = e - (m / col.n * log(m / col.n))
     end
@@ -188,8 +196,14 @@ fold = function(sym1, sym2, inc)
   if inc == nil then
     inc = 1
   end
-  for v, m in pairs(sym2.has) do
-    sym1.has[v] = (sym1.has[v] or 0) + inc * m
+  local _list_0 = sym2.keys
+  for _index_0 = 1, #_list_0 do
+    local v = _list_0[_index_0]
+    if not sym1.has[v] then
+      local _obj_0 = sym1.keys
+      _obj_0[#_obj_0 + 1] = v
+    end
+    sym1.has[v] = (sym1.has[v] or 0) + inc * sym2.has[v]
   end
   sym1.n = sym1.n + (inc * sym2.n)
   return sym1
@@ -209,20 +223,27 @@ Cols = function(names)
   end
   local x, y, klass = { }, { }, nil
   for i = #all, 1, -1 do
-    local col = all[i]
-    local e = col.txt:sub(-1)
-    if col.txt:match("X$") then
-      goto _continue_0
-    end
-    if e == "+" or e == "-" or e == "!" then
-      y[#y + 1] = col
-      if e == "!" then
-        klass = col
+    local _continue_0 = false
+    repeat
+      local col = all[i]
+      local e = col.txt:sub(-1)
+      if col.txt:match("X$") then
+        _continue_0 = true
+        break
       end
-    else
-      x[#x + 1] = col
+      if e == "+" or e == "-" or e == "!" then
+        y[#y + 1] = col
+        if e == "!" then
+          klass = col
+        end
+      else
+        x[#x + 1] = col
+      end
+      _continue_0 = true
+    until true
+    if not _continue_0 then
+      break
     end
-    ::_continue_0::
   end
   return {
     names = names,
