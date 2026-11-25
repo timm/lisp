@@ -18,8 +18,8 @@ median = (xs) ->
   ys[1 + floor #ys / 2]
 
 cohen = (xs, ys) ->
-  a = adds xs, {nm: true, n: 0, mu: 0, m2: 0}
-  c = adds ys, {nm: true, n: 0, mu: 0, m2: 0}
+  a = adds xs
+  c = adds ys
   sp = sqrt(((a.n - 1) * div(a)^2 + (c.n - 1) * div(c)^2) /
             max(1, a.n + c.n - 2))
   math.abs(a.mu - c.mu) / (sp + 1e-32)

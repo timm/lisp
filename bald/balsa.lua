@@ -105,8 +105,14 @@ end
 -- Header: Uppercase = Num, else Sym. Last char: ! class, X skip.
 -- "?" cells unknown. Rows keep raw cells and cooked ones (bin #s).
 local Col
-Col = function(at, txt)
-  if txt:match("^%u") then
+Col = function(txt, at)
+  if txt == nil then
+    txt = ""
+  end
+  if at == nil then
+    at = 0
+  end
+  if txt == "" or txt:match("^%u") then
     return {
       at = at,
       txt = txt,
@@ -145,6 +151,9 @@ end
 
 local adds
 adds = function(vs, col)
+  if col == nil then
+    col = Col()
+  end
   for _index_0 = 1, #vs do
     local v = vs[_index_0]
     add(col, v)
@@ -252,7 +261,7 @@ Cols = function(names)
     local _accum_0 = { }
     local _len_0 = 1
     for at, txt in ipairs(names) do
-      _accum_0[_len_0] = Col(at, txt)
+      _accum_0[_len_0] = Col(txt, at)
       _len_0 = _len_0 + 1
     end
     all = _accum_0

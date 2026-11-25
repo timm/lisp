@@ -49,8 +49,8 @@ csv = (file) ->
 --------------------------------------------------------------- data
 -- Header: Uppercase = Num, else Sym. Last char: ! class, X skip.
 -- "?" cells unknown. Rows keep raw cells and cooked ones (bin #s).
-Col = (at, txt) ->
-  if txt\match "^%u"
+Col = (txt="", at=0) ->                 -- no args: an anonymous Num
+  if txt == "" or txt\match "^%u"
     {:at, :txt, nm: true, n: 0, mu: 0, m2: 0}  -- a Num
   else
     {:at, :txt, n: 0, has: {}}                 -- a Sym
@@ -65,7 +65,7 @@ add = (col, v, inc=1) ->
   else
     col.has[v] = (col.has[v] or 0) + inc
 
-adds = (vs, col) ->
+adds = (vs, col=Col!) ->
   add col, v for v in *vs
   col
 
@@ -109,7 +109,7 @@ ydiv = (ys) ->                          -- entropy of the counts
 skip = (txt) -> txt\match("X$") or txt\match "X[-+!]$"
 
 Cols = (names) ->
-  all = [Col at, txt for at, txt in ipairs names]
+  all = [Col txt, at for at, txt in ipairs names]
   x, y, klass = {}, {}, nil
   for i = #all, 1, -1                   -- reversed: the lisp pushes
     col = all[i]

@@ -33,18 +33,8 @@ end
 
 local cohen
 cohen = function(xs, ys)
-  local a = adds(xs, {
-    nm = true,
-    n = 0,
-    mu = 0,
-    m2 = 0
-  })
-  local c = adds(ys, {
-    nm = true,
-    n = 0,
-    mu = 0,
-    m2 = 0
-  })
+  local a = adds(xs)
+  local c = adds(ys)
   local sp = sqrt(((a.n - 1) * div(a) ^ 2 + (c.n - 1) * div(c) ^ 2) / max(1, a.n + c.n - 2))
   return math.abs(a.mu - c.mu) / (sp + 1e-32)
 end
